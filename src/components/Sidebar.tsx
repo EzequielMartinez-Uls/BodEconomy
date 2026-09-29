@@ -35,34 +35,34 @@ export const Sidebar: React.FC<Props> = ({
     <aside className="w-64 bg-white border-r border-slate-200/90 flex flex-col h-screen sticky top-0 z-40 select-none shadow-[2px_0_12px_-4px_rgba(0,0,0,0.03)] shrink-0">
       {/* Brand Header & Menú con Scroll Suave */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-5 border-b border-slate-100 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white shadow-md shadow-amber-500/25">
-            <Flame className="w-5 h-5 fill-white" />
+        <div className="p-4 border-b border-slate-100 flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl overflow-hidden shrink-0 border border-[#1c6856]/30 bg-[#1c6856] shadow-sm flex items-center justify-center">
+            <img src="/logo.png" alt="Restaurante El Bodegón" className="w-full h-full object-cover" />
           </div>
-          <div>
-            <div className="font-black tracking-tight text-slate-900 text-base">
+          <div className="overflow-hidden">
+            <div className="font-black tracking-tight text-slate-900 text-xs sm:text-sm leading-tight truncate">
               EL BODEGÓN
             </div>
-            <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">
+            <div className="text-[10px] font-bold text-[#1c6856] uppercase tracking-wider mt-0.5">
               Control ERP de Cajas
             </div>
           </div>
         </div>
 
         {/* Administrador Activo Selector Rápido */}
-        <div className="p-3.5 mx-3 mt-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+        <div className="p-3 mx-3 mt-3 rounded-xl bg-emerald-50/40 border border-emerald-200/70 flex items-center justify-between">
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs shadow-xs">
-              <User className="w-4 h-4 text-amber-600" />
+            <div className="w-8 h-8 rounded-lg bg-white border border-emerald-200 text-[#1c6856] flex items-center justify-center font-bold text-xs shadow-xs">
+              <User className="w-4 h-4 text-[#1c6856]" />
             </div>
             <div className="truncate">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Admin en Turno</span>
-              <span className="text-xs font-black text-slate-800 truncate block">{state.activeAdminName}</span>
+              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Admin en Turno</span>
+              <span className="text-xs font-black text-slate-900 truncate block">{state.activeAdminName}</span>
             </div>
           </div>
           <button
             onClick={onSelectAdminClick}
-            className="text-[11px] font-bold text-amber-600 hover:text-amber-700 underline px-1 py-0.5 rounded cursor-pointer"
+            className="text-[11px] font-bold text-[#1c6856] hover:text-[#154f42] underline px-1 py-0.5 rounded cursor-pointer"
           >
             Cambiar
           </button>
@@ -79,7 +79,7 @@ export const Sidebar: React.FC<Props> = ({
             onClick={() => onTabChange('generalCash')}
             className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer ${
               activeTab === 'generalCash'
-                ? 'bg-amber-500 text-white shadow-md shadow-amber-500/25'
+                ? 'bg-[#1c6856] text-white shadow-md shadow-[#1c6856]/25 border border-[#154f42]'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
@@ -111,7 +111,7 @@ export const Sidebar: React.FC<Props> = ({
             onClick={() => onTabChange('pettyCash')}
             className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer ${
               activeTab === 'pettyCash'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25'
+                ? 'bg-[#154f42] text-white shadow-md shadow-[#154f42]/25 border border-[#0d342b]'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
@@ -199,7 +199,7 @@ export const Sidebar: React.FC<Props> = ({
           className="w-full pt-2 px-3 flex items-center justify-between text-[10px] font-semibold text-slate-400 hover:text-slate-600 transition cursor-pointer"
           title="Ver configuración del sistema y respaldos"
         >
-          <span>BodegónControl v1.2</span>
+          <span>Bodegón Control v1.0.2</span>
           <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
             <ShieldCheck className="w-3 h-3" /> Seguro
           </span>

@@ -161,11 +161,11 @@ export const TopBar: React.FC<Props> = ({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-1.5">
-                ¡Hola, <span className="text-amber-600">{state.activeAdminName}</span>!
+                ¡Hola, <span className="text-[#1c6856]">{state.activeAdminName}</span>!
               </h1>
               <button
                 onClick={onSelectAdminClick}
-                className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/60 transition cursor-pointer"
+                className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#1c6856]/10 hover:bg-[#1c6856]/20 text-[#1c6856] border border-[#1c6856]/20 transition cursor-pointer"
                 title="Haga clic para cambiar de administrador o turno"
               >
                 {state.activeAdminName === 'Eddy' ? 'Apertura Habitual' : state.activeAdminName === 'Xiomara' ? 'Cierre Habitual' : 'Administrador'}
@@ -209,7 +209,7 @@ export const TopBar: React.FC<Props> = ({
           {/* Indicador / Botón de Conexión Nube Supabase */}
           <button
             onClick={() => setCloudModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-xs font-bold text-amber-900 shadow-2xs transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold text-emerald-900 shadow-2xs transition cursor-pointer"
             title="Clic para verificar estado y probar conexión con Supabase"
           >
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -223,7 +223,7 @@ export const TopBar: React.FC<Props> = ({
           title="Imprimir Acta Oficial en Blanco y Negro (1 o 2 Hojas)"
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-black transition shadow-xs cursor-pointer active:scale-95"
         >
-          <Printer className="w-3.5 h-3.5 text-amber-400" />
+          <Printer className="w-3.5 h-3.5 text-emerald-400" />
           <span className="hidden md:inline">🖨️ Imprimir Acta (B/N)</span>
           <span className="md:hidden">Acta B/N</span>
         </button>
@@ -235,7 +235,7 @@ export const TopBar: React.FC<Props> = ({
             title="Imprimir Tique de Apertura (80mm)"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 transition"
           >
-            <Printer className="w-3.5 h-3.5 text-amber-600" />
+            <Printer className="w-3.5 h-3.5 text-[#1c6856]" />
             <span className="hidden md:inline">Tique Apertura</span>
           </button>
         )}
@@ -245,7 +245,7 @@ export const TopBar: React.FC<Props> = ({
           onClick={onSelectAdminClick}
           className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 transition"
         >
-          <div className="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-sm shadow-amber-500/20">
+          <div className="w-8 h-8 rounded-lg bg-[#1c6856] text-white flex items-center justify-center font-bold text-xs shadow-sm shadow-[#1c6856]/20">
             {state.activeAdminName.charAt(0)}
           </div>
           <div className="text-left hidden sm:block">

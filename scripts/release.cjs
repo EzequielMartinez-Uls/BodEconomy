@@ -31,11 +31,13 @@ process.env.GITHUB_TOKEN = token;
 
 // 2. Compilar aplicación
 console.log('📦 Compilando frontend...');
-execSync('npm run build', { stdio: 'inherit', shell: true });
+const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+execSync(`${npmCmd} run build`, { stdio: 'inherit', shell: true });
 
 // 3. Ejecutar electron-builder con publish
 console.log('⚡ Empaquetando y subiendo instaladores a GitHub...');
-spawnSync('npx', ['electron-builder', '--win', '--publish', 'always'], {
+spawnSync(npxCmd, ['electron-builder', '--win', '--publish', 'always'], {
   stdio: 'inherit',
   shell: true,
   env: process.env,
