@@ -1293,10 +1293,10 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
         ? `<tr><td colspan="8" style="text-align: center; padding: 12px; font-style: italic;">No se registraron compras ni egresos para este día.</td></tr>`
         : transactions
             .map((g, idx) => {
-              const metodoLabel =
-                g.metodo === 'EFECTIVO' || g.metodo === 'CASH'
-                  ? 'Efectivo'
-                  : 'Transferencia';
+              const raw = String(g.metodo || '').toUpperCase().trim();
+              const isCash = raw === 'EFECTIVO' || raw === 'CASH';
+              const isCard = raw === 'TARJETA' || raw === 'CARD';
+              const metodoLabel = isCash ? 'Efectivo' : isCard ? 'Tarjeta' : 'Transferencia';
               const estadoLabel = g.estado || (g.referencia ? `#${g.referencia}` : 'Liquidado');
 
               return `

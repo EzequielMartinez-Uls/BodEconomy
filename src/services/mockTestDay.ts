@@ -8,9 +8,9 @@ export const MOCK_YESTERDAY_SHIFT: CashShift = {
   status: 'CLOSED',
   exchangeRate: 36.80,
 
-  // Apertura
+  // Apertura (08:30 AM)
   openedBy: 'Eddy',
-  openedAt: '2026-09-28T08:30:00.000Z',
+  openedAt: '2026-09-28T08:30:00',
   verifiedPreviousClosingId: null,
   openingNotes: 'Apertura regular de jornada de lunes. Fondo base y gaveta verificados físicamente.',
   openingNIO: {
@@ -52,9 +52,9 @@ export const MOCK_YESTERDAY_SHIFT: CashShift = {
     notes: 'Reportes de cierre Loyverse y POS físicos conciliados satisfactoriamente.',
   },
 
-  // Cierre de Turno
+  // Cierre de Turno (11:15 PM)
   closedBy: 'Xiomara',
-  closedAt: '2026-09-28T23:15:00.000Z',
+  closedAt: '2026-09-28T23:15:00',
   closingNIO: {
     1000: 4, // 4,000
     500: 4,  // 2,000
@@ -124,14 +124,14 @@ export const MOCK_YESTERDAY_PETTY_SHIFT: PettyCashShift = {
   date: MOCK_YESTERDAY_DATE,
   status: 'CLOSED',
   openedBy: 'Eddy',
-  openedAt: '2026-09-28T08:45:00.000Z',
+  openedAt: '2026-09-28T08:45:00',
   previousDayRemaining: 1500.00,
   generalCashTransfer: 2500.00,
   bossContribution: 0.00,
   initialBalance: 4000.00, // 1500 + 2500
   openingNotes: 'Fondo de Caja Chica aperturado con remanente de C$ 1,500 y traslado de C$ 2,500 desde Caja General.',
   closedBy: 'Xiomara',
-  closedAt: '2026-09-28T23:10:00.000Z',
+  closedAt: '2026-09-28T23:10:00',
   totalExpenses: 4020.00, // Efectivo C$ 3,340.00 + Transferencia C$ 680.00
   totalInflows: 0.00,
   expectedBalance: 660.00, // 4000 - 3340 (Solo egresos en efectivo restan de la gaveta)
@@ -145,7 +145,7 @@ export const MOCK_YESTERDAY_PETTY_TRANSACTIONS: PettyCashTransaction[] = [
   {
     id: 'pct-2026-09-28-1',
     shiftId: 'pc-shift-2026-09-28-1',
-    date: '2026-09-28T09:30:00.000Z',
+    date: '2026-09-28T09:30:00',
     type: 'EXPENSE',
     amount: 850.00,
     method: 'CASH',
@@ -158,7 +158,7 @@ export const MOCK_YESTERDAY_PETTY_TRANSACTIONS: PettyCashTransaction[] = [
   {
     id: 'pct-2026-09-28-2',
     shiftId: 'pc-shift-2026-09-28-1',
-    date: '2026-09-28T10:15:00.000Z',
+    date: '2026-09-28T10:15:00',
     type: 'EXPENSE',
     amount: 240.00,
     method: 'CASH',
@@ -171,7 +171,7 @@ export const MOCK_YESTERDAY_PETTY_TRANSACTIONS: PettyCashTransaction[] = [
   {
     id: 'pct-2026-09-28-3',
     shiftId: 'pc-shift-2026-09-28-1',
-    date: '2026-09-28T11:30:00.000Z',
+    date: '2026-09-28T11:30:00',
     type: 'EXPENSE',
     amount: 480.00,
     method: 'CASH',
@@ -184,7 +184,7 @@ export const MOCK_YESTERDAY_PETTY_TRANSACTIONS: PettyCashTransaction[] = [
   {
     id: 'pct-2026-09-28-4',
     shiftId: 'pc-shift-2026-09-28-1',
-    date: '2026-09-28T14:45:00.000Z',
+    date: '2026-09-28T14:45:00',
     type: 'EXPENSE',
     amount: 1250.00,
     method: 'CASH',
@@ -197,7 +197,7 @@ export const MOCK_YESTERDAY_PETTY_TRANSACTIONS: PettyCashTransaction[] = [
   {
     id: 'pct-2026-09-28-5',
     shiftId: 'pc-shift-2026-09-28-1',
-    date: '2026-09-28T16:30:00.000Z',
+    date: '2026-09-28T16:30:00',
     type: 'EXPENSE',
     amount: 680.00,
     method: 'TRANSFER',
@@ -210,7 +210,7 @@ export const MOCK_YESTERDAY_PETTY_TRANSACTIONS: PettyCashTransaction[] = [
   {
     id: 'pct-2026-09-28-6',
     shiftId: 'pc-shift-2026-09-28-1',
-    date: '2026-09-28T18:15:00.000Z',
+    date: '2026-09-28T18:15:00',
     type: 'EXPENSE',
     amount: 520.00,
     method: 'CASH',
@@ -234,35 +234,35 @@ export const MOCK_YESTERDAY_FULL_STATE: AppState = {
   auditLogs: [
     {
       id: 'log-mock-1',
-      timestamp: '2026-09-28T08:30:00.000Z',
+      timestamp: '2026-09-28T08:30:00',
       user: 'Eddy',
       action: 'APERTURA_CAJA_GENERAL',
       details: 'Apertura de turno de lunes con fondo base de C$ 4,840.00 (C$ 3,000 NIO + $50 USD)',
     },
     {
       id: 'log-mock-2',
-      timestamp: '2026-09-28T08:45:00.000Z',
+      timestamp: '2026-09-28T08:45:00',
       user: 'Eddy',
       action: 'APERTURA_CAJA_CHICA',
       details: 'Apertura de Caja Chica con fondo inicial de C$ 4,000.00 (C$ 1,500 remanente + C$ 2,500 traslado)',
     },
     {
       id: 'log-mock-3',
-      timestamp: '2026-09-28T22:50:00.000Z',
+      timestamp: '2026-09-28T22:50:00',
       user: 'Xiomara',
       action: 'PAGO_PROPINAS',
       details: 'Distribución de propinas completada: C$ 2,800.00 entregado a 7 colaboradores (C$ 400 c/u)',
     },
     {
       id: 'log-mock-4',
-      timestamp: '2026-09-28T23:10:00.000Z',
+      timestamp: '2026-09-28T23:10:00',
       user: 'Xiomara',
       action: 'CIERRE_CAJA_CHICA',
       details: 'Cierre de Caja Chica cuadrado con C$ 660.00 en efectivo físico y C$ 4,020.00 en compras registradas',
     },
     {
       id: 'log-mock-5',
-      timestamp: '2026-09-28T23:15:00.000Z',
+      timestamp: '2026-09-28T23:15:00',
       user: 'Xiomara',
       action: 'CIERRE_CAJA_GENERAL',
       details: 'Cierre de Caja General cuadrado con C$ 9,290.00 en gaveta. Diferencia de C$ 0.00.',

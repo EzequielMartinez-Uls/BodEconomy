@@ -407,7 +407,7 @@ export const DailyEarningsView: React.FC<Props> = ({
         categoria: t.category,
         concepto: t.notes || t.vendor,
         proveedor: t.vendor,
-        metodo: t.method === 'CASH' ? 'Efectivo' : 'Transferencia',
+        metodo: t.method === 'CASH' ? 'Efectivo' : t.method === 'CARD' ? 'Tarjeta' : 'Transferencia',
         estado: t.receiptNumber ? `#${t.receiptNumber}` : 'Comprobante',
         referencia: t.receiptNumber,
         monto: t.amount,
@@ -432,7 +432,10 @@ export const DailyEarningsView: React.FC<Props> = ({
       .reduce((acc, t) => acc + t.monto, 0);
 
     const expensesTotal = expensesCash + expensesTransf;
-    const saldoRemanente = fondoInicial - expensesCash;
+    const saldoRemanente =
+      pettyShift?.actualCashCounted !== undefined
+        ? pettyShift.actualCashCounted
+        : (fondoInicial - expensesCash);
 
     const marginPercent =
       day.totalGrossSales > 0 ? (day.netEarnings / day.totalGrossSales) * 100 : 0;

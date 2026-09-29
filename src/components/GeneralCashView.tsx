@@ -15,6 +15,7 @@ import {
   calculateTotalUSD,
 } from '../services/storage';
 import { CashDenominationsInput } from './CashDenominationsInput';
+import { PrintOfficialActModal } from './PrintOfficialActModal';
 import {
   Landmark,
   Lock,
@@ -90,6 +91,106 @@ export const GeneralCashView: React.FC<Props> = ({
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [transferAmount, setTransferAmount] = useState<number>(0);
   const [transferNotes, setTransferNotes] = useState('');
+  const [selectedShiftForActa, setSelectedShiftForActa] = useState<CashShift | null>(null);
+
+  const handlePrintActaForShift = (modo: 'TODO' | 'GENERAL' | 'CHICA' | 'APERTURA') => {
+    if (!selectedShiftForActa) return;
+    const shift = selectedShiftForActa;
+    const dateStr = shift.date;
+
+    if (modo === 'APERTURA') {
+      printOfficialOpeningActBN(shift, state.activeAdminName);
+      setSelectedShiftForActa(null);
+      return;
+    }
+
+    const pettyShift =
+      (state.pettyCashShiftHistory || []).find((s) => s.date === dateStr) ||
+      (state.currentPettyCashShift?.date === dateStr ? state.currentPettyCashShift : null);
+
+    const dayTransactions = (state.pettyCashTransactions || [])
+      .filter((t) => t.type === 'EXPENSE' && (extractLocalDateStr(t.date) === dateStr || (pettyShift && t.shiftId === pettyShift.id)))
+      .map((t) => ({
+        id: t.id,
+        hora: new Date(t.date).toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' }),
+        categoria: t.category,
+        concepto: t.notes || t.vendor,
+        proveedor: t.vendor,
+        metodo: t.method === 'CASH' ? 'Efectivo' : t.method === 'CARD' ? 'Tarjeta' : 'Transferencia',
+        estado: t.receiptNumber ? `#${t.receiptNumber}` : 'Comprobante',
+        referencia: t.receiptNumber,
+        monto: t.amount,
+      }));
+
+    const salesCash =
+      shift.salesCashSystem !== undefined
+        ? shift.salesCashSystem
+        : shift.loyverseValidation?.salesCashLoyverse || 0;
+
+    const cardsBAC =
+      shift.cardsBAC !== undefined ? shift.cardsBAC : shift.loyverseValidation?.cardsBAC || 0;
+    const cardsFicohsa =
+      shift.cardsFicohsa !== undefined ? shift.cardsFicohsa : shift.loyverseValidation?.cardsFicohsa || 0;
+    const cardsBanpro =
+      shift.cardsBanpro !== undefined ? shift.cardsBanpro : shift.loyverseValidation?.cardsBanpro || 0;
+    const cardsLafise =
+      shift.cardsLafise !== undefined ? shift.cardsLafise : shift.loyverseValidation?.cardsLafise || 0;
+    const totalCards =
+      shift.totalCards !== undefined ? shift.totalCards : cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise;
+    const salesPedidosYa =
+      shift.salesPedidosYa !== undefined ? shift.salesPedidosYa : shift.loyverseValidation?.salesPedidosYa || 0;
+
+    const totalGross =
+      shift.totalGrossSales !== undefined && shift.totalGrossSales > 0
+        ? shift.totalGrossSales
+        : salesCash + totalCards + salesPedidosYa;
+
+    const expensesCash = dayTransactions
+      .filter((t) => t.metodo === 'Efectivo')
+      .reduce((acc, t) => acc + t.monto, 0);
+    const expensesTransf = dayTransactions
+      .filter((t) => t.metodo === 'Transferencia')
+      .reduce((acc, t) => acc + t.monto, 0);
+    const expensesTotal = expensesCash + expensesTransf;
+    const netProfit = shift.dailyNetProfit !== undefined ? shift.dailyNetProfit : (totalGross - expensesTotal);
+    const marginPercent = totalGross > 0 ? (netProfit / totalGross) * 100 : 0;
+
+    const fondoInicial =
+      pettyShift?.initialBalance !== undefined
+        ? pettyShift.initialBalance
+        : 2000;
+
+    const saldoRemanente =
+      pettyShift?.actualCashCounted !== undefined
+        ? pettyShift.actualCashCounted
+        : (fondoInicial - expensesCash);
+
+    printOfficialActBN({
+      shift,
+      date: dateStr,
+      modo,
+      salesCash,
+      cardsBAC,
+      cardsFicohsa,
+      cardsBanpro,
+      cardsLafise,
+      totalCards,
+      salesPedidosYa,
+      totalGross,
+      netProfit,
+      marginPercent,
+      responsableCaja: shift.closedBy || shift.openedBy || state.activeAdminName,
+      fondoInicial,
+      expensesCash,
+      expensesTransf,
+      expensesTotal,
+      saldoRemanente,
+      responsableCajaChica: pettyShift?.closedBy || pettyShift?.openedBy || state.activeAdminName,
+      transactions: dayTransactions,
+    });
+
+    setSelectedShiftForActa(null);
+  };
 
   const handleConfirmTransferToPetty = (e: React.FormEvent) => {
     e.preventDefault();
@@ -487,6 +588,14 @@ export const GeneralCashView: React.FC<Props> = ({
                     <span>Ticket Cierre</span>
                   </button>
                   <button
+                    onClick={() => setSelectedShiftForActa(lastClosedShift)}
+                    className="px-3.5 py-2.5 rounded-xl border border-slate-900 bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer active:scale-95"
+                    title="Imprimir Acta Oficial B/N de Cierre (1 o 2 Hojas)"
+                  >
+                    <Printer className="w-4 h-4 text-emerald-400" />
+                    <span>Acta B/N</span>
+                  </button>
+                  <button
                     onClick={() => exportShiftToExcel(lastClosedShift, state)}
                     className="px-3.5 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer"
                     title="Exportar cierre a Excel"
@@ -693,6 +802,13 @@ export const GeneralCashView: React.FC<Props> = ({
                             title="Imprimir ticket térmico"
                           >
                             <Printer className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setSelectedShiftForActa(sh)}
+                            className="p-1.5 rounded-lg border border-slate-900 bg-slate-900 hover:bg-black text-white transition cursor-pointer"
+                            title="Imprimir Acta Oficial B/N de este turno"
+                          >
+                            <Printer className="w-3.5 h-3.5 text-emerald-400" />
                           </button>
                           <button
                             onClick={() => exportShiftToExcel(sh, state)}
@@ -1140,6 +1256,15 @@ export const GeneralCashView: React.FC<Props> = ({
             </form>
           </div>
         </div>
+      )}
+
+      {selectedShiftForActa && (
+        <PrintOfficialActModal
+          isOpen={!!selectedShiftForActa}
+          onClose={() => setSelectedShiftForActa(null)}
+          dateStr={selectedShiftForActa.date}
+          onPrint={handlePrintActaForShift}
+        />
       )}
     </div>
   );

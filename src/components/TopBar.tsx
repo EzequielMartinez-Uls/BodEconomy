@@ -37,7 +37,8 @@ export const TopBar: React.FC<Props> = ({
   const [cloudModalOpen, setCloudModalOpen] = useState(false);
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const isShiftOpen = state.currentShift?.status === 'OPEN';
-  const todayDateStr = state.currentShift?.date || getLocalTodayStr();
+  const activeShift = state.currentShift || state.shiftHistory[0] || null;
+  const targetDateStr = activeShift?.date || getLocalTodayStr();
   const today = new Date().toLocaleDateString('es-NI', {
     weekday: 'long',
     day: 'numeric',
@@ -45,10 +46,8 @@ export const TopBar: React.FC<Props> = ({
   });
 
   const handlePrintActaTopBar = (modo: 'TODO' | 'GENERAL' | 'CHICA' | 'APERTURA') => {
-    const shift =
-      state.currentShift?.date === todayDateStr
-        ? state.currentShift
-        : state.shiftHistory.find((s) => s.date === todayDateStr) || state.currentShift || state.shiftHistory[0];
+    const shift = activeShift;
+    const dateToUse = shift?.date || targetDateStr;
 
     if (modo === 'APERTURA') {
       if (shift) {
@@ -61,19 +60,18 @@ export const TopBar: React.FC<Props> = ({
     }
 
     const pettyShift =
-      state.currentPettyCashShift?.date === todayDateStr
-        ? state.currentPettyCashShift
-        : state.pettyCashShiftHistory.find((s) => s.date === todayDateStr) || state.currentPettyCashShift;
+      (state.pettyCashShiftHistory || []).find((s) => s.date === dateToUse) ||
+      (state.currentPettyCashShift?.date === dateToUse ? state.currentPettyCashShift : null);
 
     const dayTransactions = (state.pettyCashTransactions || [])
-      .filter((t) => t.type === 'EXPENSE' && extractLocalDateStr(t.date) === todayDateStr)
+      .filter((t) => t.type === 'EXPENSE' && (extractLocalDateStr(t.date) === dateToUse || (pettyShift && t.shiftId === pettyShift.id)))
       .map((t) => ({
         id: t.id,
         hora: new Date(t.date).toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' }),
         categoria: t.category,
         concepto: t.notes || t.vendor,
         proveedor: t.vendor,
-        metodo: t.method === 'CASH' ? 'Efectivo' : 'Transferencia',
+        metodo: t.method === 'CASH' ? 'Efectivo' : t.method === 'CARD' ? 'Tarjeta' : 'Transferencia',
         estado: t.receiptNumber ? `#${t.receiptNumber}` : 'Comprobante',
         referencia: t.receiptNumber,
         monto: t.amount,
@@ -128,7 +126,7 @@ export const TopBar: React.FC<Props> = ({
       .reduce((acc, t) => acc + t.monto, 0);
 
     const expensesTotal = expensesCash + expensesTransf;
-    const netProfit = totalGross - expensesTotal;
+    const netProfit = shift?.dailyNetProfit !== undefined ? shift.dailyNetProfit : (totalGross - expensesTotal);
     const marginPercent = totalGross > 0 ? (netProfit / totalGross) * 100 : 0;
 
     const fondoInicial =
@@ -136,11 +134,14 @@ export const TopBar: React.FC<Props> = ({
         ? pettyShift.initialBalance
         : 2000;
 
-    const saldoRemanente = fondoInicial - expensesCash;
+    const saldoRemanente =
+      pettyShift?.actualCashCounted !== undefined
+        ? pettyShift.actualCashCounted
+        : (fondoInicial - expensesCash);
 
     printOfficialActBN({
-      shift: shift || state.currentShift,
-      date: todayDateStr,
+      shift: shift || undefined,
+      date: dateToUse,
       modo,
       salesCash,
       cardsBAC,
@@ -281,7 +282,7 @@ export const TopBar: React.FC<Props> = ({
     <PrintOfficialActModal
       isOpen={printModalOpen}
       onClose={() => setPrintModalOpen(false)}
-      dateStr={todayDateStr}
+      dateStr={targetDateStr}
       onPrint={handlePrintActaTopBar}
     />
   </>
