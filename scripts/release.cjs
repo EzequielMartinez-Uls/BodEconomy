@@ -7,8 +7,8 @@ console.log('🚀 Iniciando pipeline de publicación automatizada a GitHub Relea
 let token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
 if (!token) {
   try {
-    const credOutput = execSync('echo protocol=https^nhost=github.com | git credential fill', {
-      shell: 'cmd.exe',
+    const credOutput = execSync('git credential fill', {
+      input: 'protocol=https\nhost=github.com\n\n',
       encoding: 'utf-8',
     });
     const match = credOutput.match(/password=(.+)/);
