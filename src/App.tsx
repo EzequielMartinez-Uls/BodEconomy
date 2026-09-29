@@ -316,20 +316,6 @@ export function App() {
             if (j.estado === 'ABIERTA') {
               if (j.fecha === today) {
                 updatedCurrent = parsedShift;
-                if (!updatedPettyShift || updatedPettyShift.date !== today) {
-                  updatedPettyShift = {
-                    id: `pc-shift-${j.fecha}`,
-                    date: j.fecha,
-                    status: 'OPEN',
-                    openedBy: j.responsable || 'Caja Principal',
-                    openedAt: j.created_at || new Date().toISOString(),
-                    previousDayRemaining: Number(j.fondo_inicial) || 0,
-                    generalCashTransfer: 0,
-                    bossContribution: 0,
-                    initialBalance: Number(j.fondo_inicial) || 0,
-                    openingNotes: j.observaciones || 'Sincronizado desde la nube',
-                  };
-                }
               }
             } else if (j.estado === 'CERRADA') {
               if (updatedCurrent?.date === j.fecha) {
@@ -395,27 +381,46 @@ export function App() {
   };
 
   // Handlers
-  const handleConfirmOpenShift = (newShift: CashShift) => {
-    setState((prev) => ({
-      ...prev,
-      currentShift: newShift,
-      auditLogs: [
-        {
-          id: `log-${Date.now()}`,
-          timestamp: new Date().toISOString(),
-          user: newShift.openedBy,
-          action: 'APERTURA_TURNO',
-          details: `Apertura realizada con C$ ${newShift.totalOpeningEquivNIO.toFixed(2)}`,
-        },
-        ...prev.auditLogs,
-      ],
-    }));
+  const handleConfirmOpenShift = (newShift: CashShift, updatedPreviousShift?: CashShift) => {
+    setState((prev) => {
+      let updatedHistory = prev.shiftHistory;
+      if (updatedPreviousShift) {
+        updatedHistory = updatedHistory.map((s) =>
+          s.id === updatedPreviousShift.id || s.date === updatedPreviousShift.date
+            ? updatedPreviousShift
+            : s
+        );
+      }
+      return {
+        ...prev,
+        currentShift: newShift,
+        shiftHistory: updatedHistory,
+        auditLogs: [
+          {
+            id: `log-${Date.now()}`,
+            timestamp: new Date().toISOString(),
+            user: newShift.openedBy,
+            action: 'APERTURA_TURNO',
+            details: `Apertura realizada con C$ ${newShift.totalOpeningEquivNIO.toFixed(2)}${
+              updatedPreviousShift ? ' (Vouchers de anoche auditados y corroborados)' : ''
+            }`,
+          },
+          ...prev.auditLogs,
+        ],
+      };
+    });
     playSound([440, 554.37, 659.25]); // Do mayor alegre
 
     // Sincronizar apertura de Caja General con Supabase para alertar a otras computadoras y a la web
     syncGeneralCashOpeningToCloud(newShift).catch((err) =>
       console.warn('⚠️ Error sincronizando apertura con la nube:', err)
     );
+
+    if (updatedPreviousShift) {
+      syncGeneralCashShiftToCloud(updatedPreviousShift).catch((err) =>
+        console.warn('⚠️ Error sincronizando cierre previo corroborado con la nube:', err)
+      );
+    }
   };
 
   const handleConfirmCloseShift = (closedShift: CashShift) => {

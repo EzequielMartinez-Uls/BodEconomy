@@ -31,7 +31,7 @@ export const Sidebar: React.FC<Props> = ({
 }) => {
   const isShiftOpen = state.currentShift?.status === 'OPEN';
   const isPettyCashLow = state.pettyCashBalance < 2000;
-  const [appVersion, setAppVersion] = useState('v1.0.7');
+  const [appVersion, setAppVersion] = useState('v1.0.8');
 
   useEffect(() => {
     if (window.electronAPI?.getVersion) {

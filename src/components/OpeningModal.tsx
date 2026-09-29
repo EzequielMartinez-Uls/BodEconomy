@@ -19,6 +19,10 @@ import {
   Banknote,
   DollarSign,
   Calendar,
+  CreditCard,
+  Truck,
+  Receipt,
+  CheckCheck,
 } from 'lucide-react';
 
 interface Props {
@@ -29,7 +33,7 @@ interface Props {
   activeAdminName: string;
   defaultExchangeRate: number;
   availableAdmins: string[];
-  onConfirmOpen: (shift: CashShift) => void;
+  onConfirmOpen: (shift: CashShift, updatedPreviousShift?: CashShift) => void;
 }
 
 export const OpeningModal: React.FC<Props> = ({
@@ -76,9 +80,81 @@ export const OpeningModal: React.FC<Props> = ({
   };
 
   const handleResetCount = () => {
-    setDenominationsNIO(DEFAULT_DENOMINATIONS_NIO);
-    setDenominationsUSD(DEFAULT_DENOMINATIONS_USD);
+    setDenominationsNIO({ ...DEFAULT_DENOMINATIONS_NIO });
+    setDenominationsUSD({ ...DEFAULT_DENOMINATIONS_USD });
   };
+
+  // 2. Corroboración de Canales de Venta / Vouchers de Anoche
+  const [vouchersBAC, setVouchersBAC] = useState<string>(
+    lastClosedShift?.cardsBAC !== undefined ? String(lastClosedShift.cardsBAC) : ''
+  );
+  const [vouchersFicohsa, setVouchersFicohsa] = useState<string>(
+    lastClosedShift?.cardsFicohsa !== undefined ? String(lastClosedShift.cardsFicohsa) : ''
+  );
+  const [vouchersBanpro, setVouchersBanpro] = useState<string>(
+    lastClosedShift?.cardsBanpro !== undefined ? String(lastClosedShift.cardsBanpro) : ''
+  );
+  const [vouchersLafise, setVouchersLafise] = useState<string>(
+    lastClosedShift?.cardsLafise !== undefined ? String(lastClosedShift.cardsLafise) : ''
+  );
+  const [reportPedidosYa, setReportPedidosYa] = useState<string>(
+    lastClosedShift?.salesPedidosYa !== undefined ? String(lastClosedShift.salesPedidosYa) : ''
+  );
+  const [reportLoyverseCash, setReportLoyverseCash] = useState<string>(
+    lastClosedShift?.salesCashSystem !== undefined ? String(lastClosedShift.salesCashSystem) : ''
+  );
+  const [syncCorrectionsToPrevious, setSyncCorrectionsToPrevious] = useState<boolean>(true);
+
+  const handleCopySalesFromPrevious = () => {
+    if (lastClosedShift) {
+      setVouchersBAC(String(lastClosedShift.cardsBAC || 0));
+      setVouchersFicohsa(String(lastClosedShift.cardsFicohsa || 0));
+      setVouchersBanpro(String(lastClosedShift.cardsBanpro || 0));
+      setVouchersLafise(String(lastClosedShift.cardsLafise || 0));
+      setReportPedidosYa(String(lastClosedShift.salesPedidosYa || 0));
+      setReportLoyverseCash(String(lastClosedShift.salesCashSystem || 0));
+    }
+  };
+
+  const handleResetSalesAudit = () => {
+    setVouchersBAC('');
+    setVouchersFicohsa('');
+    setVouchersBanpro('');
+    setVouchersLafise('');
+    setReportPedidosYa('');
+    setReportLoyverseCash('');
+  };
+
+  const numBAC = vouchersBAC !== '' ? parseFloat(vouchersBAC) || 0 : null;
+  const numFico = vouchersFicohsa !== '' ? parseFloat(vouchersFicohsa) || 0 : null;
+  const numBanpro = vouchersBanpro !== '' ? parseFloat(vouchersBanpro) || 0 : null;
+  const numLafise = vouchersLafise !== '' ? parseFloat(vouchersLafise) || 0 : null;
+  const numPedidosYa = reportPedidosYa !== '' ? parseFloat(reportPedidosYa) || 0 : null;
+  const numLoyverseCash = reportLoyverseCash !== '' ? parseFloat(reportLoyverseCash) || 0 : null;
+
+  const repBAC = lastClosedShift?.cardsBAC || 0;
+  const repFico = lastClosedShift?.cardsFicohsa || 0;
+  const repBanpro = lastClosedShift?.cardsBanpro || 0;
+  const repLafise = lastClosedShift?.cardsLafise || 0;
+  const repPedidosYa = lastClosedShift?.salesPedidosYa || 0;
+  const repLoyverseCash = lastClosedShift?.salesCashSystem || 0;
+
+  const diffBAC = numBAC !== null ? numBAC - repBAC : null;
+  const diffFico = numFico !== null ? numFico - repFico : null;
+  const diffBanpro = numBanpro !== null ? numBanpro - repBanpro : null;
+  const diffLafise = numLafise !== null ? numLafise - repLafise : null;
+  const diffPedidosYa = numPedidosYa !== null ? numPedidosYa - repPedidosYa : null;
+  const diffLoyverseCash = numLoyverseCash !== null ? numLoyverseCash - repLoyverseCash : null;
+
+  const totalReportedSales = repBAC + repFico + repBanpro + repLafise + repPedidosYa + repLoyverseCash;
+  const totalVerifiedSales =
+    (numBAC ?? repBAC) +
+    (numFico ?? repFico) +
+    (numBanpro ?? repBanpro) +
+    (numLafise ?? repLafise) +
+    (numPedidosYa ?? repPedidosYa) +
+    (numLoyverseCash ?? repLoyverseCash);
+  const totalSalesDiff = totalVerifiedSales - totalReportedSales;
 
   const handleConfirm = () => {
     if (shiftDate > todayStr) {
@@ -100,6 +176,20 @@ export const OpeningModal: React.FC<Props> = ({
       if (!confirmDup) return;
     }
 
+    let auditNotes = notes;
+    const diffItems: string[] = [];
+    if (diffBAC !== null && Math.abs(diffBAC) >= 0.01) diffItems.push(`BAC (${diffBAC > 0 ? '+' : ''}${diffBAC.toFixed(2)})`);
+    if (diffFico !== null && Math.abs(diffFico) >= 0.01) diffItems.push(`Ficohsa (${diffFico > 0 ? '+' : ''}${diffFico.toFixed(2)})`);
+    if (diffBanpro !== null && Math.abs(diffBanpro) >= 0.01) diffItems.push(`Banpro (${diffBanpro > 0 ? '+' : ''}${diffBanpro.toFixed(2)})`);
+    if (diffLafise !== null && Math.abs(diffLafise) >= 0.01) diffItems.push(`LAFISE (${diffLafise > 0 ? '+' : ''}${diffLafise.toFixed(2)})`);
+    if (diffPedidosYa !== null && Math.abs(diffPedidosYa) >= 0.01) diffItems.push(`PedidosYa (${diffPedidosYa > 0 ? '+' : ''}${diffPedidosYa.toFixed(2)})`);
+    if (diffLoyverseCash !== null && Math.abs(diffLoyverseCash) >= 0.01) diffItems.push(`Loyverse (${diffLoyverseCash > 0 ? '+' : ''}${diffLoyverseCash.toFixed(2)})`);
+
+    if (diffItems.length > 0) {
+      const auditSummary = `[Auditoría Vouchers Anoche: ${diffItems.join(', ')}]`;
+      auditNotes = auditNotes ? `${auditNotes} • ${auditSummary}` : auditSummary;
+    }
+
     const newShift: CashShift = {
       id: `shift-${shiftDate}-${Date.now()}`,
       date: shiftDate,
@@ -108,17 +198,112 @@ export const OpeningModal: React.FC<Props> = ({
       openedBy: openerName,
       openedAt: new Date().toISOString(),
       verifiedPreviousClosingId: lastClosedShift?.id || null,
-      openingNotes: notes,
+      openingNotes: auditNotes,
       openingNIO: denominationsNIO,
       openingUSD: denominationsUSD,
       totalOpeningNIO: totalNIO,
       totalOpeningUSD: totalUSD,
       totalOpeningEquivNIO: totalEquivNIO,
+      loyverseValidation: {
+        validated: true,
+        salesCashLoyverse: numLoyverseCash ?? repLoyverseCash,
+        cardsBAC: numBAC ?? repBAC,
+        cardsFicohsa: numFico ?? repFico,
+        cardsBanpro: numBanpro ?? repBanpro,
+        cardsLafise: numLafise ?? repLafise,
+        totalCards: (numBAC ?? repBAC) + (numFico ?? repFico) + (numBanpro ?? repBanpro) + (numLafise ?? repLafise),
+        salesPedidosYa: numPedidosYa ?? repPedidosYa,
+        totalLoyverseSales: totalVerifiedSales,
+        notes: diffItems.length === 0 ? 'Vouchers verificados conformes con cierre anterior' : diffItems.join(', '),
+      },
     };
 
-    onConfirmOpen(newShift);
+    let updatedPreviousShift: CashShift | undefined = undefined;
+    if (lastClosedShift && syncCorrectionsToPrevious && diffItems.length > 0) {
+      const corBAC = numBAC ?? repBAC;
+      const corFico = numFico ?? repFico;
+      const corBanpro = numBanpro ?? repBanpro;
+      const corLafise = numLafise ?? repLafise;
+      const corTotalCards = corBAC + corFico + corBanpro + corLafise;
+      const corPY = numPedidosYa ?? repPedidosYa;
+      const corCash = numLoyverseCash ?? repLoyverseCash;
+
+      updatedPreviousShift = {
+        ...lastClosedShift,
+        cardsBAC: corBAC,
+        cardsFicohsa: corFico,
+        cardsBanpro: corBanpro,
+        cardsLafise: corLafise,
+        totalCards: corTotalCards,
+        salesPedidosYa: corPY,
+        salesCashSystem: corCash,
+        totalGrossSales: corCash + corTotalCards + corPY,
+        closingNotes: lastClosedShift.closingNotes
+          ? `${lastClosedShift.closingNotes} • Corroborado en apertura ${shiftDate}: ${diffItems.join(', ')}`
+          : `Corroborado en apertura ${shiftDate}: ${diffItems.join(', ')}`,
+      };
+    }
+
+    onConfirmOpen(newShift, updatedPreviousShift);
     onClose();
   };
+
+  const channelsAuditConfig = [
+    {
+      id: 'bac',
+      name: 'BAC Credomatic',
+      icon: <CreditCard className="w-3.5 h-3.5 text-red-600" />,
+      reported: repBAC,
+      val: vouchersBAC,
+      setVal: setVouchersBAC,
+      diff: diffBAC,
+    },
+    {
+      id: 'ficohsa',
+      name: 'Banco Ficohsa',
+      icon: <CreditCard className="w-3.5 h-3.5 text-blue-600" />,
+      reported: repFico,
+      val: vouchersFicohsa,
+      setVal: setVouchersFicohsa,
+      diff: diffFico,
+    },
+    {
+      id: 'banpro',
+      name: 'Banpro Promerica',
+      icon: <CreditCard className="w-3.5 h-3.5 text-emerald-600" />,
+      reported: repBanpro,
+      val: vouchersBanpro,
+      setVal: setVouchersBanpro,
+      diff: diffBanpro,
+    },
+    {
+      id: 'lafise',
+      name: 'Banco LAFISE',
+      icon: <CreditCard className="w-3.5 h-3.5 text-green-700" />,
+      reported: repLafise,
+      val: vouchersLafise,
+      setVal: setVouchersLafise,
+      diff: diffLafise,
+    },
+    {
+      id: 'pedidosya',
+      name: 'PedidosYa',
+      icon: <Truck className="w-3.5 h-3.5 text-rose-600" />,
+      reported: repPedidosYa,
+      val: reportPedidosYa,
+      setVal: setReportPedidosYa,
+      diff: diffPedidosYa,
+    },
+    {
+      id: 'loyverse',
+      name: 'Venta Efectivo (POS)',
+      icon: <Receipt className="w-3.5 h-3.5 text-amber-600" />,
+      reported: repLoyverseCash,
+      val: reportLoyverseCash,
+      setVal: setReportLoyverseCash,
+      diff: diffLoyverseCash,
+    },
+  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
@@ -245,6 +430,172 @@ export const OpeningModal: React.FC<Props> = ({
           ) : (
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl text-xs text-blue-800">
               ℹ️ Primer turno en registrarse. Realiza el conteo de billetes y monedas que conformarán el fondo inicial para vueltos.
+            </div>
+          )}
+
+          {/* Auditoría de Canales de Venta y Vouchers de Anoche */}
+          {lastClosedShift && (
+            <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                <div>
+                  <h3 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <span>Auditoría de Vouchers y Canales de Venta de Anoche</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Corrobora comprobantes POS y reportes del cierre <strong>{formatDateToFriendly(lastClosedShift.date)}</strong> de <strong>{lastClosedShift.closedBy || 'Turno anterior'}</strong>.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={handleCopySalesFromPrevious}
+                    className="px-3 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition border border-slate-300 flex items-center gap-1.5 cursor-pointer"
+                    title="Copiar todas las cifras reportadas anoche como base para auditar"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Copiar cifras de anoche</span>
+                  </button>
+                  {(vouchersBAC !== '' || vouchersFicohsa !== '' || vouchersBanpro !== '' || vouchersLafise !== '' || reportPedidosYa !== '' || reportLoyverseCash !== '') && (
+                    <button
+                      type="button"
+                      onClick={handleResetSalesAudit}
+                      className="px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:text-rose-600 bg-white hover:bg-rose-50 rounded-xl transition border border-slate-200 cursor-pointer"
+                      title="Limpiar entradas de auditoría"
+                    >
+                      Limpiar
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Grid de 6 Canales */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {channelsAuditConfig.map((ch) => {
+                  const hasValue = ch.val !== '';
+                  const isSquare = ch.diff !== null && Math.abs(ch.diff) < 0.01;
+                  const isShortage = ch.diff !== null && ch.diff < -0.01;
+                  const isSurplus = ch.diff !== null && ch.diff > 0.01;
+
+                  return (
+                    <div
+                      key={ch.id}
+                      className={`p-3 rounded-xl border transition-colors ${
+                        !hasValue
+                          ? 'bg-slate-50/70 border-slate-200'
+                          : isSquare
+                          ? 'bg-emerald-50/50 border-emerald-300'
+                          : isShortage
+                          ? 'bg-rose-50/60 border-rose-300'
+                          : 'bg-blue-50/60 border-blue-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                          {ch.icon}
+                          <span>{ch.name}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => ch.setVal(String(ch.reported))}
+                          className="text-[10px] text-slate-400 hover:text-emerald-700 underline cursor-pointer"
+                          title="Copiar cifra de anoche a este canal"
+                        >
+                          Copiar anoche
+                        </button>
+                      </div>
+
+                      <div className="text-[11px] text-slate-500 mb-2 flex items-center justify-between font-mono">
+                        <span>Reportó anoche:</span>
+                        <span className="font-bold text-slate-700">C$ {ch.reported.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-mono font-bold text-slate-400">C$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder={ch.reported.toFixed(2)}
+                          value={ch.val}
+                          onChange={(e) => ch.setVal(e.target.value)}
+                          className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+
+                      {hasValue && ch.diff !== null && (
+                        <div className="mt-2 flex items-center justify-between text-[11px] font-bold">
+                          <span className="text-slate-500 font-normal">Resultado:</span>
+                          {isSquare && (
+                            <span className="text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md flex items-center gap-1">
+                              ✓ Cuadrado
+                            </span>
+                          )}
+                          {isShortage && (
+                            <span className="text-rose-700 bg-rose-100/80 px-2 py-0.5 rounded-md">
+                              Faltante: C$ {Math.abs(ch.diff).toFixed(2)}
+                            </span>
+                          )}
+                          {isSurplus && (
+                            <span className="text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-md">
+                              Sobrante: +C$ {ch.diff.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Resumen Global de Auditoría */}
+              <div className="p-3.5 rounded-xl border bg-slate-50 border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                <div>
+                  <span className="text-slate-500 block text-[11px] uppercase font-bold">Total Canales Reportados</span>
+                  <strong className="text-sm font-black text-slate-800 font-mono">
+                    C$ {totalReportedSales.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                  </strong>
+                </div>
+
+                <div className="text-left sm:text-right">
+                  <span className="text-slate-500 block text-[11px] uppercase font-bold">Total Verificado en Apertura</span>
+                  <strong className="text-sm font-black text-emerald-700 font-mono">
+                    C$ {totalVerifiedSales.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                  </strong>
+                </div>
+
+                <div className={`px-3 py-1.5 rounded-xl border font-bold text-xs ${
+                  Math.abs(totalSalesDiff) < 0.01
+                    ? 'bg-emerald-100/80 border-emerald-300 text-emerald-900'
+                    : totalSalesDiff < 0
+                    ? 'bg-rose-100/80 border-rose-300 text-rose-900'
+                    : 'bg-blue-100/80 border-blue-300 text-blue-900'
+                }`}>
+                  {Math.abs(totalSalesDiff) < 0.01 ? (
+                    <span>✓ Vouchers y canales 100% Cuadrados</span>
+                  ) : totalSalesDiff < 0 ? (
+                    <span>⚠️ Faltante global de vouchers: -C$ {Math.abs(totalSalesDiff).toFixed(2)}</span>
+                  ) : (
+                    <span>ℹ️ Sobrante global de vouchers: +C$ {totalSalesDiff.toFixed(2)}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Checkbox de sincronización con el cierre anterior */}
+              <label className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100/70 transition">
+                <input
+                  type="checkbox"
+                  checked={syncCorrectionsToPrevious}
+                  onChange={(e) => setSyncCorrectionsToPrevious(e.target.checked)}
+                  className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
+                />
+                <div className="text-xs">
+                  <span className="font-bold text-slate-800">Actualizar y corregir el cierre anterior con estos vouchers verificados</span>
+                  <span className="block text-slate-500 text-[11px]">
+                    Si detectas un faltante o sobrante en vouchers, sincroniza automáticamente el historial del cierre anterior para mantener la contabilidad impecable.
+                  </span>
+                </div>
+              </label>
             </div>
           )}
 
