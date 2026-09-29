@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppState } from '../types';
+import logoImg from '../assets/logo.png';
 import {
   Landmark,
   ShoppingCart,
@@ -30,6 +31,18 @@ export const Sidebar: React.FC<Props> = ({
 }) => {
   const isShiftOpen = state.currentShift?.status === 'OPEN';
   const isPettyCashLow = state.pettyCashBalance < 2000;
+  const [appVersion, setAppVersion] = useState('v1.0.7');
+
+  useEffect(() => {
+    if (window.electronAPI?.getVersion) {
+      window.electronAPI
+        .getVersion()
+        .then((v) => {
+          if (v) setAppVersion(`v${v}`);
+        })
+        .catch(() => {});
+    }
+  }, []);
 
   return (
     <aside className="w-64 bg-white border-r border-slate-200/90 flex flex-col h-screen sticky top-0 z-40 select-none shadow-[2px_0_12px_-4px_rgba(0,0,0,0.03)] shrink-0">
@@ -37,7 +50,7 @@ export const Sidebar: React.FC<Props> = ({
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 border-b border-slate-100 flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl overflow-hidden shrink-0 border border-[#1c6856]/30 bg-[#1c6856] shadow-sm flex items-center justify-center">
-            <img src="/logo.png" alt="Restaurante El Bodegón" className="w-full h-full object-cover" />
+            <img src={logoImg} alt="Restaurante El Bodegón" className="w-full h-full object-cover" />
           </div>
           <div className="overflow-hidden">
             <div className="font-black tracking-tight text-slate-900 text-xs sm:text-sm leading-tight truncate">
@@ -199,7 +212,7 @@ export const Sidebar: React.FC<Props> = ({
           className="w-full pt-2 px-3 flex items-center justify-between text-[10px] font-semibold text-slate-400 hover:text-slate-600 transition cursor-pointer"
           title="Ver configuración del sistema y respaldos"
         >
-          <span>Bodegón Control v1.0.3</span>
+          <span>Bodegón Control {appVersion}</span>
           <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
             <ShieldCheck className="w-3 h-3" /> Seguro
           </span>

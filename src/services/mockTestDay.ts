@@ -6,7 +6,7 @@ export const MOCK_YESTERDAY_SHIFT: CashShift = {
   id: 'shift-2026-09-28-1',
   date: MOCK_YESTERDAY_DATE,
   status: 'CLOSED',
-  exchangeRate: 36.80,
+  exchangeRate: 36.00,
 
   // Apertura (08:30 AM)
   openedBy: 'Eddy',
@@ -36,7 +36,7 @@ export const MOCK_YESTERDAY_SHIFT: CashShift = {
   },
   totalOpeningNIO: 3000.00,
   totalOpeningUSD: 50.00,
-  totalOpeningEquivNIO: 4840.00, // 3000 + (50 * 36.80) = 4840
+  totalOpeningEquivNIO: 4800.00, // 3000 + (50 * 36.00) = 4800
 
   // Validación Loyverse Apertura
   loyverseValidation: {
@@ -78,7 +78,7 @@ export const MOCK_YESTERDAY_SHIFT: CashShift = {
   },
   totalClosingNIO: 7450.00,
   totalClosingUSD: 50.00,
-  totalClosingEquivNIO: 9290.00, // 7450 + (50 * 36.80) = 9290
+  totalClosingEquivNIO: 9250.00, // 7450 + (50 * 36.00) = 9250
 
   // Conciliación de Ventas
   salesCashSystem: 18450.00,
@@ -265,10 +265,10 @@ export const MOCK_YESTERDAY_FULL_STATE: AppState = {
       timestamp: '2026-09-28T23:15:00',
       user: 'Xiomara',
       action: 'CIERRE_CAJA_GENERAL',
-      details: 'Cierre de Caja General cuadrado con C$ 9,290.00 en gaveta. Diferencia de C$ 0.00.',
+      details: 'Cierre de Caja General cuadrado con C$ 9,250.00 en gaveta. Diferencia de C$ 0.00.',
     },
   ],
-  defaultExchangeRate: 36.80,
+  defaultExchangeRate: 36.00,
   activeAdminName: 'Eddy',
   availableAdmins: ['Eddy', 'Xiomara', 'Maverick', 'Snyder'],
 };

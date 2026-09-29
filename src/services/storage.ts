@@ -90,6 +90,9 @@ export function loadState(): AppState {
     const parsed = JSON.parse(raw);
     const loaded: AppState = { ...INITIAL_STATE, ...parsed };
 
+    // Tasa de cambio oficial fija en C$ 36.00 para todo el sistema
+    loaded.defaultExchangeRate = 36.00;
+
     // Limpiar inventario residual de menaje si existía en versiones anteriores
     loaded.tablewareItems = [];
     loaded.tablewareLosses = [];
