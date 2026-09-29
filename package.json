@@ -1,7 +1,7 @@
 {
   "name": "bodegon-control",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -36,12 +36,13 @@
       ]
     },
     "nsis": {
-      "oneClick": true,
+      "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": false,
+      "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Bodegón Control"
+      "shortcutName": "Bodegón Control",
+      "runAfterFinish": true
     }
   },
   "dependencies": {
