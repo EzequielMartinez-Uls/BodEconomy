@@ -15,6 +15,7 @@ import {
   printThermalClosingTicket,
   printThermalDailyExpensesTicket,
   printOfficialActBN,
+  printOfficialOpeningActBN,
 } from '../services/thermalPrint';
 import { CloudSyncModal } from './CloudSyncModal';
 import { PrintOfficialActModal } from './PrintOfficialActModal';
@@ -43,11 +44,21 @@ export const TopBar: React.FC<Props> = ({
     month: 'long',
   });
 
-  const handlePrintActaTopBar = (modo: 'TODO' | 'GENERAL' | 'CHICA') => {
+  const handlePrintActaTopBar = (modo: 'TODO' | 'GENERAL' | 'CHICA' | 'APERTURA') => {
     const shift =
       state.currentShift?.date === todayDateStr
         ? state.currentShift
         : state.shiftHistory.find((s) => s.date === todayDateStr) || state.currentShift || state.shiftHistory[0];
+
+    if (modo === 'APERTURA') {
+      if (shift) {
+        printOfficialOpeningActBN(shift, state.activeAdminName);
+      } else {
+        alert('No hay un turno de caja disponible para imprimir el acta de apertura.');
+      }
+      setPrintModalOpen(false);
+      return;
+    }
 
     const pettyShift =
       state.currentPettyCashShift?.date === todayDateStr
@@ -128,6 +139,7 @@ export const TopBar: React.FC<Props> = ({
     const saldoRemanente = fondoInicial - expensesCash;
 
     printOfficialActBN({
+      shift: shift || state.currentShift,
       date: todayDateStr,
       modo,
       salesCash,

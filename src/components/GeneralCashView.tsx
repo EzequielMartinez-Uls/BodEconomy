@@ -4,6 +4,7 @@ import {
   printThermalClosingTicket,
   printThermalOpeningTicket,
   printOfficialActBN,
+  printOfficialOpeningActBN,
 } from '../services/thermalPrint';
 import { exportShiftToExcel } from '../services/excelExport';
 import { extractLocalDateStr, getLocalTodayStr } from '../utils/dateUtils';
@@ -363,10 +364,19 @@ export const GeneralCashView: React.FC<Props> = ({
               <button
                 onClick={() => printThermalOpeningTicket(currentShift)}
                 className="px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
-                title="Imprimir comprobante de apertura"
+                title="Imprimir comprobante de apertura en tique térmico (80mm)"
               >
                 <Printer className="w-3.5 h-3.5 text-slate-500" />
-                <span>Ticket</span>
+                <span>Ticket (80mm)</span>
+              </button>
+
+              <button
+                onClick={() => printOfficialOpeningActBN(currentShift, state.activeAdminName)}
+                className="px-3.5 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-[#1c6856] font-bold text-xs flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
+                title="Imprimir Acta Oficial de Apertura en B/N (Láser / A4)"
+              >
+                <Printer className="w-3.5 h-3.5 text-[#1c6856]" />
+                <span>Acta Apertura (B/N)</span>
               </button>
 
               {onCancelOpenShift && (

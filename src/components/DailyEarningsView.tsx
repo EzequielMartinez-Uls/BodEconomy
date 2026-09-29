@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { AppState, DailyEarningsSummary, CashShift } from '../types';
-import { printOfficialActBN } from '../services/thermalPrint';
+import { printOfficialActBN, printOfficialOpeningActBN } from '../services/thermalPrint';
 import { PrintOfficialActModal } from './PrintOfficialActModal';
 import { getLocalTodayStr, addDaysToDateStr, extractLocalDateStr } from '../utils/dateUtils';
 import {
@@ -381,7 +381,21 @@ export const DailyEarningsView: React.FC<Props> = ({
       : 0;
 
   // Manejador para imprimir el acta oficial en Blanco y Negro (1 o 2 Hojas)
-  const handlePrintActa = (modo: 'TODO' | 'GENERAL' | 'CHICA') => {
+  const handlePrintActa = (modo: 'TODO' | 'GENERAL' | 'CHICA' | 'APERTURA') => {
+    const shift =
+      (state.shiftHistory || []).find((s) => s.date === selectedDate) ||
+      (state.currentShift?.date === selectedDate ? state.currentShift : null);
+
+    if (modo === 'APERTURA') {
+      if (shift) {
+        printOfficialOpeningActBN(shift, state.activeAdminName);
+      } else {
+        alert('No se encontró un turno de caja registrado para esta fecha para imprimir el acta de apertura.');
+      }
+      setShowPrintActaModal(false);
+      return;
+    }
+
     const day = activeDaySummary;
 
     // Obtener transacciones detalladas de Caja Chica de este día
@@ -424,6 +438,7 @@ export const DailyEarningsView: React.FC<Props> = ({
       day.totalGrossSales > 0 ? (day.netEarnings / day.totalGrossSales) * 100 : 0;
 
     printOfficialActBN({
+      shift: shift || undefined,
       date: selectedDate,
       modo,
       salesCash: day.cashSales,

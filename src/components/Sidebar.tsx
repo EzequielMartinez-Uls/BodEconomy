@@ -199,7 +199,7 @@ export const Sidebar: React.FC<Props> = ({
           className="w-full pt-2 px-3 flex items-center justify-between text-[10px] font-semibold text-slate-400 hover:text-slate-600 transition cursor-pointer"
           title="Ver configuración del sistema y respaldos"
         >
-          <span>Bodegón Control v1.0.2</span>
+          <span>Bodegón Control v1.0.3</span>
           <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
             <ShieldCheck className="w-3 h-3" /> Seguro
           </span>
