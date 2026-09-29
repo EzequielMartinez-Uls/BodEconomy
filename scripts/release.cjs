@@ -35,15 +35,23 @@ const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 execSync(`${npmCmd} run build`, { stdio: 'inherit', shell: true });
 
-// 3. Ejecutar electron-builder con publish
-console.log('⚡ Empaquetando y subiendo instaladores a GitHub...');
-spawnSync(npxCmd, ['electron-builder', '--win', '--publish', 'always'], {
+// 3. Ejecutar electron-builder
+console.log('⚡ Empaquetando ejecutables para Windows...');
+spawnSync(npxCmd, ['electron-builder', '--win'], {
   stdio: 'inherit',
   shell: true,
   env: process.env,
 });
 
-// 4. Publicar el borrador en GitHub si quedó en draft
+// 4. Subir todos los archivos a GitHub Releases
+console.log('📤 Verificando y subiendo archivos a GitHub Releases...');
+spawnSync('node', ['scripts/upload-release-assets.cjs'], {
+  stdio: 'inherit',
+  shell: true,
+  env: process.env,
+});
+
+// 5. Publicar el borrador en GitHub si quedó en draft
 try {
   const pkg = require('../package.json');
   const tag = `v${pkg.version}`;
