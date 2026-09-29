@@ -12,7 +12,8 @@
     "electron:dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && electron .\"",
     "electron:start": "electron .",
     "build:exe": "npm run build && electron-builder --win",
-    "build:publish": "npm run build && electron-builder --win --publish always"
+    "build:publish": "npm run build && electron-builder --win --publish always",
+    "release": "node scripts/release.cjs"
   },
   "build": {
     "appId": "com.elbodegon.control",
