@@ -27,6 +27,12 @@ import {
   supabase,
 } from './services/supabaseSync';
 import { getLocalTodayStr, getLocalDateTimeStr, extractLocalDateStr } from './utils/dateUtils';
+import {
+  MOCK_YESTERDAY_DATE,
+  MOCK_YESTERDAY_SHIFT,
+  MOCK_YESTERDAY_PETTY_SHIFT,
+  MOCK_YESTERDAY_PETTY_TRANSACTIONS,
+} from './services/mockTestDay';
 
 export function App() {
   const [state, setState] = useState<AppState>(loadState);
@@ -773,6 +779,33 @@ export function App() {
     setState(INITIAL_STATE);
   };
 
+  const handleLoadMockData = () => {
+    setState((prev) => {
+      const updatedHistory = [
+        MOCK_YESTERDAY_SHIFT,
+        ...prev.shiftHistory.filter((s) => s.date !== MOCK_YESTERDAY_DATE),
+      ].sort((a, b) => b.date.localeCompare(a.date));
+
+      const updatedPettyHistory = [
+        MOCK_YESTERDAY_PETTY_SHIFT,
+        ...(prev.pettyCashShiftHistory || []).filter((s) => s.date !== MOCK_YESTERDAY_DATE),
+      ].sort((a, b) => b.date.localeCompare(a.date));
+
+      const updatedTxs = [
+        ...prev.pettyCashTransactions.filter((tx) => !tx.id.startsWith(`pct-${MOCK_YESTERDAY_DATE}`)),
+        ...MOCK_YESTERDAY_PETTY_TRANSACTIONS,
+      ];
+
+      return {
+        ...prev,
+        shiftHistory: updatedHistory,
+        pettyCashShiftHistory: updatedPettyHistory,
+        pettyCashTransactions: updatedTxs,
+        pettyCashBalance: 660,
+      };
+    });
+  };
+
   const handleUpdateShiftSales = (
     date: string,
     sales: {
@@ -999,6 +1032,7 @@ export function App() {
         onRemoveAdmin={handleRemoveAdmin}
         onRestoreState={handleRestoreState}
         onResetState={handleResetState}
+        onLoadMockData={handleLoadMockData}
       />
 
       <AdminSelectModal

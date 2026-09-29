@@ -13,6 +13,7 @@ import {
   Check,
   Plus,
   Trash2,
+  Sparkles,
 } from 'lucide-react';
 
 interface Props {
@@ -24,6 +25,7 @@ interface Props {
   onRemoveAdmin: (name: string) => void;
   onRestoreState: (importedState: AppState) => void;
   onResetState: () => void;
+  onLoadMockData?: () => void;
 }
 
 export const SettingsModal: React.FC<Props> = ({
@@ -35,6 +37,7 @@ export const SettingsModal: React.FC<Props> = ({
   onRemoveAdmin,
   onRestoreState,
   onResetState,
+  onLoadMockData,
 }) => {
   if (!isOpen) return null;
 
@@ -297,6 +300,32 @@ export const SettingsModal: React.FC<Props> = ({
                     />
                   </label>
                 </div>
+
+                {onLoadMockData && (
+                  <div className="p-4 bg-amber-50/80 rounded-2xl border border-amber-200/90 flex flex-col justify-between space-y-3 sm:col-span-2">
+                    <div>
+                      <span className="text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                        Día de Prueba con Datos Completos (Ayer 28 de Septiembre)
+                      </span>
+                      <p className="text-xs text-amber-800/80 mt-1">
+                        Carga una jornada completa y cuadrada (Apertura Eddy C$ 4,840, Ventas Loyverse C$ 39,400, Datáfonos BAC/Ficohsa/Banpro/Lafise, Gastos de Caja Chica, Propinas C$ 2,800 a 7 personas, y Cierre Xiomara C$ 9,290 con diferencia C$ 0.00) para probar la impresión de Actas B/N y el reporte Excel.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onLoadMockData();
+                        alert('¡Datos de prueba de ayer (28 de Sep) cargados exitosamente! Ya puedes ver el reporte en Ganancias Diarias, imprimir las Actas Oficiales y exportar el Excel.');
+                        onClose();
+                      }}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm transition cursor-pointer"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span>Cargar Datos de Prueba de Ayer</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="pt-4 border-t border-slate-200">
