@@ -107,12 +107,51 @@ async function main() {
     }
   );
 
-  if (!relRes.data || !relRes.data.id) {
-    console.error('No se encontró la release:', relRes);
-    process.exit(1);
+  let release = relRes.data;
+  if (!release || !release.id) {
+    console.log(`✨ La release ${tag} no existía. Creándola en GitHub...`);
+    release = await new Promise((resolve, reject) => {
+      const payload = JSON.stringify({
+        tag_name: tag,
+        name: `Bodegón Control ${tag}`,
+        draft: false,
+        prerelease: false,
+        generate_release_notes: true,
+      });
+      const req = https.request(
+        {
+          hostname: 'api.github.com',
+          path: '/repos/EzequielMartinez-Uls/BodEconomy/releases',
+          method: 'POST',
+          headers: {
+            'User-Agent': 'NodeJS',
+            Authorization: `token ${token}`,
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(payload),
+          },
+        },
+        (res) => {
+          let d = '';
+          res.on('data', (c) => (d += c));
+          res.on('end', () => {
+            try {
+              resolve(JSON.parse(d));
+            } catch (e) {
+              reject(e);
+            }
+          });
+        }
+      );
+      req.on('error', reject);
+      req.write(payload);
+      req.end();
+    });
   }
 
-  const release = relRes.data;
+  if (!release || !release.id) {
+    console.error('No se pudo crear o encontrar la release:', release);
+    process.exit(1);
+  }
   console.log(`Release encontrada: #${release.id} (${release.tag_name})`);
 
   const existingAssets = (release.assets || []).map((a) => a.name);
