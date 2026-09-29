@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { AppState, DailyEarningsSummary, CashShift } from '../types';
 import { printOfficialActBN, printOfficialOpeningActBN } from '../services/thermalPrint';
+import { exportDailyEarningsToExcel, exportMonthlyEarningsToExcel } from '../services/excelExport';
 import { PrintOfficialActModal } from './PrintOfficialActModal';
 import { getLocalTodayStr, addDaysToDateStr, extractLocalDateStr } from '../utils/dateUtils';
 import {
@@ -29,6 +30,7 @@ import {
   Save,
   Check,
   Percent,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 interface Props {
@@ -536,6 +538,16 @@ export const DailyEarningsView: React.FC<Props> = ({
           >
             <Edit3 className="w-3.5 h-3.5" />
             <span>Editar / Cargar Ventas</span>
+          </button>
+
+          {/* Botón Exportar Día a Excel */}
+          <button
+            onClick={() => exportDailyEarningsToExcel(activeDaySummary, state)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-black transition shadow-xs cursor-pointer border border-emerald-500 active:scale-95"
+            title="Descargar Estado de Resultados y Auditoría de este día en Excel"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-white" />
+            <span>📊 EXCEL DÍA</span>
           </button>
 
           {/* Botón Imprimir Acta B/N */}
@@ -1057,9 +1069,19 @@ export const DailyEarningsView: React.FC<Props> = ({
             </p>
           </div>
 
-          <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl">
-            {dailySummaries.length} Jornadas Registradas
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => exportMonthlyEarningsToExcel(dailySummaries, state)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-300 transition cursor-pointer"
+              title="Exportar consolidado histórico completo a Excel"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Consolidado en Excel</span>
+            </button>
+            <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl">
+              {dailySummaries.length} Jornadas Registradas
+            </span>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -1156,6 +1178,16 @@ export const DailyEarningsView: React.FC<Props> = ({
                             title="Ver resumen completo"
                           >
                             Detalle
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              exportDailyEarningsToExcel(row, state);
+                            }}
+                            className="p-1 rounded-lg text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50 transition cursor-pointer"
+                            title="Descargar Estado de Resultados de este día en Excel"
+                          >
+                            <FileSpreadsheet className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={(e) => {

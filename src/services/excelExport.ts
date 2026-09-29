@@ -6,6 +6,7 @@ import {
   PettyCashTransaction,
   TablewareItem,
   TablewareLoss,
+  DailyEarningsSummary,
 } from '../types';
 import { getLocalTodayStr, extractLocalDateStr } from '../utils/dateUtils';
 
@@ -856,3 +857,550 @@ export async function exportTablewareToExcel(
 
   await saveWorkbook(wb, `Bodegon_Control_Menaje_${getLocalTodayStr()}.xlsx`);
 }
+
+// ============================================================================
+// 6. REPORTE EXCEL: ESTADO DE RESULTADOS Y AUDITORÍA DIARIA (P&L)
+// ============================================================================
+export async function exportDailyEarningsToExcel(
+  summary: DailyEarningsSummary,
+  state: AppState
+): Promise<void> {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Restaurante El Bodegón ERP';
+  wb.created = new Date();
+
+  const shift =
+    (state.shiftHistory || []).find((s) => s.date === summary.date) ||
+    (state.currentShift?.date === summary.date ? state.currentShift : null);
+
+  const dayTransactions = (state.pettyCashTransactions || []).filter(
+    (tx) => extractLocalDateStr(tx.date) === summary.date
+  );
+
+  // --------------------------------------------------------------------------
+  // HOJA 1: ESTADO DE RESULTADOS FINANCIERO (P&L)
+  // --------------------------------------------------------------------------
+  const wsPL = wb.addWorksheet('Estado de Resultados', {
+    views: [{ showGridLines: true }],
+  });
+
+  wsPL.pageSetup = {
+    orientation: 'portrait',
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 0,
+    paperSize: 9,
+  };
+
+  wsPL.columns = [
+    { width: 38 }, // A: Rubro / Cuenta
+    { width: 24 }, // B: Detalle / Entidad
+    { width: 20 }, // C: Importe C$
+    { width: 16 }, // D: % Ventas
+    { width: 22 }, // E: Referencia
+  ];
+
+  // Título
+  wsPL.mergeCells('A1:E2');
+  const tCell = wsPL.getCell('A1');
+  tCell.value = 'RESTAURANTE EL BODEGÓN — ESTADO DE RESULTADOS Y RENDIMIENTO DIARIO';
+  tCell.font = { name: FONT_NAME, size: 13, bold: true, color: { argb: COLOR_WHITE } };
+  tCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_BRAND_GREEN } };
+  tCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+  // Subtítulo
+  wsPL.mergeCells('A3:E3');
+  const sCell = wsPL.getCell('A3');
+  sCell.value = `JORNADA: ${summary.date} (${summary.dayLabel}) • ESTADO: ${summary.status === 'CLOSED' ? 'CERRADO Y CONCILIADO' : 'EN CURSO'} • RESPONSABLE: ${summary.responsible}`;
+  sCell.font = { name: FONT_NAME, size: 9.5, bold: true, color: { argb: COLOR_WHITE } };
+  sCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_BRAND_DARK } };
+  sCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+  let rIdx = 5;
+
+  const addSection = (title: string) => {
+    wsPL.mergeCells(`A${rIdx}:E${rIdx}`);
+    const cell = wsPL.getCell(`A${rIdx}`);
+    cell.value = title;
+    cell.font = { name: FONT_NAME, size: 10.5, bold: true, color: { argb: COLOR_WHITE } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_HEADER_SLATE } };
+    cell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+    wsPL.getRow(rIdx).height = 22;
+    rIdx++;
+  };
+
+  const addRow = (
+    rubro: string,
+    detalle: string,
+    monto?: number | null,
+    pct?: string,
+    extra?: string,
+    isBold = false,
+    isTotal = false,
+    isSub = false
+  ) => {
+    const row = wsPL.getRow(rIdx);
+    row.getCell(1).value = rubro;
+    row.getCell(2).value = detalle;
+    if (monto !== undefined && monto !== null) {
+      row.getCell(3).value = monto;
+      row.getCell(3).numFmt = '"C$"#,##0.00;("C$"#,##0.00);"-"';
+      row.getCell(3).alignment = { horizontal: 'right' };
+    }
+    if (pct) {
+      row.getCell(4).value = pct;
+      row.getCell(4).alignment = { horizontal: 'right' };
+    }
+    if (extra) {
+      row.getCell(5).value = extra;
+    }
+
+    row.font = { name: FONT_NAME, size: 9.5, bold: isBold };
+
+    if (isTotal) {
+      for (let c = 1; c <= 5; c++) {
+        row.getCell(c).border = DOUBLE_BOTTOM_BORDER;
+      }
+      row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ZEBRA_LIGHT } };
+    } else if (isSub) {
+      for (let c = 1; c <= 5; c++) {
+        row.getCell(c).border = {
+          top: { style: 'thin', color: { argb: 'FF94A3B8' } },
+          bottom: { style: 'thin', color: { argb: 'FF94A3B8' } },
+        };
+      }
+      row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+    } else {
+      for (let c = 1; c <= 5; c++) {
+        row.getCell(c).border = THIN_BORDER;
+      }
+    }
+    rIdx++;
+  };
+
+  const totVentas = summary.totalGrossSales || 0;
+  const pctOf = (val: number) => (totVentas > 0 ? `${((val / totVentas) * 100).toFixed(1)}%` : '0.0%');
+
+  // 1. INGRESOS
+  addSection('1. INGRESOS OPERATIVOS BRUTOS POR CANAL DE VENTA');
+  addRow('Ventas en Efectivo (Loyverse POS)', 'Recaudación directa en gaveta', summary.cashSales, pctOf(summary.cashSales));
+  addRow('Tarjetas POS Datafast — BAC Credomatic', 'Terminal BAC', summary.cardsBAC, pctOf(summary.cardsBAC));
+  addRow('Tarjetas POS Datafast — Banco Ficohsa', 'Terminal Ficohsa', summary.cardsFicohsa, pctOf(summary.cardsFicohsa));
+  addRow('Tarjetas POS Datafast — Banpro Promerica', 'Terminal Banpro', summary.cardsBanpro, pctOf(summary.cardsBanpro));
+  addRow('Tarjetas POS Datafast — Banco LAFISE', 'Terminal LAFISE', summary.cardsLafise, pctOf(summary.cardsLafise));
+  addRow('SUBTOTAL TODAS LAS TARJETAS POS', 'Consolidado Datafast', summary.totalCards, pctOf(summary.totalCards), '', true, false, true);
+  addRow('Ventas Digitales PedidosYa', 'Delivery externo aplicativo', summary.pedidosYaSales, pctOf(summary.pedidosYaSales));
+  addRow('TOTAL INGRESOS OPERATIVOS BRUTOS', 'Facturación Total del Día', totVentas, '100.0%', '', true, true);
+  rIdx++;
+
+  // 2. EGRESOS
+  addSection('2. EGRESOS, COMPRAS DE INSUMOS Y COSTOS OPERATIVOS');
+  
+  // Agrupar compras por categoría
+  const catMap = new Map<string, number>();
+  dayTransactions.filter(t => t.type === 'EXPENSE').forEach(t => {
+    catMap.set(t.category, (catMap.get(t.category) || 0) + t.amount);
+  });
+
+  if (catMap.size === 0) {
+    addRow('Sin compras registradas', 'No hubo salidas de caja chica en este día', 0, '0.0%');
+  } else {
+    catMap.forEach((amt, cat) => {
+      addRow(`Compras: ${cat}`, 'Insumos y abastecimiento', amt, pctOf(amt));
+    });
+  }
+
+  addRow('SUBTOTAL COMPRAS EN EFECTIVO (CAJA CHICA)', 'Salidas físicas de gaveta', summary.pettyCashExpenses, pctOf(summary.pettyCashExpenses), '', true, false, true);
+  addRow('SUBTOTAL COMPRAS POR TRANSFERENCIA BANCARIA', 'Pagos directos desde banco', summary.transfersPaid, pctOf(summary.transfersPaid), '', true, false, true);
+  addRow('TOTAL EGRESOS Y COSTOS OPERATIVOS', 'Gasto Total Realizado en la Jornada', summary.totalExpenses, pctOf(summary.totalExpenses), '', true, true);
+  rIdx++;
+
+  // 3. UTILIDAD
+  addSection('3. RENDIMIENTO FINANCIERO Y UTILIDAD NETA OPERATIVA');
+  const utilidadNeta = summary.netEarnings;
+  const margenNeto = totVentas > 0 ? (utilidadNeta / totVentas) * 100 : 0;
+  addRow('INGRESOS OPERATIVOS TOTALES (+)', 'Ventas brutas del día', totVentas, '100.0%');
+  addRow('EGRESOS Y COSTOS TOTALES (-)', 'Compras e insumos totales', summary.totalExpenses, pctOf(summary.totalExpenses));
+  addRow('UTILIDAD NETA OPERATIVA (=)', 'Ingresos menos Costos', utilidadNeta, `${margenNeto.toFixed(1)}%`, '', true, true);
+
+  // Fila de Diagnóstico Financiero
+  const dRow = wsPL.getRow(rIdx);
+  dRow.getCell(1).value = 'DIAGNÓSTICO DEL MARGEN:';
+  dRow.getCell(1).font = { name: FONT_NAME, size: 10, bold: true };
+  const dCell = dRow.getCell(2);
+  const diagLabel = margenNeto >= 35 ? '★ EXCELENTE RENTABILIDAD' : margenNeto >= 20 ? '✓ RENTABILIDAD ADECUADA' : margenNeto > 0 ? '▲ MARGEN REDUCIDO' : '▼ DÉFICIT EN JORNADA';
+  dCell.value = `${diagLabel} (${margenNeto.toFixed(1)}%)`;
+  dCell.font = { name: FONT_NAME, size: 10, bold: true };
+  dCell.alignment = { horizontal: 'center' };
+  if (margenNeto >= 20) {
+    dCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_SUCCESS_BG } };
+    dCell.font = { name: FONT_NAME, size: 10, bold: true, color: { argb: COLOR_SUCCESS_TEXT } };
+  } else if (margenNeto > 0) {
+    dCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_WARNING_BG } };
+    dCell.font = { name: FONT_NAME, size: 10, bold: true, color: { argb: COLOR_WARNING_TEXT } };
+  } else {
+    dCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_DANGER_BG } };
+    dCell.font = { name: FONT_NAME, size: 10, bold: true, color: { argb: COLOR_DANGER_TEXT } };
+  }
+  rIdx += 2;
+
+  // 4. RESERVAS (si turno cerrado)
+  if (shift) {
+    addSection('4. RESERVAS LEGALES, LABORALES Y RETIROS');
+    addRow('Traslado Fondo a Caja Chica', 'Para fondo operativo', shift.transferToPettyCash || 0);
+    addRow('Pago Horas Extras en Efectivo', 'Planilla operativa', shift.overtimePaidCash || 0);
+    addRow('Pago Días Extraordinarios', 'Feriados / Domingos', shift.extraDaysPaidCash || 0);
+    addRow('Reserva Tributaria DGI', 'Aportes fiscales', shift.reserveDGI || 0);
+    addRow('Reserva Planilla Quincenal', 'Fondo de sueldos', shift.reservePayroll || 0);
+    addRow('Reserva Vacaciones e Indemnización', 'Prestaciones', shift.reserveVacations || 0);
+    addRow('Retiro Socios / Snyder', 'Retiro utilidades', shift.reserveSnyder || 0);
+    addRow('TOTAL RETIROS Y RESERVAS', 'Deducciones del Turno', shift.totalWithdrawals || 0, '', '', true, true);
+    rIdx++;
+
+    addSection('5. PROPINAS DEL PERSONAL');
+    addRow('Total Propina Recaudada', 'Servicio', shift.totalTipCollected || 0);
+    addRow('Colaboradores en Turno', `${shift.staffCount || 0} personas`);
+    addRow('Monto Individual', 'Por colaborador', shift.individualTip || 0);
+    addRow('Estado de Liquidación', shift.tipPaid ? 'PAGADAS EN EFECTIVO' : 'PENDIENTE', null, '', shift.tipPaid ? 'Liquidado' : 'Pendiente');
+    rIdx++;
+  }
+
+  // Firmas
+  rIdx++;
+  wsPL.mergeCells(`A${rIdx}:B${rIdx}`);
+  wsPL.mergeCells(`D${rIdx}:E${rIdx}`);
+  wsPL.getCell(`A${rIdx}`).value = '_____________________________________\nCajero(a) / Responsable de Turno';
+  wsPL.getCell(`D${rIdx}`).value = '_____________________________________\nAdministrador(a) / Auditor Financiero';
+  wsPL.getCell(`A${rIdx}`).alignment = { horizontal: 'center', wrapText: true };
+  wsPL.getCell(`D${rIdx}`).alignment = { horizontal: 'center', wrapText: true };
+  wsPL.getCell(`A${rIdx}`).font = { name: FONT_NAME, size: 9, bold: true };
+  wsPL.getCell(`D${rIdx}`).font = { name: FONT_NAME, size: 9, bold: true };
+
+  // --------------------------------------------------------------------------
+  // HOJA 2: AUDITORÍA DETALLADA DE COMPRAS Y GASTOS DEL DÍA
+  // --------------------------------------------------------------------------
+  const wsAudit = wb.addWorksheet('Auditoría Compras y Gastos', {
+    views: [{ showGridLines: true }],
+  });
+
+  wsAudit.pageSetup = {
+    orientation: 'landscape',
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 0,
+    paperSize: 9,
+  };
+
+  wsAudit.columns = [
+    { width: 6 },  // N°
+    { width: 10 }, // Hora
+    { width: 14 }, // Tipo
+    { width: 22 }, // Categoría
+    { width: 26 }, // Proveedor
+    { width: 34 }, // Concepto / Detalle
+    { width: 16 }, // Comprobante
+    { width: 16 }, // Método
+    { width: 18 }, // Monto C$
+    { width: 20 }, // Registrado Por
+  ];
+
+  wsAudit.mergeCells('A1:J2');
+  const aTitle = wsAudit.getCell('A1');
+  aTitle.value = `RESTAURANTE EL BODEGÓN — RELACIÓN DETALLADA DE COMPRAS Y GASTOS (${summary.date})`;
+  aTitle.font = { name: FONT_NAME, size: 12.5, bold: true, color: { argb: COLOR_WHITE } };
+  aTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_BRAND_GREEN } };
+  aTitle.alignment = { horizontal: 'center', vertical: 'middle' };
+
+  const aHeaders = ['N°', 'Hora', 'Tipo', 'Categoría', 'Proveedor', 'Concepto / Detalle', 'N° Comprobante', 'Método', 'Monto C$', 'Registrado Por'];
+  const aHRow = wsAudit.getRow(4);
+  aHeaders.forEach((h, i) => {
+    const c = aHRow.getCell(i + 1);
+    c.value = h;
+    c.font = { name: FONT_NAME, size: 10, bold: true, color: { argb: COLOR_WHITE } };
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_HEADER_SLATE } };
+    c.alignment = { horizontal: i === 8 ? 'right' : 'center', vertical: 'middle' };
+  });
+  aHRow.height = 24;
+
+  let aIdx = 5;
+  let totCompras = 0;
+  if (dayTransactions.length === 0) {
+    wsAudit.mergeCells('A5:J5');
+    const noCell = wsAudit.getCell('A5');
+    noCell.value = 'No se registraron egresos ni compras en esta fecha contable.';
+    noCell.font = { name: FONT_NAME, size: 10, italic: true };
+    noCell.alignment = { horizontal: 'center' };
+    aIdx = 6;
+  } else {
+    dayTransactions.forEach((tx, i) => {
+      const r = wsAudit.getRow(aIdx);
+      if (tx.type === 'EXPENSE') totCompras += tx.amount;
+
+      r.getCell(1).value = i + 1;
+      r.getCell(2).value = new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      r.getCell(3).value = tx.type === 'EXPENSE' ? 'COMPRA' : 'FONDEO';
+      r.getCell(4).value = tx.category;
+      r.getCell(5).value = tx.vendor;
+      r.getCell(6).value = tx.notes || tx.vendor;
+      r.getCell(7).value = tx.receiptNumber || 'Sin factura';
+      r.getCell(8).value = tx.method === 'CASH' ? 'Efectivo' : tx.method === 'CARD' ? 'Tarjeta' : 'Transferencia';
+      r.getCell(9).value = tx.amount;
+      r.getCell(9).numFmt = '"C$"#,##0.00';
+      r.getCell(10).value = tx.registeredBy;
+
+      for (let c = 1; c <= 10; c++) {
+        r.getCell(c).border = THIN_BORDER;
+        r.getCell(c).font = { name: FONT_NAME, size: 9 };
+      }
+      if (aIdx % 2 === 0) {
+        r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ZEBRA_LIGHT } };
+      }
+      aIdx++;
+    });
+
+    const totRow = wsAudit.getRow(aIdx);
+    totRow.getCell(1).value = 'TOTAL ACUMULADO DE COMPRAS / EGRESOS:';
+    wsAudit.mergeCells(`A${aIdx}:H${aIdx}`);
+    totRow.getCell(1).alignment = { horizontal: 'right' };
+    totRow.getCell(9).value = totCompras;
+    totRow.getCell(9).numFmt = '"C$"#,##0.00';
+    for (let c = 1; c <= 10; c++) {
+      totRow.getCell(c).border = DOUBLE_BOTTOM_BORDER;
+      totRow.getCell(c).font = { name: FONT_NAME, size: 10, bold: true };
+      totRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ZEBRA_LIGHT } };
+    }
+  }
+
+  await saveWorkbook(wb, `Bodegon_EstadoResultados_${summary.date}.xlsx`);
+}
+
+// ============================================================================
+// 7. REPORTE EXCEL: CONSOLIDADO HISTÓRICO DE RENDIMIENTO (DÍA A DÍA)
+// ============================================================================
+export async function exportMonthlyEarningsToExcel(
+  summaries: DailyEarningsSummary[],
+  state: AppState,
+  periodTitle?: string
+): Promise<void> {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Restaurante El Bodegón ERP';
+  wb.created = new Date();
+
+  const ws = wb.addWorksheet('Consolidado Diario', {
+    views: [{ showGridLines: true }],
+  });
+
+  ws.pageSetup = {
+    orientation: 'landscape',
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 0,
+    paperSize: 9,
+  };
+
+  ws.columns = [
+    { width: 13 }, // A: Fecha
+    { width: 15 }, // B: Día
+    { width: 12 }, // C: Estado
+    { width: 16 }, // D: Efectivo
+    { width: 14 }, // E: BAC
+    { width: 14 }, // F: Ficohsa
+    { width: 14 }, // G: Banpro
+    { width: 14 }, // H: Lafise
+    { width: 16 }, // I: Total Tarjetas
+    { width: 14 }, // J: PedidosYa
+    { width: 18 }, // K: Total Ventas
+    { width: 16 }, // L: Gastos Efectivo
+    { width: 16 }, // M: Transferencias
+    { width: 18 }, // N: Total Gastos
+    { width: 18 }, // O: Ganancia Neta
+    { width: 12 }, // P: Margen %
+    { width: 14 }, // Q: Propinas
+    { width: 18 }, // R: Responsable
+  ];
+
+  ws.mergeCells('A1:R2');
+  const t = ws.getCell('A1');
+  t.value = `RESTAURANTE EL BODEGÓN — CONSOLIDADO DE INGRESOS, GASTOS Y RENDIMIENTO OPERATIVO`;
+  t.font = { name: FONT_NAME, size: 13, bold: true, color: { argb: COLOR_WHITE } };
+  t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_BRAND_GREEN } };
+  t.alignment = { horizontal: 'center', vertical: 'middle' };
+
+  ws.mergeCells('A3:R3');
+  const sub = ws.getCell('A3');
+  sub.value = `INFORME AUDITADO • TOTAL DE JORNADAS CONSOLIDADAS: ${summaries.length} • GENERADO EL ${getLocalTodayStr()}`;
+  sub.font = { name: FONT_NAME, size: 9.5, bold: true, color: { argb: COLOR_WHITE } };
+  sub.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_BRAND_DARK } };
+  sub.alignment = { horizontal: 'center', vertical: 'middle' };
+
+  const headers = [
+    'Fecha',
+    'Jornada',
+    'Estado',
+    'Ventas Efectivo',
+    'POS BAC',
+    'POS Ficohsa',
+    'POS Banpro',
+    'POS LAFISE',
+    'Total Tarjetas',
+    'PedidosYa',
+    'VENTA BRUTA TOTAL',
+    'Compras Efectivo',
+    'Transferencias',
+    'TOTAL EGRESOS',
+    'UTILIDAD NETA',
+    'Margen %',
+    'Propinas',
+    'Responsable',
+  ];
+
+  const hRow = ws.getRow(5);
+  headers.forEach((h, i) => {
+    const c = hRow.getCell(i + 1);
+    c.value = h;
+    c.font = { name: FONT_NAME, size: 9.5, bold: true, color: { argb: COLOR_WHITE } };
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_HEADER_SLATE } };
+    c.alignment = { horizontal: i >= 3 && i <= 16 ? 'right' : 'center', vertical: 'middle' };
+  });
+  hRow.height = 24;
+
+  let rIdx = 6;
+  let sumCash = 0;
+  let sumBAC = 0;
+  let sumFico = 0;
+  let sumBanpro = 0;
+  let sumLafise = 0;
+  let sumCards = 0;
+  let sumPY = 0;
+  let sumGross = 0;
+  let sumPetty = 0;
+  let sumTransf = 0;
+  let sumExpenses = 0;
+  let sumNet = 0;
+  let sumTips = 0;
+
+  // Ordenar cronológicamente (más antiguo al más reciente)
+  const sorted = [...summaries].sort((a, b) => a.date.localeCompare(b.date));
+
+  sorted.forEach((s) => {
+    const r = ws.getRow(rIdx);
+    sumCash += s.cashSales || 0;
+    sumBAC += s.cardsBAC || 0;
+    sumFico += s.cardsFicohsa || 0;
+    sumBanpro += s.cardsBanpro || 0;
+    sumLafise += s.cardsLafise || 0;
+    sumCards += s.totalCards || 0;
+    sumPY += s.pedidosYaSales || 0;
+    sumGross += s.totalGrossSales || 0;
+    sumPetty += s.pettyCashExpenses || 0;
+    sumTransf += s.transfersPaid || 0;
+    sumExpenses += s.totalExpenses || 0;
+    sumNet += s.netEarnings || 0;
+    sumTips += s.tipsCollected || 0;
+
+    const mPct = s.totalGrossSales > 0 ? (s.netEarnings / s.totalGrossSales) * 100 : 0;
+
+    r.getCell(1).value = s.date;
+    r.getCell(2).value = s.dayLabel;
+    r.getCell(3).value = s.status === 'CLOSED' ? 'Cerrado' : 'Abierto';
+    r.getCell(4).value = s.cashSales;
+    r.getCell(5).value = s.cardsBAC;
+    r.getCell(6).value = s.cardsFicohsa;
+    r.getCell(7).value = s.cardsBanpro;
+    r.getCell(8).value = s.cardsLafise;
+    r.getCell(9).value = s.totalCards;
+    r.getCell(10).value = s.pedidosYaSales;
+    r.getCell(11).value = s.totalGrossSales;
+    r.getCell(12).value = s.pettyCashExpenses;
+    r.getCell(13).value = s.transfersPaid;
+    r.getCell(14).value = s.totalExpenses;
+    r.getCell(15).value = s.netEarnings;
+    r.getCell(16).value = `${mPct.toFixed(1)}%`;
+    r.getCell(17).value = s.tipsCollected;
+    r.getCell(18).value = s.responsible;
+
+    for (let c = 4; c <= 15; c++) {
+      r.getCell(c).numFmt = '"C$"#,##0.00;("C$"#,##0.00);"-"';
+    }
+    r.getCell(17).numFmt = '"C$"#,##0.00';
+
+    for (let c = 1; c <= 18; c++) {
+      r.getCell(c).border = THIN_BORDER;
+      r.getCell(c).font = { name: FONT_NAME, size: 9 };
+    }
+    if (rIdx % 2 === 0) {
+      r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ZEBRA_LIGHT } };
+    }
+    rIdx++;
+  });
+
+  // Fila de TOTALES
+  const totRow = ws.getRow(rIdx);
+  totRow.getCell(1).value = 'TOTALES ACUMULADOS:';
+  ws.mergeCells(`A${rIdx}:C${rIdx}`);
+  totRow.getCell(1).alignment = { horizontal: 'right' };
+  totRow.getCell(4).value = sumCash;
+  totRow.getCell(5).value = sumBAC;
+  totRow.getCell(6).value = sumFico;
+  totRow.getCell(7).value = sumBanpro;
+  totRow.getCell(8).value = sumLafise;
+  totRow.getCell(9).value = sumCards;
+  totRow.getCell(10).value = sumPY;
+  totRow.getCell(11).value = sumGross;
+  totRow.getCell(12).value = sumPetty;
+  totRow.getCell(13).value = sumTransf;
+  totRow.getCell(14).value = sumExpenses;
+  totRow.getCell(15).value = sumNet;
+  const totMargin = sumGross > 0 ? (sumNet / sumGross) * 100 : 0;
+  totRow.getCell(16).value = `${totMargin.toFixed(1)}%`;
+  totRow.getCell(17).value = sumTips;
+  totRow.getCell(18).value = `${summaries.length} días`;
+
+  for (let c = 4; c <= 15; c++) {
+    totRow.getCell(c).numFmt = '"C$"#,##0.00;("C$"#,##0.00);"-"';
+  }
+  totRow.getCell(17).numFmt = '"C$"#,##0.00';
+
+  for (let c = 1; c <= 18; c++) {
+    totRow.getCell(c).border = DOUBLE_BOTTOM_BORDER;
+    totRow.getCell(c).font = { name: FONT_NAME, size: 9.5, bold: true };
+    totRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ZEBRA_LIGHT } };
+  }
+  rIdx++;
+
+  // Fila de PROMEDIOS DIARIOS
+  const nDays = Math.max(1, summaries.length);
+  const avgRow = ws.getRow(rIdx);
+  avgRow.getCell(1).value = 'PROMEDIO POR DÍA:';
+  ws.mergeCells(`A${rIdx}:C${rIdx}`);
+  avgRow.getCell(1).alignment = { horizontal: 'right' };
+  avgRow.getCell(4).value = sumCash / nDays;
+  avgRow.getCell(5).value = sumBAC / nDays;
+  avgRow.getCell(6).value = sumFico / nDays;
+  avgRow.getCell(7).value = sumBanpro / nDays;
+  avgRow.getCell(8).value = sumLafise / nDays;
+  avgRow.getCell(9).value = sumCards / nDays;
+  avgRow.getCell(10).value = sumPY / nDays;
+  avgRow.getCell(11).value = sumGross / nDays;
+  avgRow.getCell(12).value = sumPetty / nDays;
+  avgRow.getCell(13).value = sumTransf / nDays;
+  avgRow.getCell(14).value = sumExpenses / nDays;
+  avgRow.getCell(15).value = sumNet / nDays;
+  avgRow.getCell(16).value = `${totMargin.toFixed(1)}%`;
+  avgRow.getCell(17).value = sumTips / nDays;
+  avgRow.getCell(18).value = 'Promedio';
+
+  for (let c = 4; c <= 15; c++) {
+    avgRow.getCell(c).numFmt = '"C$"#,##0.00;("C$"#,##0.00);"-"';
+  }
+  avgRow.getCell(17).numFmt = '"C$"#,##0.00';
+
+  for (let c = 1; c <= 18; c++) {
+    avgRow.getCell(c).border = THIN_BORDER;
+    avgRow.getCell(c).font = { name: FONT_NAME, size: 9, bold: true };
+    avgRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+  }
+
+  await saveWorkbook(wb, `Bodegon_Consolidado_Rendimiento_${periodTitle || getLocalTodayStr()}.xlsx`);
+}
+
