@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AppState, CashShift, PettyCashShift, PettyCashTransaction, TablewareItem, TablewareLoss } from './types';
 import { loadState, saveState, INITIAL_STATE } from './services/storage';
 import { Sidebar } from './components/Sidebar';
@@ -85,6 +85,14 @@ export function App() {
   useEffect(() => {
     saveState(state);
   }, [state]);
+
+  const lastClosedShift = useMemo(() => {
+    const closed = state.shiftHistory.filter((s) => s.status === 'CLOSED');
+    if (closed.length > 0) {
+      return [...closed].sort((a, b) => b.date.localeCompare(a.date))[0];
+    }
+    return state.shiftHistory[0] || null;
+  }, [state.shiftHistory]);
 
   // Sincronización en tiempo real con Supabase (Nube Interconectada PC + Móvil)
   useEffect(() => {
@@ -1010,7 +1018,7 @@ export function App() {
       <OpeningModal
         isOpen={openingModalOpen}
         onClose={() => setOpeningModalOpen(false)}
-        lastClosedShift={state.shiftHistory[0] || null}
+        lastClosedShift={lastClosedShift}
         shiftHistory={state.shiftHistory}
         activeAdminName={state.activeAdminName}
         defaultExchangeRate={state.defaultExchangeRate}

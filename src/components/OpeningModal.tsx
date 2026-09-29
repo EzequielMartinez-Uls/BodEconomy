@@ -65,7 +65,11 @@ export const OpeningModal: React.FC<Props> = ({
   const totalEquivNIO = totalNIO + totalUSD * exchangeRate;
 
   // Corroboración contra el cierre anterior
-  const expectedFromPrevious = lastClosedShift?.totalClosingEquivNIO || 0;
+  const expectedFromPrevious =
+    lastClosedShift?.totalClosingEquivNIO ||
+    lastClosedShift?.actualCashNIO ||
+    lastClosedShift?.totalOpeningEquivNIO ||
+    0;
   const differenceWithPrevious = totalEquivNIO - expectedFromPrevious;
   const isCountInitiated = totalEquivNIO > 0;
   const isMatchWithPrevious = lastClosedShift ? Math.abs(differenceWithPrevious) < 1.0 : true;
@@ -76,6 +80,9 @@ export const OpeningModal: React.FC<Props> = ({
     if (lastClosedShift?.closingNIO && lastClosedShift?.closingUSD) {
       setDenominationsNIO({ ...lastClosedShift.closingNIO });
       setDenominationsUSD({ ...lastClosedShift.closingUSD });
+    } else if (lastClosedShift?.openingNIO && lastClosedShift?.openingUSD) {
+      setDenominationsNIO({ ...lastClosedShift.openingNIO });
+      setDenominationsUSD({ ...lastClosedShift.openingUSD });
     }
   };
 
@@ -391,41 +398,48 @@ export const OpeningModal: React.FC<Props> = ({
                 </div>
               </div>
 
-              {/* Semáforo de Corroboración */}
-              {isCountInitiated && (
-                <div
-                  className={`p-3 rounded-xl border text-xs font-bold flex items-center gap-2.5 ${
-                    isMatchWithPrevious
-                      ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                      : differenceWithPrevious < 0
-                      ? 'bg-rose-50 border-rose-300 text-rose-900'
-                      : 'bg-blue-50 border-blue-300 text-blue-900'
-                  }`}
-                >
-                  {isMatchWithPrevious ? (
-                    <>
-                      <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>
-                        Fondo verificado: Coincide exactamente con el efectivo dejado en el cierre anterior (C$ {expectedFromPrevious.toFixed(2)}).
-                      </span>
-                    </>
-                  ) : differenceWithPrevious < 0 ? (
-                    <>
-                      <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-                      <span>
-                        Diferencia detectada (Faltante): Faltan C$ {Math.abs(differenceWithPrevious).toFixed(2)} respecto al cierre anterior. Detállalo en las notas de apertura.
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4 text-blue-600 shrink-0" />
-                      <span>
-                        Diferencia detectada (Sobrante): Hay C$ {differenceWithPrevious.toFixed(2)} más de lo dejado en el cierre anterior.
-                      </span>
-                    </>
-                  )}
-                </div>
-              )}
+              {/* Semáforo de Corroboración Físico Siempre Visible */}
+              <div
+                className={`p-3 rounded-xl border text-xs font-bold flex items-center gap-2.5 ${
+                  !isCountInitiated
+                    ? 'bg-amber-50 border-amber-300 text-amber-900'
+                    : isMatchWithPrevious
+                    ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                    : differenceWithPrevious < 0
+                    ? 'bg-rose-50 border-rose-300 text-rose-900'
+                    : 'bg-blue-50 border-blue-300 text-blue-900'
+                }`}
+              >
+                {!isCountInitiated ? (
+                  <>
+                    <span className="text-base">⏳</span>
+                    <span>
+                      Pendiente de conteo físico: Ingresa los billetes y monedas abajo o toca "Cargar fondo de ayer". El saldo entregado en el cierre fue de <strong>C$ {expectedFromPrevious.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>.
+                    </span>
+                  </>
+                ) : isMatchWithPrevious ? (
+                  <>
+                    <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>
+                      Fondo verificado: Coincide exactamente con el efectivo dejado en el cierre anterior (C$ {expectedFromPrevious.toLocaleString('es-NI', { minimumFractionDigits: 2 })}).
+                    </span>
+                  </>
+                ) : differenceWithPrevious < 0 ? (
+                  <>
+                    <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>
+                      Diferencia detectada (Faltante): Faltan C$ {Math.abs(differenceWithPrevious).toFixed(2)} respecto al cierre anterior (Esperado: C$ {expectedFromPrevious.toFixed(2)}, Contado: C$ {totalEquivNIO.toFixed(2)}).
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 text-blue-600 shrink-0" />
+                    <span>
+                      Diferencia detectada (Sobrante): Hay C$ {differenceWithPrevious.toFixed(2)} más de lo dejado en el cierre anterior (Esperado: C$ {expectedFromPrevious.toFixed(2)}, Contado: C$ {totalEquivNIO.toFixed(2)}).
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
           ) : (
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl text-xs text-blue-800">
@@ -694,6 +708,9 @@ export const OpeningModal: React.FC<Props> = ({
               exchangeRate={exchangeRate}
               onChangeNIO={setDenominationsNIO}
               onChangeUSD={setDenominationsUSD}
+              previousClosingNIO={lastClosedShift?.closingNIO || null}
+              previousClosingUSD={lastClosedShift?.closingUSD || null}
+              expectedTotalEquivNIO={expectedFromPrevious}
             />
           </div>
 

@@ -544,6 +544,11 @@ export async function syncFullDayClosureToCloud({
       dailyNetProfit: generalShift.dailyNetProfit || 0,
       closedBy: generalShift.closedBy,
       closedAt: generalShift.closedAt || new Date().toISOString(),
+      totalClosingEquivNIO: generalShift.totalClosingEquivNIO || generalShift.actualCashNIO || 0,
+      totalClosingNIO: generalShift.totalClosingNIO || 0,
+      totalClosingUSD: generalShift.totalClosingUSD || 0,
+      closingNIO: generalShift.closingNIO,
+      closingUSD: generalShift.closingUSD,
     };
 
     let pettyClosing: any = undefined;
@@ -684,6 +689,11 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
   let differenceNIO = existingShift?.differenceNIO || 0;
   let auditStatus: 'SQUARED' | 'SURPLUS' | 'SHORTAGE' = existingShift?.auditStatus || 'SQUARED';
   let dailyNetProfit = existingShift?.dailyNetProfit || totalGrossSales;
+  let totalClosingEquivNIO = existingShift?.totalClosingEquivNIO || (isClosed ? actualCashNIO : undefined);
+  let totalClosingNIO = existingShift?.totalClosingNIO || (isClosed ? actualCashNIO : undefined);
+  let totalClosingUSD = existingShift?.totalClosingUSD || (isClosed ? 0 : undefined);
+  let closingNIO = existingShift?.closingNIO;
+  let closingUSD = existingShift?.closingUSD;
 
   if (auditMatch && auditMatch[1]) {
     try {
@@ -693,7 +703,17 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
       if (a.differenceNIO !== undefined) differenceNIO = Number(a.differenceNIO);
       if (a.auditStatus) auditStatus = a.auditStatus;
       if (a.dailyNetProfit !== undefined) dailyNetProfit = Number(a.dailyNetProfit);
+      if (a.totalClosingEquivNIO !== undefined) totalClosingEquivNIO = Number(a.totalClosingEquivNIO);
+      if (a.totalClosingNIO !== undefined) totalClosingNIO = Number(a.totalClosingNIO);
+      if (a.totalClosingUSD !== undefined) totalClosingUSD = Number(a.totalClosingUSD);
+      if (a.closingNIO) closingNIO = a.closingNIO;
+      if (a.closingUSD) closingUSD = a.closingUSD;
     } catch {}
+  }
+
+  if (isClosed && (!totalClosingEquivNIO || totalClosingEquivNIO === 0) && actualCashNIO > 0) {
+    totalClosingEquivNIO = actualCashNIO;
+    totalClosingNIO = actualCashNIO;
   }
 
   return {
@@ -712,6 +732,11 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
     totalOpeningNIO,
     totalOpeningUSD,
     totalOpeningEquivNIO,
+    closingNIO,
+    closingUSD,
+    totalClosingNIO,
+    totalClosingUSD,
+    totalClosingEquivNIO,
     salesCashSystem: salesCash,
     cardsBAC,
     cardsFicohsa,

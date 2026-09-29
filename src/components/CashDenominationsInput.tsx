@@ -10,6 +10,9 @@ interface Props {
   onChangeNIO: (denominations: DenominationsNIO) => void;
   onChangeUSD: (denominations: DenominationsUSD) => void;
   readOnly?: boolean;
+  previousClosingNIO?: DenominationsNIO | null;
+  previousClosingUSD?: DenominationsUSD | null;
+  expectedTotalEquivNIO?: number;
 }
 
 const NIO_KEYS: (keyof DenominationsNIO)[] = [1000, 500, 200, 100, 50, 20, 10, 5, 1, 0.5];
@@ -22,6 +25,9 @@ export const CashDenominationsInput: React.FC<Props> = ({
   onChangeNIO,
   onChangeUSD,
   readOnly = false,
+  previousClosingNIO,
+  previousClosingUSD,
+  expectedTotalEquivNIO,
 }) => {
   const totalNIO = calculateTotalNIO(denominationsNIO);
   const totalUSD = calculateTotalUSD(denominationsUSD);
@@ -83,6 +89,43 @@ export const CashDenominationsInput: React.FC<Props> = ({
         </div>
       </div>
 
+      {/* Banner de Corroboración Físico con Cierre Anterior */}
+      {expectedTotalEquivNIO !== undefined && expectedTotalEquivNIO > 0 && (
+        <div className="p-3.5 bg-slate-50 border border-slate-200/90 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500 font-bold uppercase tracking-wider text-[11px]">Efectivo de Cierre Anterior:</span>
+            <strong className="font-mono text-slate-900 font-black text-sm">
+              C$ {expectedTotalEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+            </strong>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500 font-bold uppercase tracking-wider text-[11px]">Contado Físicamente:</span>
+            <strong className="font-mono text-emerald-700 font-black text-sm">
+              C$ {totalEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+            </strong>
+          </div>
+          <div className={`px-3 py-1.5 rounded-xl font-bold font-mono text-xs border ${
+            totalEquivNIO === 0
+              ? 'bg-amber-100/90 text-amber-900 border-amber-300'
+              : Math.abs(totalEquivNIO - expectedTotalEquivNIO) < 1.0
+              ? 'bg-emerald-100/90 text-emerald-900 border-emerald-300'
+              : totalEquivNIO - expectedTotalEquivNIO < 0
+              ? 'bg-rose-100/90 text-rose-900 border-rose-300'
+              : 'bg-blue-100/90 text-blue-900 border-blue-300'
+          }`}>
+            {totalEquivNIO === 0 ? (
+              <span>⏳ Pendiente de conteo</span>
+            ) : Math.abs(totalEquivNIO - expectedTotalEquivNIO) < 1.0 ? (
+              <span>✓ Cuadrado con anoche</span>
+            ) : totalEquivNIO - expectedTotalEquivNIO < 0 ? (
+              <span>Faltante: -C$ {Math.abs(totalEquivNIO - expectedTotalEquivNIO).toFixed(2)}</span>
+            ) : (
+              <span>Sobrante: +C$ {(totalEquivNIO - expectedTotalEquivNIO).toFixed(2)}</span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Columnas de Billetes */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Moneda Nacional C$ */}
@@ -101,6 +144,7 @@ export const CashDenominationsInput: React.FC<Props> = ({
               const count = denominationsNIO[denom] || 0;
               const subtotal = count * denom;
               const isCoin = denom <= 5;
+              const prevUds = previousClosingNIO ? previousClosingNIO[denom] : undefined;
 
               return (
                 <div
@@ -108,7 +152,12 @@ export const CashDenominationsInput: React.FC<Props> = ({
                   className="flex items-center justify-between gap-3 p-2.5 bg-slate-50/70 rounded-xl border border-slate-200/60 hover:border-amber-300 hover:bg-white transition"
                 >
                   <div className="w-28 text-xs font-bold text-slate-700">
-                    {isCoin ? `Moneda C$ ${denom}` : `Billete C$ ${denom}`}
+                    <div>{isCoin ? `Moneda C$ ${denom}` : `Billete C$ ${denom}`}</div>
+                    {prevUds !== undefined && prevUds > 0 && (
+                      <span className="text-[10px] text-slate-400 font-medium block">
+                        Ayer: {prevUds} uds
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-center gap-2 shrink-0">
@@ -118,7 +167,7 @@ export const CashDenominationsInput: React.FC<Props> = ({
                       step="1"
                       disabled={readOnly}
                       value={count === 0 ? '' : count}
-                      placeholder="0"
+                      placeholder={prevUds !== undefined && prevUds > 0 ? String(prevUds) : '0'}
                       onChange={(e) => handleNIOChange(denom, e.target.value)}
                       className="w-20 h-9 text-center font-mono font-black text-slate-900 bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 disabled:opacity-50 text-base shadow-sm shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
@@ -149,6 +198,7 @@ export const CashDenominationsInput: React.FC<Props> = ({
             {USD_KEYS.map((denom) => {
               const count = denominationsUSD[denom] || 0;
               const subtotal = count * denom;
+              const prevUds = previousClosingUSD ? previousClosingUSD[denom] : undefined;
 
               return (
                 <div
@@ -156,7 +206,12 @@ export const CashDenominationsInput: React.FC<Props> = ({
                   className="flex items-center justify-between gap-3 p-2.5 bg-slate-50/70 rounded-xl border border-slate-200/60 hover:border-emerald-300 hover:bg-white transition"
                 >
                   <div className="w-28 text-xs font-bold text-slate-700">
-                    Billete ${denom}
+                    <div>Billete ${denom}</div>
+                    {prevUds !== undefined && prevUds > 0 && (
+                      <span className="text-[10px] text-slate-400 font-medium block">
+                        Ayer: {prevUds} uds
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-center gap-2 shrink-0">
@@ -166,7 +221,7 @@ export const CashDenominationsInput: React.FC<Props> = ({
                       step="1"
                       disabled={readOnly}
                       value={count === 0 ? '' : count}
-                      placeholder="0"
+                      placeholder={prevUds !== undefined && prevUds > 0 ? String(prevUds) : '0'}
                       onChange={(e) => handleUSDChange(denom, e.target.value)}
                       className="w-20 h-9 text-center font-mono font-black text-slate-900 bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-50 text-base shadow-sm shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
