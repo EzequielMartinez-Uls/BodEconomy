@@ -123,5 +123,7 @@ ipcMain.handle('updater:check', async () => {
 });
 
 ipcMain.handle('updater:install', () => {
-  autoUpdater.quitAndInstall();
+  // isSilent: true (no muestra ventanas ni preguntas de instalación)
+  // isForceRunAfter: true (vuelve a abrir la aplicación automáticamente)
+  autoUpdater.quitAndInstall(true, true);
 });
