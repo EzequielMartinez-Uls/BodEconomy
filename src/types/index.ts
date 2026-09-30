@@ -195,6 +195,8 @@ export interface AuditLogEntry {
   details: string;
 }
 
+export * from './payroll';
+
 export interface AppState {
   currentShift: CashShift | null;
   shiftHistory: CashShift[];
@@ -209,6 +211,12 @@ export interface AppState {
   activeAdminName: string;
   availableAdmins: string[];
   expenseCategories: string[];
+  
+  // Módulo de Nóminas y Planillas
+  payrollEmployees: import('./payroll').PayrollEmployee[];
+  payrollIncidents: import('./payroll').PayrollIncident[];
+  payrollHistory: import('./payroll').BiweeklyPayrollRecord[];
+  bodegonPassUrl?: string;
 }
 
 export interface DailyEarningsSummary {

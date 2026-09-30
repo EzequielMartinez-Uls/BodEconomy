@@ -7,6 +7,7 @@ import { GeneralCashView } from './components/GeneralCashView';
 import { PettyCashView } from './components/PettyCashView';
 import { TablewareView } from './components/TablewareView';
 import { DailyEarningsView } from './components/DailyEarningsView';
+import { PayrollView } from './components/payroll/PayrollView';
 import { OpeningModal } from './components/OpeningModal';
 import { ClosingModal } from './components/ClosingModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -37,7 +38,8 @@ import {
 
 export function App() {
   const [state, setState] = useState<AppState>(loadState);
-  const [activeTab, setActiveTab] = useState<'generalCash' | 'pettyCash' | 'tableware' | 'dailyEarnings'>('generalCash');
+  const [activeTab, setActiveTab] = useState<'generalCash' | 'pettyCash' | 'tableware' | 'dailyEarnings' | 'payroll'>('generalCash');
+  const [payrollSubTab, setPayrollSubTab] = useState<'quincenal' | 'especial' | 'incidencias'>('quincenal');
 
 
   // Modals
@@ -999,6 +1001,8 @@ export function App() {
         state={state}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        payrollSubTab={payrollSubTab}
+        onPayrollSubTabChange={setPayrollSubTab}
         onOpenSettingsClick={() => setSettingsModalOpen(true)}
         onChangeExchangeRateClick={() => setExchangeRateModalOpen(true)}
         onSelectAdminClick={() => setAdminSelectModalOpen(true)}
@@ -1052,6 +1056,15 @@ export function App() {
                 state={state}
                 onUpdateShiftSales={handleUpdateShiftSales}
                 onNavigateToTab={setActiveTab}
+              />
+            )}
+
+            {activeTab === 'payroll' && (
+              <PayrollView
+                state={state}
+                onUpdateState={setState}
+                subTab={payrollSubTab}
+                onSubTabChange={setPayrollSubTab}
               />
             )}
           </div>

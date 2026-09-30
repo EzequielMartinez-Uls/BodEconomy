@@ -75,6 +75,130 @@ export const DEFAULT_EXPENSE_CATEGORIES = [
   'OTROS',
 ];
 
+import { PayrollEmployee } from '../types/payroll';
+
+export const DEFAULT_PAYROLL_EMPLOYEES: PayrollEmployee[] = [
+  {
+    id: 'emp-1',
+    name: 'Uriel Zamora',
+    role: 'Jefe de Cocina',
+    baseSalaryBiweekly: 6000,
+    isInsuredINSS: true,
+    nss: '32911303',
+    hireDate: '2025-11-01',
+    reportedSalaryINSS: 5675.04,
+    isActive: true,
+  },
+  {
+    id: 'emp-2',
+    name: 'Eddy Martinez Blanco',
+    role: 'Administración',
+    baseSalaryBiweekly: 6000,
+    isInsuredINSS: false,
+    isActive: true,
+  },
+  {
+    id: 'emp-3',
+    name: 'Martha Melendez',
+    role: 'Asist. Cocina',
+    baseSalaryBiweekly: 4500,
+    isInsuredINSS: true,
+    nss: '46236436',
+    hireDate: '2025-11-01',
+    reportedSalaryINSS: 5675.04,
+    isActive: true,
+  },
+  {
+    id: 'emp-4',
+    name: 'Eliezer Ideaquez',
+    role: 'Mesero',
+    baseSalaryBiweekly: 4500,
+    isInsuredINSS: false,
+    isActive: true,
+  },
+  {
+    id: 'emp-5',
+    name: 'Marlon Camacho',
+    role: 'Mesero',
+    baseSalaryBiweekly: 4500,
+    isInsuredINSS: true,
+    nss: '29694792',
+    hireDate: '2025-11-01',
+    reportedSalaryINSS: 5675.04,
+    isActive: true,
+  },
+  {
+    id: 'emp-6',
+    name: 'Julisa Ramirez',
+    role: 'Asist. Cocina',
+    baseSalaryBiweekly: 4500,
+    isInsuredINSS: true,
+    nss: '19915977',
+    hireDate: '2025-11-01',
+    reportedSalaryINSS: 5675.04,
+    isActive: true,
+  },
+  {
+    id: 'emp-7',
+    name: 'Stephanie Padilla',
+    role: 'Mesera',
+    baseSalaryBiweekly: 4500,
+    isInsuredINSS: true,
+    nss: '35137463',
+    hireDate: '2025-11-01',
+    reportedSalaryINSS: 5675.04,
+    isActive: true,
+  },
+  {
+    id: 'emp-8',
+    name: 'David Quintero Tellez',
+    role: 'Cocinero',
+    baseSalaryBiweekly: 5000,
+    isInsuredINSS: false,
+    isActive: true,
+  },
+  {
+    id: 'emp-9',
+    name: 'Nelly Delgado',
+    role: 'Cocinera',
+    baseSalaryBiweekly: 5000,
+    isInsuredINSS: false,
+    isActive: true,
+  },
+  {
+    id: 'emp-10',
+    name: 'Heiling Perez',
+    role: 'Asist. Cocina',
+    baseSalaryBiweekly: 4500,
+    isInsuredINSS: false,
+    isActive: true,
+  },
+  {
+    id: 'emp-11',
+    name: 'Yhaira Rivas',
+    role: 'Limpieza',
+    baseSalaryBiweekly: 4000,
+    isInsuredINSS: false,
+    isActive: true,
+  },
+  {
+    id: 'emp-12',
+    name: 'Lea Calvo',
+    role: 'Lavanderia',
+    baseSalaryBiweekly: 4000,
+    isInsuredINSS: false,
+    isActive: true,
+  },
+  {
+    id: 'emp-13',
+    name: 'Oscar Vasquez',
+    role: 'Bartender',
+    baseSalaryBiweekly: 4500,
+    isInsuredINSS: false,
+    isActive: true,
+  },
+];
+
 export const INITIAL_STATE: AppState = {
   currentShift: null,
   shiftHistory: [],
@@ -97,6 +221,12 @@ export const INITIAL_STATE: AppState = {
   activeAdminName: 'Eddy',
   availableAdmins: ['Eddy', 'Xiomara', 'Ezequiel', 'Snyder'],
   expenseCategories: DEFAULT_EXPENSE_CATEGORIES,
+  
+  // Nóminas y Planillas
+  payrollEmployees: DEFAULT_PAYROLL_EMPLOYEES,
+  payrollIncidents: [],
+  payrollHistory: [],
+  bodegonPassUrl: 'http://localhost:8000',
 };
 
 export function loadState(): AppState {
@@ -118,6 +248,20 @@ export function loadState(): AppState {
     // Categorías de gastos editables
     if (!loaded.expenseCategories || loaded.expenseCategories.length === 0) {
       loaded.expenseCategories = [...DEFAULT_EXPENSE_CATEGORIES];
+    }
+
+    // Saneamiento y carga por defecto de Nómina y Planillas
+    if (!loaded.payrollEmployees || loaded.payrollEmployees.length === 0) {
+      loaded.payrollEmployees = [...DEFAULT_PAYROLL_EMPLOYEES];
+    }
+    if (!loaded.payrollIncidents) {
+      loaded.payrollIncidents = [];
+    }
+    if (!loaded.payrollHistory) {
+      loaded.payrollHistory = [];
+    }
+    if (!loaded.bodegonPassUrl) {
+      loaded.bodegonPassUrl = 'http://localhost:8000';
     }
 
     // Limpiar inventario residual de menaje si existía en versiones anteriores

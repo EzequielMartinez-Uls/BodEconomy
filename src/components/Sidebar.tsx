@@ -10,12 +10,20 @@ import {
   User,
   ShieldCheck,
   TrendingUp,
+  Users,
+  ChevronDown,
+  ChevronRight,
+  Calendar,
+  Building2,
+  UtensilsCrossed,
 } from 'lucide-react';
 
 interface Props {
   state: AppState;
-  activeTab: 'generalCash' | 'pettyCash' | 'tableware' | 'dailyEarnings';
-  onTabChange: (tab: 'generalCash' | 'pettyCash' | 'tableware' | 'dailyEarnings') => void;
+  activeTab: 'generalCash' | 'pettyCash' | 'tableware' | 'dailyEarnings' | 'payroll';
+  onTabChange: (tab: 'generalCash' | 'pettyCash' | 'tableware' | 'dailyEarnings' | 'payroll') => void;
+  payrollSubTab?: 'quincenal' | 'especial' | 'incidencias';
+  onPayrollSubTabChange?: (subTab: 'quincenal' | 'especial' | 'incidencias') => void;
   onOpenSettingsClick: () => void;
   onChangeExchangeRateClick: () => void;
   onSelectAdminClick: () => void;
@@ -25,13 +33,20 @@ export const Sidebar: React.FC<Props> = ({
   state,
   activeTab,
   onTabChange,
+  payrollSubTab = 'quincenal',
+  onPayrollSubTabChange,
   onOpenSettingsClick,
   onChangeExchangeRateClick,
   onSelectAdminClick,
 }) => {
   const isShiftOpen = state.currentShift?.status === 'OPEN';
-  const isPettyCashLow = state.pettyCashBalance < 2000;
-  const [appVersion, setAppVersion] = useState('v1.0.10');
+  const [payrollExpanded, setPayrollExpanded] = useState(activeTab === 'payroll');
+
+  useEffect(() => {
+    if (activeTab === 'payroll') {
+      setPayrollExpanded(true);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (window.electronAPI?.getVersion) {
@@ -181,6 +196,106 @@ export const Sidebar: React.FC<Props> = ({
               Día a Día
             </span>
           </button>
+
+          {/* Módulo 4: Nóminas & Planillas (Desplegable con Submenú) */}
+          <div className="pt-1">
+            <button
+              onClick={() => {
+                if (activeTab !== 'payroll') {
+                  onTabChange('payroll');
+                  setPayrollExpanded(true);
+                } else {
+                  setPayrollExpanded((prev) => !prev);
+                }
+              }}
+              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer ${
+                activeTab === 'payroll'
+                  ? 'bg-[#1c6856] text-white shadow-md shadow-[#1c6856]/25 border border-[#154f42]'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Users className="w-4 h-4" />
+                <span>Nóminas & Planillas</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span
+                  className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${
+                    activeTab === 'payroll'
+                      ? 'bg-white/25 text-white'
+                      : 'bg-emerald-50 text-[#1c6856]'
+                  }`}
+                >
+                  {(state.payrollEmployees || []).length}
+                </span>
+                {payrollExpanded ? (
+                  <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+                ) : (
+                  <ChevronRight className="w-3.5 h-3.5 opacity-70" />
+                )}
+              </div>
+            </button>
+
+            {/* Submenú Desplegable */}
+            {payrollExpanded && (
+              <div className="ml-4 pl-3 border-l-2 border-slate-200/80 mt-1.5 space-y-1">
+                {/* Submenú 1: Planilla Quincenal */}
+                <button
+                  onClick={() => {
+                    onTabChange('payroll');
+                    onPayrollSubTabChange?.('quincenal');
+                  }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition cursor-pointer text-left ${
+                    activeTab === 'payroll' && payrollSubTab === 'quincenal'
+                      ? 'bg-emerald-50 text-[#1c6856] font-bold shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <Calendar className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">Planilla Quincenal</span>
+                </button>
+
+                {/* Submenú 2: Planilla Especial INSS */}
+                <button
+                  onClick={() => {
+                    onTabChange('payroll');
+                    onPayrollSubTabChange?.('especial');
+                  }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition cursor-pointer text-left ${
+                    activeTab === 'payroll' && payrollSubTab === 'especial'
+                      ? 'bg-indigo-50 text-indigo-700 font-bold shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">Planilla Especial (INSS)</span>
+                </button>
+
+                {/* Submenú 3: Incidencias & Vajilla */}
+                <button
+                  onClick={() => {
+                    onTabChange('payroll');
+                    onPayrollSubTabChange?.('incidencias');
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition cursor-pointer text-left ${
+                    activeTab === 'payroll' && payrollSubTab === 'incidencias'
+                      ? 'bg-amber-50 text-amber-800 font-bold shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 truncate">
+                    <UtensilsCrossed className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">Incidencias & Vajilla</span>
+                  </div>
+                  {(state.payrollIncidents || []).length > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[9px] font-black">
+                      {state.payrollIncidents.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
         </nav>
       </div>
 
