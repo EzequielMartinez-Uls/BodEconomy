@@ -18,6 +18,10 @@ export const PayrollEmployeesModal: React.FC<Props> = ({
   const [list, setList] = useState<PayrollEmployee[]>(employees);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    setList(employees);
+  }, [employees, isOpen]);
+
   // Nuevo empleado form
   const [newName, setNewName] = useState('');
   const [newRole, setNewRole] = useState('');

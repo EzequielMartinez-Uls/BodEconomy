@@ -80,7 +80,7 @@ import { PayrollEmployee } from '../types/payroll';
 export const DEFAULT_PAYROLL_EMPLOYEES: PayrollEmployee[] = [
   {
     id: 'emp-1',
-    name: 'Uriel Zamora',
+    name: 'Uriel de Jesús Zamora Salgado',
     role: 'Jefe de Cocina',
     baseSalaryBiweekly: 6000,
     isInsuredINSS: true,
@@ -91,7 +91,7 @@ export const DEFAULT_PAYROLL_EMPLOYEES: PayrollEmployee[] = [
   },
   {
     id: 'emp-2',
-    name: 'Eddy Martinez Blanco',
+    name: 'Eddy Bernardo Martínez Blanco',
     role: 'Administración',
     baseSalaryBiweekly: 6000,
     isInsuredINSS: false,
@@ -99,8 +99,8 @@ export const DEFAULT_PAYROLL_EMPLOYEES: PayrollEmployee[] = [
   },
   {
     id: 'emp-3',
-    name: 'Martha Melendez',
-    role: 'Asist. Cocina',
+    name: 'Martha Patricia Meléndez',
+    role: 'Asistente de Cocina',
     baseSalaryBiweekly: 4500,
     isInsuredINSS: true,
     nss: '46236436',
@@ -110,7 +110,7 @@ export const DEFAULT_PAYROLL_EMPLOYEES: PayrollEmployee[] = [
   },
   {
     id: 'emp-4',
-    name: 'Eliezer Ideaquez',
+    name: 'Eliezer Ideaquez Ordoñez',
     role: 'Mesero',
     baseSalaryBiweekly: 4500,
     isInsuredINSS: false,
@@ -118,8 +118,8 @@ export const DEFAULT_PAYROLL_EMPLOYEES: PayrollEmployee[] = [
   },
   {
     id: 'emp-5',
-    name: 'Marlon Camacho',
-    role: 'Mesero',
+    name: 'Marlon Joseph Narváez Camacho',
+    role: 'Atención al Cliente',
     baseSalaryBiweekly: 4500,
     isInsuredINSS: true,
     nss: '29694792',
@@ -129,8 +129,8 @@ export const DEFAULT_PAYROLL_EMPLOYEES: PayrollEmployee[] = [
   },
   {
     id: 'emp-6',
-    name: 'Julisa Ramirez',
-    role: 'Asist. Cocina',
+    name: 'Julissa Lucero Ramírez Hernández',
+    role: 'Asistente de Cocina',
     baseSalaryBiweekly: 4500,
     isInsuredINSS: true,
     nss: '19915977',
@@ -140,8 +140,8 @@ export const DEFAULT_PAYROLL_EMPLOYEES: PayrollEmployee[] = [
   },
   {
     id: 'emp-7',
-    name: 'Stephanie Padilla',
-    role: 'Mesera',
+    name: 'Estefani de los Ángeles Padilla Urey',
+    role: 'Atención al Cliente',
     baseSalaryBiweekly: 4500,
     isInsuredINSS: true,
     nss: '35137463',
@@ -151,7 +151,7 @@ export const DEFAULT_PAYROLL_EMPLOYEES: PayrollEmployee[] = [
   },
   {
     id: 'emp-8',
-    name: 'David Quintero Tellez',
+    name: 'David Quintero Téllez',
     role: 'Cocinero',
     baseSalaryBiweekly: 5000,
     isInsuredINSS: false,
@@ -167,8 +167,8 @@ export const DEFAULT_PAYROLL_EMPLOYEES: PayrollEmployee[] = [
   },
   {
     id: 'emp-10',
-    name: 'Heiling Perez',
-    role: 'Asist. Cocina',
+    name: 'Heiling Pérez',
+    role: 'Asistente de Cocina',
     baseSalaryBiweekly: 4500,
     isInsuredINSS: false,
     isActive: true,
@@ -184,14 +184,14 @@ export const DEFAULT_PAYROLL_EMPLOYEES: PayrollEmployee[] = [
   {
     id: 'emp-12',
     name: 'Lea Calvo',
-    role: 'Lavanderia',
+    role: 'Lavandería',
     baseSalaryBiweekly: 4000,
     isInsuredINSS: false,
     isActive: true,
   },
   {
     id: 'emp-13',
-    name: 'Oscar Vasquez',
+    name: 'Oscar Vásquez Omeany',
     role: 'Bartender',
     baseSalaryBiweekly: 4500,
     isInsuredINSS: false,
@@ -226,7 +226,7 @@ export const INITIAL_STATE: AppState = {
   payrollEmployees: DEFAULT_PAYROLL_EMPLOYEES,
   payrollIncidents: [],
   payrollHistory: [],
-  bodegonPassUrl: 'http://localhost:8000',
+  bodegonPassUrl: 'https://asistenciabodegon-api.onrender.com',
 };
 
 export function loadState(): AppState {
@@ -250,18 +250,102 @@ export function loadState(): AppState {
       loaded.expenseCategories = [...DEFAULT_EXPENSE_CATEGORIES];
     }
 
-    // Saneamiento y carga por defecto de Nómina y Planillas
-    if (!loaded.payrollEmployees || loaded.payrollEmployees.length === 0) {
-      loaded.payrollEmployees = [...DEFAULT_PAYROLL_EMPLOYEES];
+    // Mapeo para actualizar nombres antiguos a los oficiales completos
+    const normalizeStr = (s: string) =>
+      s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+    // Saneamiento estricto de Nómina y Planillas:
+    // 1. Descartar Maverick y Sandor (ya no forman parte del equipo)
+    const isExcluded = (name: string) => {
+      const n = normalizeStr(name);
+      return n.includes('maverick') || n.includes('sandor');
+    };
+
+    let emps = (loaded.payrollEmployees || []).filter((e) => !isExcluded(e.name));
+
+    // 2. Actualizar nombres existentes a sus nombres oficiales completos
+    emps = emps.map((emp) => {
+      const match = DEFAULT_PAYROLL_EMPLOYEES.find((def) => {
+        const dNorm = normalizeStr(def.name);
+        const eNorm = normalizeStr(emp.name);
+        return dNorm === eNorm || dNorm.includes(eNorm) || eNorm.includes(dNorm);
+      });
+      if (match) {
+        return {
+          ...emp,
+          name: match.name,
+          role: match.role,
+          isInsuredINSS: match.isInsuredINSS,
+          nss: match.nss ?? emp.nss,
+          hireDate: match.hireDate ?? emp.hireDate,
+          reportedSalaryINSS: match.reportedSalaryINSS ?? emp.reportedSalaryINSS,
+        };
+      }
+      return emp;
+    });
+
+    // 3. Si falta algún empleado de la plantilla oficial de 13 integrantes, agregarlo
+    for (const defEmp of DEFAULT_PAYROLL_EMPLOYEES) {
+      const exists = emps.some((e) => {
+        const dNorm = normalizeStr(defEmp.name);
+        const eNorm = normalizeStr(e.name);
+        return dNorm === eNorm || dNorm.includes(eNorm) || eNorm.includes(dNorm);
+      });
+      if (!exists) {
+        emps.push({ ...defEmp });
+      }
     }
+
+    loaded.payrollEmployees = emps;
+
     if (!loaded.payrollIncidents) {
       loaded.payrollIncidents = [];
     }
+
+    // 4. Limpiar historial de planillas (excluir Maverick y Sandor, actualizar nombres)
     if (!loaded.payrollHistory) {
       loaded.payrollHistory = [];
+    } else {
+      loaded.payrollHistory = loaded.payrollHistory.map((hist) => ({
+        ...hist,
+        rows: (hist.rows || [])
+          .filter((r) => !isExcluded(r.name))
+          .map((r) => {
+            const match = DEFAULT_PAYROLL_EMPLOYEES.find((d) => {
+              const dNorm = normalizeStr(d.name);
+              const rNorm = normalizeStr(r.name);
+              return dNorm === rNorm || dNorm.includes(rNorm) || rNorm.includes(dNorm);
+            });
+            return match ? { ...r, name: match.name, role: match.role } : r;
+          }),
+        specialRows: (hist.specialRows || [])
+          .filter((sr) => !isExcluded(sr.name))
+          .map((sr) => {
+            const match = DEFAULT_PAYROLL_EMPLOYEES.find((d) => {
+              const dNorm = normalizeStr(d.name);
+              const sNorm = normalizeStr(sr.name);
+              return dNorm === sNorm || dNorm.includes(sNorm) || sNorm.includes(dNorm);
+            });
+            return match
+              ? {
+                  ...sr,
+                  name: match.name,
+                  role: match.role,
+                  nss: match.nss || sr.nss,
+                  hireDate: match.hireDate || sr.hireDate,
+                }
+              : sr;
+          }),
+      }));
     }
-    if (!loaded.bodegonPassUrl) {
-      loaded.bodegonPassUrl = 'http://localhost:8000';
+
+    // 5. Configurar URL oficial de Bodegón Pass en Render
+    if (
+      !loaded.bodegonPassUrl ||
+      loaded.bodegonPassUrl.includes('localhost:8000') ||
+      loaded.bodegonPassUrl.includes('127.0.0.1:8000')
+    ) {
+      loaded.bodegonPassUrl = 'https://asistenciabodegon-api.onrender.com';
     }
 
     // Limpiar inventario residual de menaje si existía en versiones anteriores

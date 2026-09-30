@@ -18,7 +18,12 @@ import {
   printSpecialPayrollINSS,
 } from '../../services/payrollPrint';
 import { exportPayrollToExcel } from '../../services/payrollExcelExport';
-import { syncFromBodegonPass } from '../../services/bodegonPassSync';
+import {
+  syncFromBodegonPass,
+  matchEmployeeName,
+  testBodegonPassConnection,
+  DEFAULT_BODEGON_PASS_URL,
+} from '../../services/bodegonPassSync';
 import {
   Calendar,
   RefreshCw,
@@ -30,6 +35,9 @@ import {
   Building2,
   UtensilsCrossed,
   Save,
+  Settings,
+  Globe,
+  X,
 } from 'lucide-react';
 
 interface Props {
@@ -61,12 +69,25 @@ export const PayrollView: React.FC<Props> = ({
 
   // Modal de Empleados
   const [employeesModalOpen, setEmployeesModalOpen] = useState(false);
+  // Modal de Configuración de Bodegón Pass
+  const [passConfigOpen, setPassConfigOpen] = useState(false);
+  const [passUrlInput, setPassUrlInput] = useState(state.bodegonPassUrl || DEFAULT_BODEGON_PASS_URL);
+  const [testingPass, setTestingPass] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+
   // Dropdown de impresión
   const [printMenuOpen, setPrintMenuOpen] = useState(false);
   // Estado de sincronización
   const [syncing, setSyncing] = useState(false);
   const [syncNotice, setSyncNotice] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
+
+  // Sincronizar input de URL si cambia en el estado
+  useEffect(() => {
+    if (state.bodegonPassUrl) {
+      setPassUrlInput(state.bodegonPassUrl);
+    }
+  }, [state.bodegonPassUrl]);
 
   // ID del período actual
   const currentPeriodId = `${year}-${String(month).padStart(2, '0')}-${period}`;
@@ -98,8 +119,36 @@ export const PayrollView: React.FC<Props> = ({
     const existing = (state.payrollHistory || []).find((h) => h.id === currentPeriodId);
 
     if (existing && existing.rows && existing.rows.length > 0) {
-      setRows(existing.rows);
-      setSpecialRows(existing.specialRows || []);
+      // Saneamiento estricto de filas del historial: descartar Maverick/Sandor y sincronizar nombres oficiales
+      const isExcluded = (n: string) => {
+        const s = (n || '').toLowerCase();
+        return s.includes('maverick') || s.includes('sandor');
+      };
+
+      const sanitizedRows = existing.rows
+        .filter((r) => !isExcluded(r.name))
+        .map((r) => {
+          const emp = (state.payrollEmployees || []).find((e) => matchEmployeeName(e.name, r.name));
+          return emp ? { ...r, name: emp.name, role: emp.role } : r;
+        });
+
+      const sanitizedSpecialRows = (existing.specialRows || [])
+        .filter((sr) => !isExcluded(sr.name))
+        .map((sr) => {
+          const emp = (state.payrollEmployees || []).find((e) => matchEmployeeName(e.name, sr.name));
+          return emp
+            ? {
+                ...sr,
+                name: emp.name,
+                role: emp.role,
+                nss: emp.nss || sr.nss,
+                hireDate: emp.hireDate || sr.hireDate,
+              }
+            : sr;
+        });
+
+      setRows(sanitizedRows);
+      setSpecialRows(sanitizedSpecialRows);
     } else {
       // Generar filas nuevas calculando incidencias de la bitácora en ese rango
       const activeEmps = (state.payrollEmployees || []).filter((e) => e.isActive);
@@ -226,45 +275,74 @@ export const PayrollView: React.FC<Props> = ({
   // Sincronizar automáticamente con Bodegón Pass
   const handleSyncBodegonPass = async () => {
     setSyncing(true);
-    setSyncNotice('Conectando con Bodegón Pass para extraer horas extras y feriados...');
+    const targetUrl = state.bodegonPassUrl || DEFAULT_BODEGON_PASS_URL;
+    setSyncNotice(`Conectando con Bodegón Pass en ${targetUrl}...`);
 
     try {
-      const result = await syncFromBodegonPass(state.bodegonPassUrl, startDate, endDate);
+      const result = await syncFromBodegonPass(targetUrl, startDate, endDate);
 
       if (result.success) {
         // Inyectar horas extras y feriados en las filas correspondientes
-        setRows((prev) =>
-          prev.map((row) => {
-            const empName = row.name.trim().toLowerCase();
-            // Buscar coincidencias
-            let otHours = row.overtimeHours;
-            let otAmount = row.overtimeAmount;
-            let holCount = row.holidaysCount;
+        const updatedRows = rows.map((row) => {
+          let otHours = row.overtimeHours;
+          let otAmount = row.overtimeAmount;
+          let holCount = row.holidaysCount;
 
-            for (const [passName, ot] of Object.entries(result.overtimeByEmployee)) {
-              if (empName.includes(passName.toLowerCase()) || passName.toLowerCase().includes(empName)) {
-                otHours = ot.hours;
-                otAmount = ot.amount > 0 ? ot.amount : parseFloat(((row.baseSalary / 15 / 8 * 2) * ot.hours).toFixed(2));
-              }
+          for (const [passName, ot] of Object.entries(result.overtimeByEmployee)) {
+            if (matchEmployeeName(row.name, passName)) {
+              otHours = ot.hours;
+              otAmount = ot.amount > 0 ? ot.amount : parseFloat(((row.baseSalary / 15 / 8 * 2) * ot.hours).toFixed(2));
             }
+          }
 
-            for (const [passName, hol] of Object.entries(result.holidaysByEmployee)) {
-              if (empName.includes(passName.toLowerCase()) || passName.toLowerCase().includes(empName)) {
-                holCount = hol.count;
-              }
+          for (const [passName, hol] of Object.entries(result.holidaysByEmployee)) {
+            if (matchEmployeeName(row.name, passName)) {
+              holCount = hol.count;
             }
+          }
 
-            const holAmount = parseFloat(((row.baseSalary * 2 / 30) * holCount).toFixed(2));
-            const earnings = row.baseSalary + otAmount + holAmount + row.bonuses;
-            const deductions = row.loanDeduction + row.restaurantServiceDeduction + row.breakageDeduction;
+          const holAmount = parseFloat(((row.baseSalary * 2 / 30) * holCount).toFixed(2));
+          const earnings = row.baseSalary + otAmount + holAmount + row.bonuses;
+          const deductions = row.loanDeduction + row.restaurantServiceDeduction + row.breakageDeduction;
+
+          return {
+            ...row,
+            overtimeHours: otHours,
+            overtimeAmount: otAmount,
+            holidaysCount: holCount,
+            holidaysAmount: holAmount,
+            totalPaid: parseFloat((earnings - deductions).toFixed(2)),
+          };
+        });
+
+        setRows(updatedRows);
+
+        // Actualizar planilla especial INSS en caso de horas extras o feriados para asegurados
+        setSpecialRows((prevSpecial) =>
+          prevSpecial.map((sr) => {
+            const matchRow = updatedRows.find((r) => matchEmployeeName(r.name, sr.name));
+            if (!matchRow) return sr;
+
+            const extraAmt = (matchRow.overtimeAmount || 0) + (matchRow.holidaysAmount || 0);
+            const sal = sr.reportedSalary;
+            const inssLab = parseFloat(((sal + extraAmt) * 0.07).toFixed(2));
+            const inssPat = parseFloat(((sal + extraAmt) * 0.215).toFixed(2));
+            const inatec = parseFloat(((sal + extraAmt) * 0.02).toFixed(2));
+            const cotiz = parseFloat((inssLab + inssPat + inatec).toFixed(2));
+            const aguinaldo = parseFloat(((sal + extraAmt) / 12).toFixed(2));
+            const cost = parseFloat(((sal + extraAmt) + aguinaldo + inssPat + inatec).toFixed(2));
+            const net = parseFloat(((sal + extraAmt) - inssLab).toFixed(2));
 
             return {
-              ...row,
-              overtimeHours: otHours,
-              overtimeAmount: otAmount,
-              holidaysCount: holCount,
-              holidaysAmount: holAmount,
-              totalPaid: parseFloat((earnings - deductions).toFixed(2)),
+              ...sr,
+              extraHolidayAmount: extraAmt,
+              aguinaldoProvision: aguinaldo,
+              inssLaboral: inssLab,
+              inssPatronal: inssPat,
+              inatecPatronal: inatec,
+              totalCotizacion: cotiz,
+              totalCostBodegon: cost,
+              netPayAsegurado: net,
             };
           })
         );
@@ -277,7 +355,7 @@ export const PayrollView: React.FC<Props> = ({
       setSyncNotice(`⚠️ Error en la sincronización: ${err?.message || 'Error de red'}`);
     } finally {
       setSyncing(false);
-      setTimeout(() => setSyncNotice(null), 6000);
+      setTimeout(() => setSyncNotice(null), 7000);
     }
   };
 
@@ -422,15 +500,27 @@ export const PayrollView: React.FC<Props> = ({
         {/* Botones de Acción */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Sincronizar Bodegón Pass */}
-          <button
-            onClick={handleSyncBodegonPass}
-            disabled={syncing}
-            className="px-3 py-2 bg-emerald-50 text-[#1c6856] hover:bg-emerald-100 border border-emerald-200/80 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-            title="Conectar con Bodegón Pass para importar horas extras y feriados"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
-            <span>{syncing ? 'Sincronizando...' : 'Bodegón Pass'}</span>
-          </button>
+          <div className="flex items-center">
+            <button
+              onClick={handleSyncBodegonPass}
+              disabled={syncing}
+              className="px-3 py-2 bg-emerald-50 text-[#1c6856] hover:bg-emerald-100 border border-emerald-200/80 rounded-l-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+              title="Conectar con Bodegón Pass para importar horas extras y feriados"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
+              <span>{syncing ? 'Sincronizando...' : 'Bodegón Pass'}</span>
+            </button>
+            <button
+              onClick={() => {
+                setTestResult(null);
+                setPassConfigOpen(true);
+              }}
+              className="px-2 py-2 bg-emerald-50 text-[#1c6856] hover:bg-emerald-100 border-y border-r border-emerald-200/80 rounded-r-xl text-xs font-bold transition flex items-center cursor-pointer"
+              title="Configurar servidor de Bodegón Pass"
+            >
+              <Settings className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
           {/* Guardar Quincena */}
           <button
@@ -554,6 +644,103 @@ export const PayrollView: React.FC<Props> = ({
         employees={state.payrollEmployees || []}
         onSaveEmployees={handleSaveEmployees}
       />
+
+      {/* Modal de Configuración del Servidor Bodegón Pass */}
+      {passConfigOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <Globe className="w-5 h-5 text-[#1c6856]" />
+                <h3 className="font-bold text-slate-900 text-sm">Servidor de Bodegón Pass</h3>
+              </div>
+              <button
+                onClick={() => setPassConfigOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  URL del Servidor API (Kiosco / Asistencia)
+                </label>
+                <input
+                  type="text"
+                  value={passUrlInput}
+                  onChange={(e) => setPassUrlInput(e.target.value)}
+                  placeholder="https://asistenciabodegon-api.onrender.com"
+                  className="w-full text-xs font-mono border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus:bg-white focus:border-[#1c6856] outline-hidden"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  URL oficial en la nube: <code className="text-[#1c6856] font-semibold">{DEFAULT_BODEGON_PASS_URL}</code>
+                </p>
+              </div>
+
+              {testResult && (
+                <div
+                  className={`p-3 rounded-xl text-xs font-medium ${
+                    testResult.ok
+                      ? 'bg-emerald-50 text-emerald-900 border border-emerald-200'
+                      : 'bg-red-50 text-red-900 border border-red-200'
+                  }`}
+                >
+                  {testResult.ok ? '✅ ' : '❌ '}
+                  {testResult.message}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setTestingPass(true);
+                    setTestResult(null);
+                    const res = await testBodegonPassConnection(passUrlInput);
+                    setTestResult(res);
+                    setTestingPass(false);
+                  }}
+                  disabled={testingPass}
+                  className="px-3 py-1.5 text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <RefreshCw className={`w-3 h-3 ${testingPass ? 'animate-spin' : ''}`} />
+                  <span>{testingPass ? 'Probando...' : 'Probar Conexión'}</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPassUrlInput(DEFAULT_BODEGON_PASS_URL);
+                    }}
+                    className="px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-700 font-semibold cursor-pointer"
+                  >
+                    Restablecer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const clean = passUrlInput.trim().replace(/\/+$/, '') || DEFAULT_BODEGON_PASS_URL;
+                      onUpdateState((prev) => ({
+                        ...prev,
+                        bodegonPassUrl: clean,
+                      }));
+                      setPassConfigOpen(false);
+                      setSyncNotice(`URL de Bodegón Pass guardada: ${clean}`);
+                      setTimeout(() => setSyncNotice(null), 4000);
+                    }}
+                    className="px-4 py-1.5 text-xs font-bold bg-[#1c6856] hover:bg-[#155243] text-white rounded-lg transition cursor-pointer shadow-xs"
+                  >
+                    Guardar URL
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
