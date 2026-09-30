@@ -182,6 +182,9 @@ export async function exportShiftToExcel(shift: CashShift, state: AppState): Pro
   addDataRow('Tarjetas Datafast Banco LAFISE', 'POS LAFISE', cardsLafise, totalGross > 0 ? `${((cardsLafise / totalGross) * 100).toFixed(1)}%` : '0%');
   addDataRow('SUBTOTAL TODAS LAS TARJETAS POS', 'Consolidado Datafast', totalCards, totalGross > 0 ? `${((totalCards / totalGross) * 100).toFixed(1)}%` : '0%', true);
   addDataRow('Ventas por Aplicación PedidosYa', 'Delivery externo digital', salesPY, totalGross > 0 ? `${((salesPY / totalGross) * 100).toFixed(1)}%` : '0%');
+  if (shift.otherIncome && shift.otherIncome > 0) {
+    addDataRow('Otros Ingresos', shift.otherIncomeNotes || 'Otros ingresos del día', shift.otherIncome, totalGross > 0 ? `${((shift.otherIncome / totalGross) * 100).toFixed(1)}%` : '0%');
+  }
   addDataRow('TOTAL VENTAS BRUTAS DEL DÍA', 'Ingresos Operativos Totales', totalGross, '100%', true, true);
   rowIdx++;
 
@@ -990,6 +993,9 @@ export async function exportDailyEarningsToExcel(
   addRow('Tarjetas POS Datafast — Banco LAFISE', 'Terminal LAFISE', summary.cardsLafise, pctOf(summary.cardsLafise));
   addRow('SUBTOTAL TODAS LAS TARJETAS POS', 'Consolidado Datafast', summary.totalCards, pctOf(summary.totalCards), '', true, false, true);
   addRow('Ventas Digitales PedidosYa', 'Delivery externo aplicativo', summary.pedidosYaSales, pctOf(summary.pedidosYaSales));
+  if (summary.otherIncomeSales && summary.otherIncomeSales > 0) {
+    addRow('Otros Ingresos', 'Ingresos adicionales de la jornada', summary.otherIncomeSales, pctOf(summary.otherIncomeSales));
+  }
   addRow('TOTAL INGRESOS OPERATIVOS BRUTOS', 'Facturación Total del Día', totVentas, '100.0%', '', true, true);
   rIdx++;
 
@@ -1209,24 +1215,25 @@ export async function exportMonthlyEarningsToExcel(
     { width: 14 }, // H: Lafise
     { width: 16 }, // I: Total Tarjetas
     { width: 14 }, // J: PedidosYa
-    { width: 18 }, // K: Total Ventas
-    { width: 16 }, // L: Gastos Efectivo
-    { width: 16 }, // M: Transferencias
-    { width: 18 }, // N: Total Gastos
-    { width: 18 }, // O: Ganancia Neta
-    { width: 12 }, // P: Margen %
-    { width: 14 }, // Q: Propinas
-    { width: 18 }, // R: Responsable
+    { width: 14 }, // K: Otros Ingresos
+    { width: 18 }, // L: Total Ventas
+    { width: 16 }, // M: Gastos Efectivo
+    { width: 16 }, // N: Transferencias
+    { width: 18 }, // O: Total Gastos
+    { width: 18 }, // P: Ganancia Neta
+    { width: 12 }, // Q: Margen %
+    { width: 14 }, // R: Propinas
+    { width: 18 }, // S: Responsable
   ];
 
-  ws.mergeCells('A1:R2');
+  ws.mergeCells('A1:S2');
   const t = ws.getCell('A1');
   t.value = `RESTAURANTE EL BODEGÓN — CONSOLIDADO DE INGRESOS, GASTOS Y RENDIMIENTO OPERATIVO`;
   t.font = { name: FONT_NAME, size: 13, bold: true, color: { argb: COLOR_WHITE } };
   t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_BRAND_GREEN } };
   t.alignment = { horizontal: 'center', vertical: 'middle' };
 
-  ws.mergeCells('A3:R3');
+  ws.mergeCells('A3:S3');
   const sub = ws.getCell('A3');
   sub.value = `INFORME AUDITADO • TOTAL DE JORNADAS CONSOLIDADAS: ${summaries.length} • GENERADO EL ${getLocalTodayStr()}`;
   sub.font = { name: FONT_NAME, size: 9.5, bold: true, color: { argb: COLOR_WHITE } };
@@ -1244,6 +1251,7 @@ export async function exportMonthlyEarningsToExcel(
     'POS LAFISE',
     'Total Tarjetas',
     'PedidosYa',
+    'Otros Ingresos',
     'VENTA BRUTA TOTAL',
     'Compras Efectivo',
     'Transferencias',
@@ -1260,7 +1268,7 @@ export async function exportMonthlyEarningsToExcel(
     c.value = h;
     c.font = { name: FONT_NAME, size: 9.5, bold: true, color: { argb: COLOR_WHITE } };
     c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_HEADER_SLATE } };
-    c.alignment = { horizontal: i >= 3 && i <= 16 ? 'right' : 'center', vertical: 'middle' };
+    c.alignment = { horizontal: i >= 3 && i <= 17 ? 'right' : 'center', vertical: 'middle' };
   });
   hRow.height = 24;
 
@@ -1272,6 +1280,7 @@ export async function exportMonthlyEarningsToExcel(
   let sumLafise = 0;
   let sumCards = 0;
   let sumPY = 0;
+  let sumOther = 0;
   let sumGross = 0;
   let sumPetty = 0;
   let sumTransf = 0;
@@ -1291,6 +1300,7 @@ export async function exportMonthlyEarningsToExcel(
     sumLafise += s.cardsLafise || 0;
     sumCards += s.totalCards || 0;
     sumPY += s.pedidosYaSales || 0;
+    sumOther += s.otherIncomeSales || 0;
     sumGross += s.totalGrossSales || 0;
     sumPetty += s.pettyCashExpenses || 0;
     sumTransf += s.transfersPaid || 0;
@@ -1310,21 +1320,22 @@ export async function exportMonthlyEarningsToExcel(
     r.getCell(8).value = s.cardsLafise;
     r.getCell(9).value = s.totalCards;
     r.getCell(10).value = s.pedidosYaSales;
-    r.getCell(11).value = s.totalGrossSales;
-    r.getCell(12).value = s.pettyCashExpenses;
-    r.getCell(13).value = s.transfersPaid;
-    r.getCell(14).value = s.totalExpenses;
-    r.getCell(15).value = s.netEarnings;
-    r.getCell(16).value = `${mPct.toFixed(1)}%`;
-    r.getCell(17).value = s.tipsCollected;
-    r.getCell(18).value = s.responsible;
+    r.getCell(11).value = s.otherIncomeSales || 0;
+    r.getCell(12).value = s.totalGrossSales;
+    r.getCell(13).value = s.pettyCashExpenses;
+    r.getCell(14).value = s.transfersPaid;
+    r.getCell(15).value = s.totalExpenses;
+    r.getCell(16).value = s.netEarnings;
+    r.getCell(17).value = `${mPct.toFixed(1)}%`;
+    r.getCell(18).value = s.tipsCollected;
+    r.getCell(19).value = s.responsible;
 
-    for (let c = 4; c <= 15; c++) {
+    for (let c = 4; c <= 16; c++) {
       r.getCell(c).numFmt = '"C$"#,##0.00;("C$"#,##0.00);"-"';
     }
-    r.getCell(17).numFmt = '"C$"#,##0.00';
+    r.getCell(18).numFmt = '"C$"#,##0.00';
 
-    for (let c = 1; c <= 18; c++) {
+    for (let c = 1; c <= 19; c++) {
       r.getCell(c).border = THIN_BORDER;
       r.getCell(c).font = { name: FONT_NAME, size: 9 };
     }
@@ -1346,22 +1357,23 @@ export async function exportMonthlyEarningsToExcel(
   totRow.getCell(8).value = sumLafise;
   totRow.getCell(9).value = sumCards;
   totRow.getCell(10).value = sumPY;
-  totRow.getCell(11).value = sumGross;
-  totRow.getCell(12).value = sumPetty;
-  totRow.getCell(13).value = sumTransf;
-  totRow.getCell(14).value = sumExpenses;
-  totRow.getCell(15).value = sumNet;
+  totRow.getCell(11).value = sumOther;
+  totRow.getCell(12).value = sumGross;
+  totRow.getCell(13).value = sumPetty;
+  totRow.getCell(14).value = sumTransf;
+  totRow.getCell(15).value = sumExpenses;
+  totRow.getCell(16).value = sumNet;
   const totMargin = sumGross > 0 ? (sumNet / sumGross) * 100 : 0;
-  totRow.getCell(16).value = `${totMargin.toFixed(1)}%`;
-  totRow.getCell(17).value = sumTips;
-  totRow.getCell(18).value = `${summaries.length} días`;
+  totRow.getCell(17).value = `${totMargin.toFixed(1)}%`;
+  totRow.getCell(18).value = sumTips;
+  totRow.getCell(19).value = `${summaries.length} días`;
 
-  for (let c = 4; c <= 15; c++) {
+  for (let c = 4; c <= 16; c++) {
     totRow.getCell(c).numFmt = '"C$"#,##0.00;("C$"#,##0.00);"-"';
   }
-  totRow.getCell(17).numFmt = '"C$"#,##0.00';
+  totRow.getCell(18).numFmt = '"C$"#,##0.00';
 
-  for (let c = 1; c <= 18; c++) {
+  for (let c = 1; c <= 19; c++) {
     totRow.getCell(c).border = DOUBLE_BOTTOM_BORDER;
     totRow.getCell(c).font = { name: FONT_NAME, size: 9.5, bold: true };
     totRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ZEBRA_LIGHT } };
@@ -1381,21 +1393,22 @@ export async function exportMonthlyEarningsToExcel(
   avgRow.getCell(8).value = sumLafise / nDays;
   avgRow.getCell(9).value = sumCards / nDays;
   avgRow.getCell(10).value = sumPY / nDays;
-  avgRow.getCell(11).value = sumGross / nDays;
-  avgRow.getCell(12).value = sumPetty / nDays;
-  avgRow.getCell(13).value = sumTransf / nDays;
-  avgRow.getCell(14).value = sumExpenses / nDays;
-  avgRow.getCell(15).value = sumNet / nDays;
-  avgRow.getCell(16).value = `${totMargin.toFixed(1)}%`;
-  avgRow.getCell(17).value = sumTips / nDays;
-  avgRow.getCell(18).value = 'Promedio';
+  avgRow.getCell(11).value = sumOther / nDays;
+  avgRow.getCell(12).value = sumGross / nDays;
+  avgRow.getCell(13).value = sumPetty / nDays;
+  avgRow.getCell(14).value = sumTransf / nDays;
+  avgRow.getCell(15).value = sumExpenses / nDays;
+  avgRow.getCell(16).value = sumNet / nDays;
+  avgRow.getCell(17).value = `${totMargin.toFixed(1)}%`;
+  avgRow.getCell(18).value = sumTips / nDays;
+  avgRow.getCell(19).value = 'Promedio';
 
-  for (let c = 4; c <= 15; c++) {
+  for (let c = 4; c <= 16; c++) {
     avgRow.getCell(c).numFmt = '"C$"#,##0.00;("C$"#,##0.00);"-"';
   }
-  avgRow.getCell(17).numFmt = '"C$"#,##0.00';
+  avgRow.getCell(18).numFmt = '"C$"#,##0.00';
 
-  for (let c = 1; c <= 18; c++) {
+  for (let c = 1; c <= 19; c++) {
     avgRow.getCell(c).border = THIN_BORDER;
     avgRow.getCell(c).font = { name: FONT_NAME, size: 9, bold: true };
     avgRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
