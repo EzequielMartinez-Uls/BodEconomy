@@ -71,6 +71,8 @@ export const ClosingModal: React.FC<Props> = ({
   const [cardsLafise, setCardsLafise] = useState<number>(shift.cardsLafise || 0);
   const [salesPedidosYa, setSalesPedidosYa] = useState<number>(shift.salesPedidosYa || 0);
   const [salesCashSystem, setSalesCashSystem] = useState<number>(shift.salesCashSystem || 0);
+  const [otherIncome, setOtherIncome] = useState<number>(shift.otherIncome || 0);
+  const [otherIncomeNotes, setOtherIncomeNotes] = useState<string>(shift.otherIncomeNotes || '');
 
   // 3. Propinas de la noche
   const [totalTipCollected, setTotalTipCollected] = useState<number>(shift.totalTipCollected || 0);
@@ -88,7 +90,7 @@ export const ClosingModal: React.FC<Props> = ({
 
   // Cálculos de Ventas
   const totalCards = cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise;
-  const totalGrossSales = salesCashSystem + totalCards + salesPedidosYa;
+  const totalGrossSales = salesCashSystem + totalCards + salesPedidosYa + otherIncome;
 
   // Cálculos de Propinas
   const individualTip = staffCount > 0 ? parseFloat((totalTipCollected / staffCount).toFixed(2)) : 0;
@@ -165,6 +167,8 @@ export const ClosingModal: React.FC<Props> = ({
       totalCards,
       salesPedidosYa,
       salesCashSystem,
+      otherIncome,
+      otherIncomeNotes,
       totalGrossSales,
 
       // Propinas
@@ -210,12 +214,28 @@ export const ClosingModal: React.FC<Props> = ({
               Jornada del <strong>{shift.date}</strong> • Apertura por {shift.openedBy} con C$ {shift.totalOpeningEquivNIO.toFixed(2)}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-2xs">
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Cerrado por:</span>
+              <select
+                value={closedBy}
+                onChange={(e) => setClosedBy(e.target.value)}
+                className="text-xs font-black text-slate-800 bg-transparent focus:outline-none cursor-pointer"
+              >
+                {availableAdmins.map((adm) => (
+                  <option key={adm} value={adm}>
+                    {adm}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Stepper de 4 Pasos Claros */}
@@ -452,8 +472,8 @@ export const ClosingModal: React.FC<Props> = ({
                 </div>
               </div>
 
-              {/* Delivery PedidosYa & Ventas Efectivo Sistema */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Delivery PedidosYa, Ventas Efectivo Sistema & Otros Ingresos */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {/* PedidosYa */}
                 <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-2">
                   <div className="flex items-center gap-2">
@@ -484,11 +504,11 @@ export const ClosingModal: React.FC<Props> = ({
                   <div className="flex items-center gap-2">
                     <Receipt className="w-5 h-5 text-emerald-600" />
                     <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                      3. Ventas Efectivo del Sistema POS (C$)
+                      3. Ventas Efectivo POS (C$)
                     </h3>
                   </div>
                   <p className="text-xs text-slate-500">
-                    Total cobrado en efectivo según el reporte del sistema (Loyverse / Facturas).
+                    Total efectivo según sistema (Loyverse).
                   </p>
                   <div className="flex items-center gap-2 pt-1">
                     <span className="text-slate-400 font-mono font-bold">C$</span>
@@ -503,13 +523,45 @@ export const ClosingModal: React.FC<Props> = ({
                     />
                   </div>
                 </div>
+
+                {/* Otros Ingresos */}
+                <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Coins className="w-5 h-5 text-cyan-600" />
+                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                      4. Otros Ingresos (C$)
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Ingresos adicionales no estándar.
+                  </p>
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-slate-400 font-mono font-bold">C$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      value={otherIncome === 0 ? '' : otherIncome}
+                      onChange={(e) => setOtherIncome(parseFloat(e.target.value) || 0)}
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-lg font-black font-mono text-cyan-700 focus:bg-white focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Concepto / Detalle (opcional)"
+                    value={otherIncomeNotes}
+                    onChange={(e) => setOtherIncomeNotes(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-xs text-slate-700 focus:bg-white focus:outline-none focus:border-cyan-500 mt-1"
+                  />
+                </div>
               </div>
 
               {/* Total Bruto Consolidado */}
               <div className="p-5 bg-slate-900 text-white rounded-2xl flex items-center justify-between shadow-md">
                 <div>
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
-                    Total Ventas Brutas del Turno (Efectivo + Tarjetas + Delivery)
+                    Total Ventas Brutas del Turno (Efectivo + Tarjetas + Delivery + Otros Ing.)
                   </span>
                   <div className="text-2xl font-black font-mono text-emerald-400 mt-1">
                     C$ {totalGrossSales.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
@@ -728,6 +780,12 @@ export const ClosingModal: React.FC<Props> = ({
                       <span>Ventas Delivery PedidosYa:</span>
                       <span className="font-mono">C$ {salesPedidosYa.toFixed(2)}</span>
                     </div>
+                    {otherIncome > 0 && (
+                      <div className="flex justify-between text-slate-600">
+                        <span>Otros Ingresos:</span>
+                        <span className="font-mono text-cyan-700 font-bold">+ C$ {otherIncome.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="border-t border-slate-200 pt-1.5 flex justify-between font-bold text-slate-900">
                       <span>Total Ventas Brutas:</span>
                       <strong className="font-mono text-indigo-700 text-sm">C$ {totalGrossSales.toFixed(2)}</strong>
@@ -794,6 +852,8 @@ export const ClosingModal: React.FC<Props> = ({
                       totalCards,
                       salesPedidosYa,
                       salesCashSystem,
+                      otherIncome,
+                      otherIncomeNotes,
                       totalGrossSales,
                       totalTipCollected,
                       staffCount,
@@ -834,6 +894,8 @@ export const ClosingModal: React.FC<Props> = ({
                       totalCards,
                       salesPedidosYa,
                       salesCashSystem,
+                      otherIncome,
+                      otherIncomeNotes,
                       totalGrossSales,
                       totalTipCollected,
                       staffCount,

@@ -60,6 +60,21 @@ const INITIAL_TABLEWARE: TablewareItem[] = [];
 
 const INITIAL_PETTY_CASH: PettyCashTransaction[] = [];
 
+export const DEFAULT_EXPENSE_CATEGORIES = [
+  'CARNES',
+  'POLLO',
+  'HIELO',
+  'BEBIDAS',
+  'BEBIDAS_ALCOHOLICAS',
+  'DELIVERYS_ACARREOS',
+  'FRUTAS_VEGETALES',
+  'SUPERMERCADO',
+  'MERCADO',
+  'LACTEOS',
+  'PAGOS_PERSONAL',
+  'OTROS',
+];
+
 export const INITIAL_STATE: AppState = {
   currentShift: null,
   shiftHistory: [],
@@ -80,7 +95,8 @@ export const INITIAL_STATE: AppState = {
   ],
   defaultExchangeRate: 36.00,
   activeAdminName: 'Eddy',
-  availableAdmins: ['Eddy', 'Xiomara', 'Maverick', 'Snyder'],
+  availableAdmins: ['Eddy', 'Xiomara', 'Ezequiel', 'Snyder'],
+  expenseCategories: DEFAULT_EXPENSE_CATEGORIES,
 };
 
 export function loadState(): AppState {
@@ -92,6 +108,17 @@ export function loadState(): AppState {
 
     // Tasa de cambio oficial fija en C$ 36.00 para todo el sistema
     loaded.defaultExchangeRate = 36.00;
+
+    // Administradores autorizados estrictamente: Eddy, Xiomara, Ezequiel, Snyder
+    loaded.availableAdmins = ['Eddy', 'Xiomara', 'Ezequiel', 'Snyder'];
+    if (loaded.activeAdminName && !loaded.availableAdmins.includes(loaded.activeAdminName)) {
+      loaded.activeAdminName = 'Eddy';
+    }
+
+    // Categorías de gastos editables
+    if (!loaded.expenseCategories || loaded.expenseCategories.length === 0) {
+      loaded.expenseCategories = [...DEFAULT_EXPENSE_CATEGORIES];
+    }
 
     // Limpiar inventario residual de menaje si existía en versiones anteriores
     loaded.tablewareItems = [];

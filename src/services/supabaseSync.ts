@@ -383,7 +383,8 @@ export async function syncGeneralCashShiftToCloud(shift: CashShift): Promise<voi
       (shift.cardsBAC || 0) + (shift.cardsFicohsa || 0) + (shift.cardsBanpro || 0) + (shift.cardsLafise || 0)
     );
     const pedidosYa = shift.salesPedidosYa ?? shift.loyverseValidation?.salesPedidosYa ?? 0;
-    const gross = shift.totalGrossSales ?? (cash + cards + pedidosYa);
+    const otherIncome = shift.otherIncome || 0;
+    const gross = shift.totalGrossSales ?? (cash + cards + pedidosYa + otherIncome);
 
     const salesDataObj = {
       salesCash: cash,
@@ -393,6 +394,8 @@ export async function syncGeneralCashShiftToCloud(shift: CashShift): Promise<voi
       cardsLafise: shift.cardsLafise || 0,
       totalCards: cards,
       salesPedidosYa: pedidosYa,
+      otherIncome: otherIncome,
+      otherIncomeNotes: shift.otherIncomeNotes || '',
       totalGrossSales: gross,
       tips: shift.totalTipCollected || 0,
       updatedAt: new Date().toISOString(),
@@ -521,7 +524,8 @@ export async function syncFullDayClosureToCloud({
       (generalShift.cardsBAC || 0) + (generalShift.cardsFicohsa || 0) + (generalShift.cardsBanpro || 0) + (generalShift.cardsLafise || 0)
     );
     const pedidosYa = generalShift.salesPedidosYa ?? generalShift.loyverseValidation?.salesPedidosYa ?? 0;
-    const gross = generalShift.totalGrossSales ?? (cash + cards + pedidosYa);
+    const otherIncome = generalShift.otherIncome || 0;
+    const gross = generalShift.totalGrossSales ?? (cash + cards + pedidosYa + otherIncome);
 
     const salesDataObj = {
       salesCash: cash,
@@ -531,6 +535,8 @@ export async function syncFullDayClosureToCloud({
       cardsLafise: generalShift.cardsLafise || 0,
       totalCards: cards,
       salesPedidosYa: pedidosYa,
+      otherIncome: otherIncome,
+      otherIncomeNotes: generalShift.otherIncomeNotes || '',
       totalGrossSales: gross,
       tips: generalShift.totalTipCollected || 0,
       updatedAt: new Date().toISOString(),
@@ -629,6 +635,43 @@ export async function syncCancelShiftToCloud(shiftDate: string): Promise<void> {
 }
 
 /**
+ * Cancela una apertura de Caja Chica en Supabase
+ */
+export async function syncCancelPettyCashShiftToCloud(shiftDate: string): Promise<void> {
+  try {
+    const { data: existing } = await supabase
+      .from('jornadas_diarias')
+      .select('id, observaciones, estado')
+      .eq('fecha', shiftDate)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      const row = existing[0];
+      const hasGeneralOpening = (row.observaciones || '').includes('[OPENING_DATA:');
+      const finalObs = mergeJornadaTags(row.observaciones, {
+        fondosComposition: null,
+        notesAppend: `Turno de Caja Chica cancelado el ${new Date().toISOString()}`,
+      });
+
+      const updatePayload: any = {
+        observaciones: finalObs,
+        updated_at: new Date().toISOString(),
+      };
+      if (!hasGeneralOpening && row.estado === 'ABIERTA') {
+        updatePayload.estado = 'CANCELADA';
+      }
+
+      await supabase
+        .from('jornadas_diarias')
+        .update(updatePayload)
+        .eq('id', row.id);
+    }
+  } catch (err) {
+    console.warn('⚠️ No se pudo cancelar turno de caja chica en la nube:', err);
+  }
+}
+
+/**
  * Reconstruye un objeto CashShift a partir de una fila de Supabase jornadas_diarias
  */
 export function parseShiftFromJornada(j: any, existingShift?: CashShift | null): CashShift {
@@ -663,6 +706,8 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
   let cardsLafise = existingShift?.cardsLafise || 0;
   let totalCards = existingShift?.totalCards || 0;
   let salesPedidosYa = existingShift?.salesPedidosYa || 0;
+  let otherIncome = existingShift?.otherIncome || 0;
+  let otherIncomeNotes = existingShift?.otherIncomeNotes || '';
   let totalGrossSales = existingShift?.totalGrossSales || 0;
   let totalTipCollected = existingShift?.totalTipCollected || 0;
 
@@ -677,7 +722,9 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
       cardsLafise = Number(s.cardsLafise) || 0;
       totalCards = Number(s.totalCards) || (cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise);
       salesPedidosYa = Number(s.salesPedidosYa) || 0;
-      totalGrossSales = Number(s.totalGrossSales) || (salesCash + totalCards + salesPedidosYa);
+      otherIncome = Number(s.otherIncome) || 0;
+      if (s.otherIncomeNotes) otherIncomeNotes = s.otherIncomeNotes;
+      totalGrossSales = Number(s.totalGrossSales) || (salesCash + totalCards + salesPedidosYa + otherIncome);
       totalTipCollected = Number(s.tips) || Number(s.totalTipCollected) || 0;
     } catch {}
   }
@@ -744,6 +791,8 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
     cardsLafise,
     totalCards,
     salesPedidosYa,
+    otherIncome,
+    otherIncomeNotes,
     totalGrossSales,
     totalTipCollected,
     actualCashNIO,

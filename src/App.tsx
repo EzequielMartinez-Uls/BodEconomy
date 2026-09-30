@@ -20,6 +20,7 @@ import {
   syncGeneralCashShiftToCloud,
   syncGeneralCashOpeningToCloud,
   syncCancelShiftToCloud,
+  syncCancelPettyCashShiftToCloud,
   syncFullDayClosureToCloud,
   fetchFullCloudState,
   parseShiftFromJornada,
@@ -150,12 +151,11 @@ export function App() {
 
             const existingIdx = updatedTxs.findIndex((t) => {
               if (t.id === cloudTx.id || t.cloudId === g.id) return true;
-              const tTime = new Date(t.date).getTime();
-              const cTime = new Date(cloudTx.date).getTime();
-              const sameTime = !isNaN(tTime) && !isNaN(cTime) && Math.abs(tTime - cTime) < 30000;
+              const sameDate = extractLocalDateStr(t.date) === extractLocalDateStr(cloudTx.date);
               const sameAmount = Math.abs(t.amount - cloudTx.amount) < 0.01;
               const sameVendor = t.vendor.trim().toLowerCase() === cloudTx.vendor.trim().toLowerCase();
-              return sameTime && sameAmount && sameVendor;
+              if (sameDate && sameAmount && sameVendor && !t.cloudId) return true;
+              return false;
             });
 
             if (existingIdx !== -1) {
@@ -208,15 +208,13 @@ export function App() {
           };
 
           setState((prev) => {
-            const newTime = new Date(newTx.date).getTime();
-
             const existingIndex = prev.pettyCashTransactions.findIndex((t) => {
               if (t.id === newTx.id || t.id === `pct-cloud-${g.id}` || t.cloudId === g.id) return true;
-              const tTime = new Date(t.date).getTime();
-              const sameTime = !isNaN(tTime) && !isNaN(newTime) && Math.abs(tTime - newTime) < 30000;
+              const sameDate = extractLocalDateStr(t.date) === extractLocalDateStr(newTx.date);
               const sameAmount = Math.abs(t.amount - newTx.amount) < 0.01;
               const sameVendor = t.vendor.trim().toLowerCase() === newTx.vendor.trim().toLowerCase();
-              return sameTime && sameAmount && sameVendor;
+              if (sameDate && sameAmount && sameVendor && !t.cloudId) return true;
+              return false;
             });
 
             if (existingIndex !== -1) {
@@ -569,6 +567,50 @@ export function App() {
         console.warn('⚠️ Error al cancelar jornada en la nube:', err)
       );
     }
+  };
+
+  const handleCancelPettyCashShift = () => {
+    const pettyToCancel = state.currentPettyCashShift;
+    setState((prev) => {
+      if (!prev.currentPettyCashShift) return prev;
+      return {
+        ...prev,
+        currentPettyCashShift: null,
+        auditLogs: [
+          {
+            id: `log-${Date.now()}`,
+            timestamp: new Date().toISOString(),
+            user: prev.activeAdminName,
+            action: 'CANCELAR_TURNO_CAJA_CHICA',
+            details: `Turno de Caja Chica del día ${prev.currentPettyCashShift.date} cancelado por ${prev.activeAdminName}`,
+          },
+          ...prev.auditLogs,
+        ],
+      };
+    });
+
+    if (pettyToCancel?.date) {
+      syncCancelPettyCashShiftToCloud(pettyToCancel.date).catch((err) =>
+        console.warn('⚠️ Error al cancelar jornada de caja chica en la nube:', err)
+      );
+    }
+  };
+
+  const handleUpdateExpenseCategories = (categories: string[]) => {
+    setState((prev) => ({
+      ...prev,
+      expenseCategories: categories,
+      auditLogs: [
+        {
+          id: `log-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          user: prev.activeAdminName,
+          action: 'ACTUALIZAR_CATEGORIAS_GASTO',
+          details: `Categorías de gastos actualizadas: ${categories.length} categorías configuradas`,
+        },
+        ...prev.auditLogs,
+      ],
+    }));
   };
 
   const handleAddPettyCashTransaction = async (tx: PettyCashTransaction) => {
@@ -991,6 +1033,8 @@ export function App() {
                 onDeleteTransaction={handleDeletePettyCashTransaction}
                 onOpenPettyCashShift={handleOpenPettyCashShift}
                 onClosePettyCashShift={handleClosePettyCashShift}
+                onCancelPettyCashShift={handleCancelPettyCashShift}
+                onUpdateExpenseCategories={handleUpdateExpenseCategories}
               />
             )}
 

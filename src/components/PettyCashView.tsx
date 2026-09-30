@@ -30,6 +30,10 @@ import {
   ChevronRight,
   Eye,
   Trash2,
+  Settings,
+  Plus,
+  X,
+  XCircle,
 } from 'lucide-react';
 
 interface Props {
@@ -38,27 +42,36 @@ interface Props {
   onDeleteTransaction: (txId: string) => void;
   onOpenPettyCashShift: (newShift: PettyCashShift) => void;
   onClosePettyCashShift: (closedShift: PettyCashShift) => void;
+  onCancelPettyCashShift?: () => void;
+  onUpdateExpenseCategories?: (categories: string[]) => void;
 }
 
-const CATEGORY_DEFINITIONS: {
-  value: ExpenseCategory;
-  label: string;
-  emoji: string;
-  badgeClass: string;
-}[] = [
-  { value: 'CARNES', label: 'Carnes', emoji: '🥩', badgeClass: 'bg-rose-50 text-rose-700 border-rose-200' },
-  { value: 'POLLO', label: 'Pollo', emoji: '🍗', badgeClass: 'bg-orange-50 text-orange-700 border-orange-200' },
-  { value: 'HIELO', label: 'Hielo', emoji: '🧊', badgeClass: 'bg-sky-50 text-sky-700 border-sky-200' },
-  { value: 'BEBIDAS', label: 'Bebidas', emoji: '🥤', badgeClass: 'bg-blue-50 text-blue-700 border-blue-200' },
-  { value: 'BEBIDAS_ALCOHOLICAS', label: 'Bebidas alcohólicas', emoji: '🍺', badgeClass: 'bg-amber-50 text-amber-800 border-amber-200' },
-  { value: 'DELIVERYS_ACARREOS', label: 'Deliverys y acarreos', emoji: '🛵', badgeClass: 'bg-purple-50 text-purple-700 border-purple-200' },
-  { value: 'FRUTAS_VEGETALES', label: 'Frutas / Vegetales', emoji: '🥗', badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  { value: 'SUPERMERCADO', label: 'Supermercado', emoji: '🛒', badgeClass: 'bg-blue-50 text-blue-800 border-blue-200' },
-  { value: 'MERCADO', label: 'Mercado', emoji: '🏪', badgeClass: 'bg-teal-50 text-teal-700 border-teal-200' },
-  { value: 'LACTEOS', label: 'Lácteos', emoji: '🧀', badgeClass: 'bg-yellow-50 text-yellow-800 border-yellow-200' },
-  { value: 'PAGOS_PERSONAL', label: 'Pagos personal', emoji: '👥', badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-  { value: 'OTROS', label: 'Otros', emoji: '📝', badgeClass: 'bg-stone-100 text-stone-700 border-stone-200' },
-];
+const BUILTIN_CATEGORY_METADATA: Record<string, { label: string; emoji: string; badgeClass: string }> = {
+  CARNES: { label: 'Carnes', emoji: '🥩', badgeClass: 'bg-rose-50 text-rose-700 border-rose-200' },
+  POLLO: { label: 'Pollo', emoji: '🍗', badgeClass: 'bg-orange-50 text-orange-700 border-orange-200' },
+  HIELO: { label: 'Hielo', emoji: '🧊', badgeClass: 'bg-sky-50 text-sky-700 border-sky-200' },
+  BEBIDAS: { label: 'Bebidas', emoji: '🥤', badgeClass: 'bg-blue-50 text-blue-700 border-blue-200' },
+  BEBIDAS_ALCOHOLICAS: { label: 'Bebidas alcohólicas', emoji: '🍺', badgeClass: 'bg-amber-50 text-amber-800 border-amber-200' },
+  DELIVERYS_ACARREOS: { label: 'Deliverys y acarreos', emoji: '🛵', badgeClass: 'bg-purple-50 text-purple-700 border-purple-200' },
+  FRUTAS_VEGETALES: { label: 'Frutas / Vegetales', emoji: '🥗', badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  SUPERMERCADO: { label: 'Supermercado', emoji: '🛒', badgeClass: 'bg-blue-50 text-blue-800 border-blue-200' },
+  MERCADO: { label: 'Mercado', emoji: '🏪', badgeClass: 'bg-teal-50 text-teal-700 border-teal-200' },
+  LACTEOS: { label: 'Lácteos', emoji: '🧀', badgeClass: 'bg-yellow-50 text-yellow-800 border-yellow-200' },
+  PAGOS_PERSONAL: { label: 'Pagos personal', emoji: '👥', badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+  OTROS: { label: 'Otros', emoji: '📝', badgeClass: 'bg-stone-100 text-stone-700 border-stone-200' },
+};
+
+export function getCategoryInfo(catValue: string) {
+  if (BUILTIN_CATEGORY_METADATA[catValue]) {
+    return BUILTIN_CATEGORY_METADATA[catValue];
+  }
+  const formatted = catValue.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  return {
+    label: formatted,
+    emoji: '📦',
+    badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
+  };
+}
 
 export const PettyCashView: React.FC<Props> = ({
   state,
@@ -66,8 +79,28 @@ export const PettyCashView: React.FC<Props> = ({
   onDeleteTransaction,
   onOpenPettyCashShift,
   onClosePettyCashShift,
+  onCancelPettyCashShift,
+  onUpdateExpenseCategories,
 }) => {
   const todayStr = useMemo(() => getLocalTodayStr(), []);
+
+  const activeCategories = useMemo(() => {
+    return state.expenseCategories && state.expenseCategories.length > 0
+      ? state.expenseCategories
+      : Object.keys(BUILTIN_CATEGORY_METADATA);
+  }, [state.expenseCategories]);
+
+  const categoryDefs = useMemo(() => {
+    return activeCategories.map((catKey) => ({
+      value: catKey as ExpenseCategory,
+      ...getCategoryInfo(catKey),
+    }));
+  }, [activeCategories]);
+
+  const [categoriesModalOpen, setCategoriesModalOpen] = useState(false);
+  const [newCategoryInput, setNewCategoryInput] = useState('');
+  const [openResponsible, setOpenResponsible] = useState<string>(state.activeAdminName);
+  const [closeResponsible, setCloseResponsible] = useState<string>(state.activeAdminName);
 
   // Pestañas principales: Vista de Jornada Diaria vs Historial de Cierres
   const [activeTab, setActiveTab] = useState<'DAY_VIEW' | 'HISTORY'>('DAY_VIEW');
@@ -247,6 +280,7 @@ export const PettyCashView: React.FC<Props> = ({
     setOpenGeneralCashTransfer(0);
     setOpenBossContribution(0);
     setOpenNotes('');
+    setOpenResponsible(state.activeAdminName);
     setOpenShiftModalOpen(true);
   };
 
@@ -274,7 +308,7 @@ export const PettyCashView: React.FC<Props> = ({
       id: `pc-shift-${openShiftDate}`,
       date: openShiftDate,
       status: 'OPEN',
-      openedBy: state.activeAdminName,
+      openedBy: openResponsible || state.activeAdminName,
       openedAt: new Date().toISOString(),
       previousDayRemaining: openPreviousRemaining,
       generalCashTransfer: openGeneralCashTransfer,
@@ -294,6 +328,7 @@ export const PettyCashView: React.FC<Props> = ({
     if (!selectedShift || selectedShift.status !== 'OPEN') return;
     setClosingActualCash(expectedSelectedBalance);
     setClosingNotes('');
+    setCloseResponsible(state.activeAdminName);
     setCloseShiftModalOpen(true);
   };
 
@@ -308,7 +343,7 @@ export const PettyCashView: React.FC<Props> = ({
     const closedShift: PettyCashShift = {
       ...selectedShift,
       status: 'CLOSED',
-      closedBy: state.activeAdminName,
+      closedBy: closeResponsible || state.activeAdminName,
       closedAt: new Date().toISOString(),
       totalExpenses: selectedDateExpenses,
       totalInflows: selectedDateInflows,
@@ -361,7 +396,7 @@ export const PettyCashView: React.FC<Props> = ({
     }
 
     if (modalType === 'EXPENSE' && !vendor.trim()) {
-      alert('Por favor indica qué se compró o a qué proveedor.');
+      alert('Por favor indica qué se compró o el concepto de la compra.');
       return;
     }
 
@@ -370,8 +405,8 @@ export const PettyCashView: React.FC<Props> = ({
       const finalVendor =
         modalType === 'INFLOW'
           ? inflowSource === 'TRASLADO_CAJA_GENERAL'
-            ? 'Traslado desde Caja General'
-            : 'Depósito a Caja Chica (Aporte del Jefe)'
+            ? 'Deposito a caja chica'
+            : 'Depositado en efectivo'
           : vendor.trim();
 
       const newTx: PettyCashTransaction = {
@@ -383,7 +418,7 @@ export const PettyCashView: React.FC<Props> = ({
         amount,
         method,
         vendor: finalVendor,
-        category: modalType === 'INFLOW' ? 'OTROS' : category,
+        category: (modalType === 'INFLOW' ? 'OTROS' : category) as ExpenseCategory,
         receiptNumber: receiptNumber.trim() || undefined,
         registeredBy: state.activeAdminName,
         notes: notes.trim() || undefined,
@@ -432,8 +467,9 @@ export const PettyCashView: React.FC<Props> = ({
     const rows: LedgerRow[] = [];
     let runningSaldo = 0;
 
-    // 1. Filas de Apertura de Caja
+    // 1. Filas de Apertura de Caja (Excel Rows 78, 79, 80)
     if (selectedShift) {
+      // Row 78: Fondo de caja anterior
       if (selectedShift.previousDayRemaining > 0) {
         runningSaldo = selectedShift.previousDayRemaining;
         rows.push({
@@ -441,49 +477,69 @@ export const PettyCashView: React.FC<Props> = ({
           isOpening: true,
           date: selectedShift.openedAt,
           hora: new Date(selectedShift.openedAt).toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' }),
-          concepto: 'Fondo de caja anterior (Sobrante de ayer)',
+          concepto: 'Fondo de caja anterior',
           categoriaEmoji: '💼',
-          vendor: 'Fondo de caja anterior (Sobrante de ayer)',
+          vendor: 'Fondo de caja anterior',
           tipoPago: '-',
           montoTotalBanco: null,
           reembolsoCajaChica: null,
           gastosCajaChica: null,
           saldoGaveta: runningSaldo,
         });
-
-        const depositoApertura = (selectedShift.bossContribution || 0) + (selectedShift.generalCashTransfer || 0);
-        if (depositoApertura > 0) {
-          runningSaldo += depositoApertura;
-          rows.push({
-            id: 'opening-deposito',
-            isOpening: true,
-            date: selectedShift.openedAt,
-            hora: new Date(selectedShift.openedAt).toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' }),
-            concepto: 'Depósito a caja chica (Aporte inicial de apertura)',
-            categoriaEmoji: '📥',
-            vendor: 'Depósito a caja chica (Aporte inicial de apertura)',
-            notes: selectedShift.openingNotes,
-            tipoPago: 'EFECTIVO',
-            montoTotalBanco: null,
-            reembolsoCajaChica: depositoApertura,
-            gastosCajaChica: null,
-            saldoGaveta: runningSaldo,
-          });
-        }
-      } else if (selectedShift.initialBalance > 0) {
+      } else if (selectedShift.initialBalance > 0 && !selectedShift.generalCashTransfer && !selectedShift.bossContribution) {
         runningSaldo = selectedShift.initialBalance;
         rows.push({
           id: 'opening-initial',
           isOpening: true,
           date: selectedShift.openedAt,
           hora: new Date(selectedShift.openedAt).toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' }),
-          concepto: 'Depósito / Fondo asignado de apertura',
+          concepto: 'Fondo de caja anterior',
           categoriaEmoji: '💼',
-          vendor: 'Depósito / Fondo asignado de apertura',
+          vendor: 'Fondo de caja anterior',
           notes: selectedShift.openingNotes,
           tipoPago: 'EFECTIVO',
           montoTotalBanco: null,
           reembolsoCajaChica: selectedShift.initialBalance,
+          gastosCajaChica: null,
+          saldoGaveta: runningSaldo,
+        });
+      }
+
+      // Row 79: Deposito a caja chica (Traspaso proveniente de Caja General)
+      if (selectedShift.generalCashTransfer && selectedShift.generalCashTransfer > 0) {
+        runningSaldo += selectedShift.generalCashTransfer;
+        rows.push({
+          id: 'opening-deposito-general',
+          isOpening: true,
+          date: selectedShift.openedAt,
+          hora: new Date(selectedShift.openedAt).toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' }),
+          concepto: 'Deposito a caja chica',
+          categoriaEmoji: '🏦',
+          vendor: 'Deposito a caja chica',
+          notes: 'Traspaso desde Caja General',
+          tipoPago: 'EFECTIVO',
+          montoTotalBanco: null,
+          reembolsoCajaChica: selectedShift.generalCashTransfer,
+          gastosCajaChica: null,
+          saldoGaveta: runningSaldo,
+        });
+      }
+
+      // Row 80: Depositado en efectivo (Aporte del Jefe)
+      if (selectedShift.bossContribution && selectedShift.bossContribution > 0) {
+        runningSaldo += selectedShift.bossContribution;
+        rows.push({
+          id: 'opening-deposito-jefe',
+          isOpening: true,
+          date: selectedShift.openedAt,
+          hora: new Date(selectedShift.openedAt).toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' }),
+          concepto: 'Depositado en efectivo',
+          categoriaEmoji: '💵',
+          vendor: 'Depositado en efectivo',
+          notes: 'Aporte en efectivo del jefe',
+          tipoPago: 'EFECTIVO',
+          montoTotalBanco: null,
+          reembolsoCajaChica: selectedShift.bossContribution,
           gastosCajaChica: null,
           saldoGaveta: runningSaldo,
         });
@@ -517,7 +573,7 @@ export const PettyCashView: React.FC<Props> = ({
         runningSaldo -= tx.amount;
       }
 
-      const catDef = CATEGORY_DEFINITIONS.find((c) => c.value === tx.category);
+      const catDef = getCategoryInfo(tx.category);
 
       rows.push({
         id: tx.id,
@@ -525,8 +581,8 @@ export const PettyCashView: React.FC<Props> = ({
         date: tx.date,
         hora: new Date(tx.date).toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' }),
         concepto: tx.vendor,
-        categoriaEmoji: catDef?.emoji || '📦',
-        categoriaLabel: catDef?.label,
+        categoriaEmoji: catDef.emoji,
+        categoriaLabel: catDef.label,
         vendor: tx.vendor,
         notes: tx.notes,
         receiptNumber: tx.receiptNumber,
@@ -950,6 +1006,23 @@ export const PettyCashView: React.FC<Props> = ({
               </div>
 
               <div className="flex items-center gap-2.5">
+                {onCancelPettyCashShift && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const confirmCancel = window.confirm(
+                        `¿Estás seguro de cancelar la jornada de Caja Chica del día ${selectedShift.date}?\n\nEsta acción cancelará la apertura y devolverá la caja chica a estado cerrado.`
+                      );
+                      if (confirmCancel) {
+                        onCancelPettyCashShift();
+                      }
+                    }}
+                    className="px-4 py-3 rounded-xl border border-rose-300 hover:bg-rose-50 text-rose-700 font-extrabold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4 text-rose-600" />
+                    <span>Cancelar Turno</span>
+                  </button>
+                )}
                 <button
                   onClick={handleStartCloseShiftModal}
                   className="px-5 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-extrabold text-xs flex items-center gap-2 transition shadow-md shadow-rose-600/25 cursor-pointer"
@@ -1172,12 +1245,22 @@ export const PettyCashView: React.FC<Props> = ({
                   <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
-                    placeholder="Buscar por proveedor, producto, factura o notas..."
+                    placeholder="Buscar por concepto, producto, factura o notas..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 font-medium"
                   />
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setCategoriesModalOpen(true)}
+                  className="px-3.5 py-2 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shrink-0 shadow-2xs"
+                  title="Administrar categorías de gastos"
+                >
+                  <Settings className="w-3.5 h-3.5 text-slate-500" />
+                  <span>⚙️ Categorías</span>
+                </button>
 
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
                   <button
@@ -1190,7 +1273,7 @@ export const PettyCashView: React.FC<Props> = ({
                   >
                     Todos ({selectedDateTransactions.length})
                   </button>
-                  {CATEGORY_DEFINITIONS.slice(0, 5).map((cat) => {
+                  {categoryDefs.map((cat) => {
                     const count = selectedDateTransactions.filter((tx) => tx.type === 'EXPENSE' && tx.category === cat.value).length;
                     return (
                       <button
@@ -1565,8 +1648,18 @@ export const PettyCashView: React.FC<Props> = ({
                   />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Abre la Jornada</span>
-                  <span className="font-extrabold text-slate-800 text-sm block pt-1">{state.activeAdminName}</span>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Abre la Jornada</label>
+                  <select
+                    value={openResponsible}
+                    onChange={(e) => setOpenResponsible(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-500"
+                  >
+                    {(state.availableAdmins || ['Eddy', 'Xiomara', 'Ezequiel', 'Snyder']).map((admin) => (
+                      <option key={admin} value={admin}>
+                        {admin}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -1592,11 +1685,11 @@ export const PettyCashView: React.FC<Props> = ({
                 </div>
               )}
 
-              {/* 1. Fondo del Día Anterior con Corroboración Obligatoria */}
+              {/* 1. Fondo de caja anterior con Corroboración Obligatoria */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <label className="block text-xs font-black text-slate-800 uppercase tracking-wider">
-                    1. Fondo del Día Anterior (Conteo Físico) *
+                    1. Fondo de caja anterior (Conteo Físico) *
                   </label>
                   {latestClosedShift && (
                     <span className="text-[11px] text-slate-500 font-medium">
@@ -1667,10 +1760,10 @@ export const PettyCashView: React.FC<Props> = ({
                 )}
               </div>
 
-              {/* 2. Traslado de General */}
+              {/* 2. Deposito a caja chica (Traspaso de Caja General) */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  2. Traslado de General (Determinado por el Administrador)
+                  2. Deposito a caja chica (Traspaso proveniente de Caja General)
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-400">C$</span>
@@ -1688,10 +1781,10 @@ export const PettyCashView: React.FC<Props> = ({
                 </span>
               </div>
 
-              {/* 3. Depósito a Caja Chica (lo del jefe) */}
+              {/* 3. Depositado en efectivo (lo del jefe) */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  3. Depósito a Caja Chica (es lo del jefe) [Opcional]
+                  3. Depositado en efectivo (Aporte en efectivo del jefe) [Opcional]
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-400">C$</span>
@@ -1715,7 +1808,7 @@ export const PettyCashView: React.FC<Props> = ({
                   <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
                     Total Fondo Inicial para Compras
                   </span>
-                  <span className="text-xs text-emerald-700">Fondo Día Anterior + Traslado General + Depósito Caja Chica</span>
+                  <span className="text-xs text-emerald-700">Fondo de caja anterior + Deposito a caja chica + Depositado en efectivo</span>
                 </div>
                 <div className="text-2xl font-black text-emerald-950 font-mono">
                   C$ {(openPreviousRemaining + openGeneralCashTransfer + openBossContribution).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
@@ -1784,6 +1877,24 @@ export const PettyCashView: React.FC<Props> = ({
             </div>
 
             <form onSubmit={handleConfirmCloseShift} className="space-y-4">
+              {/* Responsable del Cierre */}
+              <div>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                  Responsable del Cierre *
+                </label>
+                <select
+                  value={closeResponsible}
+                  onChange={(e) => setCloseResponsible(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-rose-500"
+                >
+                  {(state.availableAdmins || ['Eddy', 'Xiomara', 'Ezequiel', 'Snyder']).map((admin) => (
+                    <option key={admin} value={admin}>
+                      {admin}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Resumen Financiero del Día */}
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5 text-xs">
                 <div className="flex justify-between font-medium">
@@ -1901,7 +2012,7 @@ export const PettyCashView: React.FC<Props> = ({
                       const previewShift: PettyCashShift = {
                         ...selectedShift,
                         status: 'CLOSED',
-                        closedBy: state.activeAdminName,
+                        closedBy: closeResponsible || state.activeAdminName,
                         closedAt: new Date().toISOString(),
                         totalExpenses: selectedDateExpenses,
                         totalInflows: selectedDateInflows,
@@ -1983,7 +2094,7 @@ export const PettyCashView: React.FC<Props> = ({
                   Rubro / Categoría *
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                  {CATEGORY_DEFINITIONS.map((cat) => (
+                  {categoryDefs.map((cat) => (
                     <button
                       type="button"
                       key={cat.value}
@@ -2001,10 +2112,10 @@ export const PettyCashView: React.FC<Props> = ({
                 </div>
               </div>
 
-              {/* Proveedor / Concepto */}
+              {/* Concepto / Detalle */}
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">
-                  ¿Qué se compró o a quién? (Proveedor / Detalle) *
+                  ¿Qué se compró? (Concepto / Detalle de la Compra) *
                 </label>
                 <input
                   type="text"
@@ -2257,10 +2368,10 @@ export const PettyCashView: React.FC<Props> = ({
                     />
                     <div>
                       <span className="font-extrabold text-xs block">
-                        🏦 Traslado de General
+                        🏦 Deposito a caja chica
                       </span>
                       <span className="text-[11px] text-slate-500 block mt-0.5">
-                        Dinero de ventas de Caja General trasladado para compras.
+                        Traspaso proveniente de Caja General.
                       </span>
                     </div>
                   </label>
@@ -2282,10 +2393,10 @@ export const PettyCashView: React.FC<Props> = ({
                     />
                     <div>
                       <span className="font-extrabold text-xs block">
-                        👤 Depósito a Caja Chica (Aporte del Jefe)
+                        💵 Depositado en efectivo
                       </span>
                       <span className="text-[11px] text-slate-500 block mt-0.5">
-                        Dinero traído o depositado directamente por el jefe para compras.
+                        Aporte en efectivo del jefe.
                       </span>
                     </div>
                   </label>
@@ -2425,6 +2536,106 @@ export const PettyCashView: React.FC<Props> = ({
               >
                 <Trash2 className="w-4 h-4" />
                 <span>Sí, Eliminar Registro</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 10. MODAL: GESTIÓN DE CATEGORÍAS DE GASTOS */}
+      {categoriesModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-2xl p-6 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold">
+                  <Settings className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900">Categorías de Gastos</h3>
+                  <p className="text-xs text-slate-500">Agrega o elimina rubros para clasificar compras</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setCategoriesModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Agregar nueva categoría */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const trimmed = newCategoryInput.trim().toUpperCase();
+                if (!trimmed) return;
+                if (activeCategories.includes(trimmed)) {
+                  alert(`La categoría "${trimmed}" ya existe.`);
+                  return;
+                }
+                const updated = [...activeCategories, trimmed];
+                onUpdateExpenseCategories?.(updated);
+                setNewCategoryInput('');
+              }}
+              className="flex items-center gap-2"
+            >
+              <input
+                type="text"
+                placeholder="Nueva categoría (ej: MANTENIMIENTO)"
+                value={newCategoryInput}
+                onChange={(e) => setNewCategoryInput(e.target.value)}
+                className="flex-1 px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500/30 uppercase"
+              />
+              <button
+                type="submit"
+                className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs flex items-center gap-1 transition cursor-pointer shadow-xs"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Agregar</span>
+              </button>
+            </form>
+
+            {/* Lista de categorías activas */}
+            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+              {activeCategories.map((catKey) => {
+                const info = getCategoryInfo(catKey);
+                return (
+                  <div
+                    key={catKey}
+                    className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-white transition"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-lg">{info.emoji}</span>
+                      <span className="text-xs font-bold text-slate-800">{info.label}</span>
+                    </div>
+                    {activeCategories.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`¿Seguro que deseas eliminar la categoría "${info.label}"?`)) {
+                            const updated = activeCategories.filter((c) => c !== catKey);
+                            onUpdateExpenseCategories?.(updated);
+                          }
+                        }}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                        title="Eliminar categoría"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setCategoriesModalOpen(false)}
+                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-xs transition cursor-pointer"
+              >
+                Listo
               </button>
             </div>
           </div>

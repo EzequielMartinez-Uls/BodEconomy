@@ -88,7 +88,9 @@ export interface CashShift {
   cardsLafise?: number;
   totalCards?: number; // BAC + Ficohsa + Banpro + Lafise
   salesPedidosYa?: number;
-  totalGrossSales?: number; // Efectivo + Tarjetas + PedidosYa
+  otherIncome?: number; // Otros Ingresos
+  otherIncomeNotes?: string; // Concepto / Detalle de otros ingresos
+  totalGrossSales?: number; // Efectivo + Tarjetas + PedidosYa + Otros Ingresos
 
   // Propinas
   totalTipCollected?: number;
@@ -206,6 +208,7 @@ export interface AppState {
   defaultExchangeRate: number;
   activeAdminName: string;
   availableAdmins: string[];
+  expenseCategories: string[];
 }
 
 export interface DailyEarningsSummary {
@@ -219,6 +222,7 @@ export interface DailyEarningsSummary {
   cardsLafise: number;
   totalCards: number;
   pedidosYaSales: number;
+  otherIncomeSales?: number;
   totalGrossSales: number;
   pettyCashExpenses: number;
   transfersPaid: number;

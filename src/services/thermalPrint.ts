@@ -863,7 +863,7 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
         <span class="info-value">${tx.category}</span>
       </div>
       <div class="info-box">
-        <span class="info-label">Proveedor / Beneficiario</span>
+        <span class="info-label">Concepto / Detalle</span>
         <span class="info-value">${tx.vendor}</span>
       </div>
       <div class="info-box">
@@ -878,6 +878,17 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
         <div style="font-size: 12px; color: #1e293b; padding-top: 2px;">${tx.notes}</div>
       </div>
     ` : ''}
+
+    <div style="margin-top: 40px; margin-bottom: 25px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+      <div style="border-top: 1px solid #94a3b8; padding-top: 8px; text-align: center;">
+        <div style="font-size: 11px; font-weight: 700; color: #1e293b;">Entregado Por (Caja Chica)</div>
+        <div style="font-size: 10px; color: #64748b; margin-top: 2px;">${tx.registeredBy}</div>
+      </div>
+      <div style="border-top: 1px solid #94a3b8; padding-top: 8px; text-align: center;">
+        <div style="font-size: 11px; font-weight: 700; color: #1e293b;">Recibido Conforme</div>
+        <div style="font-size: 10px; color: #64748b; margin-top: 2px;">Firma y Cédula</div>
+      </div>
+    </div>
 
     <div class="footer-note">
       <span>BodegónControl ERP • Comprobante individual de caja chica • Registrado por: ${tx.registeredBy}</span>
@@ -2252,77 +2263,17 @@ export function printOfficialOpeningActBN(shift: CashShift, adminName?: string):
                 </div>
               </div>
 
-              <!-- CHECKLIST OPERATIVO -->
-              <div class="section-title">2. VERIFICACIÓN Y ESTADO OPERATIVO DE CAJA AL INICIO</div>
-              <table>
-                <thead>
-                  <tr>
-                    <th style="width: 8%; text-align: center;">ESTADO</th>
-                    <th style="width: 42%;">ELEMENTO VERIFICADO</th>
-                    <th style="width: 50%;">CRITERIO DE CUMPLIMIENTO</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td class="text-center font-bold">[ ✓ ]</td>
-                    <td><strong>Fondo de Apertura Contado</strong></td>
-                    <td>Billetes y monedas contados físicamente en presencia de ambas partes.</td>
-                  </tr>
-                  <tr>
-                    <td class="text-center font-bold">[ ✓ ]</td>
-                    <td><strong>Gaveta de Seguridad</strong></td>
-                    <td>Gaveta limpia, llave funcional y compartimentos ordenados por denominación.</td>
-                  </tr>
-                  <tr>
-                    <td class="text-center font-bold">[ ✓ ]</td>
-                    <td><strong>Sistema POS Loyverse</strong></td>
-                    <td>Turno abierto en software de punto de venta y catálogo actualizado.</td>
-                  </tr>
-                  <tr>
-                    <td class="text-center font-bold">[ ✓ ]</td>
-                    <td><strong>Impresora Térmica de Tiques</strong></td>
-                    <td>Equipo encendido con rollo de papel nuevo colocado y prueba de impresión OK.</td>
-                  </tr>
-                  <tr>
-                    <td class="text-center font-bold">[ ✓ ]</td>
-                    <td><strong>Datáfonos POS (Datafast)</strong></td>
-                    <td>Terminales BAC, Ficohsa, Banpro y Lafise cargados con batería y papel.</td>
-                  </tr>
-                </tbody>
-              </table>
-
               <!-- NOTAS -->
-              <div class="section-title">3. OBSERVACIONES DE APERTURA</div>
-              <div style="border: 1px solid #000; padding: 4px 6px; font-size: 8.5px; min-height: 24px;">
-                ${shift.openingNotes || 'Fondo entregado conforme sin anomalías. Todo el equipamiento operativo se encuentra en óptimas condiciones.'}
+              <div class="section-title">2. OBSERVACIONES DE APERTURA</div>
+              <div style="border: 1px solid #000; padding: 6px 8px; font-size: 9px; min-height: 35px;">
+                ${shift.openingNotes || 'Fondo entregado conforme sin anomalías. Operación comercial iniciada con éxito.'}
               </div>
             </div>
 
-            <!-- FIRMAS -->
-            <div>
-              <div style="font-size: 7.5px; color: #444; margin-bottom: 5px; text-align: center;">
-                Al firmar este documento, el cajero(a) asume la custodia legal del fondo entregado y se compromete a salvaguardarlo durante su turno.
-              </div>
-              <div class="signatures">
-                <div class="sig-box">
-                  <div style="height: 25px;"></div>
-                  <div>
-                    <strong>ENTREGADO POR: ADMINISTRACIÓN</strong><br>
-                    <span style="font-size: 8px;">Nombre: ${adminName || shift.openedBy}</span><br>
-                    <span style="font-size: 8px;">Firma: ________________________</span>
-                  </div>
-                </div>
-                <div class="sig-box">
-                  <div style="height: 25px;"></div>
-                  <div>
-                    <strong>RECIBIDO CONFORME: CAJERO(A) RESPONSABLE</strong><br>
-                    <span style="font-size: 8px;">Nombre: ${shift.openedBy}</span><br>
-                    <span style="font-size: 8px;">Firma y Cédula: ________________________</span>
-                  </div>
-                </div>
-              </div>
-              <div style="font-size: 7.5px; color: #666; text-align: center; margin-top: 6px;">
-                El Bodegón Restaurante & Bar • Documento Oficial B/N • Página 1 de 1
+            <!-- PIE DE DOCUMENTO -->
+            <div style="margin-top: 15px; padding-top: 8px; border-top: 1px solid #ddd;">
+              <div style="font-size: 8px; color: #666; text-align: center;">
+                El Bodegón Restaurante & Bar • Documento Oficial de Apertura • Página 1 de 1
               </div>
             </div>
           </div>

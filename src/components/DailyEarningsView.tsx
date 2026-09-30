@@ -150,10 +150,12 @@ export const DailyEarningsView: React.FC<Props> = ({
           ? shift.salesPedidosYa
           : shift.loyverseValidation?.salesPedidosYa || 0;
 
+      const otherIncomeSales = shift.otherIncome || 0;
+
       const totalGrossSales =
         shift.totalGrossSales !== undefined && shift.totalGrossSales > 0
           ? shift.totalGrossSales
-          : cashSales + totalCards + pedidosYaSales;
+          : cashSales + totalCards + pedidosYaSales + otherIncomeSales;
 
       map.set(d, {
         date: d,
@@ -166,6 +168,7 @@ export const DailyEarningsView: React.FC<Props> = ({
         cardsLafise,
         totalCards,
         pedidosYaSales,
+        otherIncomeSales,
         totalGrossSales,
         pettyCashExpenses: 0,
         transfersPaid: 0,
@@ -217,7 +220,9 @@ export const DailyEarningsView: React.FC<Props> = ({
           ? shift.salesPedidosYa
           : shift.loyverseValidation?.salesPedidosYa || 0;
 
-      const totalGrossSales = cashSales + totalCards + pedidosYaSales;
+      const otherIncomeSales = shift.otherIncome || 0;
+
+      const totalGrossSales = cashSales + totalCards + pedidosYaSales + otherIncomeSales;
 
       map.set(d, {
         date: d,
@@ -230,6 +235,7 @@ export const DailyEarningsView: React.FC<Props> = ({
         cardsLafise,
         totalCards,
         pedidosYaSales,
+        otherIncomeSales,
         totalGrossSales,
         pettyCashExpenses: 0,
         transfersPaid: 0,
@@ -259,6 +265,7 @@ export const DailyEarningsView: React.FC<Props> = ({
           cardsLafise: 0,
           totalCards: 0,
           pedidosYaSales: 0,
+          otherIncomeSales: 0,
           totalGrossSales: 0,
           pettyCashExpenses: 0,
           transfersPaid: 0,
@@ -299,6 +306,7 @@ export const DailyEarningsView: React.FC<Props> = ({
       cardsLafise: 0,
       totalCards: 0,
       pedidosYaSales: 0,
+      otherIncomeSales: 0,
       totalGrossSales: 0,
       pettyCashExpenses: 0,
       transfersPaid: 0,
@@ -1092,6 +1100,7 @@ export const DailyEarningsView: React.FC<Props> = ({
                 <th className="py-3 px-4 text-right">💵 Efectivo</th>
                 <th className="py-3 px-4 text-right">💳 Tarjetas</th>
                 <th className="py-3 px-4 text-right">🛵 PedidosYa</th>
+                <th className="py-3 px-4 text-right">🪙 Otros Ing.</th>
                 <th className="py-3 px-4 text-right">📈 Total Ventas</th>
                 <th className="py-3 px-4 text-right">🔻 Gastos Caja</th>
                 <th className="py-3 px-4 text-right">✨ Ganancia Neta</th>
@@ -1103,7 +1112,7 @@ export const DailyEarningsView: React.FC<Props> = ({
             <tbody className="divide-y divide-slate-100 font-medium">
               {dailySummaries.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="text-center py-8 text-slate-400">
+                  <td colSpan={11} className="text-center py-8 text-slate-400">
                     No se han registrado turnos ni ventas todavía
                   </td>
                 </tr>
@@ -1136,6 +1145,10 @@ export const DailyEarningsView: React.FC<Props> = ({
 
                       <td className="py-3 px-4 text-right font-mono text-amber-700">
                         C$ {row.pedidosYaSales.toFixed(2)}
+                      </td>
+
+                      <td className="py-3 px-4 text-right font-mono text-purple-700">
+                        C$ {(row.otherIncomeSales || 0).toFixed(2)}
                       </td>
 
                       <td className="py-3 px-4 text-right font-mono font-black text-slate-900">
@@ -1528,6 +1541,12 @@ export const DailyEarningsView: React.FC<Props> = ({
                 <span className="text-amber-700 font-bold">🛵 Delivery / PedidosYa:</span>
                 <span className="font-mono font-bold">C$ {activeDaySummary.pedidosYaSales.toFixed(2)}</span>
               </div>
+              {(activeDaySummary.otherIncomeSales || 0) > 0 && (
+                <div className="flex justify-between py-2 border-b border-slate-100">
+                  <span className="text-purple-700 font-bold">🪙 Otros Ingresos:</span>
+                  <span className="font-mono font-bold">C$ {(activeDaySummary.otherIncomeSales || 0).toFixed(2)}</span>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2 pt-2">

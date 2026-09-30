@@ -23,6 +23,7 @@ import {
   Truck,
   Receipt,
   CheckCheck,
+  Coins,
 } from 'lucide-react';
 
 interface Props {
@@ -110,6 +111,9 @@ export const OpeningModal: React.FC<Props> = ({
   const [reportLoyverseCash, setReportLoyverseCash] = useState<string>(
     lastClosedShift?.salesCashSystem !== undefined ? String(lastClosedShift.salesCashSystem) : ''
   );
+  const [reportOtherIncome, setReportOtherIncome] = useState<string>(
+    lastClosedShift?.otherIncome !== undefined ? String(lastClosedShift.otherIncome) : ''
+  );
   const [syncCorrectionsToPrevious, setSyncCorrectionsToPrevious] = useState<boolean>(true);
 
   const handleCopySalesFromPrevious = () => {
@@ -120,6 +124,7 @@ export const OpeningModal: React.FC<Props> = ({
       setVouchersLafise(String(lastClosedShift.cardsLafise || 0));
       setReportPedidosYa(String(lastClosedShift.salesPedidosYa || 0));
       setReportLoyverseCash(String(lastClosedShift.salesCashSystem || 0));
+      setReportOtherIncome(String(lastClosedShift.otherIncome || 0));
     }
   };
 
@@ -130,6 +135,7 @@ export const OpeningModal: React.FC<Props> = ({
     setVouchersLafise('');
     setReportPedidosYa('');
     setReportLoyverseCash('');
+    setReportOtherIncome('');
   };
 
   const numBAC = vouchersBAC !== '' ? parseFloat(vouchersBAC) || 0 : null;
@@ -138,6 +144,7 @@ export const OpeningModal: React.FC<Props> = ({
   const numLafise = vouchersLafise !== '' ? parseFloat(vouchersLafise) || 0 : null;
   const numPedidosYa = reportPedidosYa !== '' ? parseFloat(reportPedidosYa) || 0 : null;
   const numLoyverseCash = reportLoyverseCash !== '' ? parseFloat(reportLoyverseCash) || 0 : null;
+  const numOtherIncome = reportOtherIncome !== '' ? parseFloat(reportOtherIncome) || 0 : null;
 
   const repBAC = lastClosedShift?.cardsBAC || 0;
   const repFico = lastClosedShift?.cardsFicohsa || 0;
@@ -145,6 +152,7 @@ export const OpeningModal: React.FC<Props> = ({
   const repLafise = lastClosedShift?.cardsLafise || 0;
   const repPedidosYa = lastClosedShift?.salesPedidosYa || 0;
   const repLoyverseCash = lastClosedShift?.salesCashSystem || 0;
+  const repOtherIncome = lastClosedShift?.otherIncome || 0;
 
   const diffBAC = numBAC !== null ? numBAC - repBAC : null;
   const diffFico = numFico !== null ? numFico - repFico : null;
@@ -152,15 +160,17 @@ export const OpeningModal: React.FC<Props> = ({
   const diffLafise = numLafise !== null ? numLafise - repLafise : null;
   const diffPedidosYa = numPedidosYa !== null ? numPedidosYa - repPedidosYa : null;
   const diffLoyverseCash = numLoyverseCash !== null ? numLoyverseCash - repLoyverseCash : null;
+  const diffOtherIncome = numOtherIncome !== null ? numOtherIncome - repOtherIncome : null;
 
-  const totalReportedSales = repBAC + repFico + repBanpro + repLafise + repPedidosYa + repLoyverseCash;
+  const totalReportedSales = repBAC + repFico + repBanpro + repLafise + repPedidosYa + repLoyverseCash + repOtherIncome;
   const totalVerifiedSales =
     (numBAC ?? repBAC) +
     (numFico ?? repFico) +
     (numBanpro ?? repBanpro) +
     (numLafise ?? repLafise) +
     (numPedidosYa ?? repPedidosYa) +
-    (numLoyverseCash ?? repLoyverseCash);
+    (numLoyverseCash ?? repLoyverseCash) +
+    (numOtherIncome ?? repOtherIncome);
   const totalSalesDiff = totalVerifiedSales - totalReportedSales;
 
   const handleConfirm = () => {
@@ -191,6 +201,7 @@ export const OpeningModal: React.FC<Props> = ({
     if (diffLafise !== null && Math.abs(diffLafise) >= 0.01) diffItems.push(`LAFISE (${diffLafise > 0 ? '+' : ''}${diffLafise.toFixed(2)})`);
     if (diffPedidosYa !== null && Math.abs(diffPedidosYa) >= 0.01) diffItems.push(`PedidosYa (${diffPedidosYa > 0 ? '+' : ''}${diffPedidosYa.toFixed(2)})`);
     if (diffLoyverseCash !== null && Math.abs(diffLoyverseCash) >= 0.01) diffItems.push(`Loyverse (${diffLoyverseCash > 0 ? '+' : ''}${diffLoyverseCash.toFixed(2)})`);
+    if (diffOtherIncome !== null && Math.abs(diffOtherIncome) >= 0.01) diffItems.push(`Otros Ing. (${diffOtherIncome > 0 ? '+' : ''}${diffOtherIncome.toFixed(2)})`);
 
     if (diffItems.length > 0) {
       const auditSummary = `[Auditoría Vouchers Anoche: ${diffItems.join(', ')}]`;
@@ -234,6 +245,7 @@ export const OpeningModal: React.FC<Props> = ({
       const corTotalCards = corBAC + corFico + corBanpro + corLafise;
       const corPY = numPedidosYa ?? repPedidosYa;
       const corCash = numLoyverseCash ?? repLoyverseCash;
+      const corOther = numOtherIncome ?? repOtherIncome;
 
       updatedPreviousShift = {
         ...lastClosedShift,
@@ -244,7 +256,8 @@ export const OpeningModal: React.FC<Props> = ({
         totalCards: corTotalCards,
         salesPedidosYa: corPY,
         salesCashSystem: corCash,
-        totalGrossSales: corCash + corTotalCards + corPY,
+        otherIncome: corOther,
+        totalGrossSales: corCash + corTotalCards + corPY + corOther,
         closingNotes: lastClosedShift.closingNotes
           ? `${lastClosedShift.closingNotes} • Corroborado en apertura ${shiftDate}: ${diffItems.join(', ')}`
           : `Corroborado en apertura ${shiftDate}: ${diffItems.join(', ')}`,
@@ -309,6 +322,15 @@ export const OpeningModal: React.FC<Props> = ({
       val: reportLoyverseCash,
       setVal: setReportLoyverseCash,
       diff: diffLoyverseCash,
+    },
+    {
+      id: 'otherIncome',
+      name: 'Otros Ingresos',
+      icon: <Coins className="w-3.5 h-3.5 text-cyan-600" />,
+      reported: repOtherIncome,
+      val: reportOtherIncome,
+      setVal: setReportOtherIncome,
+      diff: diffOtherIncome,
     },
   ];
 
