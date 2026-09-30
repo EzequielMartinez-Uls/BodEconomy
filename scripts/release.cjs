@@ -37,7 +37,7 @@ execSync(`${npmCmd} run build`, { stdio: 'inherit', shell: true });
 
 // 3. Ejecutar electron-builder
 console.log('⚡ Empaquetando ejecutables para Windows...');
-spawnSync(npxCmd, ['electron-builder', '--win'], {
+spawnSync(npxCmd, ['electron-builder', '--win', '--publish', 'always'], {
   stdio: 'inherit',
   shell: true,
   env: process.env,

@@ -32,6 +32,8 @@ function fetchJson(url, options = {}) {
   });
 }
 
+const { spawnSync } = require('child_process');
+
 function uploadFile(uploadUrl, filePath, assetName, token, contentType = 'application/octet-stream') {
   return new Promise((resolve, reject) => {
     const stat = fs.statSync(filePath);
@@ -39,50 +41,36 @@ function uploadFile(uploadUrl, filePath, assetName, token, contentType = 'applic
     console.log(`📤 Subiendo ${assetName} (${(fileSize / (1024 * 1024)).toFixed(2)} MB)...`);
 
     const cleanUploadUrl = uploadUrl.replace(/\{.*?\}$/, '') + '?name=' + encodeURIComponent(assetName);
-    const parsedUrl = new URL(cleanUploadUrl);
 
-    const req = https.request(
-      {
-        hostname: parsedUrl.hostname,
-        path: parsedUrl.pathname + parsedUrl.search,
-        method: 'POST',
-        headers: {
-          'User-Agent': 'NodeJS',
-          Authorization: `token ${token}`,
-          'Content-Type': contentType,
-          'Content-Length': fileSize,
-        },
-      },
-      (res) => {
-        let respData = '';
-        res.on('data', (c) => (respData += c));
-        res.on('end', () => {
-          if (res.statusCode >= 200 && res.statusCode < 300) {
-            console.log(`✅ ${assetName} subido exitosamente a GitHub.`);
-            resolve(JSON.parse(respData));
-          } else {
-            reject(new Error(`Fallo al subir ${assetName} (${res.statusCode}): ${respData}`));
-          }
-        });
-      }
-    );
+    const args = [
+      '-L',
+      '--ssl-no-revoke',
+      '--fail-with-body',
+      '--retry', '3',
+      '--retry-delay', '5',
+      '-X', 'POST',
+      '-H', `Authorization: token ${token}`,
+      '-H', `Content-Type: ${contentType}`,
+      '--data-binary', `@${filePath}`,
+      cleanUploadUrl
+    ];
 
-    req.on('error', reject);
-
-    const stream = fs.createReadStream(filePath);
-    let uploadedBytes = 0;
-    let lastPercent = 0;
-
-    stream.on('data', (chunk) => {
-      uploadedBytes += chunk.length;
-      const percent = Math.floor((uploadedBytes / fileSize) * 100);
-      if (percent >= lastPercent + 10) {
-        lastPercent = percent;
-        process.stdout.write(`   progreso: ${percent}%\r`);
-      }
+    const result = spawnSync('curl.exe', args, {
+      stdio: ['ignore', 'pipe', 'inherit'],
+      encoding: 'utf-8',
+      maxBuffer: 50 * 1024 * 1024,
     });
 
-    stream.pipe(req);
+    if (result.status === 0) {
+      console.log(`✅ ${assetName} subido exitosamente a GitHub.`);
+      try {
+        resolve(JSON.parse(result.stdout));
+      } catch {
+        resolve({ ok: true });
+      }
+    } else {
+      reject(new Error(`curl falló con código ${result.status}: ${result.stdout || ''}`));
+    }
   });
 }
 
@@ -191,14 +179,26 @@ async function main() {
       continue;
     }
 
-    try {
-      await uploadFile(release.upload_url, item.local, item.name, token, item.type);
-    } catch (err) {
-      console.error(`❌ Error subiendo ${item.name}:`, err.message);
+    let success = false;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await uploadFile(release.upload_url, item.local, item.name, token, item.type);
+        success = true;
+        break;
+      } catch (err) {
+        console.warn(`⚠️ Intento ${attempt}/3 falló para ${item.name}:`, err.message);
+        if (attempt < 3) {
+          console.log('Esperando 3s antes de reintentar...');
+          await new Promise((r) => setTimeout(r, 3000));
+        }
+      }
+    }
+    if (!success) {
+      console.error(`❌ Fallaron todos los intentos para subir ${item.name}`);
     }
   }
 
-  console.log('\n🎉 ¡Todos los ejecutables fueron verificados y subidos a GitHub Releases!');
+  console.log('\n🎉 ¡Todos los ejecutables fueron verificados y procesados para GitHub Releases!');
 }
 
 main().catch(console.error);
