@@ -29,7 +29,7 @@ export async function exportPayrollToExcel(
   // HOJA 1: PLANILLA (OPERATIVA)
   // ==========================================
   const ws1 = wb.addWorksheet('Planilla', {
-    pageSetup: { orientation: 'landscape', paperSize: 1 }, // Letter
+    pageSetup: { orientation: 'landscape' },
   });
 
   // Título
@@ -209,7 +209,7 @@ export async function exportPayrollToExcel(
   // HOJA 2: PLANILLA ESPECIAL (INSS)
   // ==========================================
   const ws2 = wb.addWorksheet('Planilla Especial', {
-    pageSetup: { orientation: 'landscape', paperSize: 1 },
+    pageSetup: { orientation: 'landscape' },
   });
 
   // Encabezado

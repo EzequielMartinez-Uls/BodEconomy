@@ -40,6 +40,7 @@ export const Sidebar: React.FC<Props> = ({
   onSelectAdminClick,
 }) => {
   const isShiftOpen = state.currentShift?.status === 'OPEN';
+  const isPettyCashLow = state.pettyCashBalance < 2000;
   const [payrollExpanded, setPayrollExpanded] = useState(activeTab === 'payroll');
   const [appVersion, setAppVersion] = useState('v1.0.11');
 

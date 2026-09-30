@@ -285,4 +285,7 @@ export const MOCK_YESTERDAY_FULL_STATE: AppState = {
     'PAGOS_PERSONAL',
     'OTROS',
   ],
+  payrollEmployees: [],
+  payrollIncidents: [],
+  payrollHistory: [],
 };
