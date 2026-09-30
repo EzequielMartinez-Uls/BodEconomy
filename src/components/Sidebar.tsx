@@ -41,6 +41,7 @@ export const Sidebar: React.FC<Props> = ({
 }) => {
   const isShiftOpen = state.currentShift?.status === 'OPEN';
   const [payrollExpanded, setPayrollExpanded] = useState(activeTab === 'payroll');
+  const [appVersion, setAppVersion] = useState('v1.0.11');
 
   useEffect(() => {
     if (activeTab === 'payroll') {
