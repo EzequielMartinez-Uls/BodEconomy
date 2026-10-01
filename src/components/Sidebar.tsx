@@ -16,6 +16,9 @@ import {
   Calendar,
   Building2,
   UtensilsCrossed,
+  RefreshCw,
+  Sparkles,
+  Download,
 } from 'lucide-react';
 
 interface Props {
@@ -44,6 +47,12 @@ export const Sidebar: React.FC<Props> = ({
   const [payrollExpanded, setPayrollExpanded] = useState(activeTab === 'payroll');
   const [appVersion, setAppVersion] = useState('v1.0.13');
 
+  const [updateStatus, setUpdateStatus] = useState<{
+    status: 'idle' | 'available' | 'downloading' | 'ready';
+    percent?: number;
+    version?: string;
+  }>({ status: 'idle' });
+
   useEffect(() => {
     if (activeTab === 'payroll') {
       setPayrollExpanded(true);
@@ -58,6 +67,28 @@ export const Sidebar: React.FC<Props> = ({
           if (v) setAppVersion(`v${v}`);
         })
         .catch(() => {});
+    }
+
+    if (window.electronAPI) {
+      const unsubAvail = window.electronAPI.onUpdateAvailable?.((info: any) => {
+        setUpdateStatus({ status: 'available', version: info?.version });
+      });
+      const unsubProg = window.electronAPI.onUpdateProgress?.((p: any) => {
+        setUpdateStatus((prev) => ({
+          ...prev,
+          status: 'downloading',
+          percent: Math.round(p?.percent || 0),
+        }));
+      });
+      const unsubDown = window.electronAPI.onUpdateDownloaded?.((info: any) => {
+        setUpdateStatus({ status: 'ready', version: info?.version });
+      });
+
+      return () => {
+        unsubAvail?.();
+        unsubProg?.();
+        unsubDown?.();
+      };
     }
   }, []);
 
@@ -323,6 +354,25 @@ export const Sidebar: React.FC<Props> = ({
           <Settings className="w-4 h-4 text-slate-400" />
           <span>Configuración & Respaldos</span>
         </button>
+
+        {/* Banners de Actualización Automática */}
+        {updateStatus.status === 'downloading' && (
+          <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold flex items-center gap-2">
+            <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-600 shrink-0" />
+            <span>Descargando actualización ({updateStatus.percent || 0}%)...</span>
+          </div>
+        )}
+
+        {updateStatus.status === 'ready' && (
+          <button
+            onClick={() => window.electronAPI?.restartAndInstall?.()}
+            className="w-full p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center justify-center gap-2 shadow-md transition cursor-pointer"
+            title="Haz clic para reiniciar la aplicación e instalar la nueva versión"
+          >
+            <Sparkles className="w-4 h-4 shrink-0 text-amber-300" />
+            <span>Actualización lista • Reiniciar</span>
+          </button>
+        )}
 
         <button
           onClick={onOpenSettingsClick}
