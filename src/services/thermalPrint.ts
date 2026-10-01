@@ -1322,6 +1322,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
       responsableCaja,
       observacionesGeneral,
       fondoInicial,
+      totalInflows = 0,
       expensesCash,
       expensesTransf,
       expensesTotal,

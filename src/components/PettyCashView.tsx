@@ -5,6 +5,7 @@ import {
   printThermalSingleExpenseVoucher,
   printThermalPettyCashClosingAct,
   printOfficialActBN,
+  OfficialActTransaction,
 } from '../services/thermalPrint';
 import {
   exportPettyCashExpensesToExcel,

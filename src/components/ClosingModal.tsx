@@ -732,10 +732,10 @@ export const ClosingModal: React.FC<Props> = ({
                       <span>(-) Propinas Pagadas en Efectivo:</span>
                       <strong className="font-mono text-rose-600">- C$ {tipsPaidAmount.toFixed(2)}</strong>
                     </div>
-                    {transferOut > 0 && (
+                    {additionalTransferOut > 0 && (
                       <div className="flex justify-between text-slate-600">
                         <span>(-) Traspasos a Caja Chica:</span>
-                        <strong className="font-mono text-rose-600">- C$ {transferOut.toFixed(2)}</strong>
+                        <strong className="font-mono text-rose-600">- C$ {additionalTransferOut.toFixed(2)}</strong>
                       </div>
                     )}
                     <div className="border-t border-slate-200 pt-2 flex justify-between font-bold text-slate-800">

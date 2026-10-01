@@ -16,6 +16,7 @@ import {
   printThermalDailyExpensesTicket,
   printOfficialActBN,
   printOfficialOpeningActBN,
+  OfficialActTransaction,
 } from '../services/thermalPrint';
 import { CloudSyncModal } from './CloudSyncModal';
 import { PrintOfficialActModal } from './PrintOfficialActModal';
