@@ -42,7 +42,7 @@ export const Sidebar: React.FC<Props> = ({
   const isShiftOpen = state.currentShift?.status === 'OPEN';
   const isPettyCashLow = state.pettyCashBalance < 2000;
   const [payrollExpanded, setPayrollExpanded] = useState(activeTab === 'payroll');
-  const [appVersion, setAppVersion] = useState('v1.0.11');
+  const [appVersion, setAppVersion] = useState('v1.0.13');
 
   useEffect(() => {
     if (activeTab === 'payroll') {

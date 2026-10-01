@@ -881,25 +881,28 @@ export const PettyCashView: React.FC<Props> = ({
                 <div className="flex items-center gap-2 flex-wrap">
                   <button
                     onClick={() => {
-                      const dayTransactions = selectedDateTransactions
-                        .filter((t) => t.type === 'EXPENSE')
-                        .map((t) => ({
-                          id: t.id,
-                          hora: new Date(t.date).toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' }),
-                          categoria: t.category,
-                          concepto: t.notes || t.vendor,
-                          proveedor: t.vendor,
-                          metodo: t.method === 'CASH' ? 'Efectivo' : t.method === 'CARD' ? 'Tarjeta' : 'Transferencia',
-                          estado: t.receiptNumber ? `#${t.receiptNumber}` : 'Comprobante',
-                          referencia: t.receiptNumber,
-                          monto: t.amount,
-                        }));
+                      const dayTransactions: OfficialActTransaction[] = ledgerRows.map((r) => ({
+                        id: r.id,
+                        hora: r.hora,
+                        categoria: r.categoriaLabel || 'General',
+                        concepto: r.notes ? `${r.concepto} (${r.notes})` : r.concepto,
+                        proveedor: r.vendor,
+                        metodo: r.tipoPago === 'EFECTIVO' ? 'Efectivo' : r.tipoPago === 'TRANSFERENCIA' ? 'Transferencia' : r.tipoPago === 'TARJETA' ? 'Tarjeta' : '-',
+                        estado: r.receiptNumber ? `#${r.receiptNumber}` : r.isOpening ? 'Apertura' : 'Liquidado',
+                        referencia: r.receiptNumber,
+                        monto: (r.reembolsoCajaChica || 0) + (r.gastosCajaChica || 0) + (r.montoTotalBanco || 0),
+                        tipo: (r.reembolsoCajaChica && r.reembolsoCajaChica > 0) ? 'INGRESO' : 'GASTO',
+                        inflow: r.reembolsoCajaChica || 0,
+                        outflow: (r.gastosCajaChica || 0) + (r.montoTotalBanco || 0),
+                        runningBalance: r.saldoGaveta,
+                      }));
 
-                      const fondoInicial = selectedShift.initialBalance;
-                      const expensesCash = dayTransactions.filter((t) => t.metodo === 'Efectivo').reduce((sum, t) => sum + t.monto, 0);
-                      const expensesTransf = dayTransactions.filter((t) => t.metodo === 'Transferencia').reduce((sum, t) => sum + t.monto, 0);
-                      const expensesTotal = expensesCash + expensesTransf;
-                      const saldoRemanente = selectedShift.actualCashCounted ?? (fondoInicial - expensesCash);
+                      const fondoInicial = selectedShift?.initialBalance || 0;
+                      const totalInflows = selectedDateInflows;
+                      const expensesCash = selectedDateCashExpenses;
+                      const expensesTransf = selectedDateTransferExpenses;
+                      const expensesTotal = selectedDateExpenses;
+                      const saldoRemanente = selectedShift?.actualCashCounted ?? expectedSelectedBalance;
 
                       printOfficialActBN({
                         date: selectedDate,
@@ -914,13 +917,14 @@ export const PettyCashView: React.FC<Props> = ({
                         totalGross: 0,
                         netProfit: 0,
                         marginPercent: 0,
-                        responsableCaja: selectedShift.closedBy || selectedShift.openedBy || state.activeAdminName,
+                        responsableCaja: selectedShift?.closedBy || selectedShift?.openedBy || state.activeAdminName,
                         fondoInicial,
+                        totalInflows,
                         expensesCash,
                         expensesTransf,
                         expensesTotal,
                         saldoRemanente,
-                        responsableCajaChica: selectedShift.closedBy || selectedShift.openedBy || state.activeAdminName,
+                        responsableCajaChica: selectedShift?.closedBy || selectedShift?.openedBy || state.activeAdminName,
                         transactions: dayTransactions,
                       });
                     }}
@@ -1189,25 +1193,28 @@ export const PettyCashView: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    const dayTransactions = selectedDateTransactions
-                      .filter((t) => t.type === 'EXPENSE')
-                      .map((t) => ({
-                        id: t.id,
-                        hora: new Date(t.date).toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' }),
-                        categoria: t.category,
-                        concepto: t.notes || t.vendor,
-                        proveedor: t.vendor,
-                        metodo: t.method === 'CASH' ? 'Efectivo' : t.method === 'CARD' ? 'Tarjeta' : 'Transferencia',
-                        estado: t.receiptNumber ? `#${t.receiptNumber}` : 'Comprobante',
-                        referencia: t.receiptNumber,
-                        monto: t.amount,
-                      }));
+                    const dayTransactions: OfficialActTransaction[] = ledgerRows.map((r) => ({
+                      id: r.id,
+                      hora: r.hora,
+                      categoria: r.categoriaLabel || 'General',
+                      concepto: r.notes ? `${r.concepto} (${r.notes})` : r.concepto,
+                      proveedor: r.vendor,
+                      metodo: r.tipoPago === 'EFECTIVO' ? 'Efectivo' : r.tipoPago === 'TRANSFERENCIA' ? 'Transferencia' : r.tipoPago === 'TARJETA' ? 'Tarjeta' : '-',
+                      estado: r.receiptNumber ? `#${r.receiptNumber}` : r.isOpening ? 'Apertura' : 'Liquidado',
+                      referencia: r.receiptNumber,
+                      monto: (r.reembolsoCajaChica || 0) + (r.gastosCajaChica || 0) + (r.montoTotalBanco || 0),
+                      tipo: (r.reembolsoCajaChica && r.reembolsoCajaChica > 0) ? 'INGRESO' : 'GASTO',
+                      inflow: r.reembolsoCajaChica || 0,
+                      outflow: (r.gastosCajaChica || 0) + (r.montoTotalBanco || 0),
+                      runningBalance: r.saldoGaveta,
+                    }));
 
-                    const fondoInicial = selectedShift?.initialBalance || 2000;
-                    const expensesCash = dayTransactions.filter((t) => t.metodo === 'Efectivo').reduce((sum, t) => sum + t.monto, 0);
-                    const expensesTransf = dayTransactions.filter((t) => t.metodo === 'Transferencia').reduce((sum, t) => sum + t.monto, 0);
-                    const expensesTotal = expensesCash + expensesTransf;
-                    const saldoRemanente = fondoInicial - expensesCash;
+                    const fondoInicial = selectedShift?.initialBalance || 0;
+                    const totalInflows = selectedDateInflows;
+                    const expensesCash = selectedDateCashExpenses;
+                    const expensesTransf = selectedDateTransferExpenses;
+                    const expensesTotal = selectedDateExpenses;
+                    const saldoRemanente = selectedShift?.actualCashCounted ?? expectedSelectedBalance;
 
                     printOfficialActBN({
                       date: selectedDate,
@@ -1224,6 +1231,7 @@ export const PettyCashView: React.FC<Props> = ({
                       marginPercent: 0,
                       responsableCaja: selectedShift?.closedBy || selectedShift?.openedBy || state.activeAdminName,
                       fondoInicial,
+                      totalInflows,
                       expensesCash,
                       expensesTransf,
                       expensesTotal,

@@ -56,6 +56,8 @@ export interface CashShift {
   totalOpeningNIO: number; // Physical NIO
   totalOpeningUSD: number; // Physical USD
   totalOpeningEquivNIO: number; // totalOpeningNIO + (totalOpeningUSD * exchangeRate)
+  openingCashCountedNIO?: number; // Total billetes/monedas contados físicamente antes de traspasos
+  openingTransferToPettyCash?: number; // Monto trasladado a Caja Chica al abrir (se resta de la gaveta de caja general)
 
   // Validación de Ventas de Ayer (según reporte de Loyverse a la Apertura)
   loyverseValidation?: {

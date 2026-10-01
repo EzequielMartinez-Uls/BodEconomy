@@ -490,8 +490,13 @@ export function printThermalOpeningTicket(shift: CashShift): void {
     <!-- Total Gran Fondo Apertura en Gaveta -->
     <div class="total-card">
       <div>
-        <div class="total-label">Fondo Total de Apertura en Gaveta</div>
-        <div class="total-sub">Efectivo Físico Contado en Gaveta (Córdobas C$ + Dólares convertidos a Tasa Oficial)</div>
+        <div class="total-label">Fondo Neto de Apertura en Gaveta General</div>
+        <div class="total-sub">
+          ${(shift.openingTransferToPettyCash && shift.openingTransferToPettyCash > 0)
+            ? `Conteo Inicial: C$ ${(shift.openingCashCountedNIO || (shift.totalOpeningEquivNIO + shift.openingTransferToPettyCash)).toLocaleString('es-NI', { minimumFractionDigits: 2 })} • (-) Traslado a Caja Chica: -C$ ${shift.openingTransferToPettyCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}`
+            : 'Efectivo Físico Contado en Gaveta (Córdobas C$ + Dólares convertidos a Tasa Oficial)'
+          }
+        </div>
       </div>
       <div class="total-amount">
         C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -724,15 +729,23 @@ export function printThermalDailyExpensesTicket(
   const inflows = transactions.filter((t) => t.type === 'INFLOW');
 
   const totalCashExpenses = expenses
-    .filter((t) => t.method === 'CASH')
+    .filter((t) => t.method === 'CASH' || !t.method)
     .reduce((acc, t) => acc + t.amount, 0);
 
   const totalTransferExpenses = expenses
     .filter((t) => t.method === 'TRANSFER')
     .reduce((acc, t) => acc + t.amount, 0);
 
-  const grandTotalExpenses = totalCashExpenses + totalTransferExpenses;
+  const totalCardExpenses = expenses
+    .filter((t) => t.method === 'CARD')
+    .reduce((acc, t) => acc + t.amount, 0);
+
+  const grandTotalExpenses = totalCashExpenses + totalTransferExpenses + totalCardExpenses;
   const totalInflows = inflows.reduce((acc, t) => acc + t.amount, 0);
+
+  // Ordenar cronológicamente para reconstruir el saldo en gaveta paso a paso
+  const sorted = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const initialBaseBal = Math.max(0, currentBalance - totalInflows + totalCashExpenses);
 
   const content = `
     <div class="header-container">
@@ -743,12 +756,12 @@ export function printThermalDailyExpensesTicket(
       <div class="doc-header-right">
         <span class="doc-badge">DOCUMENTO OFICIAL A4</span>
         <h2 class="doc-title">Reporte Diario de Caja Chica</h2>
-        <div class="doc-meta">Control y Comprobación de Egresos</div>
+        <div class="doc-meta">Control, Fondeos y Comprobación de Egresos</div>
       </div>
     </div>
 
     <!-- Parámetros del Reporte -->
-    <div class="grid-4">
+    <div class="${totalInflows > 0 ? 'grid-4' : 'grid-3'}">
       <div class="info-box">
         <span class="info-label">Fecha Comercial</span>
         <span class="info-value">${dateStr}</span>
@@ -757,52 +770,73 @@ export function printThermalDailyExpensesTicket(
         <span class="info-label">Emitido por</span>
         <span class="info-value">${adminName}</span>
       </div>
-      <div class="info-box">
-        <span class="info-label">Total Compras del Día</span>
-        <span class="info-value" style="color: #b91c1c;">C$ ${grandTotalExpenses.toFixed(2)}</span>
+      ${totalInflows > 0 ? `
+      <div class="info-box" style="background: #f0fdf4; border-color: #86efac;">
+        <span class="info-label">(+) Fondeos / Ingresos</span>
+        <span class="info-value" style="color: #047857;">+C$ ${totalInflows.toFixed(2)}</span>
       </div>
+      ` : ''}
       <div class="info-box">
-        <span class="info-label">Saldo Disponible en Mano</span>
-        <span class="info-value" style="color: #0f172a; font-size: 14px;">C$ ${currentBalance.toFixed(2)}</span>
+        <span class="info-label">(-) Compras / Egresos</span>
+        <span class="info-value" style="color: #b91c1c;">-C$ ${grandTotalExpenses.toFixed(2)}</span>
       </div>
     </div>
 
     <div class="section-title" style="margin-top: 10px;">
-      <span>🛒</span> Detalle de Compras y Egresos Realizados (${expenses.length})
+      <span>🛒</span> Detalle de Movimientos de Caja Chica (${sorted.length})
     </div>
 
     <table>
       <thead>
         <tr>
-          <th style="width: 45px;">#</th>
+          <th style="width: 35px;">#</th>
           <th style="width: 60px;">Hora</th>
-          <th>Rubro / Categoría</th>
-          <th>Proveedor / Beneficiario</th>
-          <th>Concepto / Detalle</th>
-          <th>Comprobante</th>
-          <th>Medio</th>
-          <th class="text-right">Monto C$</th>
+          <th style="width: 130px;">Rubro / Categoría</th>
+          <th>Proveedor / Detalle</th>
+          <th style="width: 90px;">Comprobante</th>
+          <th style="width: 70px;">Medio</th>
+          <th style="width: 85px;" class="text-right">Entradas (+)</th>
+          <th style="width: 85px;" class="text-right">Salidas (-)</th>
+          <th style="width: 90px;" class="text-right">Saldo Gaveta</th>
         </tr>
       </thead>
       <tbody>
-        ${expenses.length === 0 ? '<tr><td colspan="8" class="text-center" style="padding: 16px; color: #94a3b8;">No se registraron egresos en este día.</td></tr>' : ''}
-        ${expenses.map((tx, idx) => `
-          <tr>
-            <td class="font-mono text-center" style="color: #64748b;">${idx + 1}</td>
-            <td class="font-mono text-center">${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-            <td><span class="badge badge-neutral">${tx.category}</span></td>
-            <td class="bold">${tx.vendor}</td>
-            <td>${tx.notes || '—'}</td>
-            <td class="font-mono">${tx.receiptNumber ? `<span class="badge" style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;">#${tx.receiptNumber}</span>` : '<span class="badge" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;">Sin Recibo</span>'}</td>
-            <td>${tx.method === 'CASH' ? 'Efectivo' : 'Transf.'}</td>
-            <td class="text-right font-mono bold" style="font-size: 11.5px;">C$ ${tx.amount.toFixed(2)}</td>
-          </tr>
-        `).join('')}
+        ${sorted.length === 0 ? '<tr><td colspan="9" class="text-center" style="padding: 16px; color: #94a3b8;">No se registraron movimientos en este día.</td></tr>' : ''}
+        ${(() => {
+          let runningBal = initialBaseBal;
+          return sorted.map((tx, idx) => {
+            const isIn = tx.type === 'INFLOW';
+            const isCash = tx.method === 'CASH' || !tx.method;
+            if (isIn) {
+              runningBal += tx.amount;
+            } else if (isCash) {
+              runningBal -= tx.amount;
+            }
+            return `
+              <tr style="${isIn ? 'background-color: #f0fdf4;' : ''}">
+                <td class="font-mono text-center" style="color: #64748b;">${idx + 1}</td>
+                <td class="font-mono text-center">${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                <td><span class="badge badge-neutral">${tx.category}</span></td>
+                <td>
+                  <span class="bold">${tx.vendor}</span>
+                  ${tx.notes ? `<div style="font-size: 9.5px; color: #64748b;">${tx.notes}</div>` : ''}
+                </td>
+                <td class="font-mono text-center">${tx.receiptNumber ? `<span class="badge" style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;">#${tx.receiptNumber}</span>` : '<span class="badge" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;">Sin Recibo</span>'}</td>
+                <td class="text-center">${isCash ? 'Efectivo' : tx.method === 'CARD' ? 'Tarjeta' : 'Transf.'}</td>
+                <td class="text-right font-mono ${isIn ? 'bold' : ''}" style="${isIn ? 'color: #047857;' : 'color: #94a3b8;'}">${isIn ? `+C$ ${tx.amount.toFixed(2)}` : '—'}</td>
+                <td class="text-right font-mono ${!isIn ? 'bold' : ''}" style="${!isIn ? 'color: #b91c1c;' : 'color: #94a3b8;'}">${!isIn ? `-C$ ${tx.amount.toFixed(2)}` : '—'}</td>
+                <td class="text-right font-mono bold" style="background-color: #fafafa;">C$ ${runningBal.toFixed(2)}</td>
+              </tr>
+            `;
+          }).join('');
+        })()}
       </tbody>
       <tfoot>
-        <tr style="background: #fef2f2; font-weight: bold; color: #991b1b;">
-          <td colspan="7" style="font-size: 11.5px;">TOTAL EGRESOS DE LA JORNADA</td>
-          <td class="text-right font-mono" style="font-size: 13px;">C$ ${grandTotalExpenses.toFixed(2)}</td>
+        <tr style="background: #f8fafc; font-weight: bold; color: #334155;">
+          <td colspan="6" style="font-size: 11px; text-align: right;">TOTALES ACUMULADOS:</td>
+          <td class="text-right font-mono" style="color: #047857; font-size: 11.5px;">+C$ ${totalInflows.toFixed(2)}</td>
+          <td class="text-right font-mono" style="color: #b91c1c; font-size: 11.5px;">-C$ ${grandTotalExpenses.toFixed(2)}</td>
+          <td class="text-right font-mono bold" style="font-size: 12px; color: #0f172a;">C$ ${currentBalance.toFixed(2)}</td>
         </tr>
       </tfoot>
     </table>
@@ -810,7 +844,7 @@ export function printThermalDailyExpensesTicket(
     <div class="total-card" style="background: #f8fafc; border-color: #cbd5e1;">
       <div>
         <div class="total-label" style="color: #334155;">Saldo Disponible en Mano al Momento</div>
-        <div class="total-sub">Dinero en efectivo listo para continuar operando en Caja Chica</div>
+        <div class="total-sub">Dinero físico en gaveta listo para continuar operando en Caja Chica</div>
       </div>
       <div class="total-amount" style="color: #0f172a;">
         C$ ${currentBalance.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -1024,10 +1058,19 @@ export function printThermalPettyCashClosingAct(
   const isSquared = shift.auditStatus === 'SQUARED';
   const isShortage = shift.auditStatus === 'SHORTAGE';
   const expenses = transactions.filter((t) => t.type === 'EXPENSE');
+  const inflows = transactions.filter((t) => t.type === 'INFLOW');
+  const totalInflows = shift.totalInflows !== undefined && shift.totalInflows > 0
+    ? shift.totalInflows
+    : inflows.reduce((acc, t) => acc + t.amount, 0);
+
   const cashExpenses = expenses.filter((t) => t.method === 'CASH' || !t.method).reduce((acc, t) => acc + t.amount, 0);
   const transferExpenses = expenses.filter((t) => t.method === 'TRANSFER').reduce((acc, t) => acc + t.amount, 0);
   const cardExpenses = expenses.filter((t) => t.method === 'CARD').reduce((acc, t) => acc + t.amount, 0);
   const totalExpenses = shift.totalExpenses !== undefined ? shift.totalExpenses : (cashExpenses + transferExpenses + cardExpenses);
+
+  const expectedBalance = shift.expectedBalance !== undefined && shift.expectedBalance > 0
+    ? shift.expectedBalance
+    : (shift.initialBalance + totalInflows - cashExpenses);
 
   const content = `
     <div class="header-container">
@@ -1064,24 +1107,24 @@ export function printThermalPettyCashClosingAct(
       </div>
     </div>
 
-    <!-- 2. Composición del Fondo de Apertura (Los 3 Fondos Oficiales) -->
+    <!-- 2. Composición del Fondo de Apertura y Fondeos del Día -->
     <div class="banner-box" style="background: #ffffff;">
       <div class="section-title" style="color: #0f172a; margin-bottom: 8px;">
-        <span>💼</span> 1. Composición de los 3 Fondos de Caja Chica
+        <span>💼</span> 1. Balance y Liquidación del Fondo de Caja Chica
       </div>
       <div class="grid-3" style="margin-bottom: 8px;">
         <div class="info-box">
-          <span class="info-label">1. Fondo del Día Anterior</span>
+          <span class="info-label">1. Fondo Día Anterior</span>
           <div class="info-value">C$ ${shift.previousDayRemaining.toFixed(2)}</div>
           <span style="font-size: 9.5px; color: #64748b;">Sobrante contado de ayer</span>
         </div>
         <div class="info-box">
           <span class="info-label">2. Traslado de General</span>
           <div class="info-value" style="color: #047857;">+C$ ${shift.generalCashTransfer.toFixed(2)}</div>
-          <span style="font-size: 9.5px; color: #64748b;">Ventas de Caja General</span>
+          <span style="font-size: 9.5px; color: #64748b;">Traslado desde Caja General</span>
         </div>
         <div class="info-box">
-          <span class="info-label">3. Depósito a Caja Chica</span>
+          <span class="info-label">3. Aporte Extra de Apertura</span>
           <div class="info-value" style="color: #047857;">+C$ ${shift.bossContribution.toFixed(2)}</div>
           <span style="font-size: 9.5px; color: #64748b;">Aporte directo del Jefe</span>
         </div>
@@ -1089,22 +1132,29 @@ export function printThermalPettyCashClosingAct(
 
       <div class="grid-4" style="margin-bottom: 0;">
         <div class="info-box" style="background: #f8fafc;">
-          <span class="info-label">Fondo Inicial Total</span>
+          <span class="info-label">Fondo Inicial Base</span>
           <div class="info-value">C$ ${shift.initialBalance.toFixed(2)}</div>
         </div>
-        <div class="info-box" style="background: #f8fafc;">
-          <span class="info-label">(-) Egresos Efectivo (Gaveta)</span>
-          <div class="info-value" style="color: #b91c1c;">-C$ ${cashExpenses.toFixed(2)}</div>
-          <span style="font-size: 9px; color: #64748b;">Resta gaveta física</span>
+        ${totalInflows > 0 ? `
+        <div class="info-box" style="background: #f0fdf4; border-color: #86efac;">
+          <span class="info-label">(+) Fondeos Extras Hoy</span>
+          <div class="info-value" style="color: #047857;">+C$ ${totalInflows.toFixed(2)}</div>
+          <span style="font-size: 9px; color: #065f46;">Ingresos extras a gaveta</span>
         </div>
+        ` : `
         <div class="info-box" style="background: #f8fafc;">
-          <span class="info-label">🏦 Banco & 💳 Tarjetas</span>
-          <div class="info-value" style="color: #1d4ed8;">C$ ${(transferExpenses + cardExpenses).toFixed(2)}</div>
-          <span style="font-size: 9px; color: #64748b;">Transf: C$ ${transferExpenses.toFixed(0)} • Tarjeta: C$ ${cardExpenses.toFixed(0)}</span>
+          <span class="info-label">Total Ingresado</span>
+          <div class="info-value">C$ ${(shift.initialBalance + totalInflows).toFixed(2)}</div>
+        </div>
+        `}
+        <div class="info-box" style="background: #f8fafc;">
+          <span class="info-label">(-) Egresos Efectivo</span>
+          <div class="info-value" style="color: #b91c1c;">-C$ ${cashExpenses.toFixed(2)}</div>
+          <span style="font-size: 9px; color: #64748b;">Salidas físicas gaveta</span>
         </div>
         <div class="info-box" style="background: #ecfdf5; border-color: #a7f3d0;">
           <span class="info-label">Saldo Teórico Gaveta</span>
-          <div class="info-value" style="color: #065f46; font-size: 14px;">C$ ${(shift.expectedBalance || 0).toFixed(2)}</div>
+          <div class="info-value" style="color: #065f46; font-size: 14px;">C$ ${expectedBalance.toFixed(2)}</div>
         </div>
       </div>
     </div>
@@ -1117,7 +1167,7 @@ export function printThermalPettyCashClosingAct(
       <div class="grid-3" style="margin-bottom: 6px;">
         <div class="info-box">
           <span class="info-label">Saldo Teórico Calculado</span>
-          <div class="info-value">C$ ${(shift.expectedBalance || 0).toFixed(2)}</div>
+          <div class="info-value">C$ ${expectedBalance.toFixed(2)}</div>
         </div>
         <div class="info-box" style="background: #eff6ff; border-color: #93c5fd;">
           <span class="info-label">Efectivo Físico Contado</span>
@@ -1135,52 +1185,55 @@ export function printThermalPettyCashClosingAct(
       </div>
     </div>
 
-    <!-- 4. Detalle de Compras del Día -->
+    <!-- 4. Detalle Completo de Movimientos (Idéntico al Cuadro en Vivo) -->
     <div class="section-title">
-      <span>📋</span> 3. Detalle de Compras de la Jornada (${expenses.length})
+      <span>📋</span> 3. Detalle Completo de Movimientos de la Jornada (${transactions.length})
     </div>
     <table>
       <thead>
         <tr>
-          <th>Hora</th>
-          <th>Rubro</th>
-          <th>Proveedor / Detalle</th>
-          <th>Comprobante</th>
-          <th>Medio</th>
-          <th class="text-right">Monto C$</th>
+          <th style="width: 10%;">Hora</th>
+          <th style="width: 32%;">Concepto / Detalle</th>
+          <th style="width: 14%;">Rubro</th>
+          <th style="width: 12%;">Medio</th>
+          <th style="width: 11%;" class="text-right">Entradas (+)</th>
+          <th style="width: 11%;" class="text-right">Salidas (-)</th>
+          <th style="width: 10%;" class="text-right">Saldo (C$)</th>
         </tr>
       </thead>
       <tbody>
-        ${expenses.length === 0 ? '<tr><td colspan="6" class="text-center" style="padding: 14px; color: #94a3b8;">No hubo compras en esta jornada.</td></tr>' : ''}
-        ${expenses.map((tx) => `
-          <tr>
-            <td class="font-mono text-center">${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-            <td><span class="badge badge-neutral">${tx.category}</span></td>
-            <td class="bold">${tx.vendor} ${tx.notes ? `<div style="font-size: 9.5px; font-weight: normal; color: #64748b;">${tx.notes}</div>` : ''}</td>
-            <td class="font-mono">${tx.receiptNumber ? `#${tx.receiptNumber}` : 'Sin Recibo'}</td>
-            <td>${tx.method === 'CASH' ? 'Efectivo' : tx.method === 'CARD' ? 'Tarjeta' : 'Transf.'}</td>
-            <td class="text-right font-mono bold">C$ ${tx.amount.toFixed(2)}</td>
-          </tr>
-        `).join('')}
+        ${transactions.length === 0 ? '<tr><td colspan="7" class="text-center" style="padding: 14px; color: #94a3b8;">No hubo movimientos en esta jornada.</td></tr>' : ''}
+        ${(() => {
+          let runningSaldoAct = shift.initialBalance;
+          const sorted = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          return sorted.map((tx) => {
+            const isIn = tx.type === 'INFLOW';
+            const isCash = tx.method === 'CASH' || !tx.method;
+            if (isIn) {
+              runningSaldoAct += tx.amount;
+            } else if (isCash) {
+              runningSaldoAct -= tx.amount;
+            }
+            return `
+              <tr style="${isIn ? 'background-color: #f0fdf4;' : ''}">
+                <td class="font-mono text-center">${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                <td class="bold">${tx.vendor} ${tx.notes ? `<div style="font-size: 9.5px; font-weight: normal; color: #64748b;">${tx.notes}</div>` : ''}</td>
+                <td><span class="badge badge-neutral">${tx.category}</span></td>
+                <td>${isCash ? 'Efectivo' : tx.method === 'CARD' ? 'Tarjeta' : 'Transf.'}</td>
+                <td class="text-right font-mono ${isIn ? 'bold' : ''}" style="${isIn ? 'color: #047857;' : 'color: #94a3b8;'}">${isIn ? `+C$ ${tx.amount.toFixed(2)}` : '—'}</td>
+                <td class="text-right font-mono ${!isIn ? 'bold' : ''}" style="${!isIn ? 'color: #b91c1c;' : 'color: #94a3b8;'}">${!isIn ? `-C$ ${tx.amount.toFixed(2)}` : '—'}</td>
+                <td class="text-right font-mono bold" style="background-color: #fafafa;">C$ ${runningSaldoAct.toFixed(2)}</td>
+              </tr>
+            `;
+          }).join('');
+        })()}
       </tbody>
       <tfoot>
         <tr style="background: #f8fafc; font-weight: bold; color: #475569; border-top: 1px solid #e2e8f0;">
-          <td colspan="5">Subtotal Compras en Efectivo (Salidas de Gaveta):</td>
-          <td class="text-right font-mono" style="color: #b91c1c;">C$ ${cashExpenses.toFixed(2)}</td>
-        </tr>
-        <tr style="background: #f8fafc; font-weight: bold; color: #475569;">
-          <td colspan="5">Subtotal Pagos por Banco (Transferencias):</td>
-          <td class="text-right font-mono" style="color: #1d4ed8;">C$ ${transferExpenses.toFixed(2)}</td>
-        </tr>
-        ${cardExpenses > 0 ? `
-          <tr style="background: #f8fafc; font-weight: bold; color: #475569;">
-            <td colspan="5">Subtotal Pagos con Tarjeta:</td>
-            <td class="text-right font-mono" style="color: #7e22ce;">C$ ${cardExpenses.toFixed(2)}</td>
-          </tr>
-        ` : ''}
-        <tr style="background: #fef2f2; font-weight: bold; color: #991b1b; border-top: 2px solid #f87171;">
-          <td colspan="5">TOTAL GENERAL COMPRAS DE LA JORNADA:</td>
-          <td class="text-right font-mono" style="font-size: 12.5px;">C$ ${totalExpenses.toFixed(2)}</td>
+          <td colspan="4" style="text-align: right;">TOTALES ACUMULADOS:</td>
+          <td class="text-right font-mono" style="color: #047857;">+C$ ${totalInflows.toFixed(2)}</td>
+          <td class="text-right font-mono" style="color: #b91c1c;">-C$ ${totalExpenses.toFixed(2)}</td>
+          <td class="text-right font-mono bold" style="font-size: 11px;">C$ ${expectedBalance.toFixed(2)}</td>
         </tr>
       </tfoot>
     </table>
@@ -1214,6 +1267,10 @@ export interface OfficialActTransaction {
   estado?: string;
   referencia?: string;
   monto: number;
+  tipo?: 'GASTO' | 'INGRESO' | 'EXPENSE' | 'INFLOW';
+  inflow?: number;
+  outflow?: number;
+  runningBalance?: number;
 }
 
 export interface OfficialActPrintData {
@@ -1235,6 +1292,7 @@ export interface OfficialActPrintData {
   observacionesGeneral?: string;
   // Caja Chica & Egresos
   fondoInicial: number;
+  totalInflows?: number; // Fondeos / depósitos adicionales en efectivo
   expensesCash: number;
   expensesTransf: number;
   expensesTotal: number;
@@ -1298,28 +1356,78 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
     const lafisePct = totalGross > 0 ? ((cardsLafise / totalGross) * 100).toFixed(1) : '0.0';
     const pedidosYaPct = totalGross > 0 ? ((salesPedidosYa / totalGross) * 100).toFixed(1) : '0.0';
 
-    // Generar filas de compras detalladas para Hoja 2
+    // Generar filas de movimientos detallados para Hoja 2 (Idéntico al cuadro en vivo)
+    let runningSaldoCounter = fondoInicial;
+    let totalEntradasAcum = 0;
+    let totalSalidasAcum = 0;
+
     const rowsGastosHtml =
       transactions.length === 0
-        ? `<tr><td colspan="8" style="text-align: center; padding: 12px; font-style: italic;">No se registraron compras ni egresos para este día.</td></tr>`
+        ? `<tr><td colspan="9" style="text-align: center; padding: 12px; font-style: italic;">No se registraron movimientos en Caja Chica para este día.</td></tr>`
         : transactions
             .map((g, idx) => {
               const raw = String(g.metodo || '').toUpperCase().trim();
               const isCash = raw === 'EFECTIVO' || raw === 'CASH';
               const isCard = raw === 'TARJETA' || raw === 'CARD';
-              const metodoLabel = isCash ? 'Efectivo' : isCard ? 'Tarjeta' : 'Transferencia';
+              const metodoLabel = isCash ? 'Efectivo' : isCard ? 'Tarjeta' : raw === '-' ? '-' : 'Transferencia';
               const estadoLabel = g.estado || (g.referencia ? `#${g.referencia}` : 'Liquidado');
 
+              const isIngreso =
+                g.tipo === 'INGRESO' ||
+                g.tipo === 'INFLOW' ||
+                (g.inflow !== undefined && g.inflow > 0);
+
+              const inflowVal =
+                g.inflow !== undefined
+                  ? g.inflow
+                  : isIngreso
+                  ? g.monto
+                  : 0;
+
+              const outflowVal =
+                g.outflow !== undefined
+                  ? g.outflow
+                  : !isIngreso
+                  ? g.monto
+                  : 0;
+
+              if (inflowVal > 0) {
+                totalEntradasAcum += inflowVal;
+                runningSaldoCounter += inflowVal;
+              }
+
+              if (outflowVal > 0) {
+                totalSalidasAcum += outflowVal;
+                // Sólo salidas en efectivo de gaveta reducen el saldo físico
+                if (isCash) {
+                  runningSaldoCounter -= outflowVal;
+                }
+              }
+
+              const rowSaldo =
+                g.runningBalance !== undefined ? g.runningBalance : runningSaldoCounter;
+
+              const entradaText =
+                inflowVal > 0
+                  ? `+C$ ${inflowVal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}`
+                  : '—';
+
+              const salidaText =
+                outflowVal > 0
+                  ? `-C$ ${outflowVal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}`
+                  : '—';
+
               return `
-              <tr>
+              <tr style="${isIngreso ? 'background-color: #f0fdf4;' : ''}">
                 <td style="text-align: center; font-family: monospace;">${idx + 1}</td>
                 <td style="text-align: center; font-family: monospace;">${g.hora || '—'}</td>
-                <td>${g.categoria}</td>
                 <td><strong>${g.concepto}</strong></td>
-                <td>${g.proveedor || 'Proveedor Local'}</td>
+                <td>${g.categoria || '—'}</td>
                 <td style="text-align: center;">${metodoLabel}</td>
                 <td style="text-align: center; font-size: 8px;">${estadoLabel}</td>
-                <td class="text-right font-mono font-bold">C$ ${Number(g.monto).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono ${inflowVal > 0 ? 'font-bold' : ''}" style="${inflowVal > 0 ? 'color: #047857;' : 'color: #94a3b8;'}">${entradaText}</td>
+                <td class="text-right font-mono ${outflowVal > 0 ? 'font-bold' : ''}" style="${outflowVal > 0 ? 'color: #b91c1c;' : 'color: #94a3b8;'}">${salidaText}</td>
+                <td class="text-right font-mono font-bold" style="background-color: #fafafa;">C$ ${Number(rowSaldo).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
             `;
             })
@@ -1792,15 +1900,15 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
           <table class="meta-table">
             <tr>
               <td style="width: 25%;"><strong>FECHA CONTABLE:</strong><br>${diaSemanaCap}, ${fechaLarga}</td>
-              <td style="width: 25%;"><strong>TOTAL MOVIMIENTOS:</strong><br>${transactions.length} compras / egresos</td>
+              <td style="width: 25%;"><strong>TOTAL MOVIMIENTOS:</strong><br>${transactions.length} registros contables</td>
               <td style="width: 25%;"><strong>RESPONSABLE:</strong><br>${responsableCajaChica}</td>
               <td style="width: 25%;"><strong>PAGOS EN EFECTIVO:</strong><br>C$ ${expensesCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
             </tr>
             <tr>
               <td><strong>FONDO INICIAL ASIGNADO:</strong><br>C$ ${fondoInicial.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+              <td><strong>DEPÓSITOS / FONDEOS EXTRAS:</strong><br>C$ ${(totalInflows || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               <td><strong>TRANSFERENCIAS BANCARIAS:</strong><br>C$ ${expensesTransf.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-              <td><strong>PENDIENTES DE TRANSFERIR:</strong><br>C$ ${pendientesTransf.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-              <td><strong>SALDO RESTANTE EN GAVETA:</strong><br><strong>C$ ${saldoRemanente.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
+              <td><strong>SALDO RESTANTE EN GAVETA:</strong><br><strong style="font-size: 10px;">C$ ${saldoRemanente.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
             </tr>
           </table>
 
@@ -1817,13 +1925,23 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                 <td>(+) Fondo Inicial de Caja Chica Asignado para el Turno</td>
                 <td class="text-right font-mono">C$ ${fondoInicial.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
+              ${(totalInflows && totalInflows > 0) ? `
+              <tr>
+                <td>(+) Depósitos y Fondeos Adicionales en Efectivo (Ingresos a Gaveta)</td>
+                <td class="text-right font-mono font-bold" style="color: #047857;">+ C$ ${totalInflows.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+              </tr>
+              <tr style="background-color: #f8fafc; font-weight: 600;">
+                <td>(=) Total Efectivo Ingresado a Caja Chica (Fondo + Fondeos)</td>
+                <td class="text-right font-mono">C$ ${(fondoInicial + totalInflows).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+              </tr>
+              ` : ''}
               <tr>
                 <td>(-) Total Compras y Gastos Pagados en Efectivo (Salidas de Gaveta)</td>
                 <td class="text-right font-mono">- C$ ${expensesCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
               <tr style="background-color: #fafafa; font-weight: bold;">
                 <td>(=) SALDO EFECTIVO RESTANTE EN GAVETA FÍSICA</td>
-                <td class="text-right font-mono">C$ ${saldoRemanente.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono" style="font-size: 10px;">C$ ${saldoRemanente.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
               <tr>
                 <td>(+) Facturas y Compras Pagadas mediante Transferencia Bancaria</td>
@@ -1836,25 +1954,28 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
             </tbody>
           </table>
 
-          <div class="section-title">2. RELACIÓN DETALLADA DE COMPRAS Y GASTOS REALIZADOS EN EL DÍA</div>
+          <div class="section-title">2. RELACIÓN DETALLADA DE MOVIMIENTOS, COMPRAS Y GASTOS (CUADRO EN VIVO)</div>
           <table>
             <thead>
               <tr>
                 <th style="width: 4%; text-align: center;">#</th>
-                <th style="width: 9%; text-align: center;">HORA</th>
+                <th style="width: 8%; text-align: center;">HORA</th>
+                <th style="width: 28%;">CONCEPTO / DETALLE EXACTO</th>
                 <th style="width: 14%;">CATEGORÍA</th>
-                <th style="width: 29%;">CONCEPTO / DETALLE EXACTO</th>
-                <th style="width: 15%;">PROVEEDOR</th>
                 <th style="width: 10%; text-align: center;">MÉTODO</th>
                 <th style="width: 9%; text-align: center;">COMPROBANTE</th>
-                <th style="width: 10%;" class="text-right">MONTO (C$)</th>
+                <th style="width: 9%;" class="text-right">ENTRADAS (+)</th>
+                <th style="width: 9%;" class="text-right">SALIDAS (-)</th>
+                <th style="width: 9%;" class="text-right">SALDO (C$)</th>
               </tr>
             </thead>
             <tbody>
               ${rowsGastosHtml}
               <tr class="highlight-row">
-                <td colspan="7" style="text-align: right; font-weight: bold;">TOTAL ACUMULADO DE COMPRAS / EGRESOS:</td>
-                <td class="text-right font-mono font-bold" style="font-size: 10px;">C$ ${expensesTotal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td colspan="6" style="text-align: right; font-weight: bold;">TOTALES DEL DÍA:</td>
+                <td class="text-right font-mono font-bold" style="color: #047857; font-size: 9.5px;">+C$ ${(totalInflows || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono font-bold" style="color: #b91c1c; font-size: 9.5px;">-C$ ${expensesTotal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono font-bold" style="font-size: 9.5px;">C$ ${saldoRemanente.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
             </tbody>
           </table>
@@ -2255,7 +2376,13 @@ export function printOfficialOpeningActBN(shift: CashShift, adminName?: string):
 
                   <!-- TOTAL CONSOLIDADO -->
                   <div style="border: 2px solid #000; padding: 6px; text-align: center; margin-top: 6px; background-color: #f9f9f9;">
+                    ${(shift.openingTransferToPettyCash && shift.openingTransferToPettyCash > 0) ? `
+                    <div style="font-size: 8px; color: #555; text-transform: uppercase;">CONTEO FÍSICO EN GAVETA: C$ ${(shift.openingCashCountedNIO || (shift.totalOpeningEquivNIO + shift.openingTransferToPettyCash)).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
+                    <div style="font-size: 8px; color: #b91c1c; font-weight: bold; text-transform: uppercase;">(-) TRASLADO A CAJA CHICA: - C$ ${shift.openingTransferToPettyCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
+                    <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; margin-top: 3px; border-top: 1px solid #ccc; padding-top: 2px;">(=) FONDO NETO OPERATIVO EN CAJA GENERAL:</div>
+                    ` : `
                     <div style="font-size: 8px; font-weight: bold; text-transform: uppercase;">FONDO INICIAL CONSOLIDADO EN GAVETA:</div>
+                    `}
                     <div style="font-size: 14px; font-weight: 900; font-family: monospace; margin-top: 2px;">
                       C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                     </div>

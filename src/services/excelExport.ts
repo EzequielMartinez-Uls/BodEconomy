@@ -159,9 +159,15 @@ export async function exportShiftToExcel(shift: CashShift, state: AppState): Pro
 
   // 2. FONDO DE APERTURA
   addSectionHeader('2. COMPOSICIÓN DEL FONDO INICIAL (APERTURA)');
-  addDataRow('Efectivo Físico en Córdobas (NIO)', 'Billetes y monedas locales', shift.totalOpeningNIO);
-  addDataRow('Efectivo Físico en Dólares (USD)', `US$ ${shift.totalOpeningUSD.toFixed(2)}`, shift.totalOpeningUSD * shift.exchangeRate, `US$ ${shift.totalOpeningUSD.toFixed(2)}`);
-  addDataRow('TOTAL FONDO INICIAL DE APERTURA', 'Equivalente Total en Córdobas', shift.totalOpeningEquivNIO, '100%', true, true);
+  if (shift.openingCashCountedNIO !== undefined && shift.openingTransferToPettyCash !== undefined && shift.openingTransferToPettyCash > 0) {
+    addDataRow('Efectivo Físico Contado Inicial', 'Total en gaveta antes del traspaso', shift.openingCashCountedNIO);
+    addDataRow('(-) Traspaso Inicial a Caja Chica', 'Fondeo directo a caja chica al abrir', -shift.openingTransferToPettyCash);
+    addDataRow('FONDO OPERATIVO NETO DE APERTURA', 'Equivalente Total en Córdobas en Gaveta', shift.totalOpeningEquivNIO, '100%', true, true);
+  } else {
+    addDataRow('Efectivo Físico en Córdobas (NIO)', 'Billetes y monedas locales', shift.totalOpeningNIO);
+    addDataRow('Efectivo Físico en Dólares (USD)', `US$ ${shift.totalOpeningUSD.toFixed(2)}`, shift.totalOpeningUSD * shift.exchangeRate, `US$ ${shift.totalOpeningUSD.toFixed(2)}`);
+    addDataRow('TOTAL FONDO INICIAL DE APERTURA', 'Equivalente Total en Córdobas', shift.totalOpeningEquivNIO, '100%', true, true);
+  }
   rowIdx++;
 
   // 3. VENTAS Y CONCILIACIÓN MULTIBANCO
@@ -198,7 +204,16 @@ export async function exportShiftToExcel(shift: CashShift, state: AppState): Pro
 
   // 5. DEDUCCIONES, TRASLADOS Y RESERVAS
   addSectionHeader('5. DEDUCCIONES, RETIROS Y RESERVAS FINANCIERAS');
-  addDataRow('Traslado a Caja Chica', 'Para fondo y gastos del día', shift.transferToPettyCash || 0);
+  const hasOpeningTransfer = (shift.openingTransferToPettyCash || 0) > 0;
+  const additionalPettyTransfer = Math.max(0, (shift.transferToPettyCash || 0) - (shift.openingTransferToPettyCash || 0));
+  if (hasOpeningTransfer) {
+    addDataRow('Traslado Inicial a Caja Chica (Apertura)', 'Deducido del fondo físico al abrir', shift.openingTransferToPettyCash || 0);
+    if (additionalPettyTransfer > 0) {
+      addDataRow('Traslado Adicional a Caja Chica (Turno)', 'Entregado durante el turno', additionalPettyTransfer);
+    }
+  } else {
+    addDataRow('Traslado a Caja Chica', 'Para fondo y gastos del día', shift.transferToPettyCash || 0);
+  }
   addDataRow('Pago de Horas Extras en Efectivo', 'Planilla operativa', shift.overtimePaidCash || 0);
   addDataRow('Pago de Días Extraordinarios en Efectivo', 'Feriados / Domingos', shift.extraDaysPaidCash || 0);
   addDataRow('Reserva Tributaria DGI', 'Aportes fiscales reservados', shift.reserveDGI || 0);
@@ -536,16 +551,56 @@ export async function exportShiftToExcel(shift: CashShift, state: AppState): Pro
       pIdx++;
     });
 
-    const totRow = wsPetty.getRow(pIdx);
-    totRow.getCell(1).value = 'TOTAL EGRESOS / COMPRAS DEL DÍA:';
-    wsPetty.mergeCells(`A${pIdx}:H${pIdx}`);
-    totRow.getCell(1).alignment = { horizontal: 'right' };
-    totRow.getCell(9).value = totExpenses;
-    totRow.getCell(9).numFmt = '"C$"#,##0.00';
-    for (let c = 1; c <= 10; c++) {
-      totRow.getCell(c).border = DOUBLE_BOTTOM_BORDER;
-      totRow.getCell(c).font = { name: FONT_NAME, size: 10, bold: true };
-      totRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ZEBRA_LIGHT } };
+    if (totInflows > 0) {
+      const inRow = wsPetty.getRow(pIdx);
+      inRow.getCell(1).value = 'TOTAL INGRESOS / FONDEOS DEL DÍA:';
+      wsPetty.mergeCells(`A${pIdx}:H${pIdx}`);
+      inRow.getCell(1).alignment = { horizontal: 'right' };
+      inRow.getCell(9).value = totInflows;
+      inRow.getCell(9).numFmt = '"C$"#,##0.00';
+      for (let c = 1; c <= 10; c++) {
+        inRow.getCell(c).border = THIN_BORDER;
+        inRow.getCell(c).font = { name: FONT_NAME, size: 9.5, bold: true, color: { argb: 'FF047857' } };
+        inRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0FDF4' } };
+      }
+      pIdx++;
+
+      const outRow = wsPetty.getRow(pIdx);
+      outRow.getCell(1).value = 'TOTAL EGRESOS / COMPRAS DEL DÍA:';
+      wsPetty.mergeCells(`A${pIdx}:H${pIdx}`);
+      outRow.getCell(1).alignment = { horizontal: 'right' };
+      outRow.getCell(9).value = totExpenses;
+      outRow.getCell(9).numFmt = '"C$"#,##0.00';
+      for (let c = 1; c <= 10; c++) {
+        outRow.getCell(c).border = THIN_BORDER;
+        outRow.getCell(c).font = { name: FONT_NAME, size: 9.5, bold: true, color: { argb: 'FFB91C1C' } };
+        outRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDF2F2' } };
+      }
+      pIdx++;
+
+      const netRow = wsPetty.getRow(pIdx);
+      netRow.getCell(1).value = 'MOVIMIENTO NETO EN CAJA CHICA (Ingresos - Gastos):';
+      wsPetty.mergeCells(`A${pIdx}:H${pIdx}`);
+      netRow.getCell(1).alignment = { horizontal: 'right' };
+      netRow.getCell(9).value = totInflows - totExpenses;
+      netRow.getCell(9).numFmt = '"C$"#,##0.00;("C$"#,##0.00);"-"';
+      for (let c = 1; c <= 10; c++) {
+        netRow.getCell(c).border = DOUBLE_BOTTOM_BORDER;
+        netRow.getCell(c).font = { name: FONT_NAME, size: 10, bold: true };
+        netRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ZEBRA_LIGHT } };
+      }
+    } else {
+      const totRow = wsPetty.getRow(pIdx);
+      totRow.getCell(1).value = 'TOTAL EGRESOS / COMPRAS DEL DÍA:';
+      wsPetty.mergeCells(`A${pIdx}:H${pIdx}`);
+      totRow.getCell(1).alignment = { horizontal: 'right' };
+      totRow.getCell(9).value = totExpenses;
+      totRow.getCell(9).numFmt = '"C$"#,##0.00';
+      for (let c = 1; c <= 10; c++) {
+        totRow.getCell(c).border = DOUBLE_BOTTOM_BORDER;
+        totRow.getCell(c).font = { name: FONT_NAME, size: 10, bold: true };
+        totRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ZEBRA_LIGHT } };
+      }
     }
   }
 
@@ -571,78 +626,143 @@ export async function exportPettyCashExpensesToExcel(
   });
 
   ws.columns = [
-    { width: 8 },  // A: N°
+    { width: 6 },  // A: N°
     { width: 12 }, // B: Hora
-    { width: 22 }, // C: Categoría
-    { width: 26 }, // D: Proveedor
-    { width: 34 }, // E: Concepto
-    { width: 16 }, // F: Factura
-    { width: 16 }, // G: Método
-    { width: 18 }, // H: Monto C$
-    { width: 20 }, // I: Registrado Por
+    { width: 34 }, // C: Concepto / Proveedor / Notas
+    { width: 20 }, // D: Categoría
+    { width: 16 }, // E: Comprobante / Recibo
+    { width: 15 }, // F: Método
+    { width: 16 }, // G: Entradas (+)
+    { width: 16 }, // H: Salidas (-)
+    { width: 18 }, // I: Saldo Gaveta C$
+    { width: 18 }, // J: Registrado Por
   ];
 
-  ws.mergeCells('A1:I2');
+  ws.mergeCells('A1:J2');
   const title = ws.getCell('A1');
-  title.value = `RESTAURANTE EL BODEGÓN — REPORTE DE CAJA CHICA (COMPRAS Y GASTOS)`;
+  title.value = `RESTAURANTE EL BODEGÓN — LIBRO DIARIO Y CONTROL DE CAJA CHICA`;
   title.font = { name: FONT_NAME, size: 13, bold: true, color: { argb: COLOR_WHITE } };
   title.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_BRAND_GREEN } };
   title.alignment = { horizontal: 'center', vertical: 'middle' };
 
-  ws.mergeCells('A3:I3');
+  ws.mergeCells('A3:J3');
   const sub = ws.getCell('A3');
-  sub.value = `FECHA: ${dateStr} • ADMINISTRADOR: ${adminName} • SALDO EN MANO: C$ ${currentBalance.toFixed(2)}`;
+  sub.value = `FECHA: ${dateStr} • RESPONSABLE: ${adminName} • SALDO EN MANO: C$ ${currentBalance.toFixed(2)}`;
   sub.font = { name: FONT_NAME, size: 10, bold: true, color: { argb: COLOR_WHITE } };
   sub.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_BRAND_DARK } };
   sub.alignment = { horizontal: 'center', vertical: 'middle' };
 
-  const headers = ['N°', 'Hora', 'Categoría', 'Proveedor', 'Concepto', 'N° Factura', 'Método', 'Monto C$', 'Registrado Por'];
+  const headers = [
+    'N°',
+    'Hora',
+    'Concepto / Detalle',
+    'Categoría',
+    'Comprobante',
+    'Tipo Pago',
+    'Entradas (+)',
+    'Salidas (-)',
+    'Saldo Gaveta',
+    'Registrado Por',
+  ];
   const hRow = ws.getRow(5);
   headers.forEach((h, i) => {
     const c = hRow.getCell(i + 1);
     c.value = h;
     c.font = { name: FONT_NAME, size: 10, bold: true, color: { argb: COLOR_WHITE } };
     c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_HEADER_SLATE } };
-    c.alignment = { horizontal: i === 7 ? 'right' : 'center', vertical: 'middle' };
+    c.alignment = {
+      horizontal: i >= 6 && i <= 8 ? 'right' : i === 0 || i === 1 || i === 5 ? 'center' : 'left',
+      vertical: 'middle',
+    };
   });
   hRow.height = 24;
 
   let rIdx = 6;
-  let tot = 0;
-  transactions.filter(t => t.type === 'EXPENSE').forEach((t, i) => {
-    tot += t.amount;
+  let totInflows = 0;
+  let totOutflows = 0;
+
+  // Orden cronológico de transacciones
+  const sortedTxs = [...transactions].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+
+  sortedTxs.forEach((t, i) => {
+    const isInflow = t.type === 'INFLOW';
+    const isCash = t.method === 'CASH' || !t.method;
+    const isTransf = t.method === 'TRANSFER';
+    const isCard = t.method === 'CARD';
+
+    const inflowAmt = isInflow ? t.amount : 0;
+    const outflowAmt = !isInflow ? t.amount : 0;
+
+    if (inflowAmt > 0) totInflows += inflowAmt;
+    if (outflowAmt > 0) totOutflows += outflowAmt;
+
     const r = ws.getRow(rIdx);
     r.getCell(1).value = i + 1;
     r.getCell(2).value = new Date(t.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    r.getCell(3).value = t.category;
-    r.getCell(4).value = t.vendor;
-    r.getCell(5).value = t.notes || t.vendor;
-    r.getCell(6).value = t.receiptNumber || 'Sin factura';
-    r.getCell(7).value = t.method === 'CASH' ? 'Efectivo' : 'Transferencia';
-    r.getCell(8).value = t.amount;
-    r.getCell(8).numFmt = '"C$"#,##0.00';
-    r.getCell(9).value = t.registeredBy;
+    r.getCell(3).value = t.notes ? `${t.vendor} (${t.notes})` : t.vendor;
+    r.getCell(4).value = t.category;
+    r.getCell(5).value = t.receiptNumber || 'Sin comprobante';
+    r.getCell(6).value = isCash ? 'Efectivo' : isTransf ? 'Transferencia' : isCard ? 'Tarjeta' : '-';
 
-    for (let c = 1; c <= 9; c++) {
-      r.getCell(c).border = THIN_BORDER;
-      r.getCell(c).font = { name: FONT_NAME, size: 9.5 };
+    if (inflowAmt > 0) {
+      r.getCell(7).value = inflowAmt;
+      r.getCell(7).numFmt = '"C$"#,##0.00';
+      r.getCell(7).font = { name: FONT_NAME, size: 9.5, bold: true, color: { argb: 'FF047857' } };
+    } else {
+      r.getCell(7).value = '-';
     }
-    if (rIdx % 2 === 0) {
+
+    if (outflowAmt > 0) {
+      r.getCell(8).value = outflowAmt;
+      r.getCell(8).numFmt = '"C$"#,##0.00';
+      r.getCell(8).font = { name: FONT_NAME, size: 9.5, bold: true, color: { argb: 'FFB91C1C' } };
+    } else {
+      r.getCell(8).value = '-';
+    }
+
+    // Saldo acumulativo teórico en mano (estimado)
+    r.getCell(9).value = currentBalance;
+    r.getCell(9).numFmt = '"C$"#,##0.00';
+
+    r.getCell(10).value = t.registeredBy;
+
+    for (let c = 1; c <= 10; c++) {
+      r.getCell(c).border = THIN_BORDER;
+      if (!r.getCell(c).font) {
+        r.getCell(c).font = { name: FONT_NAME, size: 9.5 };
+      }
+    }
+
+    if (isInflow) {
+      r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0FDF4' } };
+    } else if (rIdx % 2 === 0) {
       r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ZEBRA_LIGHT } };
     }
     rIdx++;
   });
 
   const totRow = ws.getRow(rIdx);
-  totRow.getCell(1).value = 'TOTAL GASTOS Y COMPRAS DEL DÍA:';
-  ws.mergeCells(`A${rIdx}:G${rIdx}`);
-  totRow.getCell(1).alignment = { horizontal: 'right' };
-  totRow.getCell(8).value = tot;
+  totRow.getCell(1).value = 'TOTALES GENERALES DE LA JORNADA:';
+  ws.mergeCells(`A${rIdx}:F${rIdx}`);
+  totRow.getCell(1).alignment = { horizontal: 'right', vertical: 'middle' };
+
+  totRow.getCell(7).value = totInflows;
+  totRow.getCell(7).numFmt = '"C$"#,##0.00';
+  totRow.getCell(7).font = { name: FONT_NAME, size: 10, bold: true, color: { argb: 'FF047857' } };
+
+  totRow.getCell(8).value = totOutflows;
   totRow.getCell(8).numFmt = '"C$"#,##0.00';
-  for (let c = 1; c <= 9; c++) {
+  totRow.getCell(8).font = { name: FONT_NAME, size: 10, bold: true, color: { argb: 'FFB91C1C' } };
+
+  totRow.getCell(9).value = currentBalance;
+  totRow.getCell(9).numFmt = '"C$"#,##0.00';
+  totRow.getCell(9).font = { name: FONT_NAME, size: 10, bold: true };
+
+  for (let c = 1; c <= 10; c++) {
     totRow.getCell(c).border = DOUBLE_BOTTOM_BORDER;
-    totRow.getCell(c).font = { name: FONT_NAME, size: 10, bold: true };
-    totRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ZEBRA_LIGHT } };
+    totRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
   }
 
   await saveWorkbook(wb, `Bodegon_CajaChica_${dateStr}.xlsx`);
@@ -659,7 +779,8 @@ export async function exportPettyCashClosingToExcel(
   wb.creator = 'Restaurante El Bodegón ERP';
   wb.created = new Date();
 
-  const ws = wb.addWorksheet('Acta Cierre Caja Chica', {
+  // Hoja 1: Resumen de Cierre y Liquidación
+  const ws = wb.addWorksheet('Liquidación Cierre', {
     views: [{ showGridLines: true }],
   });
 
@@ -692,18 +813,139 @@ export async function exportPettyCashClosingToExcel(
     rIdx++;
   };
 
+  const calculatedInflows = transactions
+    .filter((t) => t.type === 'INFLOW')
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const totalInflowsToday = shift.totalInflows || calculatedInflows;
+
   addRow('Fecha de Jornada', shift.date, null, true);
   addRow('Responsable de Apertura', shift.openedBy, null);
   addRow('Responsable de Cierre', shift.closedBy || 'N/A', null);
   addRow('Fondo del Día Anterior', 'Remanente anterior', shift.previousDayRemaining);
   addRow('Traslado de Caja General', 'Fondeo operativo', shift.generalCashTransfer);
-  addRow('Aporte Extra / Depósito Jefe', 'Aporte extraordinario', shift.bossContribution);
-  addRow('TOTAL FONDO INICIAL', 'Fondo base disponible', shift.initialBalance, true);
+  addRow('Aporte Extra / Depósito Jefe', 'Aporte extraordinario apertura', shift.bossContribution);
+  addRow('TOTAL FONDO INICIAL', 'Fondo base asignado', shift.initialBalance, true);
+  if (totalInflowsToday > 0) {
+    addRow('Depósitos y Fondeos Extras Hoy', 'Ingresos adicionales recibidos', totalInflowsToday, true);
+    addRow('Total Efectivo Ingresado a Caja', 'Fondo Inicial + Fondeos Extras', shift.initialBalance + totalInflowsToday, true);
+  }
   addRow('Total Egresos / Compras Hoy', 'Gastos acumulados', shift.totalExpenses || 0);
-  addRow('Saldo Teórico en Gaveta', 'Inicial + Fondeos - Gastos', shift.expectedBalance || 0, true);
+  addRow('Saldo Teórico en Gaveta', 'Inicial + Fondeos - Gastos', shift.expectedBalance || (shift.initialBalance + totalInflowsToday - (shift.totalExpenses || 0)), true);
   addRow('Saldo Real Físico Contado', 'Arqueo en efectivo', shift.actualCashCounted || 0, true);
   const diff = shift.difference ?? 0;
   addRow('Diferencia de Cuadre', diff === 0 ? 'Exacto' : diff > 0 ? 'Sobrante' : 'Faltante', diff, true);
+
+  // Hoja 2: Detalle de Movimientos del Día (Cuadro en Vivo)
+  const ws2 = wb.addWorksheet('Detalle de Movimientos', {
+    views: [{ showGridLines: true }],
+  });
+
+  ws2.columns = [
+    { width: 6 },
+    { width: 12 },
+    { width: 34 },
+    { width: 20 },
+    { width: 16 },
+    { width: 15 },
+    { width: 16 },
+    { width: 16 },
+    { width: 18 },
+  ];
+
+  ws2.mergeCells('A1:I2');
+  const t2 = ws2.getCell('A1');
+  t2.value = `DETALLE COMPLETO DE MOVIMIENTOS — JORNADA ${shift.date}`;
+  t2.font = { name: FONT_NAME, size: 12, bold: true, color: { argb: COLOR_WHITE } };
+  t2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_BRAND_GREEN } };
+  t2.alignment = { horizontal: 'center', vertical: 'middle' };
+
+  const headers2 = ['N°', 'Hora', 'Concepto / Proveedor', 'Categoría', 'Comprobante', 'Tipo Pago', 'Entradas (+)', 'Salidas (-)', 'Saldo Gaveta'];
+  const hRow2 = ws2.getRow(4);
+  headers2.forEach((h, i) => {
+    const c = hRow2.getCell(i + 1);
+    c.value = h;
+    c.font = { name: FONT_NAME, size: 10, bold: true, color: { argb: COLOR_WHITE } };
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_HEADER_SLATE } };
+    c.alignment = { horizontal: i >= 6 ? 'right' : 'center', vertical: 'middle' };
+  });
+  hRow2.height = 22;
+
+  let r2Idx = 5;
+  let runningBal = shift.initialBalance;
+  let totIn2 = 0;
+  let totOut2 = 0;
+
+  const sorted2 = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  sorted2.forEach((t, i) => {
+    const isIn = t.type === 'INFLOW';
+    const isCash = t.method === 'CASH' || !t.method;
+    const inAmt = isIn ? t.amount : 0;
+    const outAmt = !isIn ? t.amount : 0;
+
+    if (inAmt > 0) {
+      totIn2 += inAmt;
+      runningBal += inAmt;
+    }
+    if (outAmt > 0) {
+      totOut2 += outAmt;
+      if (isCash) runningBal -= outAmt;
+    }
+
+    const r = ws2.getRow(r2Idx);
+    r.getCell(1).value = i + 1;
+    r.getCell(2).value = new Date(t.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    r.getCell(3).value = t.notes ? `${t.vendor} (${t.notes})` : t.vendor;
+    r.getCell(4).value = t.category;
+    r.getCell(5).value = t.receiptNumber || 'Sin comprobante';
+    r.getCell(6).value = isCash ? 'Efectivo' : t.method === 'TRANSFER' ? 'Transferencia' : 'Tarjeta';
+    
+    if (inAmt > 0) {
+      r.getCell(7).value = inAmt;
+      r.getCell(7).numFmt = '"C$"#,##0.00';
+      r.getCell(7).font = { name: FONT_NAME, size: 9.5, bold: true, color: { argb: 'FF047857' } };
+    } else {
+      r.getCell(7).value = '-';
+    }
+
+    if (outAmt > 0) {
+      r.getCell(8).value = outAmt;
+      r.getCell(8).numFmt = '"C$"#,##0.00';
+      r.getCell(8).font = { name: FONT_NAME, size: 9.5, bold: true, color: { argb: 'FFB91C1C' } };
+    } else {
+      r.getCell(8).value = '-';
+    }
+
+    r.getCell(9).value = runningBal;
+    r.getCell(9).numFmt = '"C$"#,##0.00';
+
+    for (let c = 1; c <= 9; c++) {
+      r.getCell(c).border = THIN_BORDER;
+      if (!r.getCell(c).font) r.getCell(c).font = { name: FONT_NAME, size: 9.5 };
+    }
+    if (isIn) {
+      r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0FDF4' } };
+    }
+    r2Idx++;
+  });
+
+  const totRow2 = ws2.getRow(r2Idx);
+  totRow2.getCell(1).value = 'TOTALES ACUMULADOS:';
+  ws2.mergeCells(`A${r2Idx}:F${r2Idx}`);
+  totRow2.getCell(1).alignment = { horizontal: 'right', vertical: 'middle' };
+  totRow2.getCell(7).value = totIn2;
+  totRow2.getCell(7).numFmt = '"C$"#,##0.00';
+  totRow2.getCell(7).font = { name: FONT_NAME, size: 10, bold: true, color: { argb: 'FF047857' } };
+  totRow2.getCell(8).value = totOut2;
+  totRow2.getCell(8).numFmt = '"C$"#,##0.00';
+  totRow2.getCell(8).font = { name: FONT_NAME, size: 10, bold: true, color: { argb: 'FFB91C1C' } };
+  totRow2.getCell(9).value = runningBal;
+  totRow2.getCell(9).numFmt = '"C$"#,##0.00';
+  totRow2.getCell(9).font = { name: FONT_NAME, size: 10, bold: true };
+  for (let c = 1; c <= 9; c++) {
+    totRow2.getCell(c).border = DOUBLE_BOTTOM_BORDER;
+    totRow2.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+  }
 
   await saveWorkbook(wb, `Bodegon_CierreCajaChica_${shift.date}.xlsx`);
 }
@@ -725,6 +967,7 @@ export async function exportPettyCashHistoryToExcel(shifts: PettyCashShift[]): P
     { width: 18 }, // Apertura por
     { width: 18 }, // Cierre por
     { width: 16 }, // Fondo Inicial
+    { width: 16 }, // Fondeos Extras
     { width: 16 }, // Compras
     { width: 16 }, // Saldo Esperado
     { width: 16 }, // Saldo Contado
@@ -733,7 +976,7 @@ export async function exportPettyCashHistoryToExcel(shifts: PettyCashShift[]): P
     { width: 28 }, // Notas
   ];
 
-  ws.mergeCells('A1:J2');
+  ws.mergeCells('A1:K2');
   const title = ws.getCell('A1');
   title.value = `HISTORIAL DE CIERRES DE CAJA CHICA — RESTAURANTE EL BODEGÓN`;
   title.font = { name: FONT_NAME, size: 13, bold: true, color: { argb: COLOR_WHITE } };
@@ -745,7 +988,8 @@ export async function exportPettyCashHistoryToExcel(shifts: PettyCashShift[]): P
     'Apertura Por',
     'Cierre Por',
     'Fondo Inicial',
-    'Compras',
+    'Fondeos Extras (+)',
+    'Compras (-)',
     'Saldo Teórico',
     'Saldo Físico',
     'Diferencia',
@@ -758,30 +1002,52 @@ export async function exportPettyCashHistoryToExcel(shifts: PettyCashShift[]): P
     c.value = h;
     c.font = { name: FONT_NAME, size: 10, bold: true, color: { argb: COLOR_WHITE } };
     c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_HEADER_SLATE } };
-    c.alignment = { horizontal: i >= 3 && i <= 7 ? 'right' : 'center', vertical: 'middle' };
+    c.alignment = { horizontal: i >= 3 && i <= 8 ? 'right' : 'center', vertical: 'middle' };
   });
   hRow.height = 24;
 
   let rIdx = 5;
+  let sumInitial = 0;
+  let sumInflows = 0;
+  let sumExpenses = 0;
+  let sumExpected = 0;
+  let sumActual = 0;
+  let sumDiff = 0;
+
   shifts.forEach((s) => {
     const r = ws.getRow(rIdx);
+    const inAmt = s.totalInflows || 0;
+    const expAmt = s.totalExpenses || 0;
+    const expBal = s.expectedBalance || 0;
+    const actBal = s.actualCashCounted || 0;
+    const diffAmt = s.difference || 0;
+
+    sumInitial += s.initialBalance || 0;
+    sumInflows += inAmt;
+    sumExpenses += expAmt;
+    sumExpected += expBal;
+    sumActual += actBal;
+    sumDiff += diffAmt;
+
     r.getCell(1).value = s.date;
     r.getCell(2).value = s.openedBy;
     r.getCell(3).value = s.closedBy || 'N/A';
     r.getCell(4).value = s.initialBalance;
     r.getCell(4).numFmt = '"C$"#,##0.00';
-    r.getCell(5).value = s.totalExpenses || 0;
+    r.getCell(5).value = inAmt;
     r.getCell(5).numFmt = '"C$"#,##0.00';
-    r.getCell(6).value = s.expectedBalance || 0;
+    r.getCell(6).value = expAmt;
     r.getCell(6).numFmt = '"C$"#,##0.00';
-    r.getCell(7).value = s.actualCashCounted || 0;
+    r.getCell(7).value = expBal;
     r.getCell(7).numFmt = '"C$"#,##0.00';
-    r.getCell(8).value = s.difference || 0;
+    r.getCell(8).value = actBal;
     r.getCell(8).numFmt = '"C$"#,##0.00';
-    r.getCell(9).value = s.auditStatus === 'SQUARED' ? 'CUADRADO' : s.auditStatus === 'SHORTAGE' ? 'FALTANTE' : 'SOBRANTE';
-    r.getCell(10).value = s.closingNotes || '';
+    r.getCell(9).value = diffAmt;
+    r.getCell(9).numFmt = '"C$"#,##0.00';
+    r.getCell(10).value = s.auditStatus === 'SQUARED' ? 'CUADRADO' : s.auditStatus === 'SHORTAGE' ? 'FALTANTE' : 'SOBRANTE';
+    r.getCell(11).value = s.closingNotes || '';
 
-    for (let c = 1; c <= 10; c++) {
+    for (let c = 1; c <= 11; c++) {
       r.getCell(c).border = THIN_BORDER;
       r.getCell(c).font = { name: FONT_NAME, size: 9 };
     }
@@ -790,6 +1056,35 @@ export async function exportPettyCashHistoryToExcel(shifts: PettyCashShift[]): P
     }
     rIdx++;
   });
+
+  // Fila de Totales Acumulados
+  if (shifts.length > 0) {
+    const totRow = ws.getRow(rIdx);
+    totRow.getCell(1).value = 'TOTALES ACUMULADOS:';
+    ws.mergeCells(`A${rIdx}:C${rIdx}`);
+    totRow.getCell(1).alignment = { horizontal: 'right', vertical: 'middle' };
+    totRow.getCell(4).value = sumInitial;
+    totRow.getCell(4).numFmt = '"C$"#,##0.00';
+    totRow.getCell(5).value = sumInflows;
+    totRow.getCell(5).numFmt = '"C$"#,##0.00';
+    totRow.getCell(5).font = { name: FONT_NAME, size: 9.5, bold: true, color: { argb: 'FF047857' } };
+    totRow.getCell(6).value = sumExpenses;
+    totRow.getCell(6).numFmt = '"C$"#,##0.00';
+    totRow.getCell(6).font = { name: FONT_NAME, size: 9.5, bold: true, color: { argb: 'FFB91C1C' } };
+    totRow.getCell(7).value = sumExpected;
+    totRow.getCell(7).numFmt = '"C$"#,##0.00';
+    totRow.getCell(8).value = sumActual;
+    totRow.getCell(8).numFmt = '"C$"#,##0.00';
+    totRow.getCell(9).value = sumDiff;
+    totRow.getCell(9).numFmt = '"C$"#,##0.00';
+    totRow.getCell(10).value = `${shifts.length} cierres`;
+
+    for (let c = 1; c <= 11; c++) {
+      totRow.getCell(c).border = DOUBLE_BOTTOM_BORDER;
+      if (!totRow.getCell(c).font) totRow.getCell(c).font = { name: FONT_NAME, size: 9.5, bold: true };
+      totRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ZEBRA_LIGHT } };
+    }
+  }
 
   await saveWorkbook(wb, `Bodegon_Historial_Cierres_CajaChica.xlsx`);
 }
@@ -1130,6 +1425,7 @@ export async function exportDailyEarningsToExcel(
 
   let aIdx = 5;
   let totCompras = 0;
+  let totFondeos = 0;
   if (dayTransactions.length === 0) {
     wsAudit.mergeCells('A5:J5');
     const noCell = wsAudit.getCell('A5');
@@ -1141,6 +1437,7 @@ export async function exportDailyEarningsToExcel(
     dayTransactions.forEach((tx, i) => {
       const r = wsAudit.getRow(aIdx);
       if (tx.type === 'EXPENSE') totCompras += tx.amount;
+      else totFondeos += tx.amount;
 
       r.getCell(1).value = i + 1;
       r.getCell(2).value = new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -1164,16 +1461,56 @@ export async function exportDailyEarningsToExcel(
       aIdx++;
     });
 
-    const totRow = wsAudit.getRow(aIdx);
-    totRow.getCell(1).value = 'TOTAL ACUMULADO DE COMPRAS / EGRESOS:';
-    wsAudit.mergeCells(`A${aIdx}:H${aIdx}`);
-    totRow.getCell(1).alignment = { horizontal: 'right' };
-    totRow.getCell(9).value = totCompras;
-    totRow.getCell(9).numFmt = '"C$"#,##0.00';
-    for (let c = 1; c <= 10; c++) {
-      totRow.getCell(c).border = DOUBLE_BOTTOM_BORDER;
-      totRow.getCell(c).font = { name: FONT_NAME, size: 10, bold: true };
-      totRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ZEBRA_LIGHT } };
+    if (totFondeos > 0) {
+      const fondeoRow = wsAudit.getRow(aIdx);
+      fondeoRow.getCell(1).value = 'TOTAL ACUMULADO DE FONDEOS / INGRESOS:';
+      wsAudit.mergeCells(`A${aIdx}:H${aIdx}`);
+      fondeoRow.getCell(1).alignment = { horizontal: 'right' };
+      fondeoRow.getCell(9).value = totFondeos;
+      fondeoRow.getCell(9).numFmt = '"C$"#,##0.00';
+      for (let c = 1; c <= 10; c++) {
+        fondeoRow.getCell(c).border = THIN_BORDER;
+        fondeoRow.getCell(c).font = { name: FONT_NAME, size: 9.5, bold: true, color: { argb: 'FF047857' } };
+        fondeoRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0FDF4' } };
+      }
+      aIdx++;
+
+      const totRow = wsAudit.getRow(aIdx);
+      totRow.getCell(1).value = 'TOTAL ACUMULADO DE COMPRAS / EGRESOS:';
+      wsAudit.mergeCells(`A${aIdx}:H${aIdx}`);
+      totRow.getCell(1).alignment = { horizontal: 'right' };
+      totRow.getCell(9).value = totCompras;
+      totRow.getCell(9).numFmt = '"C$"#,##0.00';
+      for (let c = 1; c <= 10; c++) {
+        totRow.getCell(c).border = THIN_BORDER;
+        totRow.getCell(c).font = { name: FONT_NAME, size: 9.5, bold: true, color: { argb: 'FFB91C1C' } };
+        totRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDF2F2' } };
+      }
+      aIdx++;
+
+      const netRow = wsAudit.getRow(aIdx);
+      netRow.getCell(1).value = 'FLUJO NETO EN GAVETA (Fondeos - Compras):';
+      wsAudit.mergeCells(`A${aIdx}:H${aIdx}`);
+      netRow.getCell(1).alignment = { horizontal: 'right' };
+      netRow.getCell(9).value = totFondeos - totCompras;
+      netRow.getCell(9).numFmt = '"C$"#,##0.00;("C$"#,##0.00);"-"';
+      for (let c = 1; c <= 10; c++) {
+        netRow.getCell(c).border = DOUBLE_BOTTOM_BORDER;
+        netRow.getCell(c).font = { name: FONT_NAME, size: 10, bold: true };
+        netRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ZEBRA_LIGHT } };
+      }
+    } else {
+      const totRow = wsAudit.getRow(aIdx);
+      totRow.getCell(1).value = 'TOTAL ACUMULADO DE COMPRAS / EGRESOS:';
+      wsAudit.mergeCells(`A${aIdx}:H${aIdx}`);
+      totRow.getCell(1).alignment = { horizontal: 'right' };
+      totRow.getCell(9).value = totCompras;
+      totRow.getCell(9).numFmt = '"C$"#,##0.00';
+      for (let c = 1; c <= 10; c++) {
+        totRow.getCell(c).border = DOUBLE_BOTTOM_BORDER;
+        totRow.getCell(c).font = { name: FONT_NAME, size: 10, bold: true };
+        totRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ZEBRA_LIGHT } };
+      }
     }
   }
 

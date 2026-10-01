@@ -63,19 +63,41 @@ export const TopBar: React.FC<Props> = ({
       (state.pettyCashShiftHistory || []).find((s) => s.date === dateToUse) ||
       (state.currentPettyCashShift?.date === dateToUse ? state.currentPettyCashShift : null);
 
-    const dayTransactions = (state.pettyCashTransactions || [])
-      .filter((t) => t.type === 'EXPENSE' && (extractLocalDateStr(t.date) === dateToUse || (pettyShift && t.shiftId === pettyShift.id)))
-      .map((t) => ({
+    const relevantTxs = (state.pettyCashTransactions || [])
+      .filter((t) => extractLocalDateStr(t.date) === dateToUse || (pettyShift && t.shiftId === pettyShift.id))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    const fondoInicial =
+      pettyShift?.initialBalance !== undefined
+        ? pettyShift.initialBalance
+        : 2000;
+
+    let runningBal = fondoInicial;
+    const dayTransactions: OfficialActTransaction[] = relevantTxs.map((t) => {
+      const isInflow = t.type === 'INFLOW';
+      const isCash = t.method === 'CASH' || !t.method;
+      if (isInflow) {
+        runningBal += t.amount;
+      } else if (isCash) {
+        runningBal -= t.amount;
+      }
+
+      return {
         id: t.id,
         hora: new Date(t.date).toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' }),
         categoria: t.category,
-        concepto: t.notes || t.vendor,
+        concepto: t.notes ? `${t.vendor} (${t.notes})` : t.vendor,
         proveedor: t.vendor,
         metodo: t.method === 'CASH' ? 'Efectivo' : t.method === 'CARD' ? 'Tarjeta' : 'Transferencia',
-        estado: t.receiptNumber ? `#${t.receiptNumber}` : 'Comprobante',
+        estado: t.receiptNumber ? `#${t.receiptNumber}` : isInflow ? 'Fondeo' : 'Comprobante',
         referencia: t.receiptNumber,
         monto: t.amount,
-      }));
+        tipo: isInflow ? 'INGRESO' : 'GASTO',
+        inflow: isInflow ? t.amount : 0,
+        outflow: !isInflow ? t.amount : 0,
+        runningBalance: runningBal,
+      };
+    });
 
     const salesCash =
       shift?.salesCashSystem !== undefined
@@ -117,27 +139,26 @@ export const TopBar: React.FC<Props> = ({
         ? shift.totalGrossSales
         : salesCash + totalCards + salesPedidosYa;
 
+    const totalInflows = dayTransactions
+      .filter((t) => t.tipo === 'INGRESO')
+      .reduce((acc, t) => acc + (t.inflow || t.monto), 0);
+
     const expensesCash = dayTransactions
-      .filter((t) => t.metodo === 'Efectivo')
-      .reduce((acc, t) => acc + t.monto, 0);
+      .filter((t) => t.tipo === 'GASTO' && t.metodo === 'Efectivo')
+      .reduce((acc, t) => acc + (t.outflow || t.monto), 0);
 
     const expensesTransf = dayTransactions
-      .filter((t) => t.metodo === 'Transferencia')
-      .reduce((acc, t) => acc + t.monto, 0);
+      .filter((t) => t.tipo === 'GASTO' && t.metodo === 'Transferencia')
+      .reduce((acc, t) => acc + (t.outflow || t.monto), 0);
 
     const expensesTotal = expensesCash + expensesTransf;
     const netProfit = shift?.dailyNetProfit !== undefined ? shift.dailyNetProfit : (totalGross - expensesTotal);
     const marginPercent = totalGross > 0 ? (netProfit / totalGross) * 100 : 0;
 
-    const fondoInicial =
-      pettyShift?.initialBalance !== undefined
-        ? pettyShift.initialBalance
-        : 2000;
-
     const saldoRemanente =
       pettyShift?.actualCashCounted !== undefined
         ? pettyShift.actualCashCounted
-        : (fondoInicial - expensesCash);
+        : (fondoInicial + totalInflows - expensesCash);
 
     printOfficialActBN({
       shift: shift || undefined,
@@ -155,11 +176,12 @@ export const TopBar: React.FC<Props> = ({
       marginPercent,
       responsableCaja: shift?.closedBy || shift?.openedBy || state.activeAdminName,
       fondoInicial,
+      totalInflows,
       expensesCash,
       expensesTransf,
       expensesTotal,
       saldoRemanente,
-      responsableCajaChica: pettyShift?.closedBy || pettyShift?.openedBy || state.activeAdminName,
+      responsableCajaChica: pettyShift?.closedBy || pettyShift?.openedBy || shift?.closedBy || state.activeAdminName,
       transactions: dayTransactions,
     });
 

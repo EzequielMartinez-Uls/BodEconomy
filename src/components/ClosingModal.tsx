@@ -103,8 +103,11 @@ export const ClosingModal: React.FC<Props> = ({
   // Lo que DEBERÍA haber en la gaveta física:
   // Fondo Inicial + Ventas en Efectivo cobradas - Propinas entregadas en efectivo
   const openingFloat = shift.totalOpeningEquivNIO || 0;
-  const transferOut = shift.transferToPettyCash || 0;
-  const expectedCashNIO = parseFloat((openingFloat + salesCashSystem - tipsPaidAmount - transferOut).toFixed(2));
+  // Traslado a caja chica: si ya fue deducido del fondo de apertura, no se vuelve a restar
+  const additionalTransferOut = shift.openingTransferToPettyCash
+    ? Math.max(0, (shift.transferToPettyCash || 0) - shift.openingTransferToPettyCash)
+    : (shift.transferToPettyCash || 0);
+  const expectedCashNIO = parseFloat((openingFloat + salesCashSystem - tipsPaidAmount - additionalTransferOut).toFixed(2));
   const differenceNIO = parseFloat((actualCashNIO - expectedCashNIO).toFixed(2));
 
   let auditStatus: 'SQUARED' | 'SURPLUS' | 'SHORTAGE' = 'SQUARED';

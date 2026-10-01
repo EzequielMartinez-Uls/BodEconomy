@@ -60,10 +60,16 @@ export const OpeningModal: React.FC<Props> = ({
   const [denominationsUSD, setDenominationsUSD] = useState<DenominationsUSD>(DEFAULT_DENOMINATIONS_USD);
   const [notes, setNotes] = useState('');
 
+  // Traspaso a Caja Chica deducido en la Apertura
+  const [transferToPettyCash, setTransferToPettyCash] = useState<string>('');
+  const transferAmount = transferToPettyCash !== '' ? Math.max(0, parseFloat(transferToPettyCash) || 0) : 0;
+
   // Cálculos de Conteo Físico
   const totalNIO = calculateTotalNIO(denominationsNIO);
   const totalUSD = calculateTotalUSD(denominationsUSD);
   const totalEquivNIO = totalNIO + totalUSD * exchangeRate;
+  const netOpeningEquivNIO = Math.max(0, totalEquivNIO - transferAmount);
+  const netOpeningNIO = Math.max(0, totalNIO - transferAmount);
 
   // Corroboración contra el cierre anterior
   const expectedFromPrevious =
@@ -219,9 +225,12 @@ export const OpeningModal: React.FC<Props> = ({
       openingNotes: auditNotes,
       openingNIO: denominationsNIO,
       openingUSD: denominationsUSD,
-      totalOpeningNIO: totalNIO,
+      totalOpeningNIO: netOpeningNIO,
       totalOpeningUSD: totalUSD,
-      totalOpeningEquivNIO: totalEquivNIO,
+      totalOpeningEquivNIO: netOpeningEquivNIO,
+      openingCashCountedNIO: totalEquivNIO,
+      openingTransferToPettyCash: transferAmount > 0 ? transferAmount : undefined,
+      transferToPettyCash: transferAmount > 0 ? transferAmount : undefined,
       loyverseValidation: {
         validated: true,
         salesCashLoyverse: numLoyverseCash ?? repLoyverseCash,
@@ -736,6 +745,60 @@ export const OpeningModal: React.FC<Props> = ({
             />
           </div>
 
+          {/* Traspaso a Caja Chica al Abrir (Opcional) */}
+          <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-2xl space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                  🏦
+                </div>
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-amber-950">
+                    Traspaso a Caja Chica al Abrir (Opcional)
+                  </h4>
+                  <p className="text-[11px] text-amber-800">
+                    Mueve dinero de esta gaveta física de Caja General hacia Caja Chica para compras del turno.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+              <div>
+                <label className="block text-[11px] font-bold text-amber-900 uppercase tracking-wider mb-1">
+                  Monto a Trasladar a Caja Chica (C$)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">C$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    value={transferToPettyCash}
+                    onChange={(e) => setTransferToPettyCash(e.target.value)}
+                    className="w-full bg-white border border-amber-300 rounded-xl pl-9 pr-3 py-2 text-sm font-mono font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-white/80 border border-amber-200/80 rounded-xl p-3 text-xs space-y-1 font-mono">
+                <div className="flex justify-between text-slate-600">
+                  <span>Conteo Físico Gaveta:</span>
+                  <span>C$ {totalEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between text-rose-700 font-bold">
+                  <span>(-) Traslado a Caja Chica:</span>
+                  <span>- C$ {transferAmount.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="border-t border-amber-200 pt-1 flex justify-between font-black text-slate-900 text-sm">
+                  <span>(=) Fondo Neto Gaveta:</span>
+                  <span className="text-emerald-700">C$ {netOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Notas de Apertura */}
           <div>
             <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
@@ -753,11 +816,21 @@ export const OpeningModal: React.FC<Props> = ({
 
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-white">
-          <div className="text-sm">
-            <span className="text-slate-500 font-medium">Fondo Apertura Contado: </span>
-            <strong className="text-xl font-black text-emerald-600 font-mono">
-              C$ {totalEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
-            </strong>
+          <div className="text-xs space-y-0.5">
+            <div className="text-slate-500">
+              Conteo Físico: <strong className="text-slate-800 font-mono">C$ {totalEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
+              {transferAmount > 0 && (
+                <span className="text-amber-700 font-bold ml-2">
+                  (A Caja Chica: -C$ {transferAmount.toLocaleString('es-NI', { minimumFractionDigits: 2 })})
+                </span>
+              )}
+            </div>
+            <div className="text-sm">
+              <span className="text-slate-700 font-bold">Fondo Neto en Gaveta General: </span>
+              <strong className="text-xl font-black text-emerald-600 font-mono">
+                C$ {netOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+              </strong>
+            </div>
           </div>
 
           <div className="flex gap-3">

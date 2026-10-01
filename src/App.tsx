@@ -390,6 +390,9 @@ export function App() {
 
   // Handlers
   const handleConfirmOpenShift = (newShift: CashShift, updatedPreviousShift?: CashShift) => {
+    const transferAmount = newShift.openingTransferToPettyCash || newShift.transferToPettyCash || 0;
+    let transferTxToSync: PettyCashTransaction | null = null;
+
     setState((prev) => {
       let updatedHistory = prev.shiftHistory;
       if (updatedPreviousShift) {
@@ -399,18 +402,57 @@ export function App() {
             : s
         );
       }
+
+      let updatedPettyTxs = prev.pettyCashTransactions;
+      let updatedPettyBalance = prev.pettyCashBalance;
+      let updatedPettyShift = prev.currentPettyCashShift;
+
+      if (transferAmount > 0) {
+        const transferTx: PettyCashTransaction = {
+          id: `pct-transfer-open-${Date.now()}`,
+          shiftId: prev.currentPettyCashShift?.id || `pc-shift-${newShift.date}`,
+          date: newShift.openedAt,
+          type: 'INFLOW',
+          inflowSource: 'TRASLADO_CAJA_GENERAL',
+          amount: transferAmount,
+          method: 'CASH',
+          vendor: 'Traslado desde Caja General',
+          category: 'OTROS',
+          registeredBy: newShift.openedBy,
+          notes: `Traspaso inicial deducido al abrir Caja General (C$ ${transferAmount.toFixed(2)})`,
+        };
+        transferTxToSync = transferTx;
+        updatedPettyTxs = [transferTx, ...updatedPettyTxs];
+        updatedPettyBalance += transferAmount;
+
+        if (updatedPettyShift) {
+          updatedPettyShift = {
+            ...updatedPettyShift,
+            generalCashTransfer: (updatedPettyShift.generalCashTransfer || 0) + transferAmount,
+            initialBalance: updatedPettyShift.initialBalance + transferAmount,
+          };
+        }
+      }
+
+      const openDetails = transferAmount > 0
+        ? `Apertura con C$ ${newShift.totalOpeningEquivNIO.toFixed(2)} en gaveta (Conteo inicial: C$ ${(newShift.openingCashCountedNIO || newShift.totalOpeningEquivNIO + transferAmount).toFixed(2)}, Traspaso a Caja Chica: -C$ ${transferAmount.toFixed(2)})`
+        : `Apertura realizada con C$ ${newShift.totalOpeningEquivNIO.toFixed(2)}`;
+
       return {
         ...prev,
         currentShift: newShift,
         shiftHistory: updatedHistory,
+        pettyCashTransactions: updatedPettyTxs,
+        pettyCashBalance: updatedPettyBalance,
+        currentPettyCashShift: updatedPettyShift,
         auditLogs: [
           {
             id: `log-${Date.now()}`,
             timestamp: new Date().toISOString(),
             user: newShift.openedBy,
             action: 'APERTURA_TURNO',
-            details: `Apertura realizada con C$ ${newShift.totalOpeningEquivNIO.toFixed(2)}${
-              updatedPreviousShift ? ' (Vouchers de anoche auditados y corroborados)' : ''
+            details: `${openDetails}${
+              updatedPreviousShift ? ' • (Vouchers de anoche auditados y corroborados)' : ''
             }`,
           },
           ...prev.auditLogs,
@@ -423,6 +465,12 @@ export function App() {
     syncGeneralCashOpeningToCloud(newShift).catch((err) =>
       console.warn('⚠️ Error sincronizando apertura con la nube:', err)
     );
+
+    if (transferTxToSync) {
+      syncTransactionToCloud(transferTxToSync).catch((err) =>
+        console.warn('⚠️ Error sincronizando traspaso a caja chica en la nube:', err)
+      );
+    }
 
     if (updatedPreviousShift) {
       syncGeneralCashShiftToCloud(updatedPreviousShift).catch((err) =>
