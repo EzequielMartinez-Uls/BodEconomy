@@ -78,6 +78,31 @@ export function mapCloudCategoryToLocal(cloudCat: string): ExpenseCategory {
 }
 
 /**
+ * Detecta si una transacción de compras_gastos o de caja chica corresponde a un ingreso/fondeo
+ */
+export function isFondeoTransaction(g: any): boolean {
+  if (!g) return false;
+  if (g.tipo === 'INGRESO_FONDEO' || g.tipo === 'INFLOW') return true;
+  if (g.categoria === 'FONDEO') return true;
+  if (g.observaciones && (/\[TIPO:FONDEO\]/i.test(g.observaciones) || /\[TYPE:INFLOW\]/i.test(g.observaciones))) return true;
+  const texto = `${g.concepto || ''} ${g.proveedor || ''}`.toLowerCase();
+  if (
+    texto.includes('deposito a caja chica') ||
+    texto.includes('depósito a caja chica') ||
+    texto.includes('depositado en efectivo') ||
+    texto.includes('fondeo') ||
+    texto.includes('traslado a caja chica') ||
+    texto.includes('aporte jefe') ||
+    texto.includes('reembolso caja chica') ||
+    texto.includes('correcion de saldo anterior') ||
+    texto.includes('correccion de saldo anterior')
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
  * Combina y actualiza las etiquetas estructuradas de observaciones de una jornada sin sobrescribir las demás
  */
 export function mergeJornadaTags(
@@ -261,84 +286,86 @@ export async function syncCloseShiftToCloud(shift: PettyCashShift): Promise<void
 }
 
 /**
- * Sincroniza una transacción / gasto individual de Caja Chica a Supabase
+ * Sincroniza una transacción (gasto o fondeo/depósito) de Caja Chica a Supabase
  */
 export async function syncTransactionToCloud(tx: PettyCashTransaction): Promise<number | null> {
   try {
-    if (tx.type === 'EXPENSE') {
-      const cloudCategory = mapCategoryToCloud(tx.category);
-      const isTransfer = tx.method === 'TRANSFER';
-      const isCard = tx.method === 'CARD';
-      const metodoPago = isTransfer ? 'TRANSFERENCIA' : isCard ? 'TARJETA' : 'EFECTIVO';
-      const estadoPago = isTransfer ? 'PENDIENTE_TRANSFERENCIA' : 'PAGADO';
+    const isExpense = tx.type === 'EXPENSE';
+    const isTransfer = tx.method === 'TRANSFER';
+    const isCard = tx.method === 'CARD';
+    const metodoPago = isTransfer ? 'TRANSFERENCIA' : isCard ? 'TARJETA' : 'EFECTIVO';
+    const estadoPago = isTransfer ? 'PENDIENTE_TRANSFERENCIA' : 'PAGADO';
 
-      const { data, error } = await supabase
-        .from('compras_gastos')
-        .insert({
-          fecha_hora: tx.date || getLocalDateTimeStr(),
-          concepto: tx.notes ? `${tx.vendor} - ${tx.notes}` : tx.vendor,
-          categoria: cloudCategory,
-          proveedor: tx.vendor,
-          monto: tx.amount,
-          metodo_pago: metodoPago,
-          estado_pago: estadoPago,
-          registrado_por: tx.registeredBy || 'Bodegón Control PC',
-          observaciones: tx.receiptNumber ? `Doc: ${tx.receiptNumber}` : null,
-        })
-        .select('id')
-        .single();
+    const cloudCategory = isExpense ? mapCategoryToCloud(tx.category) : 'FONDEO';
+    const concepto = tx.notes ? `${tx.vendor} - ${tx.notes}` : tx.vendor;
+    const observaciones = isExpense
+      ? (tx.receiptNumber ? `Doc: ${tx.receiptNumber}` : null)
+      : (tx.receiptNumber ? `[TIPO:FONDEO] Doc: ${tx.receiptNumber}` : '[TIPO:FONDEO] Depósito a caja chica');
 
-      if (error) throw error;
-      return data?.id || null;
-    }
-    return null;
+    const { data, error } = await supabase
+      .from('compras_gastos')
+      .insert({
+        fecha_hora: tx.date || getLocalDateTimeStr(),
+        concepto: concepto || (isExpense ? 'Gasto Caja Chica' : 'Depósito a caja chica'),
+        categoria: cloudCategory,
+        proveedor: tx.vendor || (isExpense ? 'Proveedor' : 'Gerencia / Caja General'),
+        monto: tx.amount,
+        metodo_pago: metodoPago,
+        estado_pago: isExpense ? estadoPago : 'PAGADO',
+        registrado_por: tx.registeredBy || 'Bodegón Control PC',
+        observaciones: observaciones,
+      })
+      .select('id')
+      .single();
+
+    if (error) throw error;
+    return data?.id || null;
   } catch (err) {
-    console.warn('⚠️ No se pudo registrar gasto en la nube (modo offline):', err);
+    console.warn('⚠️ No se pudo registrar transacción en la nube (modo offline):', err);
     return null;
   }
 }
 
 /**
- * Elimina una transacción / gasto de Caja Chica en Supabase
+ * Elimina una transacción (gasto o fondeo/depósito) de Caja Chica en Supabase
  */
 export async function deleteTransactionFromCloud(tx: PettyCashTransaction): Promise<boolean> {
   try {
-    if (tx.type === 'EXPENSE') {
-      let targetId: number | null = null;
-      if (tx.cloudId) {
-        targetId = tx.cloudId;
-      } else if (tx.id.startsWith('pct-cloud-')) {
-        const parsed = parseInt(tx.id.replace('pct-cloud-', ''), 10);
-        if (!isNaN(parsed)) targetId = parsed;
-      }
-
-      if (targetId) {
-        const { error } = await supabase.from('compras_gastos').delete().eq('id', targetId);
-        if (error) throw error;
-        return true;
-      }
-
-      // Fallback: si no tiene cloudId directo, buscar por proveedor, monto y fecha del día
-      const datePrefix = (tx.date || '').slice(0, 10);
-      const { data: matches } = await supabase
-        .from('compras_gastos')
-        .select('id, fecha_hora, monto, proveedor')
-        .eq('proveedor', tx.vendor)
-        .eq('monto', tx.amount)
-        .gte('fecha_hora', `${datePrefix}T00:00:00`)
-        .lte('fecha_hora', `${datePrefix}T23:59:59`)
-        .order('id', { ascending: false })
-        .limit(1);
-
-      if (matches && matches.length > 0) {
-        const { error: delError } = await supabase.from('compras_gastos').delete().eq('id', matches[0].id);
-        if (delError) throw delError;
-        return true;
-      }
+    let targetId: number | null = null;
+    if (tx.cloudId) {
+      targetId = tx.cloudId;
+    } else if (tx.id.startsWith('pct-cloud-')) {
+      const parsed = parseInt(tx.id.replace('pct-cloud-', ''), 10);
+      if (!isNaN(parsed)) targetId = parsed;
     }
+
+    if (targetId) {
+      const { error } = await supabase.from('compras_gastos').delete().eq('id', targetId);
+      if (error) throw error;
+      return true;
+    }
+
+    // Fallback: si no tiene cloudId directo, buscar por proveedor, monto y fecha del día
+    const datePrefix = (tx.date || '').slice(0, 10);
+    const { data: matches } = await supabase
+      .from('compras_gastos')
+      .select('id, fecha_hora, monto, proveedor')
+      .eq('proveedor', tx.vendor)
+      .eq('monto', tx.amount)
+      .gte('fecha_hora', `${datePrefix}T00:00:00`)
+      .lte('fecha_hora', `${datePrefix}T23:59:59`)
+      .order('id', { ascending: false })
+      .limit(1);
+
+    if (matches && matches.length > 0) {
+      const { error: delError } = await supabase.from('compras_gastos').delete().eq('id', matches[0].id);
+      if (delError) throw delError;
+      return true;
+    }
+
     return true;
   } catch (err) {
-    console.warn('⚠️ No se pudo eliminar gasto en la nube:', err);
+    console.warn('⚠️ No se pudo eliminar transacción en la nube:', err);
     return false;
   }
 }

@@ -26,6 +26,7 @@ import {
   fetchFullCloudState,
   parseShiftFromJornada,
   mapCloudCategoryToLocal,
+  isFondeoTransaction,
   supabase,
 } from './services/supabaseSync';
 import { getLocalTodayStr, getLocalDateTimeStr, extractLocalDateStr } from './utils/dateUtils';
@@ -141,10 +142,10 @@ export function App() {
               id: `pct-cloud-${g.id}`,
               shiftId: `pc-shift-${localDate}`,
               date: g.fecha_hora || getLocalDateTimeStr(),
-              type: g.tipo === 'INGRESO_FONDEO' ? 'INFLOW' : 'EXPENSE',
+              type: isFondeoTransaction(g) ? 'INFLOW' : 'EXPENSE',
               amount: Number(g.monto) || 0,
               method: g.metodo_pago === 'TRANSFERENCIA' ? 'TRANSFER' : g.metodo_pago === 'TARJETA' ? 'CARD' : 'CASH',
-              vendor: g.proveedor || g.concepto || 'Compra',
+              vendor: g.proveedor || g.concepto || (isFondeoTransaction(g) ? 'Fondeo Caja Chica' : 'Compra'),
               category: mapCloudCategoryToLocal(g.categoria),
               registeredBy: g.registrado_por || 'Eddy',
               notes: g.concepto || g.observaciones || '',
@@ -199,10 +200,10 @@ export function App() {
             id: `pct-cloud-${g.id}`,
             shiftId: `pc-shift-${localDate}`,
             date: g.fecha_hora || getLocalDateTimeStr(),
-            type: 'EXPENSE',
+            type: isFondeoTransaction(g) ? 'INFLOW' : 'EXPENSE',
             amount: Number(g.monto) || 0,
             method: g.metodo_pago === 'TRANSFERENCIA' ? 'TRANSFER' : g.metodo_pago === 'TARJETA' ? 'CARD' : 'CASH',
-            vendor: g.proveedor || g.concepto || 'Compra Móvil',
+            vendor: g.proveedor || g.concepto || (isFondeoTransaction(g) ? 'Depósito Móvil' : 'Compra Móvil'),
             category: mapCloudCategoryToLocal(g.categoria),
             registeredBy: g.registrado_por || 'Celular Jefe',
             notes: g.concepto || g.observaciones || '',
@@ -235,12 +236,12 @@ export function App() {
             }
 
             const isCash = newTx.method === 'CASH';
-            const balanceChange = isCash ? newTx.amount : 0;
+            const delta = isCash ? (newTx.type === 'INFLOW' ? newTx.amount : -newTx.amount) : 0;
 
             return {
               ...prev,
               pettyCashTransactions: [newTx, ...prev.pettyCashTransactions],
-              pettyCashBalance: Math.max(0, parseFloat((prev.pettyCashBalance - balanceChange).toFixed(2))),
+              pettyCashBalance: Math.max(0, parseFloat((prev.pettyCashBalance + delta).toFixed(2))),
             };
           });
           playSound([659.25, 880]);
@@ -286,9 +287,10 @@ export function App() {
               if (t.id === `pct-cloud-${g.id}` || t.cloudId === g.id) {
                 return {
                   ...t,
+                  type: isFondeoTransaction(g) ? ('INFLOW' as const) : ('EXPENSE' as const),
                   amount: Number(g.monto) || 0,
-                  method: g.metodo_pago === 'TRANSFERENCIA' ? ('TRANSFER' as const) : ('CASH' as const),
-                  vendor: g.proveedor || g.concepto || 'Compra',
+                  method: g.metodo_pago === 'TRANSFERENCIA' ? ('TRANSFER' as const) : g.metodo_pago === 'TARJETA' ? ('CARD' as const) : ('CASH' as const),
+                  vendor: g.proveedor || g.concepto || (isFondeoTransaction(g) ? 'Fondeo Caja Chica' : 'Compra'),
                   category: mapCloudCategoryToLocal(g.categoria),
                   notes: g.concepto || g.observaciones || '',
                   shiftId: `pc-shift-${localDate}`,

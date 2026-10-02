@@ -7,7 +7,7 @@ import {
   calculateTotalUSD,
 } from '../services/storage';
 import { CashDenominationsInput } from './CashDenominationsInput';
-import { printThermalClosingTicket } from '../services/thermalPrint';
+import { printThermalClosingTicket, printOfficialActBN } from '../services/thermalPrint';
 import { exportShiftToExcel } from '../services/excelExport';
 import { extractLocalDateStr } from '../utils/dateUtils';
 import confetti from 'canvas-confetti';
@@ -74,7 +74,11 @@ export const ClosingModal: React.FC<Props> = ({
   const [otherIncome, setOtherIncome] = useState<number>(shift.otherIncome || 0);
   const [otherIncomeNotes, setOtherIncomeNotes] = useState<string>(shift.otherIncomeNotes || '');
 
-  // 3. Propinas de la noche
+  // Traspasos entre Cajas (Loyverse POS: Pagos/Salidas & Depositado)
+  const [transferToPettyCash, setTransferToPettyCash] = useState<number>(shift.transferToPettyCash || 0);
+  const [depositedFromPettyCash, setDepositedFromPettyCash] = useState<number>(shift.depositedFromPettyCash || 0);
+
+  // 3. Propinas de la noche (Línea 'Impuestos' en Loyverse POS)
   const [totalTipCollected, setTotalTipCollected] = useState<number>(shift.totalTipCollected || 0);
   const [staffCount, setStaffCount] = useState<number>(shift.staffCount || 10);
   const [tipPaid, setTipPaid] = useState<boolean>(shift.tipPaid !== undefined ? shift.tipPaid : true);
@@ -99,15 +103,12 @@ export const ClosingModal: React.FC<Props> = ({
   // Saldo real contado en gaveta al cierre
   const actualCashNIO = parseFloat(totalClosingEquivNIO.toFixed(2));
 
-  // CÁLCULO REAL DE AUDITORÍA Y CUADRE DE CAJA (Sin hardcodes)
-  // Lo que DEBERÍA haber en la gaveta física:
-  // Fondo Inicial + Ventas en Efectivo cobradas - Propinas entregadas en efectivo
+  // CÁLCULO REAL DE AUDITORÍA Y CUADRE DE CAJA (Idéntico a Loyverse POS)
+  // Fondo Inicial + Ventas Efectivo POS + Depositado desde Caja Chica - Pagos/Salidas a Caja Chica - Propinas entregadas de gaveta
   const openingFloat = shift.totalOpeningEquivNIO || 0;
-  // Traslado a caja chica: si ya fue deducido del fondo de apertura, no se vuelve a restar
-  const additionalTransferOut = shift.openingTransferToPettyCash
-    ? Math.max(0, (shift.transferToPettyCash || 0) - shift.openingTransferToPettyCash)
-    : (shift.transferToPettyCash || 0);
-  const expectedCashNIO = parseFloat((openingFloat + salesCashSystem - tipsPaidAmount - additionalTransferOut).toFixed(2));
+  const expectedCashNIO = parseFloat(
+    (openingFloat + salesCashSystem + depositedFromPettyCash - transferToPettyCash - tipsPaidAmount).toFixed(2)
+  );
   const differenceNIO = parseFloat((actualCashNIO - expectedCashNIO).toFixed(2));
 
   let auditStatus: 'SQUARED' | 'SURPLUS' | 'SHORTAGE' = 'SQUARED';
@@ -119,14 +120,15 @@ export const ClosingModal: React.FC<Props> = ({
     auditStatus = 'SHORTAGE';
   }
 
-  // Gastos de Caja Chica del Día para ver la ganancia neta real
+  // Gastos de Caja Chica del Día para ver la ganancia neta real (Compras en Efectivo de Insumos)
   const dayPettyExpenses = useMemo(() => {
     return (state.pettyCashTransactions || [])
       .filter((t) => t.type === 'EXPENSE' && extractLocalDateStr(t.date) === shift.date)
       .reduce((sum, t) => sum + (t.amount || 0), 0);
   }, [state.pettyCashTransactions, shift.date]);
 
-  const dailyNetProfit = parseFloat((totalGrossSales - dayPettyExpenses).toFixed(2));
+  // Rendimiento Financiero Consolidado (Idéntico a Excel: Total Ingresos - Compras Insumos - Propinas Entregadas)
+  const dailyNetProfit = parseFloat((totalGrossSales - dayPettyExpenses - tipsPaidAmount).toFixed(2));
 
   const triggerCelebration = () => {
     confetti({
@@ -189,14 +191,16 @@ export const ClosingModal: React.FC<Props> = ({
       dailyNetProfit,
       closingNotes,
 
-      transferToPettyCash: 0,
+      // Traspasos entre Cajas
+      transferToPettyCash,
+      depositedFromPettyCash,
       overtimePaidCash: 0,
       extraDaysPaidCash: 0,
       reserveDGI: 0,
       reservePayroll: 0,
       reserveVacations: 0,
       reserveSnyder: 0,
-      totalWithdrawals: 0,
+      totalWithdrawals: transferToPettyCash + tipsPaidAmount,
     };
 
     onConfirmClose(closedShift);
@@ -560,6 +564,81 @@ export const ClosingModal: React.FC<Props> = ({
                 </div>
               </div>
 
+              {/* Movimientos de Efectivo con Caja Chica (Loyverse POS) */}
+              <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-amber-50 text-amber-700 border border-amber-200">
+                      <Banknote className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-slate-900">
+                        5. Movimientos entre Cajas (Loyverse POS)
+                      </h3>
+                      <p className="text-xs text-slate-500">
+                        Registra los traspasos realizados entre la gaveta de Caja General y Caja Chica durante el turno.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Pagos / Salidas hacia Caja Chica */}
+                  <div className="p-4 bg-rose-50/50 rounded-xl border border-rose-200">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-black uppercase text-rose-900 block">
+                        (-) Pagos / Salidas a Caja Chica (C$)
+                      </label>
+                      <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full">
+                        Salida de General
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 mb-2">
+                      Efectivo retirado de esta gaveta física de Caja General para compras de Caja Chica durante el turno (Línea 'Pagos/Salidas' en Loyverse).
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold text-rose-500">C$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        value={transferToPettyCash === 0 ? '' : transferToPettyCash}
+                        onChange={(e) => setTransferToPettyCash(parseFloat(e.target.value) || 0)}
+                        className="w-full bg-white border border-rose-300 rounded-xl px-3 py-2 font-mono font-bold text-rose-900 focus:outline-none focus:border-rose-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Depositado desde Caja Chica hacia General */}
+                  <div className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-200">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-black uppercase text-emerald-900 block">
+                        (+) Depositado desde Caja Chica (C$)
+                      </label>
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                        Entrada a General
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 mb-2">
+                      Efectivo devuelto o reintegrado desde Caja Chica hacia esta gaveta de Caja General (Línea 'Depositado' en Loyverse).
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold text-emerald-500">C$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        value={depositedFromPettyCash === 0 ? '' : depositedFromPettyCash}
+                        onChange={(e) => setDepositedFromPettyCash(parseFloat(e.target.value) || 0)}
+                        className="w-full bg-white border border-emerald-300 rounded-xl px-3 py-2 font-mono font-bold text-emerald-900 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Total Bruto Consolidado */}
               <div className="p-5 bg-slate-900 text-white rounded-2xl flex items-center justify-between shadow-md">
                 <div>
@@ -598,7 +677,7 @@ export const ClosingModal: React.FC<Props> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-600 mb-1">
-                      Total de Propina Recaudada (C$)
+                      Total de Propina Recaudada (Línea 'Impuestos' en Loyverse POS) (C$)
                     </label>
                     <input
                       type="number"
@@ -712,10 +791,10 @@ export const ClosingModal: React.FC<Props> = ({
 
               {/* Conciliación Matemática Transparente */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Caja / Arqueo de Gaveta */}
+                {/* Caja / Arqueo de Gaveta (Idéntico a Loyverse POS) */}
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
                   <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center justify-between">
-                    <span>1. Conciliación de Efectivo Físico</span>
+                    <span>1. Conciliación de Efectivo (Loyverse POS)</span>
                     <Banknote className="w-4 h-4 text-emerald-600" />
                   </h4>
 
@@ -725,17 +804,25 @@ export const ClosingModal: React.FC<Props> = ({
                       <strong className="font-mono text-slate-900">C$ {openingFloat.toFixed(2)}</strong>
                     </div>
                     <div className="flex justify-between text-slate-600">
-                      <span>(+) Ventas Efectivo según Sistema:</span>
+                      <span>(+) Cobros en Efectivo (Loyverse):</span>
                       <strong className="font-mono text-emerald-700">+ C$ {salesCashSystem.toFixed(2)}</strong>
                     </div>
-                    <div className="flex justify-between text-slate-600">
-                      <span>(-) Propinas Pagadas en Efectivo:</span>
-                      <strong className="font-mono text-rose-600">- C$ {tipsPaidAmount.toFixed(2)}</strong>
-                    </div>
-                    {additionalTransferOut > 0 && (
+                    {depositedFromPettyCash > 0 && (
                       <div className="flex justify-between text-slate-600">
-                        <span>(-) Traspasos a Caja Chica:</span>
-                        <strong className="font-mono text-rose-600">- C$ {additionalTransferOut.toFixed(2)}</strong>
+                        <span>(+) Depositado desde Caja Chica:</span>
+                        <strong className="font-mono text-emerald-700">+ C$ {depositedFromPettyCash.toFixed(2)}</strong>
+                      </div>
+                    )}
+                    {transferToPettyCash > 0 && (
+                      <div className="flex justify-between text-slate-600">
+                        <span>(-) Pagos / Salidas a Caja Chica:</span>
+                        <strong className="font-mono text-rose-600">- C$ {transferToPettyCash.toFixed(2)}</strong>
+                      </div>
+                    )}
+                    {tipsPaidAmount > 0 && (
+                      <div className="flex justify-between text-slate-600">
+                        <span>(-) Propinas Pagadas en Efectivo:</span>
+                        <strong className="font-mono text-rose-600">- C$ {tipsPaidAmount.toFixed(2)}</strong>
                       </div>
                     )}
                     <div className="border-t border-slate-200 pt-2 flex justify-between font-bold text-slate-800">
@@ -757,16 +844,16 @@ export const ClosingModal: React.FC<Props> = ({
                             : 'text-rose-600'
                         }`}
                       >
-                        {differenceNIO > 0 ? `+ C$ ${differenceNIO.toFixed(2)}` : `C$ ${differenceNIO.toFixed(2)}`}
+                        {differenceNIO > 0 ? `+ C$ ${differenceNIO.toFixed(2)} (SOBRANTE)` : differenceNIO < 0 ? `- C$ ${Math.abs(differenceNIO).toFixed(2)} (FALTANTE)` : 'C$ 0.00 (EXACTO)'}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Rendimiento Financiero del Turno */}
+                {/* Rendimiento Financiero del Turno (Idéntico a Excel) */}
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
                   <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center justify-between">
-                    <span>2. Rendimiento Financiero del Día</span>
+                    <span>2. Estado Financiero Consolidado (Excel)</span>
                     <TrendingUp className="w-4 h-4 text-indigo-600" />
                   </h4>
 
@@ -790,15 +877,21 @@ export const ClosingModal: React.FC<Props> = ({
                       </div>
                     )}
                     <div className="border-t border-slate-200 pt-1.5 flex justify-between font-bold text-slate-900">
-                      <span>Total Ventas Brutas:</span>
+                      <span>Total Ingresos Facturados:</span>
                       <strong className="font-mono text-indigo-700 text-sm">C$ {totalGrossSales.toFixed(2)}</strong>
                     </div>
                     <div className="flex justify-between text-slate-500 pt-1">
-                      <span>(-) Compras / Caja Chica de hoy:</span>
+                      <span>(-) Compras / Caja Chica (Pag. Efect.):</span>
                       <span className="font-mono text-rose-600">- C$ {dayPettyExpenses.toFixed(2)}</span>
                     </div>
+                    {tipsPaidAmount > 0 && (
+                      <div className="flex justify-between text-slate-500">
+                        <span>(-) Propinas Pagadas al Personal:</span>
+                        <span className="font-mono text-rose-600">- C$ {tipsPaidAmount.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 flex justify-between font-black text-sm text-emerald-950">
-                      <span>Utilidad Neta de la Jornada:</span>
+                      <span>Total Neto / Utilidad Operativa:</span>
                       <strong className="font-mono text-emerald-700">C$ {dailyNetProfit.toFixed(2)}</strong>
                     </div>
                   </div>
@@ -863,6 +956,9 @@ export const ClosingModal: React.FC<Props> = ({
                       individualTip,
                       tipPaid,
                       tipNotes,
+                      transferToPettyCash,
+                      depositedFromPettyCash,
+                      totalWithdrawals: transferToPettyCash + tipsPaidAmount,
                       actualCashNIO,
                       expectedCashNIO,
                       differenceNIO,
@@ -875,7 +971,87 @@ export const ClosingModal: React.FC<Props> = ({
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-300 shadow-xs transition cursor-pointer"
                 >
                   <Printer className="w-4 h-4 text-amber-600" />
-                  <span>Imprimir Ticket Térmico / A4</span>
+                  <span>Ticket Cierre General A4</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const previewShift: CashShift = {
+                      ...shift,
+                      closedBy,
+                      closedAt: new Date().toISOString(),
+                      closingNIO,
+                      closingUSD,
+                      totalClosingNIO,
+                      totalClosingUSD,
+                      totalClosingEquivNIO,
+                      cardsBAC,
+                      cardsFicohsa,
+                      cardsBanpro,
+                      cardsLafise,
+                      totalCards,
+                      salesPedidosYa,
+                      salesCashSystem,
+                      otherIncome,
+                      otherIncomeNotes,
+                      totalGrossSales,
+                      totalTipCollected,
+                      staffCount,
+                      individualTip,
+                      tipPaid,
+                      tipNotes,
+                      transferToPettyCash,
+                      depositedFromPettyCash,
+                      totalWithdrawals: transferToPettyCash + tipsPaidAmount,
+                      actualCashNIO,
+                      expectedCashNIO,
+                      differenceNIO,
+                      auditStatus,
+                      dailyNetProfit,
+                      closingNotes,
+                    };
+                    const dayTransactions = (state.pettyCashTransactions || [])
+                      .filter((t) => extractLocalDateStr(t.date) === shift.date)
+                      .map((t) => ({
+                        id: t.id,
+                        hora: new Date(t.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        categoria: t.category,
+                        concepto: t.vendor + (t.notes ? ` - ${t.notes}` : ''),
+                        proveedor: t.vendor,
+                        metodo: t.method === 'CASH' ? 'Efectivo' : t.method === 'CARD' ? 'Tarjeta' : 'Transferencia',
+                        monto: t.amount,
+                        tipo: t.type === 'INFLOW' ? ('INGRESO' as const) : ('GASTO' as const),
+                      }));
+                    printOfficialActBN({
+                      shift: previewShift,
+                      date: shift.date,
+                      modo: 'TODO',
+                      salesCash: salesCashSystem,
+                      cardsBAC,
+                      cardsFicohsa,
+                      cardsBanpro,
+                      cardsLafise,
+                      totalCards,
+                      salesPedidosYa,
+                      totalGross: totalGrossSales,
+                      netProfit: dailyNetProfit,
+                      marginPercent: totalGrossSales > 0 ? (dailyNetProfit / totalGrossSales) * 100 : 0,
+                      responsableCaja: closedBy,
+                      observacionesGeneral: closingNotes,
+                      fondoInicial: shift.totalOpeningEquivNIO,
+                      expensesCash: dayPettyExpenses,
+                      expensesTransf: 0,
+                      expensesTotal: dayPettyExpenses,
+                      saldoRemanente: actualCashNIO,
+                      responsableCajaChica: closedBy,
+                      transactions: dayTransactions,
+                    });
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold border border-slate-900 shadow-xs transition cursor-pointer"
+                >
+                  <Printer className="w-4 h-4 text-amber-400" />
+                  <span>Imprimir Acta Oficial B/N (Láser Monocromática)</span>
                 </button>
 
                 <button

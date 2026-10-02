@@ -754,10 +754,10 @@ export const OpeningModal: React.FC<Props> = ({
                 </div>
                 <div>
                   <h4 className="text-xs font-black uppercase tracking-wider text-amber-950">
-                    Traspaso a Caja Chica al Abrir (Opcional)
+                    Traspaso a Caja Chica al Abrir (Pagos / Salidas en Loyverse)
                   </h4>
                   <p className="text-[11px] text-amber-800">
-                    Mueve dinero de esta gaveta física de Caja General hacia Caja Chica para compras del turno.
+                    Mueve dinero de esta gaveta física de Caja General hacia Caja Chica para compras del turno. En Loyverse POS se registra como <strong>"Pagos / Salidas"</strong>.
                   </p>
                 </div>
               </div>

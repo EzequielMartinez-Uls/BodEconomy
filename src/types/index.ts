@@ -102,7 +102,8 @@ export interface CashShift {
   tipNotes?: string;
 
   // Deducciones / Retiros de Caja
-  transferToPettyCash?: number;
+  transferToPettyCash?: number; // Pagos/Salidas hacia Caja Chica (traspasos en el turno)
+  depositedFromPettyCash?: number; // Depositado desde Caja Chica hacia General (reintegros)
   overtimePaidCash?: number;
   extraDaysPaidCash?: number;
   reserveDGI?: number;
