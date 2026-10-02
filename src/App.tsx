@@ -27,6 +27,7 @@ import {
   parseShiftFromJornada,
   mapCloudCategoryToLocal,
   isFondeoTransaction,
+  processOutboxQueue,
   supabase,
 } from './services/supabaseSync';
 import { getLocalTodayStr, getLocalDateTimeStr, extractLocalDateStr } from './utils/dateUtils';
@@ -388,6 +389,30 @@ export function App() {
     };
   }, []);
 
+  // Proceso en segundo plano: procesar cola outbox cada 15 segundos para garantizar entrega a Supabase
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setState((prev) => {
+        const hasPending = prev.pettyCashTransactions.some(
+          (t) => !t.cloudId && !t.id.startsWith('pct-cloud-') && !t.id.startsWith('opening-') && !t.id.startsWith('pct-init-')
+        );
+        if (!hasPending) return prev;
+
+        processOutboxQueue(prev.pettyCashTransactions).then(({ updated, syncedCount }) => {
+          if (syncedCount > 0) {
+            setState((curr) => ({
+              ...curr,
+              pettyCashTransactions: updated,
+            }));
+          }
+        });
+        return prev;
+      });
+    }, 15000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   // Web Audio chime feedback
   const playSound = (freqs: number[]) => {
     try {
@@ -685,23 +710,28 @@ export function App() {
   };
 
   const handleAddPettyCashTransaction = async (tx: PettyCashTransaction) => {
+    const txWithStatus: PettyCashTransaction = {
+      ...tx,
+      syncStatus: 'PENDING',
+    };
+
     setState((prev) => {
-      const isExpense = tx.type === 'EXPENSE';
-      const isCash = tx.method === 'CASH';
+      const isExpense = txWithStatus.type === 'EXPENSE';
+      const isCash = txWithStatus.method === 'CASH';
       // Las compras por transferencia bancaria NO tocan el efectivo físico de la gaveta
-      const balanceChange = isExpense ? (isCash ? -tx.amount : 0) : tx.amount;
+      const balanceChange = isExpense ? (isCash ? -txWithStatus.amount : 0) : txWithStatus.amount;
 
       return {
         ...prev,
         pettyCashBalance: Math.max(0, parseFloat((prev.pettyCashBalance + balanceChange).toFixed(2))),
-        pettyCashTransactions: [tx, ...prev.pettyCashTransactions],
+        pettyCashTransactions: [txWithStatus, ...prev.pettyCashTransactions],
         auditLogs: [
           {
             id: `log-${Date.now()}`,
             timestamp: new Date().toISOString(),
-            user: tx.registeredBy,
+            user: txWithStatus.registeredBy,
             action: isExpense ? 'GASTO_CAJA_CHICA' : 'REEMBOLSO_CAJA_CHICA',
-            details: `${tx.vendor} - C$ ${tx.amount.toFixed(2)} (${tx.method === 'CASH' ? 'Efectivo Gaveta' : 'Transferencia Banco'})`,
+            details: `${txWithStatus.vendor} - C$ ${txWithStatus.amount.toFixed(2)} (${txWithStatus.method === 'CASH' ? 'Efectivo Gaveta' : 'Transferencia Banco'})`,
           },
           ...prev.auditLogs,
         ],
@@ -710,16 +740,55 @@ export function App() {
 
     playSound([587.33, 880]);
 
-    // Sincronizar a Supabase y guardar el ID oficial retornado
-    const cloudId = await syncTransactionToCloud(tx);
-    if (cloudId) {
+    // Sincronizar de inmediato a Supabase
+    try {
+      const cloudId = await syncTransactionToCloud(txWithStatus);
+      if (cloudId) {
+        setState((prev) => ({
+          ...prev,
+          pettyCashTransactions: prev.pettyCashTransactions.map((t) =>
+            t.id === txWithStatus.id
+              ? { ...t, id: `pct-cloud-${cloudId}`, cloudId, syncStatus: 'SYNCED', syncError: undefined }
+              : t
+          ),
+        }));
+      } else {
+        setState((prev) => ({
+          ...prev,
+          pettyCashTransactions: prev.pettyCashTransactions.map((t) =>
+            t.id === txWithStatus.id
+              ? { ...t, syncStatus: 'PENDING', syncError: 'Pendiente de conexión con la nube' }
+              : t
+          ),
+        }));
+      }
+    } catch (err: any) {
       setState((prev) => ({
         ...prev,
         pettyCashTransactions: prev.pettyCashTransactions.map((t) =>
-          t.id === tx.id ? { ...t, id: `pct-cloud-${cloudId}`, cloudId } : t
+          t.id === txWithStatus.id
+            ? { ...t, syncStatus: 'PENDING', syncError: err?.message || 'Error de red' }
+            : t
         ),
       }));
     }
+  };
+
+  const handleForceSyncPending = async () => {
+    setState((prev) => {
+      processOutboxQueue(prev.pettyCashTransactions).then(({ updated, syncedCount }) => {
+        if (syncedCount > 0) {
+          setState((curr) => ({
+            ...curr,
+            pettyCashTransactions: updated,
+          }));
+          alert(`✅ ¡Excelente! Se sincronizaron exitosamente ${syncedCount} movimientos pendientes con la nube.`);
+        } else {
+          alert('ℹ️ No hay movimientos pendientes o la nube ya está completamente al día.');
+        }
+      });
+      return prev;
+    });
   };
 
   const handleDeletePettyCashTransaction = (txId: string) => {
@@ -1084,6 +1153,7 @@ export function App() {
           onSelectAdminClick={() => setAdminSelectModalOpen(true)}
           onOpenShiftClick={() => setOpeningModalOpen(true)}
           onCloseShiftClick={() => setClosingModalOpen(true)}
+          onForceSyncClick={handleForceSyncPending}
         />
 
         <main className="flex-1 overflow-y-auto p-6 lg:p-8 bg-slate-50">
@@ -1108,6 +1178,7 @@ export function App() {
                 onClosePettyCashShift={handleClosePettyCashShift}
                 onCancelPettyCashShift={handleCancelPettyCashShift}
                 onUpdateExpenseCategories={handleUpdateExpenseCategories}
+                onForceSyncClick={handleForceSyncPending}
               />
             )}
 

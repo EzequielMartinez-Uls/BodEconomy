@@ -45,6 +45,7 @@ interface Props {
   onClosePettyCashShift: (closedShift: PettyCashShift) => void;
   onCancelPettyCashShift?: () => void;
   onUpdateExpenseCategories?: (categories: string[]) => void;
+  onForceSyncClick?: () => void;
 }
 
 const BUILTIN_CATEGORY_METADATA: Record<string, { label: string; emoji: string; badgeClass: string }> = {
@@ -60,6 +61,7 @@ const BUILTIN_CATEGORY_METADATA: Record<string, { label: string; emoji: string; 
   LACTEOS: { label: 'Lácteos', emoji: '🧀', badgeClass: 'bg-yellow-50 text-yellow-800 border-yellow-200' },
   PAGOS_PERSONAL: { label: 'Pagos personal', emoji: '👥', badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
   OTROS: { label: 'Otros', emoji: '📝', badgeClass: 'bg-stone-100 text-stone-700 border-stone-200' },
+  FONDEO: { label: 'Depósito / Fondeo', emoji: '💵', badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
 };
 
 export function getCategoryInfo(catValue: string) {
@@ -82,6 +84,7 @@ export const PettyCashView: React.FC<Props> = ({
   onClosePettyCashShift,
   onCancelPettyCashShift,
   onUpdateExpenseCategories,
+  onForceSyncClick,
 }) => {
   const todayStr = useMemo(() => getLocalTodayStr(), []);
 
@@ -618,8 +621,39 @@ export const PettyCashView: React.FC<Props> = ({
     });
   }, [ledgerRows, searchTerm, selectedCategoryFilter]);
 
+  const pendingTransactionsCount = useMemo(() => {
+    return (state.pettyCashTransactions || []).filter(
+      (t) => !t.cloudId && !t.id.startsWith('pct-cloud-') && !t.id.startsWith('opening-') && !t.id.startsWith('pct-init-')
+    ).length;
+  }, [state.pettyCashTransactions]);
+
   return (
     <div className="space-y-6">
+      {/* Banner de Sincronización Pendiente */}
+      {pendingTransactionsCount > 0 && (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl animate-bounce">⏳</span>
+            <div>
+              <p className="text-xs font-black text-amber-950">
+                {pendingTransactionsCount} movimiento(s) guardado(s) en PC pendientes de subir a la nube.
+              </p>
+              <p className="text-[11px] text-amber-800">
+                El sistema reintenta enviarlos automáticamente en segundo plano. Puedes forzar el envío en cualquier momento.
+              </p>
+            </div>
+          </div>
+          {onForceSyncClick && (
+            <button
+              onClick={onForceSyncClick}
+              className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-black shadow-xs transition cursor-pointer shrink-0 self-start sm:self-auto"
+            >
+              🔄 Forzar Envío a Nube
+            </button>
+          )}
+        </div>
+      )}
+
       {/* 1. Header Principal */}
       <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
@@ -1348,6 +1382,11 @@ export const PettyCashView: React.FC<Props> = ({
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 {row.categoriaEmoji && <span>{row.categoriaEmoji}</span>}
                                 <span>{row.vendor}</span>
+                                {row.rawTx?.type === 'INFLOW' && !row.isOpening && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                    Entrada / Fondeo
+                                  </span>
+                                )}
                               </div>
                               {row.notes && (
                                 <div className="text-[10px] font-normal text-slate-500 mt-0.5 truncate max-w-xs">
@@ -1411,10 +1450,30 @@ export const PettyCashView: React.FC<Props> = ({
                             <td className="py-2.5 px-3 text-center">
                               {row.isOpening ? (
                                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100/80 text-amber-800 border border-amber-200">
-                                  Apertura
+                                Apertura
                                 </span>
                               ) : (
                                 <div className="flex items-center justify-center gap-1.5">
+                                  {row.rawTx && (
+                                    (row.rawTx.cloudId || row.rawTx.id.startsWith('pct-cloud-')) ? (
+                                      <span
+                                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                        title="Sincronizado con Supabase Cloud"
+                                      >
+                                        <span>☁️</span>
+                                      </span>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() => onForceSyncClick && onForceSyncClick()}
+                                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-900 border border-amber-300 animate-pulse hover:bg-amber-200 cursor-pointer"
+                                        title="Pendiente de subir a Supabase. Haz clic para forzar envío."
+                                      >
+                                        <span>⏳</span>
+                                        <span>PC</span>
+                                      </button>
+                                    )
+                                  )}
                                   {row.rawTx?.type === 'EXPENSE' && (
                                     <button
                                       onClick={() => row.rawTx && printThermalSingleExpenseVoucher(row.rawTx)}

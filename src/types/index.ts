@@ -139,6 +139,8 @@ export interface PettyCashTransaction {
   registeredBy: string;
   notes?: string;
   cloudId?: number;
+  syncStatus?: 'SYNCED' | 'PENDING' | 'ERROR';
+  syncError?: string;
 }
 
 export interface PettyCashShift {

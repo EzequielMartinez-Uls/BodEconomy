@@ -329,9 +329,54 @@ export async function syncTransactionToCloud(tx: PettyCashTransaction): Promise<
     if (error) throw error;
     return data?.id || null;
   } catch (err) {
-    console.warn('⚠️ No se pudo registrar transacción en la nube (modo offline):', err);
+    console.warn('⚠️ No se pudo registrar transacción en la nube (quedará en bandeja de reintento):', err);
     return null;
   }
+}
+
+/**
+ * Procesa la bandeja de transacciones pendientes (Outbox Queue)
+ * Retorna las transacciones actualizadas con su nuevo cloudId y syncStatus.
+ */
+export async function processOutboxQueue(
+  transactions: PettyCashTransaction[]
+): Promise<{ updated: PettyCashTransaction[]; syncedCount: number }> {
+  let syncedCount = 0;
+  const updated = [...transactions];
+
+  for (let i = 0; i < updated.length; i++) {
+    const tx = updated[i];
+    // Sincronizar si no tiene cloudId oficial y no es una fila sintética de apertura
+    if (!tx.cloudId && !tx.id.startsWith('pct-cloud-') && !tx.id.startsWith('opening-') && !tx.id.startsWith('pct-init-')) {
+      try {
+        const newCloudId = await syncTransactionToCloud(tx);
+        if (newCloudId) {
+          syncedCount++;
+          updated[i] = {
+            ...tx,
+            id: `pct-cloud-${newCloudId}`,
+            cloudId: newCloudId,
+            syncStatus: 'SYNCED',
+            syncError: undefined,
+          };
+        } else {
+          updated[i] = {
+            ...tx,
+            syncStatus: 'PENDING',
+            syncError: 'Pendiente de conexión con la nube',
+          };
+        }
+      } catch {
+        updated[i] = {
+          ...tx,
+          syncStatus: 'PENDING',
+          syncError: 'Pendiente de conexión con la nube',
+        };
+      }
+    }
+  }
+
+  return { updated, syncedCount };
 }
 
 /**

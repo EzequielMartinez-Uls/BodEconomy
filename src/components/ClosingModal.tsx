@@ -10,6 +10,7 @@ import { CashDenominationsInput } from './CashDenominationsInput';
 import { printThermalClosingTicket, printOfficialActBN } from '../services/thermalPrint';
 import { exportShiftToExcel } from '../services/excelExport';
 import { extractLocalDateStr } from '../utils/dateUtils';
+import { processOutboxQueue } from '../services/supabaseSync';
 import confetti from 'canvas-confetti';
 import {
   X,
@@ -127,6 +128,14 @@ export const ClosingModal: React.FC<Props> = ({
       .reduce((sum, t) => sum + (t.amount || 0), 0);
   }, [state.pettyCashTransactions, shift.date]);
 
+  const pendingPettyTransactions = useMemo(() => {
+    return (state.pettyCashTransactions || []).filter(
+      (t) => !t.cloudId && !t.id.startsWith('pct-cloud-')
+    );
+  }, [state.pettyCashTransactions]);
+
+  const isPettyCashOpen = state.currentPettyCashShift?.status === 'OPEN';
+
   // Rendimiento Financiero Consolidado (Idéntico a Excel: Total Ingresos - Compras Insumos - Propinas Entregadas)
   const dailyNetProfit = parseFloat((totalGrossSales - dayPettyExpenses - tipsPaidAmount).toFixed(2));
 
@@ -151,6 +160,12 @@ export const ClosingModal: React.FC<Props> = ({
         'Atención: No se registraron ventas en el turno (Efectivo, Tarjetas y PedidosYa están en C$ 0.00).\n\n¿Deseas continuar con el cierre?'
       );
       if (!confirmNoSales) return;
+    }
+
+    if (pendingPettyTransactions.length > 0) {
+      processOutboxQueue(state.pettyCashTransactions).catch((err) => {
+        console.warn('Advertencia al sincronizar cola outbox al cerrar:', err);
+      });
     }
 
     const closedShift: CashShift = {
@@ -788,6 +803,45 @@ export const ClosingModal: React.FC<Props> = ({
                   {auditStatus === 'SHORTAGE' && `Hay un faltante de - C$ ${Math.abs(differenceNIO).toFixed(2)} respecto al efectivo esperado.`}
                 </div>
               </div>
+
+              {/* Banners Informativos de Integridad Caja Chica / Sincronización */}
+              {pendingPettyTransactions.length > 0 && (
+                <div className="p-3.5 bg-amber-50 border-2 border-amber-300 rounded-2xl flex items-center justify-between text-xs text-amber-950 shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">⏳</span>
+                    <div>
+                      <strong className="block font-black text-amber-900">
+                        {pendingPettyTransactions.length} movimiento(s) de Caja Chica pendientes en esta PC
+                      </strong>
+                      <span className="text-[11px] text-amber-800">
+                        Al confirmar el cierre, el sistema los enviará automáticamente a Supabase para mantener la web cuadrada.
+                      </span>
+                    </div>
+                  </div>
+                  <span className="px-2 py-1 rounded-lg bg-amber-200/80 font-mono font-bold text-amber-900 text-[10px]">
+                    Auto-Sync
+                  </span>
+                </div>
+              )}
+
+              {isPettyCashOpen && (
+                <div className="p-3.5 bg-sky-50 border border-sky-300 rounded-2xl flex items-center justify-between text-xs text-sky-950 shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">ℹ️</span>
+                    <div>
+                      <strong className="block font-black text-sky-900">
+                        Caja Chica permanece abierta
+                      </strong>
+                      <span className="text-[11px] text-sky-800">
+                        Asegúrate de haber registrado todos los vales, compras y fondeos del día antes de archivar este cierre.
+                      </span>
+                    </div>
+                  </div>
+                  <span className="px-2 py-1 rounded-lg bg-sky-100 font-bold text-sky-800 text-[10px]">
+                    Turno Abierto
+                  </span>
+                </div>
+              )}
 
               {/* Conciliación Matemática Transparente */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

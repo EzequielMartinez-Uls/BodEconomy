@@ -27,6 +27,7 @@ interface Props {
   onSelectAdminClick: () => void;
   onOpenShiftClick?: () => void;
   onCloseShiftClick?: () => void;
+  onForceSyncClick?: () => void;
 }
 
 export const TopBar: React.FC<Props> = ({
@@ -34,10 +35,14 @@ export const TopBar: React.FC<Props> = ({
   onSelectAdminClick,
   onOpenShiftClick,
   onCloseShiftClick,
+  onForceSyncClick,
 }) => {
   const [cloudModalOpen, setCloudModalOpen] = useState(false);
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const isShiftOpen = state.currentShift?.status === 'OPEN';
+  const pendingCount = (state.pettyCashTransactions || []).filter(
+    (t) => !t.cloudId && !t.id.startsWith('pct-cloud-') && !t.id.startsWith('opening-') && !t.id.startsWith('pct-init-')
+  ).length;
   const activeShift = state.currentShift || state.shiftHistory[0] || null;
   const targetDateStr = activeShift?.date || getLocalTodayStr();
   const today = new Date().toLocaleDateString('es-NI', {
@@ -244,13 +249,35 @@ export const TopBar: React.FC<Props> = ({
 
           {/* Indicador / Botón de Conexión Nube Supabase */}
           <button
-            onClick={() => setCloudModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold text-emerald-900 shadow-2xs transition cursor-pointer"
-            title="Clic para verificar estado y probar conexión con Supabase"
+            onClick={() => {
+              if (pendingCount > 0 && onForceSyncClick) {
+                onForceSyncClick();
+              } else {
+                setCloudModalOpen(true);
+              }
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold shadow-2xs transition cursor-pointer ${
+              pendingCount > 0
+                ? 'bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 animate-pulse'
+                : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-900'
+            }`}
+            title={
+              pendingCount > 0
+                ? `⚠️ ${pendingCount} movimiento(s) guardado(s) localmente pendientes de subir. Clic para forzar sincronización con la nube.`
+                : 'Nube 100% Sincronizada con la Web. Clic para verificar conexión.'
+            }
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="hidden sm:inline">Nube Sincronizada</span>
-            <span className="sm:hidden">Nube</span>
+            <span
+              className={`w-2 h-2 rounded-full ${
+                pendingCount > 0 ? 'bg-amber-500' : 'bg-emerald-500'
+              } animate-pulse`}
+            ></span>
+            <span className="hidden sm:inline">
+              {pendingCount > 0 ? `Subiendo a Nube (${pendingCount})` : 'Nube Sincronizada'}
+            </span>
+            <span className="sm:hidden">
+              {pendingCount > 0 ? `Nube (${pendingCount})` : 'Nube'}
+            </span>
           </button>
 
         {/* Botón Impresión Oficial B/N */}
