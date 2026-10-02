@@ -177,6 +177,25 @@ export function App() {
           }
         }
 
+        // Auto-sincronizar transacciones locales pendientes que no se hayan subido a la nube
+        const pendingLocalTxs = updatedTxs.filter(
+          (t) => !t.cloudId && !t.id.startsWith('pct-cloud-') && !t.id.startsWith('opening-')
+        );
+        if (pendingLocalTxs.length > 0) {
+          pendingLocalTxs.forEach((ptx) => {
+            syncTransactionToCloud(ptx).then((newCloudId) => {
+              if (newCloudId) {
+                setState((current) => ({
+                  ...current,
+                  pettyCashTransactions: current.pettyCashTransactions.map((t) =>
+                    t.id === ptx.id ? { ...t, id: `pct-cloud-${newCloudId}`, cloudId: newCloudId } : t
+                  ),
+                }));
+              }
+            });
+          });
+        }
+
         return {
           ...prev,
           currentShift,
