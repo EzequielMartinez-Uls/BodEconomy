@@ -87,15 +87,18 @@ export function isFondeoTransaction(g: any): boolean {
   if (g.observaciones && (/\[TIPO:FONDEO\]/i.test(g.observaciones) || /\[TYPE:INFLOW\]/i.test(g.observaciones))) return true;
   const texto = `${g.concepto || ''} ${g.proveedor || ''}`.toLowerCase();
   if (
-    texto.includes('deposito a caja chica') ||
-    texto.includes('depósito a caja chica') ||
-    texto.includes('depositado en efectivo') ||
+    texto.includes('deposito') ||
+    texto.includes('depósito') ||
+    texto.includes('depositado') ||
     texto.includes('fondeo') ||
     texto.includes('traslado a caja chica') ||
+    texto.includes('traspaso a caja chica') ||
     texto.includes('aporte jefe') ||
-    texto.includes('reembolso caja chica') ||
-    texto.includes('correcion de saldo anterior') ||
-    texto.includes('correccion de saldo anterior')
+    texto.includes('aporte de jefe') ||
+    texto.includes('reembolso') ||
+    texto.includes('inflow') ||
+    texto.includes('correcion de saldo') ||
+    texto.includes('correccion de saldo')
   ) {
     return true;
   }
@@ -297,7 +300,12 @@ export async function syncTransactionToCloud(tx: PettyCashTransaction): Promise<
     const estadoPago = isTransfer ? 'PENDIENTE_TRANSFERENCIA' : 'PAGADO';
 
     const cloudCategory = isExpense ? mapCategoryToCloud(tx.category) : 'FONDEO';
-    const concepto = tx.notes ? `${tx.vendor} - ${tx.notes}` : tx.vendor;
+    const cleanNotes = tx.notes?.trim();
+    const cleanVendor = tx.vendor?.trim() || (isExpense ? 'Proveedor' : 'Gerencia / Caja General');
+    const concepto =
+      cleanNotes && cleanNotes.toLowerCase() !== cleanVendor.toLowerCase()
+        ? `${cleanVendor} - ${cleanNotes}`
+        : cleanVendor;
     const observaciones = isExpense
       ? (tx.receiptNumber ? `Doc: ${tx.receiptNumber}` : null)
       : (tx.receiptNumber ? `[TIPO:FONDEO] Doc: ${tx.receiptNumber}` : '[TIPO:FONDEO] Depósito a caja chica');
