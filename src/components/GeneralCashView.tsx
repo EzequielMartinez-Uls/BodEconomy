@@ -271,9 +271,9 @@ export const GeneralCashView: React.FC<Props> = ({
     const individualTip = staffCount > 0 ? parseFloat((totalTipCollected / staffCount).toFixed(2)) : 0;
     const tipsPaidAmount = editingShift.tipPaid ? totalTipCollected : 0;
 
-    const openingFloat = editingShift.totalOpeningEquivNIO || 0;
+    const openingFloat = editingShift.totalOpeningNIO || editingShift.totalOpeningEquivNIO || 0;
     const expectedCashNIO = parseFloat((openingFloat + salesCashSystem - tipsPaidAmount).toFixed(2));
-    const actualCashNIO = editingShift.actualCashNIO || editingShift.totalClosingEquivNIO || 0;
+    const actualCashNIO = editingShift.totalClosingNIO || editingShift.actualCashNIO || editingShift.totalClosingEquivNIO || 0;
     const differenceNIO = parseFloat((actualCashNIO - expectedCashNIO).toFixed(2));
 
     let auditStatus: 'SQUARED' | 'SURPLUS' | 'SHORTAGE' = 'SQUARED';
@@ -331,7 +331,6 @@ export const GeneralCashView: React.FC<Props> = ({
     if (!adjustingOpeningShift || !onUpdateShift) return;
     const totalNIO = calculateTotalNIO(adjOpeningNIO);
     const totalUSD = calculateTotalUSD(adjOpeningUSD);
-    const totalEquivNIO = totalNIO + totalUSD * adjExchangeRate;
 
     const updated: CashShift = {
       ...adjustingOpeningShift,
@@ -340,7 +339,7 @@ export const GeneralCashView: React.FC<Props> = ({
       openingUSD: adjOpeningUSD,
       totalOpeningNIO: totalNIO,
       totalOpeningUSD: totalUSD,
-      totalOpeningEquivNIO: totalEquivNIO,
+      totalOpeningEquivNIO: totalNIO,
       openingNotes: adjNotes,
     };
 

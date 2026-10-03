@@ -205,10 +205,9 @@ export const PettyCashView: React.FC<Props> = ({
   const [txToDelete, setTxToDelete] = useState<PettyCashTransaction | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Transacciones de la fecha seleccionada
   const selectedDateTransactions = useMemo(() => {
     return state.pettyCashTransactions.filter((tx) => {
-      if (tx.id.startsWith('pct-init-')) return false;
+      if (tx.id.startsWith('pct-init-') || tx.id.startsWith('pct-transfer-open-')) return false;
       if (selectedShift && tx.shiftId === selectedShift.id) return true;
       if (!tx.date) return false;
       return extractLocalDateStr(tx.date) === selectedDate;
@@ -413,10 +412,32 @@ export const PettyCashView: React.FC<Props> = ({
             : 'Depositado en efectivo'
           : vendor.trim();
 
+      // Escudo anti-duplicados: advertir si ya existe un movimiento idéntico en este turno
+      const isDuplicate = selectedDateTransactions.some(
+        (t) =>
+          t.type === (modalType || 'EXPENSE') &&
+          Math.abs(t.amount - amount) < 0.01 &&
+          (t.vendor.toLowerCase().trim() === finalVendor.toLowerCase().trim() ||
+            (notes.trim() && t.notes?.toLowerCase().trim() === notes.toLowerCase().trim()))
+      );
+      if (isDuplicate) {
+        const confirmDup = window.confirm(
+          `⚠️ ADVERTENCIA DE DUPLICADO:\n\nYa existe un movimiento de C$ ${amount.toFixed(2)} registrado para "${finalVendor}" en esta jornada.\n\n¿Estás seguro de que deseas registrar este monto OTRA VEZ, o se trata de una duplicación accidental?`
+        );
+        if (!confirmDup) return;
+      }
+
+      // Asegurar que la fecha pertenezca al día de la jornada activa (para facturas de días anteriores)
+      let txDate = getLocalDateTimeStr();
+      if (selectedShift && selectedShift.date && !txDate.startsWith(selectedShift.date)) {
+        const timePart = txDate.slice(10);
+        txDate = `${selectedShift.date}${timePart}`;
+      }
+
       const newTx: PettyCashTransaction = {
         id: `pct-${Date.now()}`,
         shiftId: selectedShift?.id || `pc-shift-${selectedDate}`,
-        date: getLocalDateTimeStr(),
+        date: txDate,
         type: modalType || 'EXPENSE',
         inflowSource: modalType === 'INFLOW' ? inflowSource : undefined,
         amount,
@@ -552,7 +573,7 @@ export const PettyCashView: React.FC<Props> = ({
 
     // 2. Transacciones del día ordenadas cronológicamente
     const sorted = [...selectedDateTransactions]
-      .filter((tx) => !tx.id.startsWith('pct-init-boss-') && !tx.id.startsWith('pct-init-gen-'))
+      .filter((tx) => !tx.id.startsWith('pct-init-boss-') && !tx.id.startsWith('pct-init-gen-') && !tx.id.startsWith('pct-transfer-open-'))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     for (const tx of sorted) {

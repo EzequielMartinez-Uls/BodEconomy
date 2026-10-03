@@ -88,10 +88,11 @@ export const ClosingModal: React.FC<Props> = ({
   // 4. Observaciones
   const [closingNotes, setClosingNotes] = useState<string>('');
 
-  // Cálculos reactivos de Efectivo en Gaveta
+  // Cálculos reactivos de Efectivo en Gaveta (100% Córdobas en gaveta física)
   const totalClosingNIO = calculateTotalNIO(closingNIO);
-  const totalClosingUSD = calculateTotalUSD(closingUSD);
-  const totalClosingEquivNIO = totalClosingNIO + totalClosingUSD * shift.exchangeRate;
+  const totalClosingUSD = calculateTotalUSD(closingUSD); // Dólares informativos que se entregan a Snyder
+  const actualCashNIO = parseFloat(totalClosingNIO.toFixed(2)); // En gaveta solo quedan Córdobas
+  const totalClosingEquivNIO = actualCashNIO;
 
   // Cálculos de Ventas
   const totalCards = cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise;
@@ -101,12 +102,9 @@ export const ClosingModal: React.FC<Props> = ({
   const individualTip = staffCount > 0 ? parseFloat((totalTipCollected / staffCount).toFixed(2)) : 0;
   const tipsPaidAmount = tipPaid ? totalTipCollected : 0;
 
-  // Saldo real contado en gaveta al cierre
-  const actualCashNIO = parseFloat(totalClosingEquivNIO.toFixed(2));
-
   // CÁLCULO REAL DE AUDITORÍA Y CUADRE DE CAJA (Idéntico a Loyverse POS)
-  // Fondo Inicial + Ventas Efectivo POS + Depositado desde Caja Chica - Pagos/Salidas a Caja Chica - Propinas entregadas de gaveta
-  const openingFloat = shift.totalOpeningEquivNIO || 0;
+  // Fondo Inicial de Gaveta (en Córdobas) + Ventas Efectivo POS + Depositado desde Caja Chica - Salidas extraordinarias a Caja Chica - Propinas entregadas de gaveta
+  const openingFloat = shift.totalOpeningNIO || shift.totalOpeningEquivNIO || 0;
   const expectedCashNIO = parseFloat(
     (openingFloat + salesCashSystem + depositedFromPettyCash - transferToPettyCash - tipsPaidAmount).toFixed(2)
   );
@@ -956,14 +954,19 @@ export const ClosingModal: React.FC<Props> = ({
               <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-2xl text-xs text-amber-950 flex items-center justify-between">
                 <div>
                   <span className="font-black uppercase tracking-wider block text-[10px] text-amber-800">
-                    Fondo que queda en Gaveta para la Apertura de Mañana:
+                    Fondo que queda en Gaveta para amanecer (Total Córdobas):
                   </span>
                   <div className="text-xl font-black font-mono text-amber-900 mt-0.5">
                     C$ {actualCashNIO.toFixed(2)}
                   </div>
+                  {totalClosingUSD > 0 && (
+                    <div className="text-[11px] font-bold text-amber-800 mt-1">
+                      💵 Moneda Extranjera: ${totalClosingUSD.toFixed(2)} USD (Entrega a Snyder • Quedan $0.00 en caja)
+                    </div>
+                  )}
                 </div>
                 <span className="text-[11px] text-slate-500 max-w-xs text-right">
-                  Quien abra mañana podrá cargar este saldo como referencia inicial con un solo clic.
+                  Quien abra mañana tomará este saldo total y decidirá en la apertura el traslado a Caja Chica.
                 </span>
               </div>
 

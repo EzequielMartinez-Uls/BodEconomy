@@ -64,21 +64,22 @@ export const OpeningModal: React.FC<Props> = ({
   const [transferToPettyCash, setTransferToPettyCash] = useState<string>('');
   const transferAmount = transferToPettyCash !== '' ? Math.max(0, parseFloat(transferToPettyCash) || 0) : 0;
 
-  // Cálculos de Conteo Físico
+  // Cálculos de Conteo Físico (100% en Córdobas para la gaveta física)
   const totalNIO = calculateTotalNIO(denominationsNIO);
-  const totalUSD = calculateTotalUSD(denominationsUSD);
-  const totalEquivNIO = totalNIO + totalUSD * exchangeRate;
-  const netOpeningEquivNIO = Math.max(0, totalEquivNIO - transferAmount);
+  const totalUSD = calculateTotalUSD(denominationsUSD); // Dólares informativos entregados al jefe
   const netOpeningNIO = Math.max(0, totalNIO - transferAmount);
+  const netOpeningEquivNIO = netOpeningNIO; // La gaveta solo maneja córdobas; dólares no inflan el fondo
+  const totalEquivNIO = totalNIO; // Efectivo físico en gaveta antes del traslado
 
-  // Corroboración contra el cierre anterior
+  // Corroboración contra el cierre anterior (exclusivamente en Córdobas)
   const expectedFromPrevious =
-    lastClosedShift?.totalClosingEquivNIO ||
+    lastClosedShift?.totalClosingNIO ||
     lastClosedShift?.actualCashNIO ||
+    lastClosedShift?.totalOpeningNIO ||
     lastClosedShift?.totalOpeningEquivNIO ||
     0;
-  const differenceWithPrevious = totalEquivNIO - expectedFromPrevious;
-  const isCountInitiated = totalEquivNIO > 0;
+  const differenceWithPrevious = totalNIO - expectedFromPrevious;
+  const isCountInitiated = totalNIO > 0;
   const isMatchWithPrevious = lastClosedShift ? Math.abs(differenceWithPrevious) < 1.0 : true;
 
   const isSelectedDateClosed = shiftHistory.some((s) => s.date === shiftDate);
@@ -795,6 +796,12 @@ export const OpeningModal: React.FC<Props> = ({
                   <span>(=) Fondo Neto Gaveta:</span>
                   <span className="text-emerald-700">C$ {netOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span>
                 </div>
+                {totalUSD > 0 && (
+                  <div className="pt-1 text-[11px] text-amber-800 font-semibold border-t border-amber-100 flex items-center justify-between">
+                    <span>💵 Dólares recibidos ({totalUSD.toFixed(2)} USD):</span>
+                    <span className="text-amber-900 font-bold">Entrega a Snyder ($0.00 en caja)</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

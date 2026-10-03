@@ -310,9 +310,24 @@ export async function syncTransactionToCloud(tx: PettyCashTransaction): Promise<
       ? (tx.receiptNumber ? `Doc: ${tx.receiptNumber}` : null)
       : (tx.receiptNumber ? `[TIPO:FONDEO] Doc: ${tx.receiptNumber}` : '[TIPO:FONDEO] Depósito a caja chica');
 
+    let cloudJornadaId: number | null = null;
+    const txDateStr = (tx.date || '').slice(0, 10);
+    if (txDateStr) {
+      const { data: jData } = await supabase
+        .from('jornadas_diarias')
+        .select('id')
+        .eq('fecha', txDateStr)
+        .order('id', { ascending: false })
+        .limit(1);
+      if (jData && jData.length > 0) {
+        cloudJornadaId = jData[0].id;
+      }
+    }
+
     const { data, error } = await supabase
       .from('compras_gastos')
       .insert({
+        jornada_id: cloudJornadaId,
         fecha_hora: tx.date || getLocalDateTimeStr(),
         concepto: concepto || (isExpense ? 'Gasto Caja Chica' : 'Depósito a caja chica'),
         categoria: cloudCategory,

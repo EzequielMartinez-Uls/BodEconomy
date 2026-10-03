@@ -529,26 +529,8 @@ export function App() {
     let closedPettyToSync: PettyCashShift | null = null;
 
     setState((prev) => {
-      // Si hubo traslado a caja chica, se añade automáticamente a los movimientos
       let updatedPetty = prev.pettyCashTransactions;
       let updatedPettyBalance = prev.pettyCashBalance;
-
-      if (closedShift.transferToPettyCash && closedShift.transferToPettyCash > 0) {
-        const transferTx: PettyCashTransaction = {
-          id: `pct-transfer-${Date.now()}`,
-          shiftId: closedShift.id,
-          date: new Date().toISOString(),
-          type: 'INFLOW',
-          amount: closedShift.transferToPettyCash,
-          method: 'CASH',
-          vendor: 'Traslado desde Caja Principal',
-          category: 'OTROS',
-          registeredBy: closedShift.closedBy || prev.activeAdminName,
-          notes: `Traslado registrado al cierre de turno por ${closedShift.closedBy}`,
-        };
-        updatedPetty = [transferTx, ...updatedPetty];
-        updatedPettyBalance += closedShift.transferToPettyCash;
-      }
 
       // Si Caja Chica tenía una jornada abierta, cerrarla de forma sincronizada con el cierre general del día
       let updatedPettyShift = prev.currentPettyCashShift;
