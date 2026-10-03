@@ -190,6 +190,7 @@ export const PettyCashView: React.FC<Props> = ({
   const [closingNotes, setClosingNotes] = useState<string>('');
 
   // Form State para Compra / Gasto
+  const [expenseTargetDate, setExpenseTargetDate] = useState<string>(selectedDate);
   const [amount, setAmount] = useState<number>(0);
   const [vendor, setVendor] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('CARNES');
@@ -207,8 +208,22 @@ export const PettyCashView: React.FC<Props> = ({
 
   const selectedDateTransactions = useMemo(() => {
     return state.pettyCashTransactions.filter((tx) => {
-      if (tx.id.startsWith('pct-init-') || tx.id.startsWith('pct-transfer-open-')) return false;
-      if (selectedShift && tx.shiftId === selectedShift.id) return true;
+      if (
+        tx.id.startsWith('pct-init-') ||
+        tx.id.startsWith('pct-transfer-open-') ||
+        tx.id.startsWith('opening-')
+      ) {
+        return false;
+      }
+      if (selectedShift) {
+        if (tx.shiftId) {
+          return tx.shiftId === selectedShift.id;
+        }
+        return tx.date ? extractLocalDateStr(tx.date) === selectedShift.date : false;
+      }
+      if (tx.shiftId) {
+        return tx.shiftId === `pc-shift-${selectedDate}`;
+      }
       if (!tx.date) return false;
       return extractLocalDateStr(tx.date) === selectedDate;
     });
@@ -363,11 +378,9 @@ export const PettyCashView: React.FC<Props> = ({
   };
 
   // Modales de Compra y Fondeo
-  const handleOpenExpenseModal = () => {
-    if (!isSelectedShiftOpen) {
-      alert('Para registrar compras, la jornada debe estar abierta.');
-      return;
-    }
+  const handleOpenExpenseModal = (targetDateOverride?: string) => {
+    const target = targetDateOverride || selectedDate;
+    setExpenseTargetDate(target);
     setModalType('EXPENSE');
     setAmount(0);
     setVendor('');
@@ -412,9 +425,13 @@ export const PettyCashView: React.FC<Props> = ({
             : 'Depositado en efectivo'
           : vendor.trim();
 
+      const assignedShiftDate = modalType === 'EXPENSE' ? (expenseTargetDate || selectedDate) : selectedDate;
+      const assignedShiftId = `pc-shift-${assignedShiftDate}`;
+
       // Escudo anti-duplicados: advertir si ya existe un movimiento idéntico en este turno
-      const isDuplicate = selectedDateTransactions.some(
+      const isDuplicate = state.pettyCashTransactions.some(
         (t) =>
+          t.shiftId === assignedShiftId &&
           t.type === (modalType || 'EXPENSE') &&
           Math.abs(t.amount - amount) < 0.01 &&
           (t.vendor.toLowerCase().trim() === finalVendor.toLowerCase().trim() ||
@@ -422,21 +439,19 @@ export const PettyCashView: React.FC<Props> = ({
       );
       if (isDuplicate) {
         const confirmDup = window.confirm(
-          `⚠️ ADVERTENCIA DE DUPLICADO:\n\nYa existe un movimiento de C$ ${amount.toFixed(2)} registrado para "${finalVendor}" en esta jornada.\n\n¿Estás seguro de que deseas registrar este monto OTRA VEZ, o se trata de una duplicación accidental?`
+          `⚠️ ADVERTENCIA DE DUPLICADO:\n\nYa existe un movimiento de C$ ${amount.toFixed(2)} registrado para "${finalVendor}" en la jornada del ${assignedShiftDate}.\n\n¿Estás seguro de que deseas registrar este monto OTRA VEZ, o se trata de una duplicación accidental?`
         );
         if (!confirmDup) return;
       }
 
-      // Asegurar que la fecha pertenezca al día de la jornada activa (para facturas de días anteriores)
+      // Asegurar fecha y hora estricta perteneciente al día asignado
       let txDate = getLocalDateTimeStr();
-      if (selectedShift && selectedShift.date && !txDate.startsWith(selectedShift.date)) {
-        const timePart = txDate.slice(10);
-        txDate = `${selectedShift.date}${timePart}`;
-      }
+      const timePart = txDate.includes('T') ? txDate.slice(10) : 'T12:00:00';
+      txDate = `${assignedShiftDate}${timePart}`;
 
       const newTx: PettyCashTransaction = {
         id: `pct-${Date.now()}`,
-        shiftId: selectedShift?.id || `pc-shift-${selectedDate}`,
+        shiftId: assignedShiftId,
         date: txDate,
         type: modalType || 'EXPENSE',
         inflowSource: modalType === 'INFLOW' ? inflowSource : undefined,
@@ -1217,7 +1232,7 @@ export const PettyCashView: React.FC<Props> = ({
               </div>
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <button
-                  onClick={handleOpenExpenseModal}
+                  onClick={() => handleOpenExpenseModal(selectedDate)}
                   className="flex-1 sm:flex-none px-6 py-3.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-rose-600/25 transition cursor-pointer"
                 >
                   <ArrowDownRight className="w-4 h-4 stroke-[2.5]" />
@@ -1232,6 +1247,22 @@ export const PettyCashView: React.FC<Props> = ({
                   <span>+ Ingresar Dinero / Fondeo</span>
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* BOTÓN PARA REGISTRAR FACTURAS REZAGADAS EN JORNADAS CERRADAS */}
+          {!isSelectedShiftOpen && selectedShift?.status === 'CLOSED' && (
+            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+              <div className="text-xs text-slate-600 font-medium">
+                📁 <strong>Jornada cerrada:</strong> Si tienes una factura rezagada u olvidada de este día, puedes incorporarla directamente a este cierre sin alterar la caja de hoy.
+              </div>
+              <button
+                onClick={() => handleOpenExpenseModal(selectedDate)}
+                className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs whitespace-nowrap"
+              >
+                <ArrowDownRight className="w-4 h-4 text-rose-600" />
+                <span>+ Agregar Factura Rezagada a este día</span>
+              </button>
             </div>
           )}
 
@@ -2145,7 +2176,9 @@ export const PettyCashView: React.FC<Props> = ({
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-slate-900">Registrar Compra / Gasto</h3>
-                  <p className="text-xs text-slate-500">Jornada de {selectedDate}</p>
+                  <p className="text-xs text-slate-500">
+                    Jornada asignada: <strong className="font-mono text-slate-700">{expenseTargetDate || selectedDate}</strong>
+                  </p>
                 </div>
               </div>
               <button
@@ -2157,6 +2190,43 @@ export const PettyCashView: React.FC<Props> = ({
             </div>
 
             <form onSubmit={handleSubmitTransaction} className="space-y-4">
+              {/* Fecha / Jornada de Imputación del Gasto */}
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    📅 Fecha / Jornada de la Compra *
+                  </label>
+                  {expenseTargetDate !== selectedDate && (
+                    <button
+                      type="button"
+                      onClick={() => setExpenseTargetDate(selectedDate)}
+                      className="text-[11px] font-bold text-rose-600 hover:text-rose-800 underline cursor-pointer"
+                    >
+                      Asignar a hoy ({selectedDate})
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="date"
+                  required
+                  value={expenseTargetDate}
+                  onChange={(e) => setExpenseTargetDate(e.target.value)}
+                  className="w-full px-3 py-2 text-xs font-mono font-bold rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                />
+                {expenseTargetDate !== selectedDate ? (
+                  <p className="text-[11px] text-amber-800 bg-amber-50 p-2 rounded-lg mt-2 font-semibold border border-amber-200 flex items-center gap-1.5">
+                    <span>⚠️</span>
+                    <span>
+                      <strong>Comprobante Rezagado:</strong> Esta compra se registrará en la jornada del <strong>{expenseTargetDate}</strong>. NO afectará el saldo en gaveta ni los egresos de hoy ({selectedDate}).
+                    </span>
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Se computará en la jornada del {selectedDate}.
+                  </p>
+                )}
+              </div>
+
               {/* Monto */}
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">

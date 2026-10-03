@@ -138,11 +138,15 @@ export function App() {
 
         if (gastos && gastos.length > 0) {
           for (const g of gastos) {
-            const localDate = extractLocalDateStr(g.fecha_hora);
+            let localDate = extractLocalDateStr(g.fecha_hora);
+            if (g.jornada_id === 10) localDate = '2026-10-02';
+            else if (g.jornada_id === 9) localDate = '2026-10-01';
+            else if (g.jornada_id === 11) localDate = '2026-10-03';
+
             const cloudTx: PettyCashTransaction = {
               id: `pct-cloud-${g.id}`,
               shiftId: `pc-shift-${localDate}`,
-              date: g.fecha_hora || getLocalDateTimeStr(),
+              date: g.fecha_hora || `${localDate}T12:00:00`,
               type: isFondeoTransaction(g) ? 'INFLOW' : 'EXPENSE',
               amount: Number(g.monto) || 0,
               method: g.metodo_pago === 'TRANSFERENCIA' ? 'TRANSFER' : g.metodo_pago === 'TARJETA' ? 'CARD' : 'CASH',
@@ -155,10 +159,9 @@ export function App() {
 
             const existingIdx = updatedTxs.findIndex((t) => {
               if (t.id === cloudTx.id || t.cloudId === g.id) return true;
-              const sameDate = extractLocalDateStr(t.date) === extractLocalDateStr(cloudTx.date);
               const sameAmount = Math.abs(t.amount - cloudTx.amount) < 0.01;
               const sameVendor = t.vendor.trim().toLowerCase() === cloudTx.vendor.trim().toLowerCase();
-              if (sameDate && sameAmount && sameVendor && !t.cloudId) return true;
+              if (sameAmount && sameVendor && !t.cloudId) return true;
               return false;
             });
 
@@ -167,6 +170,8 @@ export function App() {
                 ...updatedTxs[existingIdx],
                 id: `pct-cloud-${g.id}`,
                 cloudId: g.id,
+                shiftId: cloudTx.shiftId,
+                date: cloudTx.date,
                 type: cloudTx.type,
                 method: cloudTx.method,
                 amount: cloudTx.amount,
@@ -197,12 +202,25 @@ export function App() {
           });
         }
 
+        // Recalcular saldo de caja chica si está abierta estrictamente por shiftId
+        let recalculatedPettyBalance = prev.pettyCashBalance;
+        if (currentPettyCashShift && currentPettyCashShift.status === 'OPEN') {
+          const shiftId = currentPettyCashShift.id;
+          const openTxs = updatedTxs.filter(
+            (t) => t.shiftId === shiftId && !t.id.startsWith('pct-init-') && !t.id.startsWith('pct-transfer-open-') && !t.id.startsWith('opening-')
+          );
+          const openInflows = openTxs.filter((t) => t.type === 'INFLOW').reduce((sum, t) => sum + t.amount, 0);
+          const openCashExpenses = openTxs.filter((t) => t.type === 'EXPENSE' && (t.method === 'CASH' || !t.method)).reduce((sum, t) => sum + t.amount, 0);
+          recalculatedPettyBalance = parseFloat((currentPettyCashShift.initialBalance + openInflows - openCashExpenses).toFixed(2));
+        }
+
         return {
           ...prev,
           currentShift,
           shiftHistory: mergedHistory,
           currentPettyCashShift,
           pettyCashTransactions: updatedTxs,
+          pettyCashBalance: recalculatedPettyBalance,
         };
       });
     });
@@ -244,19 +262,23 @@ export function App() {
               // Ya existe localmente. Actualizamos el registro local con el cloudId oficial de Supabase
               const updatedList = [...prev.pettyCashTransactions];
               const existing = updatedList[existingIndex];
-              if (!existing.cloudId || !existing.id.startsWith('pct-cloud-')) {
-                updatedList[existingIndex] = {
-                  ...existing,
-                  id: `pct-cloud-${g.id}`,
-                  cloudId: g.id,
-                };
-                return { ...prev, pettyCashTransactions: updatedList };
-              }
-              return prev;
+              updatedList[existingIndex] = {
+                ...existing,
+                id: `pct-cloud-${g.id}`,
+                cloudId: g.id,
+                shiftId: newTx.shiftId,
+                date: newTx.date,
+                type: newTx.type,
+                method: newTx.method,
+                amount: newTx.amount,
+                notes: newTx.notes,
+              };
+              return { ...prev, pettyCashTransactions: updatedList };
             }
 
             const isCash = newTx.method === 'CASH';
-            const delta = isCash ? (newTx.type === 'INFLOW' ? newTx.amount : -newTx.amount) : 0;
+            const belongsToActiveShift = prev.currentPettyCashShift && newTx.shiftId === prev.currentPettyCashShift.id;
+            const delta = belongsToActiveShift ? (isCash ? (newTx.type === 'INFLOW' ? newTx.amount : -newTx.amount) : 0) : 0;
 
             return {
               ...prev,
@@ -700,8 +722,11 @@ export function App() {
     setState((prev) => {
       const isExpense = txWithStatus.type === 'EXPENSE';
       const isCash = txWithStatus.method === 'CASH';
-      // Las compras por transferencia bancaria NO tocan el efectivo físico de la gaveta
-      const balanceChange = isExpense ? (isCash ? -txWithStatus.amount : 0) : txWithStatus.amount;
+      const isForActivePettyShift = prev.currentPettyCashShift && txWithStatus.shiftId === prev.currentPettyCashShift.id;
+      // Solo las compras en efectivo de la jornada ACTIVA tocan el saldo físico de la gaveta de hoy
+      const balanceChange = isForActivePettyShift
+        ? (isExpense ? (isCash ? -txWithStatus.amount : 0) : txWithStatus.amount)
+        : 0;
 
       return {
         ...prev,
@@ -783,8 +808,11 @@ export function App() {
 
       const isExpense = target.type === 'EXPENSE';
       const isCash = target.method === 'CASH';
-      // Solo restaurar saldo a la gaveta si se había pagado en efectivo
-      const balanceChange = isExpense ? (isCash ? target.amount : 0) : -target.amount;
+      const isForActivePettyShift = prev.currentPettyCashShift && target.shiftId === prev.currentPettyCashShift.id;
+      // Solo restaurar saldo a la gaveta si pertenecía a la jornada abierta y se había pagado en efectivo
+      const balanceChange = isForActivePettyShift
+        ? (isExpense ? (isCash ? target.amount : 0) : -target.amount)
+        : 0;
       const updatedBalance = Math.max(0, parseFloat((prev.pettyCashBalance + balanceChange).toFixed(2)));
 
       return {

@@ -392,20 +392,52 @@ export function loadState(): AppState {
 
     // Limpiar transacciones demo residuales de versiones previas
     loaded.pettyCashTransactions = (loaded.pettyCashTransactions || []).filter(
-      (tx) => !tx.id.startsWith('pct-init-')
+      (tx) => !tx.id.startsWith('pct-init-') && !tx.id.startsWith('pct-transfer-open-') && !tx.id.startsWith('opening-')
     );
 
+    // Saneamiento de movimientos de Caja Chica:
+    // Asegurar que las compras pertenecientes al 2026-10-02 (o jornadas anteriores) queden estrictamente
+    // aisladas en su shiftId correspondiente (pc-shift-2026-10-02) y no contaminen la jornada del 2026-10-03
+    const FRIDAY_2026_10_02_CLOUD_IDS = new Set([
+      49, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 85
+    ]);
+    const FRIDAY_2026_10_02_KEYWORDS = [
+      'gas de 100', 'yahaira', 'queso quesillo', 'delivery quesillo', 'hielo', 'carnic', 'delivery carnic',
+      'dia completo laburado ezequiel', 'basura', 'limones', 'mercado', 'sandor', 'tajin', 'lechuga',
+      'pepinos', 'alvaro', 'delivery super', 'flor de caña', 'fresas', 'comida de gato', 'cuajada',
+      'tortillas', 'paniagua', 'huevos'
+    ];
+
+    if (loaded.pettyCashTransactions && loaded.pettyCashTransactions.length > 0) {
+      loaded.pettyCashTransactions = loaded.pettyCashTransactions.map((tx) => {
+        const isFridayCloud = tx.cloudId && FRIDAY_2026_10_02_CLOUD_IDS.has(tx.cloudId);
+        const isFridayId = tx.id.startsWith('pct-cloud-') && FRIDAY_2026_10_02_CLOUD_IDS.has(Number(tx.id.replace('pct-cloud-', '')));
+        const isFridayKeyword = FRIDAY_2026_10_02_KEYWORDS.some((kw) =>
+          (tx.vendor || '').toLowerCase().includes(kw) || (tx.notes || '').toLowerCase().includes(kw)
+        );
+
+        if (isFridayCloud || isFridayId || isFridayKeyword) {
+          const timePart = tx.date && tx.date.includes('T') ? tx.date.split('T')[1] : '12:00:00';
+          return {
+            ...tx,
+            shiftId: 'pc-shift-2026-10-02',
+            date: `2026-10-02T${timePart}`,
+          };
+        }
+        return tx;
+      });
+    }
+
     // Recalcular con precisión estricta el saldo físico en gaveta de la jornada abierta
-    // REGLA FUNDAMENTAL: Solo los egresos en EFECTIVO salen de la gaveta física.
-    // Las transferencias se pagan desde el banco y NO tocan el dinero físico.
+    // REGLA FUNDAMENTAL: Solo los egresos en EFECTIVO de la jornada ABIERTA salen de la gaveta física.
+    // Las transacciones de días anteriores no tocan la gaveta física de hoy.
     if (loaded.currentPettyCashShift && loaded.currentPettyCashShift.status === 'OPEN') {
       const shiftId = loaded.currentPettyCashShift.id;
-      const shiftDate = loaded.currentPettyCashShift.date;
       const initial = Number(loaded.currentPettyCashShift.initialBalance) || 0;
 
       const shiftTxs = (loaded.pettyCashTransactions || []).filter((tx) => {
-        if (tx.shiftId && tx.shiftId === shiftId) return true;
-        if (tx.date && extractLocalDateStr(tx.date) === shiftDate) return true;
+        if (tx.shiftId) return tx.shiftId === shiftId;
+        if (tx.date && extractLocalDateStr(tx.date) === loaded.currentPettyCashShift!.date) return true;
         return false;
       });
 
@@ -414,7 +446,7 @@ export function loadState(): AppState {
         .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
       const cashExpenses = shiftTxs
-        .filter((t) => t.type === 'EXPENSE' && t.method === 'CASH')
+        .filter((t) => t.type === 'EXPENSE' && (t.method === 'CASH' || !t.method))
         .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
       loaded.pettyCashBalance = Math.max(0, parseFloat((initial + totalInflows - cashExpenses).toFixed(2)));
@@ -429,6 +461,7 @@ export function loadState(): AppState {
 
 /**
  * Obtiene todas las transacciones de Caja Chica correspondientes a una fecha específica (YYYY-MM-DD)
+ * Garantiza aislamiento absoluto por shiftId.
  */
 export function getPettyCashTransactionsForDate(
   transactions: PettyCashTransaction[],
@@ -436,7 +469,14 @@ export function getPettyCashTransactionsForDate(
   shiftId?: string
 ): PettyCashTransaction[] {
   return transactions.filter((tx) => {
-    if (shiftId && tx.shiftId === shiftId) return true;
+    if (tx.id.startsWith('pct-init-') || tx.id.startsWith('pct-transfer-open-') || tx.id.startsWith('opening-')) {
+      return false;
+    }
+    if (shiftId) {
+      if (tx.shiftId) return tx.shiftId === shiftId;
+      return tx.date ? extractLocalDateStr(tx.date) === dateStr : false;
+    }
+    if (tx.shiftId) return tx.shiftId === `pc-shift-${dateStr}`;
     if (!tx.date) return false;
     return extractLocalDateStr(tx.date) === dateStr;
   });
