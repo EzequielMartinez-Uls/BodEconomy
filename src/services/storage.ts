@@ -390,16 +390,31 @@ export function loadState(): AppState {
       }
     }
 
-    // Limpiar transacciones demo residuales de versiones previas
+    // Limpiar transacciones demo residuales y duplicados conocidos (ej. ID 85 duplicado de C$ 2,600)
     loaded.pettyCashTransactions = (loaded.pettyCashTransactions || []).filter(
-      (tx) => !tx.id.startsWith('pct-init-') && !tx.id.startsWith('pct-transfer-open-') && !tx.id.startsWith('opening-')
+      (tx) =>
+        !tx.id.startsWith('pct-init-') &&
+        !tx.id.startsWith('pct-transfer-open-') &&
+        !tx.id.startsWith('opening-') &&
+        tx.cloudId !== 85 &&
+        tx.id !== 'pct-cloud-85'
     );
+
+    // Eliminar posible duplicado local de C$ 2,600 si ya existe registrado el fondeo oficial
+    const hasOfficial2600 = loaded.pettyCashTransactions.some(
+      (tx) => tx.amount === 2600 && tx.type === 'INFLOW' && (tx.cloudId === 59 || tx.id === 'pct-cloud-59')
+    );
+    if (hasOfficial2600) {
+      loaded.pettyCashTransactions = loaded.pettyCashTransactions.filter(
+        (tx) => !(tx.amount === 2600 && tx.type === 'INFLOW' && !tx.cloudId && (tx.notes || '').toLowerCase().includes('snyder'))
+      );
+    }
 
     // Saneamiento de movimientos de Caja Chica:
     // Asegurar que las compras pertenecientes al 2026-10-02 (o jornadas anteriores) queden estrictamente
     // aisladas en su shiftId correspondiente (pc-shift-2026-10-02) y no contaminen la jornada del 2026-10-03
     const FRIDAY_2026_10_02_CLOUD_IDS = new Set([
-      49, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 85
+      49, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83
     ]);
     const FRIDAY_2026_10_02_KEYWORDS = [
       'gas de 100', 'yahaira', 'queso quesillo', 'delivery quesillo', 'hielo', 'carnic', 'delivery carnic',
@@ -426,6 +441,56 @@ export function loadState(): AppState {
         }
         return tx;
       });
+    }
+
+    // Saneamiento de turnos históricos y activos (Viernes 2026-10-02 y Sábado 2026-10-03)
+    if (loaded.shiftHistory) {
+      loaded.shiftHistory = loaded.shiftHistory.map((s) => {
+        if (s.date === '2026-10-02') {
+          return {
+            ...s,
+            actualCashNIO: 11481,
+            expectedCashNIO: 11481,
+            totalClosingNIO: 11481,
+            totalClosingUSD: 40,
+            totalClosingEquivNIO: 11481,
+            differenceNIO: 0,
+            auditStatus: 'SQUARED',
+            dailyNetProfit: 14374.97,
+          };
+        }
+        return s;
+      });
+    }
+
+    if (loaded.pettyCashShiftHistory) {
+      loaded.pettyCashShiftHistory = loaded.pettyCashShiftHistory.map((ps) => {
+        if (ps.date === '2026-10-02') {
+          return {
+            ...ps,
+            initialBalance: 5987,
+            totalExpenses: 26289.50,
+            expectedBalance: 42,
+            actualCashCounted: 42,
+            difference: 0,
+            auditStatus: 'SQUARED',
+          };
+        }
+        return ps;
+      });
+    }
+
+    if (loaded.currentShift && loaded.currentShift.date === '2026-10-03') {
+      loaded.currentShift.totalOpeningNIO = 1781;
+      loaded.currentShift.totalOpeningUSD = 0;
+      loaded.currentShift.totalOpeningEquivNIO = 1781;
+    }
+
+    if (loaded.currentPettyCashShift && loaded.currentPettyCashShift.date === '2026-10-03') {
+      loaded.currentPettyCashShift.previousDayRemaining = 42;
+      loaded.currentPettyCashShift.generalCashTransfer = 9700;
+      loaded.currentPettyCashShift.bossContribution = 0;
+      loaded.currentPettyCashShift.initialBalance = 9742;
     }
 
     // Recalcular con precisión estricta el saldo físico en gaveta de la jornada abierta

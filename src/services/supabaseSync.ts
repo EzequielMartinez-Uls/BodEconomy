@@ -791,7 +791,8 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
     } catch {}
   }
 
-  const totalOpeningEquivNIO = parseFloat((totalOpeningNIO + totalOpeningUSD * exchangeRate).toFixed(2)) || Number(j.fondo_inicial) || 0;
+  // El fondo de gaveta física de apertura es estrictamente en Córdobas (los dólares se entregan al jefe Snyder)
+  const totalOpeningEquivNIO = totalOpeningNIO > 0 ? totalOpeningNIO : (Number(j.fondo_inicial) || 0);
 
   // 2. Datos de ventas
   let salesCash = existingShift?.salesCashSystem || 0;
