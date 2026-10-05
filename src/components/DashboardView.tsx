@@ -59,7 +59,7 @@ export const DashboardView: React.FC<Props> = ({
     <div className="space-y-6">
       {/* Banner Principal de Turno */}
       {isShiftOpen ? (
-        <div className="p-6 md:p-8 rounded-3xl bg-white border border-emerald-200 shadow-sm relative overflow-hidden">
+        <div className="p-6 md:p-8 rounded-xl bg-white border border-emerald-200 shadow-sm relative overflow-hidden">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -73,7 +73,7 @@ export const DashboardView: React.FC<Props> = ({
               </div>
 
               <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-                Caja Abierta por <span className="text-amber-600">{shift.openedBy}</span>
+                Caja Abierta por <span className="text-[#1c6856]">{shift.openedBy}</span>
               </h1>
 
               <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
@@ -95,7 +95,7 @@ export const DashboardView: React.FC<Props> = ({
             </div>
 
             <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 text-right flex-1 md:flex-none">
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-right flex-1 md:flex-none">
                 <span className="text-xs text-slate-500 font-semibold block">Fondo de Apertura en Gaveta</span>
                 <span className="text-2xl font-black text-slate-900 font-mono">
                   C$ {shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
@@ -108,7 +108,7 @@ export const DashboardView: React.FC<Props> = ({
               <div className="flex flex-col gap-2 flex-1 md:flex-none">
                 <button
                   onClick={onCloseShiftClick}
-                  className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm shadow-md shadow-rose-600/20 transition active:scale-95"
+                  className="flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm shadow-sm transition active:scale-95 cursor-pointer"
                 >
                   <Power className="w-4 h-4" />
                   <span>Proceder al Cierre de Turno</span>
@@ -117,9 +117,9 @@ export const DashboardView: React.FC<Props> = ({
 
                 <button
                   onClick={() => printThermalOpeningTicket(shift)}
-                  className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs border border-slate-300 transition active:scale-95 shadow-sm"
+                  className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs border border-slate-300 transition active:scale-95 shadow-sm cursor-pointer"
                 >
-                  <Printer className="w-3.5 h-3.5 text-amber-600" />
+                  <Printer className="w-3.5 h-3.5 text-[#1c6856]" />
                   <span>Imprimir Tique de Apertura (80mm)</span>
                 </button>
               </div>
@@ -127,14 +127,14 @@ export const DashboardView: React.FC<Props> = ({
           </div>
         </div>
       ) : (
-        <div className="p-6 md:p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="p-6 md:p-8 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 text-slate-500 text-xs uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200">
               <span className="w-2 h-2 rounded-full bg-slate-400"></span>
               Caja Cerrada • Lista para Nueva Jornada
             </div>
             <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-              Bienvenido a <span className="text-amber-600">El Bodegón</span>
+              Bienvenido a <span className="text-[#1c6856]">El Bodegón</span>
             </h1>
             <p className="text-xs text-slate-600 max-w-lg leading-relaxed">
               {lastClosed
@@ -145,7 +145,7 @@ export const DashboardView: React.FC<Props> = ({
 
           <button
             onClick={onOpenShiftClick}
-            className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-base shadow-lg shadow-emerald-600/25 transition active:scale-95 w-full md:w-auto justify-center"
+            className="flex items-center gap-3 px-8 py-3.5 rounded-lg bg-[#1c6856] hover:bg-[#155244] text-white font-black text-base shadow-sm transition active:scale-95 w-full md:w-auto justify-center cursor-pointer"
           >
             <Power className="w-5 h-5" />
             <span>Abrir Caja de Turno</span>
@@ -157,7 +157,7 @@ export const DashboardView: React.FC<Props> = ({
       {/* Grid de Métricas KPI Estilo Tarjetas de Restaurante */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* KPI 1: Saldo Caja Chica */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <div className="text-xs uppercase font-bold tracking-wider text-slate-400 mb-1">
               Caja Chica (Saldo)
@@ -177,13 +177,13 @@ export const DashboardView: React.FC<Props> = ({
               )}
             </div>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200/60 shadow-sm">
-            <Wallet className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-lg bg-emerald-50 text-[#1c6856] flex items-center justify-center border border-emerald-200 shadow-sm">
+            <Wallet className="w-5 h-5" />
           </div>
         </div>
 
         {/* KPI 2: Egresos del Turno Actual */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <div className="text-xs uppercase font-bold tracking-wider text-slate-400 mb-1">
               Compras Turno
@@ -195,13 +195,13 @@ export const DashboardView: React.FC<Props> = ({
               {currentShiftExpenses.length} compras de emergencia
             </div>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-200/60 shadow-sm">
-            <TrendingDown className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-200 shadow-sm">
+            <TrendingDown className="w-5 h-5" />
           </div>
         </div>
 
         {/* KPI 3: Cristalería y Menaje */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <div className="text-xs uppercase font-bold tracking-wider text-slate-400 mb-1">
               Menaje en Servicio
@@ -219,13 +219,13 @@ export const DashboardView: React.FC<Props> = ({
               )}
             </div>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200/60 shadow-sm">
-            <UtensilsCrossed className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-lg bg-slate-50 text-[#1c6856] flex items-center justify-center border border-slate-200 shadow-sm">
+            <UtensilsCrossed className="w-5 h-5" />
           </div>
         </div>
 
         {/* KPI 4: Turnos Archivados */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <div className="text-xs uppercase font-bold tracking-wider text-slate-400 mb-1">
               Cierres Archivados
@@ -237,8 +237,8 @@ export const DashboardView: React.FC<Props> = ({
               Actas conciliadas y firmadas
             </div>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-200/60 shadow-sm">
-            <ShieldCheck className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-lg bg-slate-50 text-slate-700 flex items-center justify-center border border-slate-200 shadow-sm">
+            <ShieldCheck className="w-5 h-5" />
           </div>
         </div>
       </div>
@@ -246,11 +246,11 @@ export const DashboardView: React.FC<Props> = ({
       {/* Secciones de Trabajo Rápido */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Caja Chica Rápida */}
-        <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-4">
+        <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Wallet className="w-4 h-4 text-amber-600" />
+                <Wallet className="w-4 h-4 text-[#1c6856]" />
                 Caja Chica & Compras del Día
               </h3>
               <span className="text-xs text-slate-400">
@@ -259,7 +259,7 @@ export const DashboardView: React.FC<Props> = ({
             </div>
             <button
               onClick={onGoToPettyCash}
-              className="text-xs font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1"
+              className="text-xs font-bold text-[#1c6856] hover:text-[#155244] flex items-center gap-1 cursor-pointer"
             >
               <span>Ver Todo</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -291,11 +291,11 @@ export const DashboardView: React.FC<Props> = ({
         </div>
 
         {/* Menaje y Cristalería Alerta */}
-        <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-4">
+        <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <UtensilsCrossed className="w-4 h-4 text-amber-600" />
+                <UtensilsCrossed className="w-4 h-4 text-[#1c6856]" />
                 Menaje & Alertas de Reposición
               </h3>
               <span className="text-xs text-slate-400">
@@ -304,7 +304,7 @@ export const DashboardView: React.FC<Props> = ({
             </div>
             <button
               onClick={onGoToTableware}
-              className="text-xs font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1"
+              className="text-xs font-bold text-[#1c6856] hover:text-[#155244] flex items-center gap-1 cursor-pointer"
             >
               <span>Ver Todo</span>
               <ArrowRight className="w-3.5 h-3.5" />

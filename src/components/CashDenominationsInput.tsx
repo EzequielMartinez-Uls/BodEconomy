@@ -50,39 +50,39 @@ export const CashDenominationsInput: React.FC<Props> = ({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Resumen Totalizador Tipo Tarjeta Bancaria */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-white border border-slate-200/90 rounded-2xl shadow-sm">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200/60 shadow-sm">
-            <Banknote className="w-6 h-6" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white border border-slate-200 rounded-xl">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-slate-100 text-[#1c6856] flex items-center justify-center border border-slate-200">
+            <Banknote className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Total Córdobas (C$)</div>
-            <div className="text-2xl font-black text-slate-900 font-mono">
+            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Córdobas (C$)</div>
+            <div className="text-xl font-bold text-slate-900 font-mono">
               C$ {totalNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200/60 shadow-sm">
-            <DollarSign className="w-6 h-6" />
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
+            <DollarSign className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Total Dólares (US$)</div>
-            <div className="text-2xl font-black text-slate-900 font-mono">
+            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Dólares (US$)</div>
+            <div className="text-xl font-bold text-slate-900 font-mono">
               $ {totalUSD.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3.5 border-t md:border-t-0 md:border-l border-slate-100 pt-3 md:pt-0 md:pl-5">
+        <div className="flex items-center gap-3 border-t md:border-t-0 md:border-l border-slate-100 pt-3 md:pt-0 md:pl-5">
           <div>
-            <div className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
+            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
               Gran Total (Equiv. a T/C {exchangeRate.toFixed(2)})
             </div>
-            <div className="text-2xl font-black text-amber-600 font-mono">
+            <div className="text-xl font-bold text-[#1c6856] font-mono">
               C$ {totalEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
             </div>
           </div>
@@ -91,32 +91,32 @@ export const CashDenominationsInput: React.FC<Props> = ({
 
       {/* Banner de Corroboración Físico con Cierre Anterior */}
       {expectedTotalEquivNIO !== undefined && expectedTotalEquivNIO > 0 && (
-        <div className="p-3.5 bg-slate-50 border border-slate-200/90 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs">
+        <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
             <span className="text-slate-500 font-bold uppercase tracking-wider text-[11px]">Efectivo de Cierre Anterior:</span>
-            <strong className="font-mono text-slate-900 font-black text-sm">
+            <strong className="font-mono text-slate-900 font-bold text-sm">
               C$ {expectedTotalEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
             </strong>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-slate-500 font-bold uppercase tracking-wider text-[11px]">Contado Físicamente:</span>
-            <strong className="font-mono text-emerald-700 font-black text-sm">
+            <strong className="font-mono text-[#1c6856] font-bold text-sm">
               C$ {totalEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
             </strong>
           </div>
-          <div className={`px-3 py-1.5 rounded-xl font-bold font-mono text-xs border ${
+          <div className={`px-2.5 py-1 rounded-md font-bold font-mono text-xs border ${
             totalEquivNIO === 0
-              ? 'bg-amber-100/90 text-amber-900 border-amber-300'
+              ? 'bg-amber-50 text-amber-900 border-amber-300'
               : Math.abs(totalEquivNIO - expectedTotalEquivNIO) < 1.0
-              ? 'bg-emerald-100/90 text-emerald-900 border-emerald-300'
+              ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
               : totalEquivNIO - expectedTotalEquivNIO < 0
-              ? 'bg-rose-100/90 text-rose-900 border-rose-300'
-              : 'bg-blue-100/90 text-blue-900 border-blue-300'
+              ? 'bg-rose-50 text-rose-900 border-rose-300'
+              : 'bg-blue-50 text-blue-900 border-blue-300'
           }`}>
             {totalEquivNIO === 0 ? (
-              <span>⏳ Pendiente de conteo</span>
+              <span>Pendiente de conteo</span>
             ) : Math.abs(totalEquivNIO - expectedTotalEquivNIO) < 1.0 ? (
-              <span>✓ Cuadrado con anoche</span>
+              <span>Cuadrado con anoche</span>
             ) : totalEquivNIO - expectedTotalEquivNIO < 0 ? (
               <span>Faltante: -C$ {Math.abs(totalEquivNIO - expectedTotalEquivNIO).toFixed(2)}</span>
             ) : (
@@ -127,19 +127,19 @@ export const CashDenominationsInput: React.FC<Props> = ({
       )}
 
       {/* Columnas de Billetes */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Moneda Nacional C$ */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
-            <span className="font-bold text-slate-800 text-sm flex items-center gap-2">
-              <Banknote className="w-4 h-4 text-amber-600" /> Moneda Nacional (Córdobas C$)
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+            <span className="font-bold text-slate-800 text-xs flex items-center gap-2">
+              <Banknote className="w-4 h-4 text-[#1c6856]" /> Moneda Nacional (Córdobas C$)
             </span>
-            <span className="text-xs bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg font-mono font-bold border border-amber-200/50">
+            <span className="text-xs bg-slate-100 text-slate-800 px-2 py-0.5 rounded-md font-mono font-bold border border-slate-200">
               C$ {totalNIO.toFixed(2)}
             </span>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {NIO_KEYS.map((denom) => {
               const count = denominationsNIO[denom] || 0;
               const subtotal = count * denom;
@@ -149,7 +149,7 @@ export const CashDenominationsInput: React.FC<Props> = ({
               return (
                 <div
                   key={denom}
-                  className="flex items-center justify-between gap-3 p-2.5 bg-slate-50/70 rounded-xl border border-slate-200/60 hover:border-amber-300 hover:bg-white transition"
+                  className="flex items-center justify-between gap-3 p-2 bg-slate-50/70 rounded-lg border border-slate-200/60 hover:border-slate-300 hover:bg-white transition"
                 >
                   <div className="w-28 text-xs font-bold text-slate-700">
                     <div>{isCoin ? `Moneda C$ ${denom}` : `Billete C$ ${denom}`}</div>
@@ -169,9 +169,9 @@ export const CashDenominationsInput: React.FC<Props> = ({
                       value={count === 0 ? '' : count}
                       placeholder={prevUds !== undefined && prevUds > 0 ? String(prevUds) : '0'}
                       onChange={(e) => handleNIOChange(denom, e.target.value)}
-                      className="w-20 h-9 text-center font-mono font-black text-slate-900 bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 disabled:opacity-50 text-base shadow-sm shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-20 h-8 text-center font-mono font-bold text-slate-900 bg-white border border-slate-300 rounded-md focus:outline-none focus:border-[#1c6856] disabled:opacity-50 text-sm shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
-                    <span className="text-xs text-slate-400 font-semibold w-7 shrink-0">uds</span>
+                    <span className="text-[11px] text-slate-400 font-semibold w-7 shrink-0">uds</span>
                   </div>
 
                   <div className="w-28 text-right font-mono text-xs font-bold text-slate-800">
@@ -184,17 +184,17 @@ export const CashDenominationsInput: React.FC<Props> = ({
         </div>
 
         {/* Moneda Extranjera US$ */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
-            <span className="font-bold text-slate-800 text-sm flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-emerald-600" /> Moneda Extranjera (Dólares US$)
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+            <span className="font-bold text-slate-800 text-xs flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-emerald-700" /> Moneda Extranjera (Dólares US$)
             </span>
-            <span className="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg font-mono font-bold border border-emerald-200/50">
+            <span className="text-xs bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-md font-mono font-bold border border-emerald-200">
               $ {totalUSD.toFixed(2)} = C$ {(totalUSD * exchangeRate).toFixed(2)}
             </span>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {USD_KEYS.map((denom) => {
               const count = denominationsUSD[denom] || 0;
               const subtotal = count * denom;
@@ -203,7 +203,7 @@ export const CashDenominationsInput: React.FC<Props> = ({
               return (
                 <div
                   key={denom}
-                  className="flex items-center justify-between gap-3 p-2.5 bg-slate-50/70 rounded-xl border border-slate-200/60 hover:border-emerald-300 hover:bg-white transition"
+                  className="flex items-center justify-between gap-3 p-2 bg-slate-50/70 rounded-lg border border-slate-200/60 hover:border-slate-300 hover:bg-white transition"
                 >
                   <div className="w-28 text-xs font-bold text-slate-700">
                     <div>Billete ${denom}</div>
@@ -223,9 +223,9 @@ export const CashDenominationsInput: React.FC<Props> = ({
                       value={count === 0 ? '' : count}
                       placeholder={prevUds !== undefined && prevUds > 0 ? String(prevUds) : '0'}
                       onChange={(e) => handleUSDChange(denom, e.target.value)}
-                      className="w-20 h-9 text-center font-mono font-black text-slate-900 bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-50 text-base shadow-sm shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-20 h-8 text-center font-mono font-bold text-slate-900 bg-white border border-slate-300 rounded-md focus:outline-none focus:border-[#1c6856] disabled:opacity-50 text-sm shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
-                    <span className="text-xs text-slate-400 font-semibold w-7 shrink-0">uds</span>
+                    <span className="text-[11px] text-slate-400 font-semibold w-7 shrink-0">uds</span>
                   </div>
 
                   <div className="w-28 text-right font-mono text-xs font-bold text-slate-800">

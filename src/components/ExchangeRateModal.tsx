@@ -28,16 +28,16 @@ export const ExchangeRateModal: React.FC<Props> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-xs overflow-hidden shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/70">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="bg-white border border-slate-200 rounded-xl w-full max-w-xs overflow-hidden shadow-xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-slate-50/90">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <CircleDollarSign className="w-4 h-4 text-emerald-600" />
+            <CircleDollarSign className="w-4 h-4 text-[#1c6856]" />
             Tasa de Cambio (T/C)
           </h3>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -45,11 +45,11 @@ export const ExchangeRateModal: React.FC<Props> = ({
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1.5">
+            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
               Córdobas (C$) por US$ 1.00
             </label>
             <div className="flex items-center gap-2">
-              <span className="text-slate-500 font-mono font-bold text-sm">C$</span>
+              <span className="text-slate-400 font-mono font-bold text-sm">C$</span>
               <input
                 type="number"
                 step="0.01"
@@ -57,7 +57,7 @@ export const ExchangeRateModal: React.FC<Props> = ({
                 autoFocus
                 value={rate}
                 onChange={(e) => setRate(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-2xl font-mono font-black text-center text-slate-900 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 transition shadow-inner"
+                className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-2xl font-mono font-bold text-center text-slate-900 focus:outline-none focus:border-[#1c6856] focus:bg-white transition"
               />
             </div>
           </div>
@@ -66,13 +66,13 @@ export const ExchangeRateModal: React.FC<Props> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition"
+              className="px-3.5 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/25 transition active:scale-95"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#1c6856] hover:bg-[#154f42] text-white font-bold text-xs shadow-sm transition cursor-pointer"
             >
               <Check className="w-4 h-4" />
               <span>Aplicar</span>

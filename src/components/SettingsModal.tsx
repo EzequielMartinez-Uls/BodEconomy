@@ -84,31 +84,31 @@ export const SettingsModal: React.FC<Props> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-150">
-      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-150">
+      <div className="bg-white border border-slate-200 rounded-xl w-full max-w-2xl overflow-hidden shadow-xl flex flex-col my-8">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/70">
-          <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center shadow-sm">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50/90">
+          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-[#1c6856] text-white flex items-center justify-center shadow-xs">
               <Settings className="w-4 h-4" />
             </div>
             Configuración & Respaldos del Sistema
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Selector */}
-        <div className="flex border-b border-slate-200 text-xs font-bold bg-slate-50/50 px-2">
+        <div className="flex border-b border-slate-200 text-xs font-bold bg-slate-50/50 px-2 divide-x divide-slate-100">
           <button
             onClick={() => setActiveTab('admins')}
-            className={`py-3 px-5 border-b-2 transition flex items-center gap-2 ${
+            className={`py-3 px-5 border-b-2 transition flex items-center gap-2 cursor-pointer ${
               activeTab === 'admins'
-                ? 'border-amber-500 text-amber-700 bg-white font-extrabold'
+                ? 'border-[#1c6856] text-[#1c6856] bg-white font-bold'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -116,9 +116,9 @@ export const SettingsModal: React.FC<Props> = ({
           </button>
           <button
             onClick={() => setActiveTab('exchange')}
-            className={`py-3 px-5 border-b-2 transition flex items-center gap-2 ${
+            className={`py-3 px-5 border-b-2 transition flex items-center gap-2 cursor-pointer ${
               activeTab === 'exchange'
-                ? 'border-amber-500 text-amber-700 bg-white font-extrabold'
+                ? 'border-[#1c6856] text-[#1c6856] bg-white font-bold'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -126,9 +126,9 @@ export const SettingsModal: React.FC<Props> = ({
           </button>
           <button
             onClick={() => setActiveTab('backup')}
-            className={`py-3 px-5 border-b-2 transition flex items-center gap-2 ${
+            className={`py-3 px-5 border-b-2 transition flex items-center gap-2 cursor-pointer ${
               activeTab === 'backup'
-                ? 'border-amber-500 text-amber-700 bg-white font-extrabold'
+                ? 'border-[#1c6856] text-[#1c6856] bg-white font-bold'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -137,7 +137,7 @@ export const SettingsModal: React.FC<Props> = ({
         </div>
 
         {/* Tab Body */}
-        <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+        <div className="p-6 space-y-5 flex-1 overflow-y-auto">
           {/* TAB ADMINS */}
           {activeTab === 'admins' && (
             <div className="space-y-4">
@@ -154,16 +154,16 @@ export const SettingsModal: React.FC<Props> = ({
                 {state.availableAdmins.map((admin) => (
                   <div
                     key={admin}
-                    className="flex items-center justify-between p-3.5 bg-slate-50/80 rounded-xl border border-slate-200"
+                    className="flex items-center justify-between p-3 bg-slate-50/80 rounded-lg border border-slate-200"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-sm shadow-amber-500/20">
+                      <div className="w-7 h-7 rounded-md bg-[#1c6856] text-white flex items-center justify-center font-bold text-xs shadow-2xs">
                         {admin.charAt(0)}
                       </div>
                       <div>
-                        <span className="font-bold text-slate-900 text-sm">{admin}</span>
+                        <span className="font-bold text-slate-900 text-xs">{admin}</span>
                         {admin === state.activeAdminName && (
-                          <span className="ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="ml-2 text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200">
                             Activo Ahora
                           </span>
                         )}
@@ -179,7 +179,7 @@ export const SettingsModal: React.FC<Props> = ({
                       <button
                         type="button"
                         onClick={() => onRemoveAdmin(admin)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -188,17 +188,17 @@ export const SettingsModal: React.FC<Props> = ({
                 ))}
               </div>
 
-              <form onSubmit={handleAddAdmin} className="flex gap-2 pt-2">
+              <form onSubmit={handleAddAdmin} className="flex gap-2 pt-1">
                 <input
                   type="text"
                   placeholder="Nombre de nuevo administrador..."
                   value={newAdminInput}
                   onChange={(e) => setNewAdminInput(e.target.value)}
-                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/20 transition"
+                  className="flex-1 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#1c6856] focus:bg-white transition"
                 />
                 <button
                   type="submit"
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition shadow-sm"
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#1c6856] hover:bg-[#154f42] text-white text-xs font-bold transition shadow-xs cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Agregar</span>
@@ -219,27 +219,27 @@ export const SettingsModal: React.FC<Props> = ({
                 </p>
               </div>
 
-              <form onSubmit={handleSaveRate} className="p-5 bg-slate-50/70 rounded-2xl border border-slate-200 space-y-4">
+              <form onSubmit={handleSaveRate} className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                  <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
                     Tasa de Cambio (C$ por 1 US$)
                   </label>
                   <div className="flex items-center gap-2 max-w-xs">
-                    <span className="text-slate-500 font-mono font-bold text-sm">C$</span>
+                    <span className="text-slate-400 font-mono font-bold text-sm">C$</span>
                     <input
                       type="number"
                       step="0.01"
                       min="1"
                       value={rateInput}
                       onChange={(e) => setRateInput(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xl font-mono font-bold text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition shadow-sm"
+                      className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xl font-mono font-bold text-slate-900 focus:outline-none focus:border-[#1c6856] transition"
                     />
                   </div>
                 </div>
 
                 <button
                   type="submit"
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/25 transition"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1c6856] hover:bg-[#154f42] text-white font-bold text-xs shadow-sm transition cursor-pointer"
                 >
                   <Check className="w-4 h-4" />
                   <span>Guardar Nueva Tasa</span>
@@ -250,7 +250,7 @@ export const SettingsModal: React.FC<Props> = ({
 
           {/* TAB BACKUP */}
           {activeTab === 'backup' && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 mb-1">
                   Respaldos y Seguridad Local
@@ -260,37 +260,37 @@ export const SettingsModal: React.FC<Props> = ({
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50/70 rounded-2xl border border-slate-200 flex flex-col justify-between space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-col justify-between space-y-3">
                   <div>
-                    <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider block">
+                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
                       Descargar Copia de Seguridad
                     </span>
                     <p className="text-xs text-slate-500 mt-1">
-                      Exporta todo el historial de turnos, caja chica e inventario en un archivo JSON cifrado.
+                      Exporta todo el historial de turnos, caja chica e inventario en un archivo JSON.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => exportBackupJSON(state)}
-                    className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold border border-slate-200 shadow-sm transition"
+                    className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-lg bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold border border-slate-300 shadow-2xs transition cursor-pointer"
                   >
-                    <Download className="w-4 h-4 text-emerald-600" />
+                    <Download className="w-4 h-4 text-[#1c6856]" />
                     <span>Descargar Respaldo</span>
                   </button>
                 </div>
 
-                <div className="p-4 bg-slate-50/70 rounded-2xl border border-slate-200 flex flex-col justify-between space-y-3">
+                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-col justify-between space-y-3">
                   <div>
-                    <span className="text-xs font-bold text-amber-700 uppercase tracking-wider block">
+                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
                       Restaurar desde Respaldo
                     </span>
                     <p className="text-xs text-slate-500 mt-1">
                       Carga un archivo de respaldo previo para restablecer la base de datos local.
                     </p>
                   </div>
-                  <label className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold border border-slate-200 shadow-sm transition cursor-pointer">
-                    <Upload className="w-4 h-4 text-amber-600" />
+                  <label className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-lg bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold border border-slate-300 shadow-2xs transition cursor-pointer">
+                    <Upload className="w-4 h-4 text-slate-600" />
                     <span>Seleccionar Archivo</span>
                     <input
                       type="file"
@@ -302,13 +302,13 @@ export const SettingsModal: React.FC<Props> = ({
                 </div>
 
                 {onLoadMockData && (
-                  <div className="p-4 bg-amber-50/80 rounded-2xl border border-amber-200/90 flex flex-col justify-between space-y-3 sm:col-span-2">
+                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-col justify-between space-y-3 sm:col-span-2">
                     <div>
-                      <span className="text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                      <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <Settings className="w-3.5 h-3.5 text-slate-600" />
                         Día de Prueba con Datos Completos (Ayer 28 de Septiembre)
                       </span>
-                      <p className="text-xs text-amber-800/80 mt-1">
+                      <p className="text-xs text-slate-600 mt-1">
                         Carga una jornada completa y cuadrada (Apertura Eddy C$ 4,840, Ventas Loyverse C$ 39,400, Datáfonos BAC/Ficohsa/Banpro/Lafise, Gastos de Caja Chica, Propinas C$ 2,800 a 7 personas, y Cierre Xiomara C$ 9,290 con diferencia C$ 0.00) para probar la impresión de Actas B/N y el reporte Excel.
                       </p>
                     </div>
@@ -319,17 +319,16 @@ export const SettingsModal: React.FC<Props> = ({
                         alert('¡Datos de prueba de ayer (28 de Sep) cargados exitosamente! Ya puedes ver el reporte en Ganancias Diarias, imprimir las Actas Oficiales y exportar el Excel.');
                         onClose();
                       }}
-                      className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm transition cursor-pointer"
+                      className="flex items-center justify-center gap-2 w-full py-2 px-4 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold shadow-xs transition cursor-pointer"
                     >
-                      <Sparkles className="w-4 h-4" />
                       <span>Cargar Datos de Prueba de Ayer</span>
                     </button>
                   </div>
                 )}
               </div>
 
-              <div className="pt-4 border-t border-slate-200">
-                <div className="flex items-center justify-between p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs">
+              <div className="pt-3 border-t border-slate-200">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-rose-50 border border-rose-200 text-xs">
                   <span className="text-rose-800 font-medium">
                     Restablecer datos maestros a valores iniciales de prueba
                   </span>
@@ -341,7 +340,7 @@ export const SettingsModal: React.FC<Props> = ({
                         onClose();
                       }
                     }}
-                    className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold transition shadow-sm"
+                    className="px-3 py-1 rounded-md bg-rose-700 hover:bg-rose-800 text-white font-bold transition shadow-xs cursor-pointer"
                   >
                     Restablecer
                   </button>
@@ -352,11 +351,11 @@ export const SettingsModal: React.FC<Props> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end px-6 py-4 border-t border-slate-100 bg-slate-50/70">
+        <div className="flex justify-end px-6 py-3 border-t border-slate-200 bg-slate-50/90">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 text-xs font-bold rounded-xl bg-slate-800 hover:bg-slate-900 text-white transition shadow-sm"
+            className="px-4 py-1.5 text-xs font-bold rounded-lg bg-slate-800 hover:bg-slate-900 text-white transition shadow-xs cursor-pointer"
           >
             Listo
           </button>

@@ -198,23 +198,24 @@ export const TopBar: React.FC<Props> = ({
 
   return (
     <>
-      <header className="h-18 bg-white border-b border-slate-200/80 px-6 flex items-center justify-between sticky top-0 z-30 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.03)]">
+      <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
         {/* Saludo y Fecha */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-1.5">
-                ¡Hola, <span className="text-[#1c6856]">{state.activeAdminName}</span>!
+              <h1 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
+                <span>Sesión:</span>
+                <span className="text-[#1c6856] font-extrabold">{state.activeAdminName}</span>
               </h1>
               <button
                 onClick={onSelectAdminClick}
-                className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#1c6856]/10 hover:bg-[#1c6856]/20 text-[#1c6856] border border-[#1c6856]/20 transition cursor-pointer"
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition cursor-pointer"
                 title="Haga clic para cambiar de administrador o turno"
               >
-                {state.activeAdminName === 'Eddy' ? 'Apertura Habitual' : state.activeAdminName === 'Xiomara' ? 'Cierre Habitual' : 'Administrador'}
+                {state.activeAdminName === 'Eddy' ? 'Apertura' : state.activeAdminName === 'Xiomara' ? 'Cierre' : 'Administrador'}
               </button>
             </div>
-            <div className="text-xs text-slate-500 capitalize flex items-center gap-1.5 mt-0.5">
+            <div className="text-xs text-slate-500 capitalize flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-slate-400" />
               <span>{today}</span>
               <span>•</span>
@@ -224,15 +225,15 @@ export const TopBar: React.FC<Props> = ({
         </div>
 
         {/* Acciones Rápidas del TopBar */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* Indicador / Botón de Estado de Caja */}
           {isShiftOpen ? (
             <button
               onClick={onCloseShiftClick}
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-xs transition cursor-pointer"
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-xs transition cursor-pointer"
               title="Caja Abierta - Clic para ver opciones de cierre"
             >
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
               <span className="font-semibold text-emerald-800">Caja Abierta:</span>
               <span className="font-mono font-bold text-emerald-900">
                 C$ {state.currentShift?.totalOpeningEquivNIO.toFixed(2)}
@@ -241,7 +242,7 @@ export const TopBar: React.FC<Props> = ({
           ) : (
             <button
               onClick={onOpenShiftClick}
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:border-emerald-300 text-xs text-slate-700 hover:text-emerald-800 font-bold border border-slate-200 transition cursor-pointer"
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs text-slate-700 font-semibold border border-slate-200 transition cursor-pointer"
               title="Caja Cerrada - Clic para abrir turno de hoy"
             >
               <span className="w-2 h-2 rounded-full bg-slate-400"></span>
@@ -258,21 +259,21 @@ export const TopBar: React.FC<Props> = ({
                 setCloudModalOpen(true);
               }
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold shadow-2xs transition cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold shadow-2xs transition cursor-pointer ${
               pendingCount > 0
-                ? 'bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 animate-pulse'
-                : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-900'
+                ? 'bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900'
+                : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
             }`}
             title={
               pendingCount > 0
-                ? `⚠️ ${pendingCount} movimiento(s) guardado(s) localmente pendientes de subir. Clic para forzar sincronización con la nube.`
-                : 'Nube 100% Sincronizada con la Web. Clic para verificar conexión.'
+                ? `${pendingCount} movimiento(s) guardado(s) localmente pendientes de subir. Clic para forzar sincronización con la nube.`
+                : 'Nube sincronizada con Supabase. Clic para verificar conexión.'
             }
           >
             <span
               className={`w-2 h-2 rounded-full ${
                 pendingCount > 0 ? 'bg-amber-500' : 'bg-emerald-500'
-              } animate-pulse`}
+              }`}
             ></span>
             <span className="hidden sm:inline">
               {pendingCount > 0 ? `Subiendo a Nube (${pendingCount})` : 'Nube Sincronizada'}
@@ -282,41 +283,41 @@ export const TopBar: React.FC<Props> = ({
             </span>
           </button>
 
-        {/* Botón Impresión Oficial B/N */}
-        <button
-          onClick={() => setPrintModalOpen(true)}
-          title="Imprimir Acta Oficial en Blanco y Negro (1 o 2 Hojas)"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-black transition shadow-xs cursor-pointer active:scale-95"
-        >
-          <Printer className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="hidden md:inline">🖨️ Imprimir Acta (B/N)</span>
-          <span className="md:hidden">Acta B/N</span>
-        </button>
-
-        {/* Botón Único de Apertura de Turno (cuando la jornada está cerrada) */}
-        {!isShiftOpen && onOpenShiftClick && (
+          {/* Botón Impresión Oficial B/N */}
           <button
-            onClick={onOpenShiftClick}
-            title="Iniciar la apertura del día (Caja Chica y Caja General en un solo flujo)"
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black transition shadow-md shadow-emerald-600/25 cursor-pointer active:scale-95 animate-pulse"
+            onClick={() => setPrintModalOpen(true)}
+            title="Imprimir Acta Oficial en Blanco y Negro (1 o 2 Hojas)"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white text-xs font-semibold transition cursor-pointer shadow-xs"
           >
-            <Unlock className="w-3.5 h-3.5 text-white" />
-            <span>🔓 Abrir Turno</span>
+            <Printer className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden md:inline">Acta Oficial (B/N)</span>
+            <span className="md:hidden">Acta B/N</span>
           </button>
-        )}
 
-        {/* Botón de Cierre de Turno (cuando la jornada está abierta) */}
-        {isShiftOpen && onCloseShiftClick && (
-          <button
-            onClick={onCloseShiftClick}
-            title="Proceder al cierre de jornada (Noche)"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black transition shadow-xs cursor-pointer active:scale-95"
-          >
-            <Lock className="w-3.5 h-3.5 text-white" />
-            <span className="hidden sm:inline">Cerrar Turno</span>
-            <span className="sm:hidden">Cierre</span>
-          </button>
-        )}
+          {/* Botón Único de Apertura de Turno (cuando la jornada está cerrada) */}
+          {!isShiftOpen && onOpenShiftClick && (
+            <button
+              onClick={onOpenShiftClick}
+              title="Iniciar la apertura del día (Caja Chica y Caja General en un solo flujo)"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#1c6856] hover:bg-[#155344] text-white text-xs font-semibold transition cursor-pointer shadow-xs"
+            >
+              <Unlock className="w-3.5 h-3.5 text-white" />
+              <span>Abrir Turno</span>
+            </button>
+          )}
+
+          {/* Botón de Cierre de Turno (cuando la jornada está abierta) */}
+          {isShiftOpen && onCloseShiftClick && (
+            <button
+              onClick={onCloseShiftClick}
+              title="Proceder al cierre de jornada (Noche)"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold transition cursor-pointer shadow-xs"
+            >
+              <Lock className="w-3.5 h-3.5 text-white" />
+              <span className="hidden sm:inline">Cerrar Turno</span>
+              <span className="sm:hidden">Cierre</span>
+            </button>
+          )}
 
         {/* Acceso Rápido a Impresiones */}
         {isShiftOpen && state.currentShift && (

@@ -36,6 +36,12 @@ import {
   Plus,
   X,
   XCircle,
+  Cloud,
+  CloudOff,
+  RefreshCw,
+  Banknote,
+  Building2,
+  CreditCard,
 } from 'lucide-react';
 
 interface Props {
@@ -51,19 +57,19 @@ interface Props {
 }
 
 const BUILTIN_CATEGORY_METADATA: Record<string, { label: string; emoji: string; badgeClass: string }> = {
-  CARNES: { label: 'Carnes', emoji: '🥩', badgeClass: 'bg-rose-50 text-rose-700 border-rose-200' },
-  POLLO: { label: 'Pollo', emoji: '🍗', badgeClass: 'bg-orange-50 text-orange-700 border-orange-200' },
-  HIELO: { label: 'Hielo', emoji: '🧊', badgeClass: 'bg-sky-50 text-sky-700 border-sky-200' },
-  BEBIDAS: { label: 'Bebidas', emoji: '🥤', badgeClass: 'bg-blue-50 text-blue-700 border-blue-200' },
-  BEBIDAS_ALCOHOLICAS: { label: 'Bebidas alcohólicas', emoji: '🍺', badgeClass: 'bg-amber-50 text-amber-800 border-amber-200' },
-  DELIVERYS_ACARREOS: { label: 'Deliverys y acarreos', emoji: '🛵', badgeClass: 'bg-purple-50 text-purple-700 border-purple-200' },
-  FRUTAS_VEGETALES: { label: 'Frutas / Vegetales', emoji: '🥗', badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  SUPERMERCADO: { label: 'Supermercado', emoji: '🛒', badgeClass: 'bg-blue-50 text-blue-800 border-blue-200' },
-  MERCADO: { label: 'Mercado', emoji: '🏪', badgeClass: 'bg-teal-50 text-teal-700 border-teal-200' },
-  LACTEOS: { label: 'Lácteos', emoji: '🧀', badgeClass: 'bg-yellow-50 text-yellow-800 border-yellow-200' },
-  PAGOS_PERSONAL: { label: 'Pagos personal', emoji: '👥', badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-  OTROS: { label: 'Otros', emoji: '📝', badgeClass: 'bg-stone-100 text-stone-700 border-stone-200' },
-  FONDEO: { label: 'Depósito / Fondeo', emoji: '💵', badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  CARNES: { label: 'Carnes', emoji: '', badgeClass: 'bg-slate-100 text-slate-700 border-slate-200' },
+  POLLO: { label: 'Pollo', emoji: '', badgeClass: 'bg-slate-100 text-slate-700 border-slate-200' },
+  HIELO: { label: 'Hielo', emoji: '', badgeClass: 'bg-slate-100 text-slate-700 border-slate-200' },
+  BEBIDAS: { label: 'Bebidas', emoji: '', badgeClass: 'bg-slate-100 text-slate-700 border-slate-200' },
+  BEBIDAS_ALCOHOLICAS: { label: 'Bebidas alcohólicas', emoji: '', badgeClass: 'bg-slate-100 text-slate-700 border-slate-200' },
+  DELIVERYS_ACARREOS: { label: 'Deliverys y acarreos', emoji: '', badgeClass: 'bg-slate-100 text-slate-700 border-slate-200' },
+  FRUTAS_VEGETALES: { label: 'Frutas / Vegetales', emoji: '', badgeClass: 'bg-slate-100 text-slate-700 border-slate-200' },
+  SUPERMERCADO: { label: 'Supermercado', emoji: '', badgeClass: 'bg-slate-100 text-slate-700 border-slate-200' },
+  MERCADO: { label: 'Mercado', emoji: '', badgeClass: 'bg-slate-100 text-slate-700 border-slate-200' },
+  LACTEOS: { label: 'Lácteos', emoji: '', badgeClass: 'bg-slate-100 text-slate-700 border-slate-200' },
+  PAGOS_PERSONAL: { label: 'Pagos personal', emoji: '', badgeClass: 'bg-slate-100 text-slate-700 border-slate-200' },
+  OTROS: { label: 'Otros', emoji: '', badgeClass: 'bg-slate-100 text-slate-700 border-slate-200' },
+  FONDEO: { label: 'Depósito / Fondeo', emoji: '', badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
 };
 
 export function getCategoryInfo(catValue: string) {
@@ -73,7 +79,7 @@ export function getCategoryInfo(catValue: string) {
   const formatted = catValue.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
   return {
     label: formatted,
-    emoji: '📦',
+    emoji: '',
     badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
   };
 }
@@ -722,54 +728,50 @@ export const PettyCashView: React.FC<Props> = ({
     <div className="space-y-6">
       {/* Banner de Sincronización Pendiente */}
       {pendingTransactionsCount > 0 && (
-        <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl animate-bounce">⏳</span>
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5 text-amber-900">
+            <RefreshCw className="w-4 h-4 text-amber-700 animate-spin shrink-0" />
             <div>
-              <p className="text-xs font-black text-amber-950">
-                {pendingTransactionsCount} movimiento(s) guardado(s) en PC pendientes de subir a la nube.
-              </p>
-              <p className="text-[11px] text-amber-800">
-                El sistema reintenta enviarlos automáticamente en segundo plano. Puedes forzar el envío en cualquier momento.
-              </p>
+              <span className="font-semibold">{pendingTransactionsCount} movimiento(s) guardados en PC pendientes de sincronización.</span>
+              <span className="text-amber-700 ml-1">Se enviarán automáticamente a Supabase o puedes forzar la sincronización.</span>
             </div>
           </div>
           {onForceSyncClick && (
             <button
               onClick={onForceSyncClick}
-              className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-black shadow-xs transition cursor-pointer shrink-0 self-start sm:self-auto"
+              className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 text-white text-xs font-semibold transition cursor-pointer shrink-0 self-start sm:self-auto"
             >
-              🔄 Forzar Envío a Nube
+              Sincronizar ahora
             </button>
           )}
         </div>
       )}
 
       {/* 1. Header Principal */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/25">
-            <ShoppingCart className="w-6 h-6" />
+      <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-[#1c6856] text-white flex items-center justify-center shrink-0">
+            <ShoppingCart className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">
                 Caja Chica
               </h1>
               {currentOpenShift ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-xs">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
                   Jornada Abierta • {currentOpenShift.date}
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-300">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
                   <Lock className="w-3.5 h-3.5 text-slate-500" />
                   Sin Jornada Abierta Hoy
                 </span>
               )}
             </div>
-            <p className="text-sm text-slate-500 font-medium mt-0.5">
-              Control diario estricto: 1 apertura y 1 cierre por cada día comercial.
+            <p className="text-xs text-slate-500 mt-0.5">
+              Control operativo diario: 1 apertura y 1 cierre por cada día comercial.
             </p>
           </div>
         </div>
@@ -779,15 +781,15 @@ export const PettyCashView: React.FC<Props> = ({
           {!currentOpenShift ? (
             <button
               onClick={() => handleStartOpenShiftModal()}
-              className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-black text-xs flex items-center gap-2 transition shadow-lg shadow-emerald-600/25 cursor-pointer"
+              className="px-4 py-2 rounded-lg bg-[#1c6856] hover:bg-[#155344] active:bg-[#0f3d32] text-white font-semibold text-xs flex items-center gap-2 transition cursor-pointer shadow-xs"
             >
-              <Unlock className="w-4 h-4 stroke-[2.5]" />
-              <span>+ Abrir Nueva Jornada (Día)</span>
+              <Unlock className="w-4 h-4" />
+              <span>Abrir Jornada (Día)</span>
             </button>
           ) : (
             <div className="text-right">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Fondo en Mano Hoy</span>
-              <span className="text-lg font-black text-emerald-700 font-mono">
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Fondo en Mano Hoy</span>
+              <span className="text-lg font-bold text-[#1c6856] font-mono">
                 C$ {state.pettyCashBalance.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
               </span>
             </div>
@@ -797,12 +799,12 @@ export const PettyCashView: React.FC<Props> = ({
 
       {/* 2. Selector de Pestañas Principales */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-2 flex-wrap gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => setActiveTab('DAY_VIEW')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-2 transition cursor-pointer ${
+            className={`px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition cursor-pointer ${
               activeTab === 'DAY_VIEW'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
+                ? 'bg-[#1c6856] text-white shadow-xs'
                 : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
             }`}
           >
@@ -812,15 +814,17 @@ export const PettyCashView: React.FC<Props> = ({
 
           <button
             onClick={() => setActiveTab('HISTORY')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-2 transition cursor-pointer ${
+            className={`px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition cursor-pointer ${
               activeTab === 'HISTORY'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
+                ? 'bg-[#1c6856] text-white shadow-xs'
                 : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
             }`}
           >
             <History className="w-4 h-4" />
             <span>Historial de Cierres Diarios</span>
-            <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-700">
+            <span className={`ml-1 px-1.5 py-0.2 rounded-full text-[10px] ${
+              activeTab === 'HISTORY' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+            }`}>
               {state.pettyCashShiftHistory.length}
             </span>
           </button>
@@ -869,64 +873,62 @@ export const PettyCashView: React.FC<Props> = ({
         <div className="space-y-6">
           {/* Alerta Formal de Jornada Anterior Pendiente de Cierre */}
           {currentOpenShift && currentOpenShift.date < todayStr && (
-            <div className="bg-amber-500/10 border-2 border-amber-500/40 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shrink-0 shadow-md shadow-amber-500/20">
-                  <AlertTriangle className="w-6 h-6" />
+                <div className="w-9 h-9 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold shrink-0">
+                  <AlertTriangle className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-black text-amber-950 flex items-center gap-2">
-                    <span>Control de Jornada: Cierre Pendiente del {currentOpenShift.date}</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-amber-200 text-amber-900 font-bold uppercase">
+                  <h4 className="text-xs font-bold text-amber-950 flex items-center gap-2">
+                    <span>Jornada Anterior Pendiente de Cierre: {currentOpenShift.date}</span>
+                    <span className="px-1.5 py-0.2 rounded text-[10px] bg-amber-200 text-amber-900 font-semibold uppercase">
                       Obligatorio
                     </span>
                   </h4>
-                  <p className="text-xs text-amber-800 mt-0.5">
-                    La jornada comercial de Caja Chica del <strong>{currentOpenShift.date}</strong> no fue cerrada. Debe realizar el arqueo y cierre correspondiente para dar paso formal a las compras de hoy.
+                  <p className="text-amber-800 mt-0.5">
+                    La jornada comercial del <strong>{currentOpenShift.date}</strong> debe cerrarse formalmente antes de operar hoy.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedDate(currentOpenShift.date);
-                    handleStartCloseShiftModal();
-                  }}
-                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
-                >
-                  <Lock className="w-4 h-4" />
-                  <span>Cerrar Jornada del {currentOpenShift.date}</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedDate(currentOpenShift.date);
+                  handleStartCloseShiftModal();
+                }}
+                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-amber-700 hover:bg-amber-800 text-white font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer shrink-0"
+              >
+                <Lock className="w-4 h-4" />
+                <span>Cerrar Jornada {currentOpenShift.date}</span>
+              </button>
             </div>
           )}
 
           {/* BARRA DE NAVEGACIÓN Y SELECCIÓN DE DÍAS */}
-          <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <button
                 onClick={handlePrevDate}
-                className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition cursor-pointer"
+                className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition cursor-pointer"
                 title="Ver día anterior"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
 
-              <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50">
-                <Calendar className="w-4 h-4 text-emerald-600" />
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50">
+                <Calendar className="w-4 h-4 text-[#1c6856]" />
                 <input
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="bg-transparent text-xs font-mono font-black text-slate-900 focus:outline-none cursor-pointer"
+                  className="bg-transparent text-xs font-mono font-bold text-slate-900 focus:outline-none cursor-pointer"
                 />
               </div>
 
               <button
                 onClick={handleNextDate}
-                className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition cursor-pointer"
+                className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition cursor-pointer"
                 title="Ver día siguiente"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -935,7 +937,7 @@ export const PettyCashView: React.FC<Props> = ({
               {selectedDate !== todayStr && (
                 <button
                   onClick={() => setSelectedDate(todayStr)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition cursor-pointer"
                 >
                   Ir a Hoy
                 </button>
@@ -944,23 +946,23 @@ export const PettyCashView: React.FC<Props> = ({
 
             {/* Badge de Estado del Día Seleccionado */}
             <div className="flex items-center gap-2">
-              <span className="text-xs font-extrabold text-slate-500">
+              <span className="text-xs font-semibold text-slate-500">
                 {formatDateToFriendly(selectedDate)}:
               </span>
               {isSelectedShiftOpen && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
-                  <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-                  Jornada en Operación (Abierta)
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+                  Jornada Abierta
                 </span>
               )}
               {isSelectedShiftClosed && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-slate-100 text-slate-800 border border-slate-300">
-                  <Lock className="w-3.5 h-3.5 text-slate-600" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
+                  <Lock className="w-3.5 h-3.5 text-slate-500" />
                   Jornada Cerrada y Liquidada
                 </span>
               )}
               {!selectedShift && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
                   Sin Apertura Registrada
                 </span>
               )}
@@ -969,35 +971,35 @@ export const PettyCashView: React.FC<Props> = ({
 
           {/* CASO A: SI LA FECHA SELECCIONADA ESTÁ CERRADA */}
           {isSelectedShiftClosed && selectedShift && (
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-2xs space-y-4">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center border border-slate-200">
-                    <Lock className="w-6 h-6" />
+                  <div className="w-10 h-10 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center border border-slate-200 shrink-0">
+                    <Lock className="w-5 h-5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-black text-slate-900">
+                      <h3 className="text-base font-bold text-slate-900">
                         Jornada Cerrada del {selectedDate}
                       </h3>
                       <span
-                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-black border ${
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
                           selectedShift.auditStatus === 'SQUARED'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                             : selectedShift.auditStatus === 'SHORTAGE'
-                            ? 'bg-rose-50 text-rose-800 border-rose-300'
-                            : 'bg-blue-50 text-blue-800 border-blue-300'
+                            ? 'bg-rose-50 text-rose-800 border-rose-200'
+                            : 'bg-blue-50 text-blue-800 border-blue-200'
                         }`}
                       >
                         {selectedShift.auditStatus === 'SQUARED'
-                          ? 'CUADRADO EXACTO ✅'
+                          ? 'CUADRADO EXACTO'
                           : selectedShift.auditStatus === 'SHORTAGE'
-                          ? `FALTANTE 🔴 (C$ ${Math.abs(selectedShift.difference || 0).toFixed(2)})`
-                          : `SOBRANTE 🔵 (+C$ ${(selectedShift.difference || 0).toFixed(2)})`}
+                          ? `FALTANTE (-C$ ${Math.abs(selectedShift.difference || 0).toFixed(2)})`
+                          : `SOBRANTE (+C$ ${(selectedShift.difference || 0).toFixed(2)})`}
                       </span>
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Apertura por <strong className="text-slate-700">{selectedShift.openedBy}</strong> • Cierre por{' '}
+                      Apertura: <strong className="text-slate-700">{selectedShift.openedBy}</strong> • Cierre:{' '}
                       <strong className="text-slate-800">{selectedShift.closedBy || 'N/A'}</strong> a las{' '}
                       {selectedShift.closedAt ? new Date(selectedShift.closedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
                     </p>
@@ -1054,64 +1056,64 @@ export const PettyCashView: React.FC<Props> = ({
                         transactions: dayTransactions,
                       });
                     }}
-                    className="px-3.5 py-2 rounded-xl border border-slate-900 bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer active:scale-95"
-                    title="Imprimir Acta Oficial de Caja Chica y Compras en 1 Hoja B/N"
+                    className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-black text-white font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                    title="Imprimir Acta Oficial de Caja Chica en 1 Hoja B/N"
                   >
-                    <Printer className="w-4 h-4 text-amber-400" />
-                    <span>🖨️ Acta Oficial B/N</span>
+                    <Printer className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Acta Oficial B/N</span>
                   </button>
 
                   <button
                     onClick={() => printThermalPettyCashClosingAct(selectedShift, selectedDateTransactions, selectedShift.closedBy || state.activeAdminName)}
-                    className="px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer"
                   >
-                    <Printer className="w-4 h-4 text-slate-500" />
-                    <span>Acta de Cierre A4</span>
+                    <Printer className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Acta Cierre A4</span>
                   </button>
 
                   <button
                     onClick={() => exportPettyCashClosingToExcel(selectedShift, selectedDateTransactions)}
-                    className="px-3.5 py-2 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer"
                   >
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                    <span>Exportar Acta Excel</span>
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Excel</span>
                   </button>
 
                   {!currentOpenShift && (
                     <button
                       onClick={() => handleStartOpenShiftModal()}
-                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center gap-1.5 transition shadow-md shadow-emerald-600/25 cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-lg bg-[#1c6856] hover:bg-[#155344] text-white font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
                     >
-                      <Unlock className="w-4 h-4" />
-                      <span>+ Abrir Nuevo Día</span>
+                      <Unlock className="w-3.5 h-3.5" />
+                      <span>Abrir Turno</span>
                     </button>
                   )}
                 </div>
               </div>
 
               {/* Resumen del Arqueo de Cierre */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-slate-50 p-3 rounded-lg border border-slate-200">
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Fondo Apertura</span>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Fondo Apertura</span>
                   <span className="font-mono font-bold text-slate-800 text-sm">
                     C$ {selectedShift.initialBalance.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Compras del Día</span>
-                  <span className="font-mono font-bold text-rose-600 text-sm">
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Total Compras del Día</span>
+                  <span className="font-mono font-bold text-rose-700 text-sm">
                     - C$ {(selectedShift.totalExpenses || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Saldo Teórico Esperado</span>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Saldo Teórico Esperado</span>
                   <span className="font-mono font-bold text-slate-800 text-sm">
                     C$ {(selectedShift.expectedBalance || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">Efectivo Físico Contado</span>
-                  <span className="font-mono font-black text-slate-900 text-sm">
+                  <span className="text-[10px] font-semibold text-emerald-800 uppercase tracking-wider block">Efectivo Físico Contado</span>
+                  <span className="font-mono font-bold text-slate-900 text-sm">
                     C$ {(selectedShift.actualCashCounted || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
@@ -1121,21 +1123,21 @@ export const PettyCashView: React.FC<Props> = ({
 
           {/* CASO B: SI LA FECHA SELECCIONADA ESTÁ ABIERTA */}
           {isSelectedShiftOpen && selectedShift && (
-            <div className="bg-gradient-to-r from-emerald-50 via-white to-amber-50 rounded-2xl p-5 border border-emerald-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="space-y-0.5">
-                <div className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-                  Jornada en Operación Activa
+                <div className="text-xs font-semibold text-[#1c6856] uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+                  Jornada Activa
                 </div>
-                <h3 className="text-base font-extrabold text-slate-900">
-                  Caja Chica del {selectedDate} — Lista para compras
+                <h3 className="text-sm font-bold text-slate-900">
+                  Caja Chica del {selectedDate} — Compras y movimientos habilitados
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Al terminar las compras del día, realiza el arqueo físico y cierre diario.
+                  Registra compras del día. Al finalizar, realiza el conteo de arqueo y cierre.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 {onCancelPettyCashShift && (
                   <button
                     type="button"
@@ -1147,17 +1149,17 @@ export const PettyCashView: React.FC<Props> = ({
                         onCancelPettyCashShift();
                       }
                     }}
-                    className="px-4 py-3 rounded-xl border border-rose-300 hover:bg-rose-50 text-rose-700 font-extrabold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                    className="px-3.5 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer"
                   >
-                    <Trash2 className="w-4 h-4 text-rose-600" />
+                    <Trash2 className="w-3.5 h-3.5 text-slate-500" />
                     <span>Cancelar Turno</span>
                   </button>
                 )}
                 <button
                   onClick={handleStartCloseShiftModal}
-                  className="px-5 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-extrabold text-xs flex items-center gap-2 transition shadow-md shadow-rose-600/25 cursor-pointer"
+                  className="px-4 py-2 rounded-lg bg-rose-700 hover:bg-rose-800 active:bg-rose-900 text-white font-semibold text-xs flex items-center gap-2 transition cursor-pointer shadow-xs"
                 >
-                  <Lock className="w-4 h-4" />
+                  <Lock className="w-3.5 h-3.5" />
                   <span>Cerrar Caja Chica del Día</span>
                 </button>
               </div>
@@ -1166,114 +1168,100 @@ export const PettyCashView: React.FC<Props> = ({
 
           {/* CASO C: SI LA FECHA NO TIENE NINGUNA JORNADA REGISTRADA */}
           {!selectedShift && (
-            <div className="bg-white rounded-2xl p-8 border border-slate-200 text-center space-y-4 max-w-lg mx-auto shadow-sm">
-              <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
-                <Calendar className="w-7 h-7" />
+            <div className="bg-white rounded-xl p-8 border border-slate-200 text-center space-y-3 max-w-md mx-auto shadow-2xs">
+              <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mx-auto border border-slate-200">
+                <Calendar className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-lg font-black text-slate-900">
+                <h3 className="text-base font-bold text-slate-900">
                   Sin Jornada Registrada para el {selectedDate}
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Cada día de trabajo tiene 1 apertura y 1 cierre. Puedes abrir la Caja Chica para este día comercial.
+                  Para registrar compras en esta fecha, realiza la apertura con su saldo inicial.
                 </p>
               </div>
-              <div>
+              <div className="pt-1">
                 <button
                   onClick={() => handleStartOpenShiftModal(selectedDate)}
-                  className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center gap-2 mx-auto shadow-md shadow-emerald-600/25 transition cursor-pointer"
+                  className="px-4 py-2 rounded-lg bg-[#1c6856] hover:bg-[#155344] text-white font-semibold text-xs flex items-center gap-2 mx-auto transition cursor-pointer shadow-xs"
                 >
                   <Unlock className="w-4 h-4" />
-                  <span>+ Iniciar Apertura de Caja Chica para este Día</span>
+                  <span>Iniciar Apertura para este Día</span>
                 </button>
               </div>
             </div>
           )}
 
-          {/* TARJETAS DE MÉTRICAS DEL DÍA (VISIBLES TANTO SI ESTÁ ABIERTO COMO SI ESTÁ CERRADO) */}
+          {/* TARJETAS DE MÉTRICAS DEL DÍA (UNIFIED FINANCIAL KPI BAR) */}
           {selectedShift && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-2xs divide-y sm:divide-y-0 sm:divide-x divide-slate-100 grid grid-cols-2 lg:grid-cols-4">
                 {/* 1. Fondo Asignado */}
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                      1. Fondo Asignado
-                    </span>
-                    <span className="text-xs font-bold text-slate-500">💵 Apertura</span>
-                  </div>
-                  <div className="text-2xl font-black text-slate-900 font-mono">
+                <div className="p-4 space-y-1">
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">
+                    Fondo Asignado
+                  </span>
+                  <div className="text-xl font-bold font-mono text-slate-900">
                     C$ {(selectedInitialBalance + selectedDateInflows).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                   </div>
-                  <div className="text-[11px] text-slate-500 truncate">
-                    <span>Fondo Inicial: C$ {selectedInitialBalance.toFixed(0)}</span>
-                    {selectedDateInflows > 0 && <span> + Inyecciones: C$ {selectedDateInflows.toFixed(0)}</span>}
+                  <div className="text-[11px] text-slate-400 truncate">
+                    Inicial: C$ {selectedInitialBalance.toFixed(0)} {selectedDateInflows > 0 && `+ Inyecciones: C$ ${selectedDateInflows.toFixed(0)}`}
                   </div>
                 </div>
 
                 {/* 2. Salidas de Gaveta (Efectivo) */}
-                <div className="bg-white p-5 rounded-2xl border border-rose-200 shadow-xs space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-rose-600 uppercase tracking-wider block">
-                      2. Egresos en Efectivo
-                    </span>
-                    <span className="text-xs font-bold text-rose-600">🔴 Gaveta</span>
-                  </div>
-                  <div className="text-2xl font-black text-rose-600 font-mono">
+                <div className="p-4 space-y-1">
+                  <span className="text-[10px] font-semibold text-rose-700 uppercase tracking-wider block">
+                    Egresos Efectivo (Gaveta)
+                  </span>
+                  <div className="text-xl font-bold font-mono text-rose-700">
                     - C$ {selectedDateCashExpenses.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                   </div>
-                  <div className="text-[11px] text-rose-700 font-medium">
-                    {selectedDateTransactions.filter((t) => t.type === 'EXPENSE' && t.method === 'CASH').length} pagos en efectivo físico
+                  <div className="text-[11px] text-slate-400">
+                    {selectedDateTransactions.filter((t) => t.type === 'EXPENSE' && t.method === 'CASH').length} compras en efectivo
                   </div>
                 </div>
 
                 {/* 3. Pagos por Banco y Tarjetas */}
-                <div className="bg-white p-5 rounded-2xl border border-sky-200 shadow-xs space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-sky-700 uppercase tracking-wider block">
-                      3. Banco & Tarjetas
-                    </span>
-                    <span className="text-xs font-bold text-sky-700">💳 No Toca Gaveta</span>
-                  </div>
-                  <div className="text-2xl font-black text-sky-800 font-mono">
+                <div className="p-4 space-y-1">
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">
+                    Banco & Tarjetas
+                  </span>
+                  <div className="text-xl font-bold font-mono text-slate-900">
                     C$ {(selectedDateTransferExpenses + selectedDateCardExpenses).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                   </div>
-                  <div className="text-[11px] text-sky-600 font-medium">
-                    Transf: C$ {selectedDateTransferExpenses.toLocaleString('es-NI', { minimumFractionDigits: 2 })} • Tarjeta: C$ {selectedDateCardExpenses.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                  <div className="text-[11px] text-slate-400">
+                    Transf: C$ {selectedDateTransferExpenses.toLocaleString('es-NI', { minimumFractionDigits: 0 })} · Tarjeta: C$ {selectedDateCardExpenses.toLocaleString('es-NI', { minimumFractionDigits: 0 })}
                   </div>
                 </div>
 
                 {/* 4. Efectivo Físico en Gaveta */}
-                <div className="bg-emerald-50/90 p-5 rounded-2xl border border-emerald-300 shadow-xs space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
-                      {isSelectedShiftClosed ? '4. Efectivo al Cierre' : '4. Efectivo en Gaveta'}
-                    </span>
-                    <span className="text-xs font-bold text-emerald-800">✅ En Mano</span>
-                  </div>
-                  <div className="text-3xl font-black text-emerald-950 font-mono">
+                <div className="p-4 space-y-1 bg-slate-50/70 sm:rounded-r-xl">
+                  <span className="text-[10px] font-semibold text-[#1c6856] uppercase tracking-wider block">
+                    {isSelectedShiftClosed ? 'Efectivo al Cierre' : 'Saldo Físico Gaveta'}
+                  </span>
+                  <div className="text-2xl font-bold font-mono text-[#1c6856]">
                     C$ {selectedFinalBalance.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                   </div>
-                  <div className="text-[11px] text-emerald-800 font-semibold">
-                    {isSelectedShiftClosed ? 'Conteo físico verificado al cerrar' : 'Dinero físico actual en caja'}
+                  <div className="text-[11px] text-slate-500">
+                    {isSelectedShiftClosed ? 'Conteo físico verificado' : 'Dinero físico actual en caja'}
                   </div>
                 </div>
               </div>
 
               {/* Barra Informativa de Egresos Totales Consolidados */}
-              <div className="bg-slate-100/90 rounded-xl px-4 py-2.5 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs gap-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-extrabold text-slate-800">Total Compras del Día:</span>
-                  <span className="font-mono font-black text-slate-900 bg-white px-2.5 py-0.5 rounded-lg border border-slate-200">
+              <div className="bg-slate-50 rounded-lg px-3.5 py-2 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs gap-2">
+                <div className="flex items-center gap-2 flex-wrap text-slate-700">
+                  <span className="font-semibold">Total Compras del Día:</span>
+                  <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">
                     C$ {selectedDateExpenses.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                   </span>
                   <span className="text-[11px] text-slate-500">
-                    (C$ {selectedDateCashExpenses.toLocaleString('es-NI', { minimumFractionDigits: 2 })} en Efectivo + C$ {selectedDateTransferExpenses.toLocaleString('es-NI', { minimumFractionDigits: 2 })} Transf. + C$ {selectedDateCardExpenses.toLocaleString('es-NI', { minimumFractionDigits: 2 })} Tarjeta)
+                    (C$ {selectedDateCashExpenses.toLocaleString('es-NI', { minimumFractionDigits: 2 })} Efectivo + C$ {selectedDateTransferExpenses.toLocaleString('es-NI', { minimumFractionDigits: 2 })} Transf. + C$ {selectedDateCardExpenses.toLocaleString('es-NI', { minimumFractionDigits: 2 })} Tarjeta)
                   </span>
                 </div>
-                <div className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
-                  <span>💡</span>
-                  <span>Pagos por banco y tarjeta no restan de la gaveta de billetes físicos.</span>
+                <div className="text-[11px] text-slate-500">
+                  Transferencias y tarjetas no descuentan billetes físicos de gaveta.
                 </div>
               </div>
             </div>
@@ -1281,25 +1269,25 @@ export const PettyCashView: React.FC<Props> = ({
 
           {/* BOTONES DE REGISTRO DE MOVIMIENTOS (SOLO CUANDO EL DÍA ESTÁ ABIERTO) */}
           {isSelectedShiftOpen && (
-            <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-sm font-bold text-slate-700">
-                Registrar movimientos para la jornada de hoy ({selectedDate}):
+            <div className="bg-white rounded-xl p-3.5 border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="text-xs font-semibold text-slate-700">
+                Registrar compras y movimientos de hoy ({selectedDate}):
               </div>
-              <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-2.5 w-full sm:w-auto">
                 <button
                   onClick={() => handleOpenExpenseModal(selectedDate)}
-                  className="flex-1 sm:flex-none px-6 py-3.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-rose-600/25 transition cursor-pointer"
+                  className="flex-1 sm:flex-none px-4 py-2 rounded-lg bg-[#1c6856] hover:bg-[#155344] active:bg-[#0f3d32] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-xs transition cursor-pointer"
                 >
-                  <ArrowDownRight className="w-4 h-4 stroke-[2.5]" />
-                  <span>+ Registrar Compra / Gasto</span>
+                  <ArrowDownRight className="w-4 h-4" />
+                  <span>Registrar Compra / Gasto</span>
                 </button>
 
                 <button
                   onClick={handleOpenInflowModal}
-                  className="flex-1 sm:flex-none px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-600/25 transition cursor-pointer"
+                  className="flex-1 sm:flex-none px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
                 >
-                  <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
-                  <span>+ Ingresar Dinero / Fondeo</span>
+                  <ArrowUpRight className="w-4 h-4 text-emerald-700" />
+                  <span>Ingresar Fondeo</span>
                 </button>
               </div>
             </div>
@@ -1307,16 +1295,16 @@ export const PettyCashView: React.FC<Props> = ({
 
           {/* BOTÓN PARA REGISTRAR FACTURAS REZAGADAS EN JORNADAS CERRADAS */}
           {!isSelectedShiftOpen && selectedShift?.status === 'CLOSED' && (
-            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
-              <div className="text-xs text-slate-600 font-medium">
-                📁 <strong>Jornada cerrada:</strong> Si tienes una factura rezagada u olvidada de este día, puedes incorporarla directamente a este cierre sin alterar la caja de hoy.
+            <div className="bg-slate-50 rounded-xl p-3 border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+              <div className="text-slate-600">
+                <strong>Jornada cerrada:</strong> Puedes incorporar facturas rezagadas de este día sin alterar turnos posteriores.
               </div>
               <button
                 onClick={() => handleOpenExpenseModal(selectedDate)}
-                className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs whitespace-nowrap"
+                className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-2xs whitespace-nowrap"
               >
-                <ArrowDownRight className="w-4 h-4 text-rose-600" />
-                <span>+ Agregar Factura Rezagada a este día</span>
+                <ArrowDownRight className="w-3.5 h-3.5 text-rose-600" />
+                <span>Agregar Factura Rezagada</span>
               </button>
             </div>
           )}
@@ -1382,40 +1370,40 @@ export const PettyCashView: React.FC<Props> = ({
                       transactions: dayTransactions,
                     });
                   }}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-900 bg-slate-900 hover:bg-black text-white text-xs font-black flex items-center gap-1.5 transition shadow-xs cursor-pointer active:scale-95"
+                  className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-black text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
                   title="Imprimir Acta Oficial de Caja Chica y Detalle de Compras en 1 Hoja B/N"
                 >
                   <Printer className="w-3.5 h-3.5 text-amber-400" />
-                  <span>🖨️ Imprimir Caja Chica (1 Hoja B/N)</span>
+                  <span>Imprimir Acta Oficial (B/N)</span>
                 </button>
               </div>
 
-              <div className="flex flex-col md:flex-row gap-3">
+              <div className="flex flex-col md:flex-row gap-2.5">
                 <div className="relative flex-1">
-                  <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
                     placeholder="Buscar por concepto, producto, factura o notas..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 font-medium"
+                    className="w-full pl-9 pr-3.5 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-[#1c6856] font-medium"
                   />
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setCategoriesModalOpen(true)}
-                  className="px-3.5 py-2 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shrink-0 shadow-2xs"
+                  className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shrink-0 shadow-2xs"
                   title="Administrar categorías de gastos"
                 >
                   <Settings className="w-3.5 h-3.5 text-slate-500" />
-                  <span>⚙️ Categorías</span>
+                  <span>Categorías</span>
                 </button>
 
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
                   <button
                     onClick={() => setSelectedCategoryFilter('TODOS')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold whitespace-nowrap transition cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
                       selectedCategoryFilter === 'TODOS'
                         ? 'bg-slate-900 text-white shadow-xs'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -1429,13 +1417,13 @@ export const PettyCashView: React.FC<Props> = ({
                       <button
                         key={cat.value}
                         onClick={() => setSelectedCategoryFilter(cat.value)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                        className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
                           selectedCategoryFilter === cat.value
-                            ? 'bg-emerald-600 text-white shadow-xs'
+                            ? 'bg-[#1c6856] text-white shadow-xs'
                             : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                         }`}
                       >
-                        {cat.emoji} {cat.label} {count > 0 && `(${count})`}
+                        {cat.label} {count > 0 && `(${count})`}
                       </button>
                     );
                   })}
@@ -1443,21 +1431,21 @@ export const PettyCashView: React.FC<Props> = ({
               </div>
 
               {/* Tabla Detallada Estilo Excel / Libro Diario */}
-              <div className="overflow-x-auto border-2 border-slate-300 rounded-xl bg-white shadow-xs">
+              <div className="overflow-x-auto border border-slate-200 rounded-lg bg-white shadow-2xs">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="bg-slate-100 border-b-2 border-slate-300 text-slate-800 font-black uppercase tracking-wider text-[11px]">
-                      <th className="py-2.5 px-3 border-r border-slate-300 text-center w-14">Hora</th>
-                      <th className="py-2.5 px-4 border-r border-slate-300 min-w-[230px]">Concepto</th>
-                      <th className="py-2.5 px-3 border-r border-slate-300 text-center min-w-[130px]">TIPO DE PAGO</th>
-                      <th className="py-2.5 px-3 border-r border-slate-300 text-right min-w-[125px] bg-sky-50/60">MONTO TOTAL</th>
-                      <th className="py-2.5 px-3 border-r border-slate-300 text-right min-w-[130px] bg-emerald-50/60">Reemb. A Caja Chica</th>
-                      <th className="py-2.5 px-3 border-r border-slate-300 text-right min-w-[125px] bg-rose-50/60">Gastos Caja Ch.</th>
-                      <th className="py-2.5 px-4 border-r border-slate-300 text-right min-w-[135px] bg-amber-50/70 font-black text-slate-900">Saldo</th>
-                      <th className="py-2.5 px-3 text-center w-24">Acciones</th>
+                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+                      <th className="py-2.5 px-3 border-r border-slate-200 text-center w-14">Hora</th>
+                      <th className="py-2.5 px-3.5 border-r border-slate-200 min-w-[220px]">Concepto</th>
+                      <th className="py-2.5 px-3 border-r border-slate-200 text-center min-w-[120px]">Forma de Pago</th>
+                      <th className="py-2.5 px-3 border-r border-slate-200 text-right min-w-[120px]">Banco / Tarjeta</th>
+                      <th className="py-2.5 px-3 border-r border-slate-200 text-right min-w-[120px]">Reembolso</th>
+                      <th className="py-2.5 px-3 border-r border-slate-200 text-right min-w-[120px]">Gasto Efectivo</th>
+                      <th className="py-2.5 px-3.5 border-r border-slate-200 text-right min-w-[130px] font-bold text-slate-800">Saldo</th>
+                      <th className="py-2.5 px-2.5 text-center w-24">Acciones</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200 text-slate-800">
+                  <tbody className="divide-y divide-slate-100 text-slate-800">
                     {filteredRows.length === 0 ? (
                       <tr>
                         <td colSpan={8} className="py-8 text-center text-slate-400 font-medium">
@@ -1472,31 +1460,26 @@ export const PettyCashView: React.FC<Props> = ({
                         return (
                           <tr
                             key={row.id}
-                            className={`transition-colors border-b border-slate-200 ${
+                            className={`transition-colors border-b border-slate-100 ${
                               row.isOpening
-                                ? 'bg-amber-50/40 font-semibold'
-                                : isTransf
-                                ? 'bg-sky-50/20 hover:bg-sky-50/40'
-                                : isCard
-                                ? 'bg-purple-50/20 hover:bg-purple-50/40'
-                                : 'hover:bg-slate-50'
+                                ? 'bg-amber-50/30 font-medium'
+                                : 'hover:bg-slate-50/80'
                             }`}
                           >
-                            <td className="py-2.5 px-3 border-r border-slate-200 font-mono text-center text-[11px] text-slate-500">
+                            <td className="py-2 px-3 border-r border-slate-100 font-mono text-center text-[11px] text-slate-500">
                               {row.hora}
                             </td>
-                            <td className="py-2.5 px-4 border-r border-slate-200 font-bold text-slate-900">
+                            <td className="py-2 px-3.5 border-r border-slate-100">
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                {row.categoriaEmoji && <span>{row.categoriaEmoji}</span>}
-                                <span>{row.vendor}</span>
+                                <span className="font-semibold text-slate-900">{row.vendor}</span>
                                 {row.rawTx?.type === 'INFLOW' && !row.isOpening && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                    Entrada / Fondeo
+                                  <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                    Fondeo
                                   </span>
                                 )}
                               </div>
                               {row.notes && (
-                                <div className="text-[10px] font-normal text-slate-500 mt-0.5 truncate max-w-xs">
+                                <div className="text-[10px] text-slate-500 mt-0.5 truncate max-w-xs">
                                   {row.notes}
                                   {row.receiptNumber && (
                                     <span className="ml-1.5 font-mono text-slate-400">Ref: #{row.receiptNumber}</span>
@@ -1504,79 +1487,76 @@ export const PettyCashView: React.FC<Props> = ({
                                 </div>
                               )}
                             </td>
-                            <td className="py-2.5 px-3 border-r border-slate-200 text-center font-bold text-[11px]">
+                            <td className="py-2 px-3 border-r border-slate-100 text-center text-[11px]">
                               {row.isOpening ? (
                                 row.tipoPago === '-' ? (
                                   <span className="text-slate-400 font-mono">-</span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 font-mono">
-                                    💵 Efectivo
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 font-mono font-medium">
+                                    Efectivo
                                   </span>
                                 )
                               ) : isTransf ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-100 text-sky-900 border border-sky-300">
-                                  <span>🏦</span>
-                                  <span>Transferencia</span>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-sky-50 text-sky-800 border border-sky-200 font-medium">
+                                  Transferencia
                                 </span>
                               ) : isCard ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-100 text-purple-900 border border-purple-300">
-                                  <span>💳</span>
-                                  <span>Tarjeta</span>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200 font-medium">
+                                  Tarjeta
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 font-mono">
-                                  <span>💵</span>
-                                  <span>Efectivo</span>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 font-mono font-medium">
+                                  Efectivo
                                 </span>
                               )}
                             </td>
-                            <td className="py-2.5 px-3 border-r border-slate-200 text-right font-mono font-bold text-[12px] bg-sky-50/20 text-sky-900">
+                            <td className="py-2 px-3 border-r border-slate-100 text-right font-mono font-semibold text-[11.5px] text-slate-800">
                               {row.montoTotalBanco !== null ? (
                                 `C$ ${row.montoTotalBanco.toLocaleString('es-NI', { minimumFractionDigits: 2 })}`
                               ) : (
                                 <span className="text-slate-300 font-normal">-</span>
                               )}
                             </td>
-                            <td className="py-2.5 px-3 border-r border-slate-200 text-right font-mono font-bold text-[12px] bg-emerald-50/20 text-emerald-800">
+                            <td className="py-2 px-3 border-r border-slate-100 text-right font-mono font-semibold text-[11.5px] text-emerald-800">
                               {row.reembolsoCajaChica !== null ? (
                                 `C$ ${row.reembolsoCajaChica.toLocaleString('es-NI', { minimumFractionDigits: 2 })}`
                               ) : (
                                 <span className="text-slate-300 font-normal">-</span>
                               )}
                             </td>
-                            <td className="py-2.5 px-3 border-r border-slate-200 text-right font-mono font-bold text-[12px] bg-rose-50/20 text-rose-800">
+                            <td className="py-2 px-3 border-r border-slate-100 text-right font-mono font-semibold text-[11.5px] text-rose-700">
                               {row.gastosCajaChica !== null ? (
                                 `C$ ${row.gastosCajaChica.toLocaleString('es-NI', { minimumFractionDigits: 2 })}`
                               ) : (
                                 <span className="text-slate-300 font-normal">-</span>
                               )}
                             </td>
-                            <td className="py-2.5 px-4 border-r border-slate-200 text-right font-mono font-black text-sm bg-amber-50/30 text-slate-900">
+                            <td className="py-2 px-3.5 border-r border-slate-100 text-right font-mono font-bold text-xs text-slate-900 bg-slate-50/50">
                               C$ {row.saldoGaveta.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                             </td>
-                            <td className="py-2.5 px-3 text-center">
+                            <td className="py-2 px-2.5 text-center">
                               {row.isOpening ? (
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100/80 text-amber-800 border border-amber-200">
-                                Apertura
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                  Apertura
                                 </span>
                               ) : (
-                                <div className="flex items-center justify-center gap-1.5">
+                                <div className="flex items-center justify-center gap-1">
                                   {row.rawTx && (
                                     (row.rawTx.cloudId || row.rawTx.id.startsWith('pct-cloud-')) ? (
                                       <span
-                                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                        className="p-1 rounded text-emerald-600"
                                         title="Sincronizado con Supabase Cloud"
                                       >
-                                        <span>☁️</span>
+                                        <Cloud className="w-3.5 h-3.5" />
                                       </span>
                                     ) : (
                                       <button
                                         type="button"
                                         onClick={() => onForceSyncClick && onForceSyncClick()}
-                                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-900 border border-amber-300 animate-pulse hover:bg-amber-200 cursor-pointer"
-                                        title="Pendiente de subir a Supabase. Haz clic para forzar envío."
+                                        className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 cursor-pointer"
+                                        title="Pendiente de sincronizar. Clic para enviar."
                                       >
-                                        <span>⏳</span>
+                                        <CloudOff className="w-3 h-3 text-amber-600" />
                                         <span>PC</span>
                                       </button>
                                     )
@@ -1584,7 +1564,7 @@ export const PettyCashView: React.FC<Props> = ({
                                   {row.rawTx?.type === 'EXPENSE' && (
                                     <button
                                       onClick={() => row.rawTx && printThermalSingleExpenseVoucher(row.rawTx)}
-                                      className="px-2 py-0.5 rounded border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 transition inline-flex items-center gap-1 text-[10px] font-bold shadow-xs cursor-pointer"
+                                      className="px-1.5 py-0.5 rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition inline-flex items-center gap-1 text-[10px] font-medium cursor-pointer"
                                       title="Imprimir Vale A4"
                                     >
                                       <Printer className="w-3 h-3 text-slate-500" />
@@ -1593,14 +1573,14 @@ export const PettyCashView: React.FC<Props> = ({
                                   )}
                                   <button
                                     onClick={() => row.rawTx && handleStartEditTx(row.rawTx)}
-                                    className="p-1 rounded border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600 transition inline-flex items-center justify-center text-[11px] font-bold shadow-xs cursor-pointer"
+                                    className="p-1 rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition inline-flex items-center justify-center cursor-pointer"
                                     title="Editar este movimiento"
                                   >
                                     <Edit2 className="w-3.5 h-3.5" />
                                   </button>
                                   <button
                                     onClick={() => row.rawTx && setTxToDelete(row.rawTx)}
-                                    className="p-1 rounded border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 transition inline-flex items-center justify-center text-[11px] font-bold shadow-xs cursor-pointer"
+                                    className="p-1 rounded border border-slate-200 bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-600 transition inline-flex items-center justify-center cursor-pointer"
                                     title="Eliminar este movimiento"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -1616,24 +1596,24 @@ export const PettyCashView: React.FC<Props> = ({
 
                   {/* Fila de Totales estilo Balance de Excel */}
                   <tfoot>
-                    <tr className="bg-slate-100 border-t-2 border-slate-400 text-slate-900 font-black text-xs">
-                      <td colSpan={3} className="py-3 px-4 border-r border-slate-300 text-right uppercase tracking-wider">
-                        TOTALES DEL DÍA:
+                    <tr className="bg-slate-50 border-t-2 border-slate-300 text-slate-900 font-bold text-xs">
+                      <td colSpan={3} className="py-2.5 px-3.5 border-r border-slate-200 text-right uppercase tracking-wider text-[11px] text-slate-600">
+                        Totales:
                       </td>
-                      <td className="py-3 px-3 border-r border-slate-300 text-right font-mono text-[13px] bg-sky-100/70 text-sky-950 font-black">
+                      <td className="py-2.5 px-3 border-r border-slate-200 text-right font-mono text-xs text-slate-900 font-bold">
                         C$ {selectedDateTransferExpenses.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="py-3 px-3 border-r border-slate-300 text-right font-mono text-[13px] bg-emerald-100/70 text-emerald-950 font-black">
+                      <td className="py-2.5 px-3 border-r border-slate-200 text-right font-mono text-xs text-emerald-800 font-bold">
                         C$ {(selectedInitialBalance + selectedDateInflows).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="py-3 px-3 border-r border-slate-300 text-right font-mono text-[13px] bg-rose-100/70 text-rose-950 font-black">
+                      <td className="py-2.5 px-3 border-r border-slate-200 text-right font-mono text-xs text-rose-700 font-bold">
                         C$ {selectedDateCashExpenses.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="py-3 px-4 border-r border-slate-300 text-right font-mono text-base bg-emerald-200/90 text-emerald-950 font-black ring-2 ring-emerald-500/50">
+                      <td className="py-2.5 px-3.5 border-r border-slate-200 text-right font-mono text-sm bg-slate-100 text-slate-900 font-extrabold">
                         C$ {expectedSelectedBalance.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="py-3 px-3 text-center bg-slate-100 text-[10px] text-slate-500 font-bold">
-                        Arqueo
+                      <td className="py-2.5 px-2.5 text-center text-[10px] text-slate-500 font-medium">
+                        Balance
                       </td>
                     </tr>
                   </tfoot>
@@ -1732,10 +1712,10 @@ export const PettyCashView: React.FC<Props> = ({
                             }`}
                           >
                             {isSquared
-                              ? 'CUADRADO ✅'
+                              ? 'CUADRADO'
                               : isShortage
-                              ? `FALTANTE 🔴 (C$ ${Math.abs(hShift.difference || 0).toFixed(2)})`
-                              : `SOBRANTE 🔵 (+C$ ${(hShift.difference || 0).toFixed(2)})`}
+                              ? `FALTANTE (C$ ${Math.abs(hShift.difference || 0).toFixed(2)})`
+                              : `SOBRANTE (+C$ ${(hShift.difference || 0).toFixed(2)})`}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-center">
@@ -2230,14 +2210,14 @@ export const PettyCashView: React.FC<Props> = ({
       {/* 7. MODAL: REGISTRAR COMPRA / GASTO */}
       {modalType === 'EXPENSE' && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-y-auto max-h-[90vh] p-6 space-y-5">
+          <div className="bg-white rounded-xl max-w-lg w-full border border-slate-200 shadow-xl overflow-y-auto max-h-[90vh] p-5 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-rose-500 text-white flex items-center justify-center font-bold">
-                  <ArrowDownRight className="w-5 h-5" />
+                <div className="w-8 h-8 rounded-lg bg-[#1c6856] text-white flex items-center justify-center font-bold">
+                  <ArrowDownRight className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-slate-900">Registrar Compra / Gasto</h3>
+                  <h3 className="text-base font-bold text-slate-900">Registrar Compra / Gasto</h3>
                   <p className="text-xs text-slate-500">
                     Jornada asignada: <strong className="font-mono text-slate-700">{expenseTargetDate || selectedDate}</strong>
                   </p>
@@ -2245,7 +2225,7 @@ export const PettyCashView: React.FC<Props> = ({
               </div>
               <button
                 onClick={() => setModalType(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer"
+                className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold cursor-pointer"
               >
                 ✕
               </button>
@@ -2253,16 +2233,16 @@ export const PettyCashView: React.FC<Props> = ({
 
             <form onSubmit={handleSubmitTransaction} className="space-y-4">
               {/* Fecha / Jornada de Imputación del Gasto */}
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    📅 Fecha / Jornada de la Compra *
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                    Fecha / Jornada de la Compra *
                   </label>
                   {expenseTargetDate !== selectedDate && (
                     <button
                       type="button"
                       onClick={() => setExpenseTargetDate(selectedDate)}
-                      className="text-[11px] font-bold text-rose-600 hover:text-rose-800 underline cursor-pointer"
+                      className="text-[11px] font-semibold text-[#1c6856] hover:underline cursor-pointer"
                     >
                       Asignar a hoy ({selectedDate})
                     </button>
@@ -2273,14 +2253,11 @@ export const PettyCashView: React.FC<Props> = ({
                   required
                   value={expenseTargetDate}
                   onChange={(e) => setExpenseTargetDate(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-mono font-bold rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                  className="w-full px-3 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#1c6856]"
                 />
                 {expenseTargetDate !== selectedDate ? (
-                  <p className="text-[11px] text-amber-800 bg-amber-50 p-2 rounded-lg mt-2 font-semibold border border-amber-200 flex items-center gap-1.5">
-                    <span>⚠️</span>
-                    <span>
-                      <strong>Comprobante Rezagado:</strong> Esta compra se registrará en la jornada del <strong>{expenseTargetDate}</strong>. NO afectará el saldo en gaveta ni los egresos de hoy ({selectedDate}).
-                    </span>
+                  <p className="text-[11px] text-amber-900 bg-amber-50 p-2 rounded-lg mt-2 font-medium border border-amber-200">
+                    <strong>Comprobante Rezagado:</strong> Se registrará en la jornada del {expenseTargetDate}. No altera el saldo de gaveta de hoy.
                   </p>
                 ) : (
                   <p className="text-[11px] text-slate-500 mt-1">
@@ -2291,11 +2268,11 @@ export const PettyCashView: React.FC<Props> = ({
 
               {/* Monto */}
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                   Monto del Gasto (Córdobas C$) *
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-lg">C$</span>
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-base">C$</span>
                   <input
                     type="number"
                     step="0.01"
@@ -2304,30 +2281,29 @@ export const PettyCashView: React.FC<Props> = ({
                     placeholder="0.00"
                     value={amount || ''}
                     onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
-                    className="w-full pl-12 pr-4 py-3 text-2xl font-black font-mono rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500/30 text-slate-900 bg-white"
+                    className="w-full pl-11 pr-3 py-2 text-xl font-bold font-mono rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-[#1c6856] text-slate-900 bg-white"
                   />
                 </div>
               </div>
 
               {/* Categoría */}
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                   Rubro / Categoría *
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5">
                   {categoryDefs.map((cat) => (
                     <button
                       type="button"
                       key={cat.value}
                       onClick={() => setCategory(cat.value)}
-                      className={`p-2 rounded-xl border text-left transition flex items-center gap-2 cursor-pointer ${
+                      className={`p-2 rounded-lg border text-left transition cursor-pointer text-xs ${
                         category === cat.value
-                          ? 'bg-rose-50 border-rose-400 text-rose-900 font-extrabold ring-2 ring-rose-400/20 shadow-xs'
-                          : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700 font-medium'
+                          ? 'bg-slate-900 text-white border-slate-900 font-semibold shadow-xs'
+                          : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'
                       }`}
                     >
-                      <span className="text-base">{cat.emoji}</span>
-                      <span className="text-[11px] truncate">{cat.label}</span>
+                      <span className="truncate block">{cat.label}</span>
                     </button>
                   ))}
                 </div>
@@ -2335,8 +2311,8 @@ export const PettyCashView: React.FC<Props> = ({
 
               {/* Concepto / Detalle */}
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">
-                  ¿Qué se compró? (Concepto / Detalle de la Compra) *
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                  Concepto / Detalle de la Compra *
                 </label>
                 <input
                   type="text"
@@ -2344,148 +2320,131 @@ export const PettyCashView: React.FC<Props> = ({
                   placeholder="Ej: Lomo de res, 10 bolsas de hielo, Verduras del mercado..."
                   value={vendor}
                   onChange={(e) => setVendor(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                  className="w-full px-3 py-2 text-xs font-semibold rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-[#1c6856]"
                 />
               </div>
 
-              {/* Forma de Pago - Selector Visual de 3 Métodos */}
+              {/* Forma de Pago */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  ¿Cómo se pagó esta compra? (Método de Pago) *
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Método de Pago *
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
                   <button
                     type="button"
                     onClick={() => setMethod('CASH')}
-                    className={`p-3 rounded-xl border text-left transition flex items-start gap-2.5 cursor-pointer ${
+                    className={`p-2.5 rounded-lg border text-left transition flex items-start gap-2 cursor-pointer ${
                       method === 'CASH'
-                        ? 'bg-rose-50 border-rose-500 text-rose-950 ring-2 ring-rose-500/20 shadow-xs'
+                        ? 'bg-emerald-50 border-emerald-500 text-emerald-950 ring-1 ring-emerald-500 shadow-2xs'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    <span className="text-xl">💵</span>
+                    <Banknote className="w-4 h-4 text-emerald-700 mt-0.5 shrink-0" />
                     <div>
-                      <div className="text-xs font-black text-slate-900">Efectivo</div>
-                      <div className="text-[10px] text-rose-700 font-bold mt-0.5">🔴 Resta gaveta física</div>
+                      <div className="text-xs font-bold text-slate-900">Efectivo</div>
+                      <div className="text-[10px] text-emerald-800 font-medium">Resta gaveta física</div>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setMethod('TRANSFER')}
-                    className={`p-3 rounded-xl border text-left transition flex items-start gap-2.5 cursor-pointer ${
+                    className={`p-2.5 rounded-lg border text-left transition flex items-start gap-2 cursor-pointer ${
                       method === 'TRANSFER'
-                        ? 'bg-sky-50 border-sky-500 text-sky-950 ring-2 ring-sky-500/20 shadow-xs'
+                        ? 'bg-sky-50 border-sky-500 text-sky-950 ring-1 ring-sky-500 shadow-2xs'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    <span className="text-xl">🏦</span>
+                    <Building2 className="w-4 h-4 text-sky-700 mt-0.5 shrink-0" />
                     <div>
-                      <div className="text-xs font-black text-slate-900">Transferencia</div>
-                      <div className="text-[10px] text-sky-700 font-bold mt-0.5">🟢 Banco (no toca gaveta)</div>
+                      <div className="text-xs font-bold text-slate-900">Transferencia</div>
+                      <div className="text-[10px] text-sky-800 font-medium">Cuenta bancaria</div>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setMethod('CARD')}
-                    className={`p-3 rounded-xl border text-left transition flex items-start gap-2.5 cursor-pointer ${
+                    className={`p-2.5 rounded-lg border text-left transition flex items-start gap-2 cursor-pointer ${
                       method === 'CARD'
-                        ? 'bg-purple-50 border-purple-500 text-purple-950 ring-2 ring-purple-500/20 shadow-xs'
+                        ? 'bg-purple-50 border-purple-500 text-purple-950 ring-1 ring-purple-500 shadow-2xs'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    <span className="text-xl">💳</span>
+                    <CreditCard className="w-4 h-4 text-purple-700 mt-0.5 shrink-0" />
                     <div>
-                      <div className="text-xs font-black text-slate-900">Tarjeta</div>
-                      <div className="text-[10px] text-purple-700 font-bold mt-0.5">🔵 POS/Banco (no toca gaveta)</div>
+                      <div className="text-xs font-bold text-slate-900">Tarjeta</div>
+                      <div className="text-[10px] text-purple-800 font-medium">POS / Tarjeta corporativa</div>
                     </div>
                   </button>
                 </div>
 
                 {/* Indicador de Impacto en Efectivo Físico */}
-                <div
-                  className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-between mb-3 ${
-                    method === 'CASH'
-                      ? 'bg-rose-50 border-rose-300 text-rose-900'
-                      : method === 'TRANSFER'
-                      ? 'bg-sky-50 border-sky-300 text-sky-900'
-                      : 'bg-purple-50 border-purple-300 text-purple-900'
-                  }`}
-                >
-                  <span className="flex items-center gap-1.5">
-                    {method === 'CASH' ? '🔴 Impacto en gaveta física:' : '🟢 Impacto en gaveta física:'}
+                <div className="p-2.5 rounded-lg border border-slate-200 bg-slate-50 text-xs flex items-center justify-between mb-2.5">
+                  <span className="text-slate-600 font-medium">
+                    Impacto en gaveta física:
                   </span>
-                  <span className="font-mono font-black text-sm">
-                    {method === 'CASH' ? `- C$ ${amount.toFixed(2)}` : 'C$ 0.00 (Pago electrónico / banco)'}
+                  <span className="font-mono font-bold text-xs text-slate-900">
+                    {method === 'CASH' ? `- C$ ${amount.toFixed(2)}` : 'C$ 0.00 (Pago bancario / electrónico)'}
                   </span>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">
-                    No. Factura / Recibo / Ref. Transf. / Voucher (Opcional)
+                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                    No. Factura / Recibo / Ref. Transf. (Opcional)
                   </label>
                   <input
                     type="text"
-                    placeholder={
-                      method === 'TRANSFER'
-                        ? 'Ej: Transf. #9482 o Factura #4821'
-                        : method === 'CARD'
-                        ? 'Ej: Voucher POS #8412 o Factura'
-                        : 'Ej: #4821'
-                    }
+                    placeholder="Ej: Transf. #9482 o Factura #4821"
                     value={receiptNumber}
                     onChange={(e) => setReceiptNumber(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 font-mono focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                    className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 font-mono focus:outline-none focus:ring-1 focus:ring-[#1c6856]"
                   />
                 </div>
               </div>
 
               {/* Selector de Recibo / Vale Impreso */}
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/90 space-y-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  ¿Necesitas comprobante / Vale A4 impreso?
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                  ¿Comprobante / Vale A4 impreso?
                 </label>
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setPrintVoucherOnSave(false)}
-                    className={`p-3 rounded-xl border text-left transition flex items-start gap-2.5 cursor-pointer ${
+                    className={`p-2.5 rounded-lg border text-left transition cursor-pointer ${
                       !printVoucherOnSave
-                        ? 'bg-white border-slate-400 text-slate-900 shadow-xs ring-2 ring-slate-400/20'
+                        ? 'bg-white border-slate-400 text-slate-900 shadow-2xs font-semibold'
                         : 'bg-white/60 border-slate-200 text-slate-500 hover:bg-white'
                     }`}
                   >
-                    <span className="text-lg">📄</span>
-                    <div>
-                      <div className="text-xs font-black">No imprimir recibo</div>
-                      <div className="text-[11px] text-slate-500 leading-tight">El proveedor ya trajo factura física</div>
-                    </div>
+                    <div className="text-xs font-bold">No imprimir recibo</div>
+                    <div className="text-[10px] text-slate-500">Proveedor con factura física</div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setPrintVoucherOnSave(true)}
-                    className={`p-3 rounded-xl border text-left transition flex items-start gap-2.5 cursor-pointer ${
+                    className={`p-2.5 rounded-lg border text-left transition flex items-start gap-1.5 cursor-pointer ${
                       printVoucherOnSave
-                        ? 'bg-rose-50 border-rose-400 text-rose-900 shadow-xs ring-2 ring-rose-400/20'
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-2xs font-semibold'
                         : 'bg-white/60 border-slate-200 text-slate-500 hover:bg-white'
                     }`}
                   >
-                    <Printer className={`w-4 h-4 mt-0.5 ${printVoucherOnSave ? 'text-rose-600' : 'text-slate-400'}`} />
+                    <Printer className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                     <div>
-                      <div className="text-xs font-black">🖨️ Sí, Imprimir Vale A4</div>
-                      <div className="text-[11px] text-slate-500 leading-tight">Para respaldo físico</div>
+                      <div className="text-xs font-bold">Imprimir Vale A4</div>
+                      <div className={`text-[10px] ${printVoucherOnSave ? 'text-slate-300' : 'text-slate-500'}`}>Respaldo físico</div>
                     </div>
                   </button>
                 </div>
               </div>
 
-              <div className="pt-2 flex items-center justify-between gap-2.5 border-t border-slate-100">
+              <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setModalType(null)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs cursor-pointer"
+                  className="px-3.5 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs cursor-pointer"
                 >
                   Cancelar
                 </button>
@@ -2495,27 +2454,19 @@ export const PettyCashView: React.FC<Props> = ({
                     type="submit"
                     disabled={isSubmitting}
                     onClick={() => setPrintVoucherOnSave(false)}
-                    className={`px-4 py-2.5 rounded-xl border text-xs font-bold transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                      !printVoucherOnSave
-                        ? 'bg-slate-800 text-white border-slate-800 hover:bg-slate-900'
-                        : 'border-slate-300 text-slate-700 hover:bg-slate-100'
-                    }`}
+                    className="px-3.5 py-2 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-800 text-xs font-semibold transition cursor-pointer disabled:opacity-50"
                   >
-                    {isSubmitting ? 'Guardando...' : 'Guardar sin Recibo'}
+                    {isSubmitting ? 'Guardando...' : 'Guardar'}
                   </button>
 
                   <button
                     type="submit"
                     disabled={isSubmitting}
                     onClick={() => setPrintVoucherOnSave(true)}
-                    className={`px-4 py-2.5 rounded-xl text-white font-extrabold text-xs shadow-md flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                      printVoucherOnSave
-                        ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/25 ring-2 ring-rose-600/30'
-                        : 'bg-slate-600 hover:bg-slate-700'
-                    }`}
+                    className="px-4 py-2 rounded-lg bg-[#1c6856] hover:bg-[#155344] text-white font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs disabled:opacity-50"
                   >
                     <Printer className="w-3.5 h-3.5" />
-                    <span>{isSubmitting ? 'Guardando...' : 'Guardar e Imprimir Vale A4'}</span>
+                    <span>{isSubmitting ? 'Guardando...' : 'Guardar e Imprimir Vale'}</span>
                   </button>
                 </div>
               </div>
@@ -2589,7 +2540,7 @@ export const PettyCashView: React.FC<Props> = ({
                     />
                     <div>
                       <span className="font-extrabold text-xs block">
-                        🏦 Deposito a caja chica
+                        Depósito a caja chica
                       </span>
                       <span className="text-[11px] text-slate-500 block mt-0.5">
                         Traspaso proveniente de Caja General.
@@ -2599,7 +2550,7 @@ export const PettyCashView: React.FC<Props> = ({
 
                   <label
                     onClick={() => setInflowSource('APORTE_JEFE')}
-                    className={`p-3.5 rounded-xl border flex items-start gap-3 cursor-pointer transition ${
+                    className={`p-3.5 rounded-lg border flex items-start gap-3 cursor-pointer transition ${
                       inflowSource === 'APORTE_JEFE'
                         ? 'bg-emerald-50 border-emerald-300 text-emerald-900 ring-2 ring-emerald-400/20'
                         : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'
@@ -2614,7 +2565,7 @@ export const PettyCashView: React.FC<Props> = ({
                     />
                     <div>
                       <span className="font-extrabold text-xs block">
-                        💵 Depositado en efectivo
+                        Depositado en efectivo
                       </span>
                       <span className="text-[11px] text-slate-500 block mt-0.5">
                         Aporte en efectivo del jefe.
@@ -2633,7 +2584,7 @@ export const PettyCashView: React.FC<Props> = ({
                   placeholder="Ej: Inyección de fondo para abastecimiento..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:border-[#1c6856]"
                 />
               </div>
 
@@ -2641,14 +2592,14 @@ export const PettyCashView: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setModalType(null)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs cursor-pointer"
+                  className="px-4 py-2.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md shadow-emerald-600/25 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2.5 rounded-lg bg-[#1c6856] hover:bg-[#155244] text-white font-bold text-xs shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'Guardando...' : 'Confirmar Fondeo'}
                 </button>
@@ -2661,10 +2612,10 @@ export const PettyCashView: React.FC<Props> = ({
       {/* 9. MODAL: CONFIRMAR ELIMINACIÓN DE MOVIMIENTO */}
       {txToDelete && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-2xl p-6 space-y-5">
+          <div className="bg-white rounded-xl max-w-md w-full border border-slate-200 shadow-2xl p-6 space-y-5">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center flex-shrink-0">
-                <Trash2 className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center flex-shrink-0">
+                <Trash2 className="w-5 h-5" />
               </div>
               <div>
                 <h3 className="text-lg font-black text-slate-900">
@@ -2676,11 +2627,11 @@ export const PettyCashView: React.FC<Props> = ({
               </div>
             </div>
 
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2 text-xs">
+            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 space-y-2 text-xs">
               <div className="flex justify-between items-center text-slate-500">
                 <span>Tipo de Registro:</span>
                 <span className="font-bold text-slate-800">
-                  {txToDelete.type === 'EXPENSE' ? '🛒 Compra / Gasto' : '📥 Fondeo / Ingreso'}
+                  {txToDelete.type === 'EXPENSE' ? 'Compra / Gasto' : 'Fondeo / Ingreso'}
                 </span>
               </div>
               <div className="flex justify-between items-center text-slate-500">
@@ -2703,12 +2654,12 @@ export const PettyCashView: React.FC<Props> = ({
               </div>
               <div className="flex justify-between items-center text-slate-500">
                 <span>Forma de Pago:</span>
-                <span className={`px-2 py-0.5 rounded-md font-bold text-[11px] ${
+                <span className={`px-2 py-0.5 rounded-md font-semibold text-[11px] ${
                   txToDelete.method === 'TRANSFER'
-                    ? 'bg-blue-100 text-blue-800'
-                    : 'bg-emerald-100 text-emerald-800'
+                    ? 'bg-sky-50 text-sky-800 border border-sky-200'
+                    : 'bg-slate-100 text-slate-700 border border-slate-200'
                 }`}>
-                  {txToDelete.method === 'TRANSFER' ? '🏦 Transferencia Bancaria' : '💵 Efectivo (Gaveta)'}
+                  {txToDelete.method === 'TRANSFER' ? 'Transferencia Bancaria' : 'Efectivo (Gaveta)'}
                 </span>
               </div>
               <div className="flex justify-between items-center text-slate-500">
@@ -2717,46 +2668,46 @@ export const PettyCashView: React.FC<Props> = ({
               </div>
             </div>
 
-            <div className={`p-3 rounded-xl border text-xs leading-relaxed ${
+            <div className={`p-3 rounded-lg border text-xs leading-relaxed ${
               txToDelete.type === 'EXPENSE'
                 ? txToDelete.method === 'TRANSFER'
-                  ? 'bg-blue-50 border-blue-200 text-blue-900'
+                  ? 'bg-sky-50 border-sky-200 text-sky-900'
                   : 'bg-emerald-50 border-emerald-200 text-emerald-800'
                 : 'bg-amber-50 border-amber-200 text-amber-800'
             }`}>
-              <div className="font-bold mb-0.5">ℹ️ Impacto en Gaveta de Caja Chica:</div>
+              <div className="font-semibold mb-0.5">Impacto en Gaveta de Caja Chica:</div>
               {txToDelete.type === 'EXPENSE' ? (
                 txToDelete.method === 'TRANSFER' ? (
                   <span>
-                    Esta compra fue pagada por <strong>Transferencia Bancaria</strong> (vía cuenta bancaria de la empresa). Al eliminarla, se quitará del historial de compras y reportes pero <strong>NO alterará el saldo físico de tu gaveta</strong> (no restaura efectivo).
+                    Esta compra fue pagada por <strong>Transferencia Bancaria</strong>. Al eliminarla, se removerá del historial pero <strong>no alterará el saldo físico de tu gaveta</strong>.
                   </span>
                 ) : (
                   <span>
-                    Al eliminar este gasto pagado en <strong>Efectivo</strong>, el monto de <strong>C$ {txToDelete.amount.toFixed(2)}</strong> será <strong>restaurado inmediatamente a tu saldo físico</strong> de gaveta.
+                    Al eliminar este gasto pagado en <strong>Efectivo</strong>, el monto de <strong>C$ {txToDelete.amount.toFixed(2)}</strong> se <strong>restaurará a tu saldo físico</strong> de gaveta.
                   </span>
                 )
               ) : (
                 <span>
-                  Al eliminar este ingreso/fondeo, el saldo de gaveta se <strong>reducirá en C$ {txToDelete.amount.toFixed(2)}</strong>.
+                  Al eliminar este fondeo, el saldo de gaveta se <strong>reducirá en C$ {txToDelete.amount.toFixed(2)}</strong>.
                 </span>
               )}
             </div>
 
-            <div className="pt-2 flex justify-end gap-2.5 border-t border-slate-100">
+            <div className="pt-2 flex justify-end gap-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setTxToDelete(null)}
-                className="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs cursor-pointer transition"
+                className="px-3.5 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs cursor-pointer transition"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={handleConfirmDeleteTx}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-md shadow-rose-600/20 flex items-center gap-1.5 cursor-pointer transition"
+                className="px-4 py-2 rounded-lg bg-rose-700 hover:bg-rose-800 text-white font-semibold text-xs flex items-center gap-1.5 cursor-pointer transition shadow-xs"
               >
-                <Trash2 className="w-4 h-4" />
-                <span>Sí, Eliminar Registro</span>
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Confirmar Eliminación</span>
               </button>
             </div>
           </div>
@@ -2765,37 +2716,37 @@ export const PettyCashView: React.FC<Props> = ({
 
       {/* 9.1 MODAL: EDITAR / MODIFICAR REGISTRO O GASTO */}
       {editingTx && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden animate-scaleUp">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-xl max-w-lg w-full border border-slate-200 shadow-xl overflow-hidden">
             {/* Header del Modal */}
-            <div className="px-6 py-5 bg-gradient-to-r from-blue-600 to-indigo-700 text-white flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner">
-                  <Edit2 className="w-5 h-5" />
+            <div className="px-5 py-4 bg-[#1c6856] text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center text-white">
+                  <Edit2 className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black tracking-tight">
+                  <h3 className="text-sm font-bold tracking-tight">
                     {editingTx.type === 'EXPENSE' ? 'Editar Gasto / Compra' : 'Editar Fondeo / Ingreso'}
                   </h3>
-                  <p className="text-[11px] text-blue-100 font-medium">
+                  <p className="text-[11px] text-emerald-100 font-medium">
                     Modifica los datos sin necesidad de borrar y reescribir
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setEditingTx(null)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-sm font-bold transition cursor-pointer"
+                className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-xs font-bold transition cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             {/* Formulario de Edición */}
-            <form onSubmit={handleSaveEditTx} className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleSaveEditTx} className="p-5 space-y-3.5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* Concepto / Proveedor */}
                 <div className="md:col-span-2 space-y-1">
-                  <label className="text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                  <label className="text-[11px] font-semibold uppercase text-slate-600 tracking-wider">
                     {editingTx.type === 'EXPENSE' ? 'Concepto o Proveedor *' : 'Descripción / Origen *'}
                   </label>
                   <input
@@ -2804,17 +2755,17 @@ export const PettyCashView: React.FC<Props> = ({
                     value={editVendor}
                     onChange={(e) => setEditVendor(e.target.value)}
                     placeholder="Ej: Carnicería San Martín, Hielo..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#1c6856]"
                   />
                 </div>
 
                 {/* Monto en Córdobas */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                  <label className="text-[11px] font-semibold uppercase text-slate-600 tracking-wider">
                     Monto (C$) *
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3.5 top-2.5 text-xs font-black text-slate-400">C$</span>
+                    <span className="absolute left-3 top-2 text-xs font-bold text-slate-400">C$</span>
                     <input
                       type="number"
                       step="0.01"
@@ -2823,14 +2774,14 @@ export const PettyCashView: React.FC<Props> = ({
                       value={editAmount}
                       onChange={(e) => setEditAmount(e.target.value)}
                       placeholder="0.00"
-                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm font-black font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                      className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold font-mono text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#1c6856]"
                     />
                   </div>
                 </div>
 
                 {/* Fecha Comercial */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                  <label className="text-[11px] font-semibold uppercase text-slate-600 tracking-wider">
                     Fecha del Registro *
                   </label>
                   <input
@@ -2838,24 +2789,24 @@ export const PettyCashView: React.FC<Props> = ({
                     required
                     value={editDate}
                     onChange={(e) => setEditDate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#1c6856]"
                   />
                 </div>
 
                 {/* Categoría (solo para gastos) */}
                 {editingTx.type === 'EXPENSE' && (
                   <div className="space-y-1">
-                    <label className="text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                    <label className="text-[11px] font-semibold uppercase text-slate-600 tracking-wider">
                       Categoría del Gasto *
                     </label>
                     <select
                       value={editCategory}
                       onChange={(e) => setEditCategory(e.target.value as ExpenseCategory)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white"
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#1c6856] bg-white"
                     >
                       {categoryDefs.map((cat) => (
                         <option key={cat.value} value={cat.value}>
-                          {cat.emoji} {cat.label}
+                          {cat.label}
                         </option>
                       ))}
                     </select>
@@ -2864,38 +2815,40 @@ export const PettyCashView: React.FC<Props> = ({
 
                 {/* Método de Pago */}
                 <div className={editingTx.type === 'EXPENSE' ? 'space-y-1' : 'md:col-span-2 space-y-1'}>
-                  <label className="text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                  <label className="text-[11px] font-semibold uppercase text-slate-600 tracking-wider">
                     Método de Pago *
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => setEditMethod('CASH')}
-                      className={`px-3 py-2 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition flex items-center justify-center gap-1.5 cursor-pointer ${
                         editMethod === 'CASH'
-                          ? 'bg-emerald-500 text-white border-emerald-600 shadow-xs'
-                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                       }`}
                     >
-                      <span>💵</span> Efectivo
+                      <Banknote className="w-3.5 h-3.5" />
+                      <span>Efectivo</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setEditMethod('TRANSFER')}
-                      className={`px-3 py-2 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition flex items-center justify-center gap-1.5 cursor-pointer ${
                         editMethod === 'TRANSFER'
-                          ? 'bg-blue-600 text-white border-blue-700 shadow-xs'
-                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          ? 'bg-sky-700 text-white border-sky-800 shadow-2xs'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                       }`}
                     >
-                      <span>🏦</span> Transferencia
+                      <Building2 className="w-3.5 h-3.5" />
+                      <span>Transferencia</span>
                     </button>
                   </div>
                 </div>
 
                 {/* N° Comprobante */}
                 <div className="md:col-span-2 space-y-1">
-                  <label className="text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                  <label className="text-[11px] font-semibold uppercase text-slate-600 tracking-wider">
                     N° Factura / Comprobante (Opcional)
                   </label>
                   <input
@@ -2903,13 +2856,13 @@ export const PettyCashView: React.FC<Props> = ({
                     value={editReceiptNumber}
                     onChange={(e) => setEditReceiptNumber(e.target.value)}
                     placeholder="Ej: FAC-0492 o N° Referencia"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#1c6856]"
                   />
                 </div>
 
                 {/* Notas / Observaciones */}
                 <div className="md:col-span-2 space-y-1">
-                  <label className="text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                  <label className="text-[11px] font-semibold uppercase text-slate-600 tracking-wider">
                     Notas / Justificación
                   </label>
                   <textarea
@@ -2917,30 +2870,30 @@ export const PettyCashView: React.FC<Props> = ({
                     value={editNotes}
                     onChange={(e) => setEditNotes(e.target.value)}
                     placeholder="Detalles adicionales sobre este movimiento..."
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#1c6856] resize-none"
                   />
                 </div>
               </div>
 
               {/* Impacto informativo en gaveta */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-[11px] text-slate-600 leading-relaxed">
-                ℹ️ <strong>Impacto automático:</strong> Si cambias el monto o la forma de pago (Efectivo vs Transferencia), el saldo de la gaveta activa se recalculará instantáneamente y se actualizará en la nube.
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-[11px] text-slate-600 leading-relaxed">
+                <strong>Impacto automático:</strong> Si cambias el monto o la forma de pago (Efectivo vs Transferencia), el saldo de la gaveta se recalculará instantáneamente.
               </div>
 
               {/* Botones de acción */}
-              <div className="pt-2 flex justify-end gap-2.5 border-t border-slate-100">
+              <div className="pt-2 flex justify-end gap-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setEditingTx(null)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs cursor-pointer transition"
+                  className="px-3.5 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs cursor-pointer transition"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs shadow-md shadow-blue-600/25 flex items-center gap-1.5 cursor-pointer transition"
+                  className="px-4 py-1.5 rounded-lg bg-[#1c6856] hover:bg-[#155344] text-white font-semibold text-xs flex items-center gap-1.5 cursor-pointer transition shadow-xs"
                 >
-                  <Edit2 className="w-4 h-4" />
+                  <Edit2 className="w-3.5 h-3.5" />
                   <span>Guardar Cambios</span>
                 </button>
               </div>

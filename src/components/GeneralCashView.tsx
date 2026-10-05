@@ -350,26 +350,28 @@ export const GeneralCashView: React.FC<Props> = ({
   return (
     <div className="space-y-6">
       {/* Header Principal */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/25">
-            <Landmark className="w-6 h-6" />
+      <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-[#1c6856] text-white flex items-center justify-center shrink-0">
+            <Landmark className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-              Caja General
-              <span className="text-xs px-3 py-1 rounded-full font-bold bg-amber-50 text-amber-800 border border-amber-200">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+                Caja General
+              </h1>
+              <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                 Ventas & Gaveta
               </span>
-            </h1>
-            <p className="text-sm text-slate-500 font-medium">
-              Control del fondo para vueltos, cobros en efectivo y conciliación de datáfonos / PedidosYa.
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Control de fondo de caja, cobros en efectivo y conciliación de tarjetas y PedidosYa.
             </p>
           </div>
         </div>
 
         {/* Indicador de Tasa de Cambio */}
-        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600">
           <span>Tasa de Cambio:</span>
           <span className="font-mono font-bold text-slate-900">
             C$ {currentShift?.exchangeRate?.toFixed(2) || state.defaultExchangeRate.toFixed(2)}
@@ -377,52 +379,52 @@ export const GeneralCashView: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Alerta de Cierre Pendiente de Jornada Anterior (Punto 2) */}
+      {/* Alerta de Cierre Pendiente de Jornada Anterior */}
       {isShiftOpen && currentShift && currentShift.date < todayStr && (
-        <div className="bg-amber-500/10 border-2 border-amber-500/40 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shrink-0 shadow-md shadow-amber-500/20">
-              <AlertTriangle className="w-6 h-6" />
+            <div className="w-9 h-9 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold shrink-0">
+              <AlertTriangle className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-black text-amber-950 flex items-center gap-2">
-                <span>Control de Jornada: Turno Anterior Pendiente de Liquidación</span>
-                <span className="px-2 py-0.5 rounded text-[10px] bg-amber-200 text-amber-900 font-bold uppercase">
+              <h4 className="text-xs font-bold text-amber-950 flex items-center gap-2">
+                <span>Turno Anterior Pendiente de Liquidación: {currentShift.date}</span>
+                <span className="px-1.5 py-0.2 rounded text-[10px] bg-amber-200 text-amber-900 font-semibold uppercase">
                   Acción Requerida
                 </span>
               </h4>
-              <p className="text-xs text-amber-800 mt-0.5">
-                El turno de Caja General de la fecha <strong>{currentShift.date}</strong> aún permanece abierto. Por normativa contable, debe liquidar y cerrar este turno antes de registrar una nueva apertura.
+              <p className="text-amber-800 mt-0.5">
+                El turno del <strong>{currentShift.date}</strong> permanece abierto. Debe liquidarse antes de abrir una nueva jornada.
               </p>
             </div>
           </div>
 
           <button
             onClick={onCloseShiftClick}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition cursor-pointer shrink-0"
+            className="w-full sm:w-auto px-4 py-2 rounded-lg bg-amber-700 hover:bg-amber-800 text-white font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer shrink-0"
           >
             <Lock className="w-4 h-4" />
-            <span>Proceder al Cierre del {currentShift.date}</span>
+            <span>Proceder al Cierre {currentShift.date}</span>
           </button>
         </div>
       )}
 
       {/* Tarjeta de Estado de Turno Actual */}
       {isShiftOpen ? (
-        <div className="bg-gradient-to-br from-emerald-50/80 via-white to-white rounded-2xl p-7 border border-emerald-200/90 shadow-sm space-y-6 animate-in fade-in duration-150">
+        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-2xs space-y-4">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="space-y-1">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider">
-                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
                 Turno de Ventas Abierto
               </div>
-              <h2 className="text-xl font-extrabold text-slate-900 mt-1">
+              <h2 className="text-base font-bold text-slate-900 mt-1">
                 Gaveta Operativa Activa
               </h2>
-              <p className="text-xs text-slate-600 flex items-center gap-2 flex-wrap">
+              <p className="text-xs text-slate-500 flex items-center gap-2 flex-wrap">
                 <span className="flex items-center gap-1">
                   <User className="w-3.5 h-3.5 text-slate-400" />
-                  Abierto por <strong className="text-slate-800 font-bold">{currentShift.openedBy}</strong>
+                  Abierto por <strong className="text-slate-700 font-semibold">{currentShift.openedBy}</strong>
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
@@ -438,23 +440,23 @@ export const GeneralCashView: React.FC<Props> = ({
             </div>
 
             {/* Acciones del Turno Abierto */}
-            <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => {
                   setTransferAmount(0);
                   setTransferNotes('');
                   setTransferModalOpen(true);
                 }}
-                className="px-3.5 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
+                className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
                 title="Traspasar dinero en efectivo de las ventas a Caja Chica"
               >
-                <ArrowRightLeft className="w-3.5 h-3.5 text-emerald-600" />
+                <ArrowRightLeft className="w-3.5 h-3.5 text-[#1c6856]" />
                 <span>Traspaso a Caja Chica</span>
               </button>
 
               <button
                 onClick={handleOpenAdjustOpening}
-                className="px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
+                className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
                 title="Corregir billetes o tasa con que se abrió la caja"
               >
                 <Edit3 className="w-3.5 h-3.5 text-slate-500" />
@@ -463,7 +465,7 @@ export const GeneralCashView: React.FC<Props> = ({
 
               <button
                 onClick={() => printThermalOpeningTicket(currentShift)}
-                className="px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
+                className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
                 title="Imprimir comprobante de apertura en tique térmico (80mm)"
               >
                 <Printer className="w-3.5 h-3.5 text-slate-500" />
@@ -472,51 +474,51 @@ export const GeneralCashView: React.FC<Props> = ({
 
               <button
                 onClick={() => printOfficialOpeningActBN(currentShift, state.activeAdminName)}
-                className="px-3.5 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-[#1c6856] font-bold text-xs flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
+                className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-black text-white font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
                 title="Imprimir Acta Oficial de Apertura en B/N (Láser / A4)"
               >
-                <Printer className="w-3.5 h-3.5 text-[#1c6856]" />
+                <Printer className="w-3.5 h-3.5 text-amber-400" />
                 <span>Acta Apertura (B/N)</span>
               </button>
 
               {onCancelOpenShift && (
                 <button
                   onClick={onCancelOpenShift}
-                  className="px-3.5 py-2.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer"
                   title="Cancelar turno si se abrió por error"
                 >
-                  <X className="w-3.5 h-3.5 text-rose-600" />
+                  <X className="w-3.5 h-3.5 text-slate-500" />
                   <span>Cancelar Turno</span>
                 </button>
               )}
 
               <button
                 onClick={onCloseShiftClick}
-                className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-extrabold text-sm flex items-center gap-2 transition shadow-md shadow-amber-500/25 cursor-pointer"
+                className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs flex items-center gap-2 transition cursor-pointer shadow-xs"
               >
-                <Lock className="w-4 h-4" />
+                <Lock className="w-3.5 h-3.5" />
                 <span>Cerrar Turno (Noche)</span>
               </button>
             </div>
           </div>
 
-          {/* Desglose del Fondo Inicial de Gaveta */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
-            <div className="bg-white rounded-xl p-4 border border-emerald-100 shadow-sm">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          {/* Desglose del Fondo Inicial de Gaveta (Unified Financial KPI Bar) */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-2xs divide-y sm:divide-y-0 sm:divide-x divide-slate-100 grid grid-cols-1 sm:grid-cols-3">
+            <div className="p-4 space-y-1">
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">
                 Fondo Córdobas (C$)
               </span>
-              <div className="text-2xl font-black text-slate-900 font-mono mt-1">
+              <div className="text-xl font-bold text-slate-900 font-mono">
                 C$ {currentShift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
               </div>
               <span className="text-[11px] text-slate-400">Efectivo físico para vueltos</span>
             </div>
 
-            <div className="bg-white rounded-xl p-4 border border-emerald-100 shadow-sm">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="p-4 space-y-1">
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">
                 Fondo Dólares (USD)
               </span>
-              <div className="text-2xl font-black text-emerald-700 font-mono mt-1">
+              <div className="text-xl font-bold text-[#1c6856] font-mono">
                 $ {currentShift.totalOpeningUSD.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
               <span className="text-[11px] text-slate-400">
@@ -524,90 +526,89 @@ export const GeneralCashView: React.FC<Props> = ({
               </span>
             </div>
 
-            <div className="bg-white rounded-xl p-4 border border-emerald-100 shadow-sm">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="p-4 space-y-1 bg-slate-50/70 sm:rounded-r-xl">
+              <span className="text-[10px] font-semibold text-[#1c6856] uppercase tracking-wider block">
                 Total Fondo Equivalente
               </span>
-              <div className="text-2xl font-black text-emerald-800 font-mono mt-1">
+              <div className="text-xl font-bold text-[#1c6856] font-mono">
                 C$ {currentShift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
               </div>
-              <span className="text-[11px] text-slate-400">C$ + USD convertidos</span>
+              <span className="text-[11px] text-slate-500">C$ + USD convertidos</span>
             </div>
-
-            {Boolean(currentShift.transferToPettyCash && currentShift.transferToPettyCash > 0) && (
-              <div className="bg-white rounded-xl p-4 border border-rose-200 shadow-sm sm:col-span-3 flex items-center justify-between flex-wrap gap-2">
-                <div>
-                  <span className="text-xs font-bold text-rose-700 uppercase tracking-wider block">
-                    Traspasos Entregados a Caja Chica (Salidas de Gaveta)
-                  </span>
-                  <div className="text-xl font-black text-rose-700 font-mono mt-0.5">
-                    - C$ {currentShift.transferToPettyCash?.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
-                  </div>
-                </div>
-                <span className="text-[11px] text-slate-500">
-                  Deducido del arqueo nocturno para cuadre exacto de efectivo.
-                </span>
-              </div>
-            )}
           </div>
+
+          {Boolean(currentShift.transferToPettyCash && currentShift.transferToPettyCash > 0) && (
+            <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 flex items-center justify-between flex-wrap gap-2 text-xs">
+              <div>
+                <span className="font-semibold text-slate-700 block">
+                  Traspasos entregados a Caja Chica (Salidas de Gaveta):
+                </span>
+                <div className="text-base font-bold text-rose-700 font-mono mt-0.5">
+                  - C$ {currentShift.transferToPettyCash?.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                </div>
+              </div>
+              <span className="text-[11px] text-slate-500">
+                Deducido del arqueo nocturno para cuadre exacto de efectivo.
+              </span>
+            </div>
+          )}
         </div>
       ) : (
-        <div className="bg-white rounded-2xl p-7 border border-slate-200/90 shadow-sm space-y-6">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-2xs space-y-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center border border-slate-200 shadow-xs">
-                <Lock className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center border border-slate-200 shrink-0">
+                <Lock className="w-5 h-5" />
               </div>
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold uppercase tracking-wider">
-                  <span>🔒</span>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold uppercase tracking-wider">
                   {lastClosedShift ? `Jornada Cerrada • ${lastClosedShift.date}` : 'Caja General Cerrada'}
                 </div>
-                <h2 className="text-xl font-extrabold text-slate-900 mt-1">
+                <h2 className="text-base font-bold text-slate-900 mt-1">
                   {lastClosedShift ? 'Gaveta Cuadrada y Liquidada' : 'No Hay Turno Activo'}
                 </h2>
                 {lastClosedShift && (
                   <p className="text-xs text-slate-500">
-                    Cierre realizado por <strong className="text-slate-800">{lastClosedShift.closedBy}</strong>{' '}
+                    Cierre realizado por <strong className="text-slate-700">{lastClosedShift.closedBy}</strong>{' '}
                     {lastClosedShift.closedAt && `a las ${new Date(lastClosedShift.closedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
               {lastClosedShift && (
                 <>
                   <button
                     onClick={() => printThermalClosingTicket(lastClosedShift)}
-                    className="px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
                     title="Reimprimir ticket de cierre"
                   >
-                    <Printer className="w-4 h-4 text-slate-500" />
+                    <Printer className="w-3.5 h-3.5 text-slate-500" />
                     <span>Ticket Cierre</span>
                   </button>
                   <button
                     onClick={() => setSelectedShiftForActa(lastClosedShift)}
-                    className="px-3.5 py-2.5 rounded-xl border border-slate-900 bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer active:scale-95"
+                    className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-black text-white font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer"
                     title="Imprimir Acta Oficial B/N de Cierre (1 o 2 Hojas)"
                   >
-                    <Printer className="w-4 h-4 text-emerald-400" />
+                    <Printer className="w-3.5 h-3.5 text-amber-400" />
                     <span>Acta B/N</span>
                   </button>
                   <button
                     onClick={() => exportShiftToExcel(lastClosedShift, state)}
-                    className="px-3.5 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer"
                     title="Exportar cierre a Excel"
                   >
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Excel</span>
                   </button>
                   <button
                     onClick={() => handleOpenEditClosing(lastClosedShift)}
-                    className="px-3.5 py-2.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer"
                     title="Corregir datos de ventas o cuadre de este cierre"
                   >
-                    <Edit3 className="w-4 h-4 text-amber-700" />
+                    <Edit3 className="w-3.5 h-3.5 text-amber-700" />
                     <span>Corregir Cierre</span>
                   </button>
                 </>
@@ -615,7 +616,7 @@ export const GeneralCashView: React.FC<Props> = ({
 
               <button
                 onClick={onOpenShiftClick}
-                className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-black text-xs flex items-center gap-2 transition shadow-lg shadow-emerald-600/25 cursor-pointer"
+                className="px-4 py-2 rounded-lg bg-[#1c6856] hover:bg-[#155344] text-white font-semibold text-xs flex items-center gap-2 transition cursor-pointer shadow-xs"
               >
                 <Unlock className="w-4 h-4" />
                 <span>Abrir Turno de la Nueva Jornada</span>
@@ -624,64 +625,66 @@ export const GeneralCashView: React.FC<Props> = ({
           </div>
 
           {lastClosedShift ? (
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/80">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs divide-y sm:divide-y-0 sm:divide-x divide-slate-100 grid grid-cols-1 sm:grid-cols-4">
+              <div className="p-4 space-y-1">
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">
                   Ventas Brutas del Día
                 </span>
-                <div className="text-xl font-black text-slate-900 font-mono mt-1">
+                <div className="text-xl font-bold text-slate-900 font-mono">
                   C$ {(lastClosedShift.totalGrossSales || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                 </div>
-                <span className="text-[11px] text-slate-500">Efectivo + Tarjetas + PedidosYa</span>
+                <span className="text-[11px] text-slate-400">Efectivo + Tarjetas + PedidosYa</span>
               </div>
 
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/80">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              <div className="p-4 space-y-1">
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">
                   Efectivo Físico en Gaveta
                 </span>
-                <div className="text-xl font-black text-slate-900 font-mono mt-1">
+                <div className="text-xl font-bold text-slate-900 font-mono">
                   C$ {(lastClosedShift.totalClosingNIO || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                   {lastClosedShift.totalClosingUSD ? (
-                    <span className="text-emerald-700 text-sm ml-1">+${lastClosedShift.totalClosingUSD}</span>
+                    <span className="text-[#1c6856] text-xs ml-1">+${lastClosedShift.totalClosingUSD}</span>
                   ) : null}
                 </div>
-                <span className="text-[11px] text-slate-500">Pasa como fondo para el siguiente turno</span>
+                <span className="text-[11px] text-slate-400">Fondo remanente al cerrar</span>
               </div>
 
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/80">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              <div className="p-4 space-y-1">
+                <span className="text-[10px] font-semibold text-[#1c6856] uppercase tracking-wider block">
                   Utilidad Neta de la Jornada
                 </span>
-                <div className="text-xl font-black text-emerald-700 font-mono mt-1">
+                <div className="text-xl font-bold text-[#1c6856] font-mono">
                   C$ {(lastClosedShift.dailyNetProfit || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                 </div>
-                <span className="text-[11px] text-slate-500">Ventas Brutas − Gastos Insumos</span>
+                <span className="text-[11px] text-slate-400">Ventas Brutas − Gastos Insumos</span>
               </div>
 
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/80 flex flex-col justify-between">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Diagnóstico de Cuadre
-                </span>
-                <div className="mt-1">
-                  {lastClosedShift.auditStatus === 'SQUARED' ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      Cuadrado Exacto
-                    </span>
-                  ) : lastClosedShift.auditStatus === 'SHORTAGE' ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-800 border border-rose-300 font-mono">
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                      Faltante C$ {Math.abs(lastClosedShift.differenceNIO || 0).toFixed(2)}
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-blue-100 text-blue-800 border border-blue-300 font-mono">
-                      + C$ {lastClosedShift.differenceNIO?.toFixed(2)}
-                    </span>
-                  )}
+              <div className="p-4 space-y-1 bg-slate-50/70 sm:rounded-r-xl flex flex-col justify-between">
+                <div>
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">
+                    Diagnóstico de Cuadre
+                  </span>
+                  <div className="mt-1">
+                    {lastClosedShift.auditStatus === 'SQUARED' ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        Cuadrado Exacto
+                      </span>
+                    ) : lastClosedShift.auditStatus === 'SHORTAGE' ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 font-mono">
+                        <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                        Faltante C$ {Math.abs(lastClosedShift.differenceNIO || 0).toFixed(2)}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-200 font-mono">
+                        + C$ {lastClosedShift.differenceNIO?.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <button
                   onClick={() => setSelectedShiftDetails(lastClosedShift)}
-                  className="text-[11px] font-bold text-amber-700 hover:text-amber-800 underline text-left mt-2 cursor-pointer"
+                  className="text-[11px] font-semibold text-[#1c6856] hover:underline text-left mt-2 cursor-pointer"
                 >
                   Ver arqueo completo →
                 </button>
@@ -836,7 +839,7 @@ export const GeneralCashView: React.FC<Props> = ({
       {/* Modal de Detalle de Cierre Seleccionado */}
       {selectedShiftDetails && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in zoom-in-95 duration-150 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-2xl w-full border border-slate-200 shadow-2xl overflow-y-auto max-h-[90vh] p-6 space-y-5 my-8">
+          <div className="bg-white rounded-xl max-w-2xl w-full border border-slate-200 shadow-2xl overflow-y-auto max-h-[90vh] p-6 space-y-5 my-8">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
                 <h3 className="text-lg font-black text-slate-900">
@@ -848,7 +851,7 @@ export const GeneralCashView: React.FC<Props> = ({
               </div>
               <button
                 onClick={() => setSelectedShiftDetails(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer"
               >
                 ✕
               </button>
@@ -952,11 +955,11 @@ export const GeneralCashView: React.FC<Props> = ({
       {/* Modal para Editar / Corregir Cierre */}
       {editingShift && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in zoom-in-95 duration-150 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-xl w-full border border-slate-200 shadow-2xl p-6 space-y-4 my-8">
+          <div className="bg-white rounded-xl max-w-xl w-full border border-slate-200 shadow-2xl p-6 space-y-4 my-8">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-amber-100 text-amber-900">
-                  <Edit3 className="w-5 h-5 text-amber-800" />
+                <div className="p-2 rounded-lg bg-emerald-50 text-[#1c6856] border border-emerald-200">
+                  <Edit3 className="w-5 h-5 text-[#1c6856]" />
                 </div>
                 <div>
                   <h3 className="text-base font-black text-slate-900">
@@ -969,7 +972,7 @@ export const GeneralCashView: React.FC<Props> = ({
               </div>
               <button
                 onClick={() => setEditingShift(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer"
               >
                 ✕
               </button>
@@ -1097,7 +1100,7 @@ export const GeneralCashView: React.FC<Props> = ({
       {/* Modal para Ajustar Fondo de Apertura del Turno Activo */}
       {adjustingOpeningShift && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in zoom-in-95 duration-150 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-2xl w-full border border-slate-200 shadow-2xl p-6 space-y-4 my-8">
+          <div className="bg-white rounded-xl max-w-2xl w-full border border-slate-200 shadow-2xl p-6 space-y-4 my-8">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
                 <h3 className="text-base font-black text-slate-900">
@@ -1109,7 +1112,7 @@ export const GeneralCashView: React.FC<Props> = ({
               </div>
               <button
                 onClick={() => setAdjustingOpeningShift(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer"
               >
                 ✕
               </button>
@@ -1132,14 +1135,14 @@ export const GeneralCashView: React.FC<Props> = ({
                 value={adjNotes}
                 onChange={(e) => setAdjNotes(e.target.value)}
                 placeholder="Ej: Se corrigió conteo inicial de monedas..."
-                className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs"
+                className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-xs"
               />
             </div>
 
             <div className="flex justify-between items-center pt-3 border-t border-slate-100">
               <div className="text-xs">
                 <span className="text-slate-500">Nuevo Fondo: </span>
-                <strong className="font-mono font-black text-emerald-700 text-base">
+                <strong className="font-mono font-black text-[#1c6856] text-base">
                   C$ {(calculateTotalNIO(adjOpeningNIO) + calculateTotalUSD(adjOpeningUSD) * adjExchangeRate).toFixed(2)}
                 </strong>
               </div>
@@ -1147,14 +1150,14 @@ export const GeneralCashView: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setAdjustingOpeningShift(null)}
-                  className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  className="px-4 py-2 rounded-lg border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
                   onClick={handleSaveAdjustOpening}
-                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  className="px-5 py-2 rounded-lg bg-[#1c6856] hover:bg-[#155244] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <Save className="w-4 h-4" />
                   <span>Guardar Nuevo Fondo</span>
@@ -1168,10 +1171,10 @@ export const GeneralCashView: React.FC<Props> = ({
       {/* Modal para Registrar Traspaso a Caja Chica (Punto 1) */}
       {transferModalOpen && currentShift && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in zoom-in-95 duration-150">
-          <div className="bg-white rounded-3xl max-w-md w-full border border-slate-200 shadow-2xl p-6 space-y-4">
+          <div className="bg-white rounded-xl max-w-md w-full border border-slate-200 shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-600/20">
+                <div className="w-10 h-10 rounded-lg bg-[#1c6856] text-white flex items-center justify-center font-bold shadow-sm">
                   <ArrowRightLeft className="w-5 h-5" />
                 </div>
                 <div>
@@ -1185,7 +1188,7 @@ export const GeneralCashView: React.FC<Props> = ({
               </div>
               <button
                 onClick={() => setTransferModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer"
               >
                 ✕
               </button>
@@ -1224,12 +1227,12 @@ export const GeneralCashView: React.FC<Props> = ({
                   placeholder="Ej: Para compra de verduras y carnes..."
                   value={transferNotes}
                   onChange={(e) => setTransferNotes(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 text-slate-900"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:border-[#1c6856] text-slate-900"
                 />
               </div>
 
-              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs">
-                <span className="font-bold block mb-0.5">📌 Registro Contable Doble:</span>
+              <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-xs">
+                <span className="font-bold block mb-0.5 text-slate-900">Registro Contable Doble:</span>
                 <span>
                   Al confirmar, se registrará una salida en Caja General (deducida del cuadre nocturno) y un ingreso equivalente en la Caja Chica del día.
                 </span>
@@ -1239,14 +1242,14 @@ export const GeneralCashView: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setTransferModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  className="px-4 py-2.5 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={transferAmount <= 0}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 text-white text-xs font-black flex items-center gap-1.5 shadow-md shadow-emerald-600/20 cursor-pointer"
+                  className="px-5 py-2.5 rounded-lg bg-[#1c6856] hover:bg-[#155244] disabled:opacity-50 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer"
                 >
                   <ArrowRightLeft className="w-4 h-4" />
                   <span>Confirmar Traspaso C$ {transferAmount.toFixed(2)}</span>

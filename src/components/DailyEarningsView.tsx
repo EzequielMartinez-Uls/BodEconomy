@@ -551,29 +551,29 @@ export const DailyEarningsView: React.FC<Props> = ({
           {/* Botón Exportar Día a Excel */}
           <button
             onClick={() => exportDailyEarningsToExcel(activeDaySummary, state)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-black transition shadow-xs cursor-pointer border border-emerald-500 active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition cursor-pointer shadow-xs"
             title="Descargar Estado de Resultados y Auditoría de este día en Excel"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-white" />
-            <span>📊 EXCEL DÍA</span>
+            <span>Excel Día</span>
           </button>
 
           {/* Botón Imprimir Acta B/N */}
           <button
             onClick={() => setShowPrintActaModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-black transition shadow-xs cursor-pointer border border-slate-800 active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white text-xs font-semibold transition cursor-pointer shadow-xs"
             title="Imprimir Acta Oficial en Blanco y Negro (1 o 2 Hojas)"
           >
             <Printer className="w-3.5 h-3.5 text-amber-400" />
-            <span>🖨️ IMPRIMIR DÍA</span>
+            <span>Imprimir Acta (B/N)</span>
           </button>
         </div>
       </div>
 
       {/* 2. Banner de Información del Día Seleccionado con Navegación ◀ ▶ */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-slate-900 rounded-xl p-4 text-white shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-indigo-300 text-xs font-bold uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-2 text-slate-300 text-xs font-semibold uppercase tracking-wider mb-1">
             <CalendarDays className="w-4 h-4 text-amber-400" />
             <span>Jornada Seleccionada</span>
             <span>•</span>
@@ -581,10 +581,10 @@ export const DailyEarningsView: React.FC<Props> = ({
               onClick={() => {
                 if (onNavigateToTab) onNavigateToTab('generalCash');
               }}
-              className="px-2 py-0.5 rounded-full bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-200 border border-indigo-400/30 text-[10px] cursor-pointer transition"
+              className="px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20 text-slate-200 border border-white/20 text-[10px] cursor-pointer transition"
               title="Haga clic para ir a Caja General"
             >
-              {activeDaySummary.status === 'OPEN' ? '🟢 Turno En Curso' : '🔒 Turno Cerrado'}
+              {activeDaySummary.status === 'OPEN' ? 'Turno En Curso' : 'Turno Cerrado'}
             </button>
           </div>
 
@@ -592,13 +592,13 @@ export const DailyEarningsView: React.FC<Props> = ({
             {/* Flecha Día Anterior */}
             <button
               onClick={handlePrevDay}
-              className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer"
+              className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer"
               title="Ir al día anterior"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
 
-            <div className="text-xl sm:text-2xl font-black text-white tracking-tight capitalize">
+            <div className="text-xl sm:text-2xl font-bold text-white tracking-tight capitalize">
               {new Date(selectedDate + 'T12:00:00').toLocaleDateString('es-NI', {
                 weekday: 'long',
                 day: 'numeric',
@@ -610,14 +610,14 @@ export const DailyEarningsView: React.FC<Props> = ({
             {/* Flecha Día Siguiente */}
             <button
               onClick={handleNextDay}
-              className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer"
+              className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer"
               title="Ir al día siguiente"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="text-xs text-slate-300 mt-1 flex items-center gap-2">
+          <div className="text-xs text-slate-400 mt-1 flex items-center gap-2">
             <span>
               Responsable: <strong className="text-white">{activeDaySummary.responsible}</strong>
             </span>
@@ -626,7 +626,7 @@ export const DailyEarningsView: React.FC<Props> = ({
                 <span>•</span>
                 <span>
                   Propinas Recaudadas:{' '}
-                  <strong className="text-amber-300 font-mono">
+                  <strong className="text-amber-400 font-mono">
                     C$ {activeDaySummary.tipsCollected.toFixed(2)}
                   </strong>
                 </span>
@@ -638,153 +638,150 @@ export const DailyEarningsView: React.FC<Props> = ({
         {/* Resumen Compacto de Ganancia Neta — Clickable */}
         <button
           onClick={() => setActiveModal('NET')}
-          className="flex items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/15 transition text-left cursor-pointer group"
+          className="flex items-center gap-3 bg-white/10 hover:bg-white/15 px-4 py-2.5 rounded-xl border border-white/10 transition text-left cursor-pointer"
           title="Haga clic para ver el desglose financiero de ganancia neta"
         >
           <div>
-            <div className="text-[10px] font-bold text-indigo-200 uppercase tracking-wider flex items-center gap-1">
+            <div className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1">
               <span>Ganancia Neta</span>
-              <span className="text-[9px] text-emerald-300 font-normal underline">
+              <span className="text-[9px] text-emerald-400 font-normal underline">
                 (Ver fórmula)
               </span>
             </div>
-            <div className="text-2xl font-black font-mono text-emerald-400 group-hover:scale-105 transition-transform">
+            <div className="text-2xl font-bold font-mono text-emerald-400">
               C$ {activeDaySummary.netEarnings.toFixed(2)}
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 group-hover:bg-emerald-500/30 border border-emerald-400/30 flex items-center justify-center text-emerald-400 transition">
-            <Sparkles className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-lg bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
+            <TrendingUp className="w-4 h-4" />
           </div>
         </button>
       </div>
 
       {/* 3. Cuadrícula de KPIs Separados por Tipo de Ingreso — Todos Clickables */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Apartado 1: Ganancia en Efectivo */}
         <div
           onClick={() => setActiveModal('CASH')}
-          className="bg-white rounded-2xl border border-emerald-100 hover:border-emerald-300 p-5 shadow-xs hover:shadow-md transition cursor-pointer relative overflow-hidden group"
+          className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 p-4 shadow-2xs transition cursor-pointer"
           title="Haga clic para ver el detalle de ventas en efectivo"
         >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full blur-2xl -mr-6 -mt-6 pointer-events-none" />
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
               Efectivo en Caja
             </span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 group-hover:bg-emerald-200 text-emerald-700 flex items-center justify-center transition">
-              <Banknote className="w-4 h-4" />
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+              <Banknote className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="text-2xl font-black font-mono text-slate-900 group-hover:text-emerald-700 transition-colors">
+          <div className="text-xl font-bold font-mono text-slate-900">
             C$ {activeDaySummary.cashSales.toFixed(2)}
           </div>
-          <div className="mt-2 flex items-center justify-between text-xs">
-            <span className="text-slate-500 font-medium">Participación del día:</span>
-            <span className="font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-mono">
+          <div className="mt-1 flex items-center justify-between text-xs">
+            <span className="text-slate-400 text-[11px]">Participación:</span>
+            <span className="font-semibold text-emerald-800 font-mono text-[11px]">
               {cashPercent.toFixed(1)}%
             </span>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-emerald-700 font-semibold flex items-center justify-between">
+          <div className="mt-2.5 pt-2 border-t border-slate-100 text-[11px] text-[#1c6856] font-medium flex items-center justify-between">
             <span className="flex items-center gap-1">
-              <Wallet className="w-3.5 h-3.5 text-emerald-600" />
+              <Wallet className="w-3.5 h-3.5" />
               <span>Ver arqueo y desglose</span>
             </span>
-            <ChevronRight className="w-3.5 h-3.5 text-emerald-600 group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </div>
         </div>
 
         {/* Apartado 2: Ganancia en Tarjetas (Total + Bancos) */}
         <div
           onClick={() => setActiveModal('CARDS')}
-          className="bg-white rounded-2xl border border-indigo-100 hover:border-indigo-300 p-5 shadow-xs hover:shadow-md transition cursor-pointer relative overflow-hidden group"
+          className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 p-4 shadow-2xs transition cursor-pointer"
           title="Haga clic para ver el desglose de tarjetas por banco"
         >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-full blur-2xl -mr-6 -mt-6 pointer-events-none" />
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
               Tarjetas POS (Datáfonos)
             </span>
-            <div className="w-8 h-8 rounded-lg bg-indigo-100 group-hover:bg-indigo-200 text-indigo-700 flex items-center justify-center transition">
-              <CreditCard className="w-4 h-4" />
+            <div className="w-7 h-7 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center">
+              <CreditCard className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="text-2xl font-black font-mono text-slate-900 group-hover:text-indigo-700 transition-colors">
+          <div className="text-xl font-bold font-mono text-slate-900">
             C$ {activeDaySummary.totalCards.toFixed(2)}
           </div>
-          <div className="mt-2 flex items-center justify-between text-xs">
-            <span className="text-slate-500 font-medium">Participación del día:</span>
-            <span className="font-extrabold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full font-mono">
+          <div className="mt-1 flex items-center justify-between text-xs">
+            <span className="text-slate-400 text-[11px]">Participación:</span>
+            <span className="font-semibold text-sky-800 font-mono text-[11px]">
               {cardsPercent.toFixed(1)}%
             </span>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-indigo-700 font-semibold flex items-center justify-between">
+          <div className="mt-2.5 pt-2 border-t border-slate-100 text-[11px] text-sky-700 font-medium flex items-center justify-between">
             <span className="flex items-center gap-1">
-              <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+              <Building2 className="w-3.5 h-3.5" />
               <span>Ver 4 bancos</span>
             </span>
-            <ChevronRight className="w-3.5 h-3.5 text-indigo-600 group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </div>
         </div>
 
         {/* Apartado 3: PedidosYa & Delivery */}
         <div
           onClick={() => setActiveModal('DELIVERY')}
-          className="bg-white rounded-2xl border border-amber-100 hover:border-amber-300 p-5 shadow-xs hover:shadow-md transition cursor-pointer relative overflow-hidden group"
+          className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 p-4 shadow-2xs transition cursor-pointer"
           title="Haga clic para ver el detalle de pedidos y delivery"
         >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-full blur-2xl -mr-6 -mt-6 pointer-events-none" />
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
               Delivery / PedidosYa
             </span>
-            <div className="w-8 h-8 rounded-lg bg-amber-100 group-hover:bg-amber-200 text-amber-700 flex items-center justify-center transition">
-              <Truck className="w-4 h-4" />
+            <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
+              <Truck className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="text-2xl font-black font-mono text-slate-900 group-hover:text-amber-700 transition-colors">
+          <div className="text-xl font-bold font-mono text-slate-900">
             C$ {activeDaySummary.pedidosYaSales.toFixed(2)}
           </div>
-          <div className="mt-2 flex items-center justify-between text-xs">
-            <span className="text-slate-500 font-medium">Participación del día:</span>
-            <span className="font-extrabold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full font-mono">
+          <div className="mt-1 flex items-center justify-between text-xs">
+            <span className="text-slate-400 text-[11px]">Participación:</span>
+            <span className="font-semibold text-amber-800 font-mono text-[11px]">
               {pedidosYaPercent.toFixed(1)}%
             </span>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-amber-700 font-semibold flex items-center justify-between">
+          <div className="mt-2.5 pt-2 border-t border-slate-100 text-[11px] text-amber-700 font-medium flex items-center justify-between">
             <span className="flex items-center gap-1">
-              <Receipt className="w-3.5 h-3.5 text-amber-600" />
+              <Receipt className="w-3.5 h-3.5" />
               <span>Ver detalle delivery</span>
             </span>
-            <ChevronRight className="w-3.5 h-3.5 text-amber-600 group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </div>
         </div>
 
         {/* Apartado 4: Total Ventas Brutas */}
         <div
           onClick={() => setActiveModal('GROSS')}
-          className="bg-white rounded-2xl border border-slate-200 hover:border-slate-400 p-5 shadow-xs hover:shadow-md transition cursor-pointer relative overflow-hidden group"
+          className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 p-4 shadow-2xs transition cursor-pointer"
           title="Haga clic para ver el resumen consolidado de ventas"
         >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
               Ventas Totales Brutas
             </span>
-            <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-slate-200 text-slate-700 flex items-center justify-center transition">
-              <ArrowUpRight className="w-4 h-4" />
+            <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
+              <ArrowUpRight className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="text-2xl font-black font-mono text-slate-900 group-hover:text-indigo-600 transition-colors">
+          <div className="text-xl font-bold font-mono text-slate-900">
             C$ {activeDaySummary.totalGrossSales.toFixed(2)}
           </div>
-          <div className="mt-2 flex items-center justify-between text-xs">
-            <span className="text-slate-500 font-medium">Gastos Caja Chica:</span>
-            <span className="font-extrabold text-rose-600 font-mono">
+          <div className="mt-1 flex items-center justify-between text-xs">
+            <span className="text-slate-400 text-[11px]">Compras Insumos:</span>
+            <span className="font-semibold text-rose-700 font-mono text-[11px]">
               - C$ {activeDaySummary.totalExpenses.toFixed(2)}
             </span>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-700 font-semibold flex items-center justify-between">
+          <div className="mt-2.5 pt-2 border-t border-slate-100 text-[11px] text-slate-700 font-medium flex items-center justify-between">
             <span>Ver consolidado completo</span>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
           </div>
         </div>
       </div>
@@ -1001,8 +998,8 @@ export const DailyEarningsView: React.FC<Props> = ({
                       <div className="absolute -top-24 z-20 bg-slate-900 text-white p-2.5 rounded-xl shadow-xl text-left whitespace-nowrap border border-slate-700 animate-in fade-in zoom-in-95 pointer-events-none">
                         <div className="font-bold text-xs text-amber-400 capitalize">{d.dayLabel}</div>
                         <div className="text-[11px] font-mono mt-1 space-y-0.5">
-                          <div className="text-emerald-300">💵 Ef: C$ {d.cashSales.toFixed(2)}</div>
-                          <div className="text-indigo-300">💳 Tarj: C$ {d.totalCards.toFixed(2)}</div>
+                          <div className="text-emerald-300">Efectivo: C$ {d.cashSales.toFixed(2)}</div>
+                          <div className="text-indigo-300">Tarjetas: C$ {d.totalCards.toFixed(2)}</div>
                           <div className="text-white font-extrabold pt-0.5 border-t border-slate-700">
                             Total: C$ {d.totalGrossSales.toFixed(2)}
                           </div>
@@ -1097,13 +1094,13 @@ export const DailyEarningsView: React.FC<Props> = ({
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
                 <th className="py-3 px-4">Fecha / Día</th>
-                <th className="py-3 px-4 text-right">💵 Efectivo</th>
-                <th className="py-3 px-4 text-right">💳 Tarjetas</th>
-                <th className="py-3 px-4 text-right">🛵 PedidosYa</th>
-                <th className="py-3 px-4 text-right">🪙 Otros Ing.</th>
-                <th className="py-3 px-4 text-right">📈 Total Ventas</th>
-                <th className="py-3 px-4 text-right">🔻 Gastos Caja</th>
-                <th className="py-3 px-4 text-right">✨ Ganancia Neta</th>
+                <th className="py-3 px-4 text-right">Efectivo</th>
+                <th className="py-3 px-4 text-right">Tarjetas</th>
+                <th className="py-3 px-4 text-right">PedidosYa</th>
+                <th className="py-3 px-4 text-right">Otros Ing.</th>
+                <th className="py-3 px-4 text-right">Total Ventas</th>
+                <th className="py-3 px-4 text-right">Gastos Caja</th>
+                <th className="py-3 px-4 text-right">Ganancia Neta</th>
                 <th className="py-3 px-4">Responsable</th>
                 <th className="py-3 px-4 text-center">Estado</th>
                 <th className="py-3 px-4 text-center">Acciones</th>
@@ -1242,10 +1239,10 @@ export const DailyEarningsView: React.FC<Props> = ({
       {/* Modal 1: Detalle de Efectivo en Caja */}
       {activeModal === 'CASH' && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-md w-full border border-slate-200 shadow-2xl overflow-hidden p-6 space-y-4">
+          <div className="bg-white rounded-xl max-w-md w-full border border-slate-200 shadow-2xl overflow-hidden p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-emerald-100 text-emerald-800">
+                <div className="p-2 rounded-lg bg-emerald-50 text-[#1c6856] border border-emerald-200">
                   <Banknote className="w-5 h-5" />
                 </div>
                 <div>
@@ -1257,20 +1254,20 @@ export const DailyEarningsView: React.FC<Props> = ({
               </div>
               <button
                 onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition"
+                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-center">
-              <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider block">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                 Total Efectivo Recaudado
               </span>
-              <span className="text-3xl font-black font-mono text-emerald-900 mt-1 block">
+              <span className="text-3xl font-black font-mono text-[#1c6856] mt-1 block">
                 C$ {activeDaySummary.cashSales.toFixed(2)}
               </span>
-              <span className="text-xs text-emerald-700 font-medium mt-1 inline-block">
+              <span className="text-xs text-slate-500 font-medium mt-1 inline-block">
                 Representa el {cashPercent.toFixed(1)}% de las ventas brutas
               </span>
             </div>
@@ -1283,7 +1280,7 @@ export const DailyEarningsView: React.FC<Props> = ({
               <div className="flex justify-between py-2 border-b border-slate-100">
                 <span className="text-slate-500">Estado de Caja General:</span>
                 <span className="font-bold text-slate-800">
-                  {activeDaySummary.status === 'OPEN' ? '🟢 Abierta' : '🔒 Cerrada'}
+                  {activeDaySummary.status === 'OPEN' ? 'Abierta' : 'Cerrada'}
                 </span>
               </div>
               <div className="flex justify-between py-2 border-b border-slate-100">
@@ -1298,14 +1295,14 @@ export const DailyEarningsView: React.FC<Props> = ({
                   setActiveModal(null);
                   handleOpenEditForm(activeDaySummary);
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 rounded-lg bg-[#1c6856] hover:bg-[#155244] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Edit3 className="w-3.5 h-3.5" />
                 <span>Modificar Monto</span>
               </button>
               <button
                 onClick={() => setActiveModal(null)}
-                className="py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition"
+                className="py-2.5 px-4 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
               >
                 Cerrar
               </button>
@@ -1321,10 +1318,10 @@ export const DailyEarningsView: React.FC<Props> = ({
         activeModal === 'BANPRO' ||
         activeModal === 'LAFISE') && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden p-6 space-y-4">
+          <div className="bg-white rounded-xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-indigo-100 text-indigo-800">
+                <div className="p-2 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">
                   <CreditCard className="w-5 h-5" />
                 </div>
                 <div>
@@ -1344,14 +1341,14 @@ export const DailyEarningsView: React.FC<Props> = ({
               </div>
               <button
                 onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition"
+                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200/80 text-center">
-              <span className="text-xs font-bold text-indigo-800 uppercase tracking-wider block">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                 {activeModal === 'BAC'
                   ? 'Ventas BAC'
                   : activeModal === 'FICOHSA'
@@ -1362,7 +1359,7 @@ export const DailyEarningsView: React.FC<Props> = ({
                   ? 'Ventas Lafise'
                   : 'Total Tarjetas POS'}
               </span>
-              <span className="text-3xl font-black font-mono text-indigo-950 mt-1 block">
+              <span className="text-3xl font-black font-mono text-slate-900 mt-1 block">
                 C${' '}
                 {activeModal === 'BAC'
                   ? activeDaySummary.cardsBAC.toFixed(2)
@@ -1374,31 +1371,31 @@ export const DailyEarningsView: React.FC<Props> = ({
                   ? activeDaySummary.cardsLafise.toFixed(2)
                   : activeDaySummary.totalCards.toFixed(2)}
               </span>
-              <span className="text-xs text-indigo-700 font-medium mt-1 inline-block">
+              <span className="text-xs text-slate-500 font-medium mt-1 inline-block">
                 Representa el {cardsPercent.toFixed(1)}% de las ventas brutas
               </span>
             </div>
 
             <div className="space-y-2 text-xs">
-              <div className="flex justify-between items-center py-2 px-3 rounded-xl bg-rose-50/60 border border-rose-200">
+              <div className="flex justify-between items-center py-2 px-3 rounded-lg bg-slate-50 border border-slate-200">
                 <span className="font-bold text-rose-800">BAC Credomatic</span>
                 <span className="font-mono font-bold text-slate-900">
                   C$ {activeDaySummary.cardsBAC.toFixed(2)}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-2 px-3 rounded-xl bg-purple-50/60 border border-purple-200">
+              <div className="flex justify-between items-center py-2 px-3 rounded-lg bg-slate-50 border border-slate-200">
                 <span className="font-bold text-purple-800">Banco Ficohsa</span>
                 <span className="font-mono font-bold text-slate-900">
                   C$ {activeDaySummary.cardsFicohsa.toFixed(2)}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-2 px-3 rounded-xl bg-emerald-50/60 border border-emerald-200">
+              <div className="flex justify-between items-center py-2 px-3 rounded-lg bg-slate-50 border border-slate-200">
                 <span className="font-bold text-emerald-800">Banpro Promerica</span>
                 <span className="font-mono font-bold text-slate-900">
                   C$ {activeDaySummary.cardsBanpro.toFixed(2)}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-2 px-3 rounded-xl bg-blue-50/60 border border-blue-200">
+              <div className="flex justify-between items-center py-2 px-3 rounded-lg bg-slate-50 border border-slate-200">
                 <span className="font-bold text-blue-800">Banco LAFISE</span>
                 <span className="font-mono font-bold text-slate-900">
                   C$ {activeDaySummary.cardsLafise.toFixed(2)}
@@ -1412,14 +1409,14 @@ export const DailyEarningsView: React.FC<Props> = ({
                   setActiveModal(null);
                   handleOpenEditForm(activeDaySummary);
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 rounded-lg bg-[#1c6856] hover:bg-[#155244] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Edit3 className="w-3.5 h-3.5" />
                 <span>Ajustar Vouchers</span>
               </button>
               <button
                 onClick={() => setActiveModal(null)}
-                className="py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition"
+                className="py-2.5 px-4 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
               >
                 Cerrar
               </button>
@@ -1431,10 +1428,10 @@ export const DailyEarningsView: React.FC<Props> = ({
       {/* Modal 3: Detalle de PedidosYa / Delivery */}
       {activeModal === 'DELIVERY' && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-md w-full border border-slate-200 shadow-2xl overflow-hidden p-6 space-y-4">
+          <div className="bg-white rounded-xl max-w-md w-full border border-slate-200 shadow-2xl overflow-hidden p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-amber-100 text-amber-800">
+                <div className="p-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
                   <Truck className="w-5 h-5" />
                 </div>
                 <div>
@@ -1444,20 +1441,20 @@ export const DailyEarningsView: React.FC<Props> = ({
               </div>
               <button
                 onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition"
+                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/80 text-center">
-              <span className="text-xs font-bold text-amber-800 uppercase tracking-wider block">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                 Total Facturado en Plataforma
               </span>
-              <span className="text-3xl font-black font-mono text-amber-950 mt-1 block">
+              <span className="text-3xl font-black font-mono text-slate-900 mt-1 block">
                 C$ {activeDaySummary.pedidosYaSales.toFixed(2)}
               </span>
-              <span className="text-xs text-amber-700 font-medium mt-1 inline-block">
+              <span className="text-xs text-slate-500 font-medium mt-1 inline-block">
                 Representa el {pedidosYaPercent.toFixed(1)}% de las ventas brutas
               </span>
             </div>
@@ -1479,14 +1476,14 @@ export const DailyEarningsView: React.FC<Props> = ({
                   setActiveModal(null);
                   handleOpenEditForm(activeDaySummary);
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 rounded-lg bg-[#1c6856] hover:bg-[#155244] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Edit3 className="w-3.5 h-3.5" />
                 <span>Modificar Monto</span>
               </button>
               <button
                 onClick={() => setActiveModal(null)}
-                className="py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition"
+                className="py-2.5 px-4 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
               >
                 Cerrar
               </button>
@@ -1498,10 +1495,10 @@ export const DailyEarningsView: React.FC<Props> = ({
       {/* Modal 4: Resumen de Ventas Brutas */}
       {activeModal === 'GROSS' && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden p-6 space-y-4">
+          <div className="bg-white rounded-xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-slate-100 text-slate-800">
+                <div className="p-2 rounded-lg bg-slate-100 text-slate-800 border border-slate-200">
                   <ArrowUpRight className="w-5 h-5" />
                 </div>
                 <div>
@@ -1513,13 +1510,13 @@ export const DailyEarningsView: React.FC<Props> = ({
               </div>
               <button
                 onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition"
+                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                 Total Ventas Brutas
               </span>
@@ -1530,20 +1527,20 @@ export const DailyEarningsView: React.FC<Props> = ({
 
             <div className="space-y-2 text-xs">
               <div className="flex justify-between py-2 border-b border-slate-100">
-                <span className="text-emerald-700 font-bold">💵 Efectivo en Caja:</span>
+                <span className="text-slate-700 font-bold">Efectivo en Caja:</span>
                 <span className="font-mono font-bold">C$ {activeDaySummary.cashSales.toFixed(2)}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-slate-100">
-                <span className="text-indigo-700 font-bold">💳 Tarjetas POS (4 Bancos):</span>
+                <span className="text-slate-700 font-bold">Tarjetas POS (4 Bancos):</span>
                 <span className="font-mono font-bold">C$ {activeDaySummary.totalCards.toFixed(2)}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-slate-100">
-                <span className="text-amber-700 font-bold">🛵 Delivery / PedidosYa:</span>
+                <span className="text-slate-700 font-bold">Delivery / PedidosYa:</span>
                 <span className="font-mono font-bold">C$ {activeDaySummary.pedidosYaSales.toFixed(2)}</span>
               </div>
               {(activeDaySummary.otherIncomeSales || 0) > 0 && (
                 <div className="flex justify-between py-2 border-b border-slate-100">
-                  <span className="text-purple-700 font-bold">🪙 Otros Ingresos:</span>
+                  <span className="text-slate-700 font-bold">Otros Ingresos:</span>
                   <span className="font-mono font-bold">C$ {(activeDaySummary.otherIncomeSales || 0).toFixed(2)}</span>
                 </div>
               )}
@@ -1555,14 +1552,14 @@ export const DailyEarningsView: React.FC<Props> = ({
                   setActiveModal(null);
                   setShowPrintActaModal(true);
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2.5 rounded-lg bg-[#1c6856] hover:bg-[#155244] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
               >
-                <Printer className="w-3.5 h-3.5 text-amber-400" />
-                <span>🖨️ Imprimir Acta Oficial (B/N)</span>
+                <Printer className="w-3.5 h-3.5" />
+                <span>Imprimir Acta Oficial (B/N)</span>
               </button>
               <button
                 onClick={() => setActiveModal(null)}
-                className="py-2.5 px-4 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold transition"
+                className="py-2.5 px-4 rounded-lg border border-slate-200 text-slate-700 text-xs font-bold transition hover:bg-slate-50 cursor-pointer"
               >
                 Cerrar
               </button>
@@ -1574,10 +1571,10 @@ export const DailyEarningsView: React.FC<Props> = ({
       {/* Modal 5: Estado de Resultados & Utilidad Neta (Fórmula Financiera) */}
       {activeModal === 'NET' && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden p-6 space-y-4">
+          <div className="bg-white rounded-xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-emerald-100 text-emerald-800">
+                <div className="p-2 rounded-lg bg-emerald-50 text-[#1c6856] border border-emerald-200">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
@@ -1589,20 +1586,20 @@ export const DailyEarningsView: React.FC<Props> = ({
               </div>
               <button
                 onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition"
+                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-center">
-              <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider block">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                 Ganancia Neta Disponible
               </span>
-              <span className="text-3xl font-black font-mono text-emerald-900 mt-1 block">
+              <span className="text-3xl font-black font-mono text-[#1c6856] mt-1 block">
                 C$ {activeDaySummary.netEarnings.toFixed(2)}
               </span>
-              <span className="text-[11px] text-emerald-700 font-medium mt-1 inline-block">
+              <span className="text-[11px] text-slate-500 font-medium mt-1 inline-block">
                 Utilidad calculada restando todos los gastos operativos del día
               </span>
             </div>
@@ -1610,7 +1607,7 @@ export const DailyEarningsView: React.FC<Props> = ({
             <div className="space-y-2.5 text-xs">
               <div className="flex justify-between py-2 border-b border-slate-100 font-bold text-slate-800">
                 <span>(+) Ventas Totales Brutas</span>
-                <span className="font-mono text-emerald-700">
+                <span className="font-mono text-[#1c6856]">
                   + C$ {activeDaySummary.totalGrossSales.toFixed(2)}
                 </span>
               </div>
@@ -1626,9 +1623,9 @@ export const DailyEarningsView: React.FC<Props> = ({
                   - C$ {activeDaySummary.transfersPaid.toFixed(2)}
                 </span>
               </div>
-              <div className="flex justify-between py-2.5 px-3 rounded-xl bg-emerald-100/60 font-black text-emerald-900 text-sm">
+              <div className="flex justify-between py-2 px-3 rounded-lg bg-slate-100 font-black text-slate-900 text-sm border border-slate-200">
                 <span>(=) GANANCIA NETA FINAL</span>
-                <span className="font-mono">C$ {activeDaySummary.netEarnings.toFixed(2)}</span>
+                <span className="font-mono text-[#1c6856]">C$ {activeDaySummary.netEarnings.toFixed(2)}</span>
               </div>
             </div>
 
@@ -1638,13 +1635,13 @@ export const DailyEarningsView: React.FC<Props> = ({
                   setActiveModal(null);
                   if (onNavigateToTab) onNavigateToTab('pettyCash');
                 }}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <span>Ver Gastos en Caja Chica</span>
               </button>
               <button
                 onClick={() => setActiveModal(null)}
-                className="py-2.5 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition"
+                className="py-2.5 px-5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition cursor-pointer"
               >
                 Entendido
               </button>
@@ -1656,10 +1653,10 @@ export const DailyEarningsView: React.FC<Props> = ({
       {/* Modal 6: Formulario Completo de Ingreso / Edición de Ventas del Día */}
       {activeModal === 'REGISTER_SALES' && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-y-auto max-h-[92vh] p-6 space-y-4">
+          <div className="bg-white rounded-xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-y-auto max-h-[92vh] p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-amber-100 text-amber-800">
+                <div className="p-2 rounded-lg bg-emerald-50 text-[#1c6856] border border-emerald-200">
                   <Edit3 className="w-5 h-5" />
                 </div>
                 <div>
@@ -1673,7 +1670,7 @@ export const DailyEarningsView: React.FC<Props> = ({
               </div>
               <button
                 onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition"
+                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1688,14 +1685,14 @@ export const DailyEarningsView: React.FC<Props> = ({
               {/* Efectivo */}
               <div>
                 <label className="font-bold text-slate-700 block mb-1">
-                  💵 Ventas en Efectivo (C$)
+                  Ventas en Efectivo (C$)
                 </label>
                 <input
                   type="number"
                   placeholder="0.00"
                   value={editForm.salesCash}
                   onChange={(e) => setEditForm({ ...editForm, salesCash: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 font-mono font-bold text-slate-900 focus:outline-none focus:border-[#1c6856]"
                 />
               </div>
 
@@ -1708,7 +1705,7 @@ export const DailyEarningsView: React.FC<Props> = ({
                     placeholder="0.00"
                     value={editForm.cardsBAC}
                     onChange={(e) => setEditForm({ ...editForm, cardsBAC: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-rose-200 font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono font-bold text-slate-900 focus:outline-none focus:border-[#1c6856]"
                   />
                 </div>
                 <div>
@@ -1718,7 +1715,7 @@ export const DailyEarningsView: React.FC<Props> = ({
                     placeholder="0.00"
                     value={editForm.cardsFicohsa}
                     onChange={(e) => setEditForm({ ...editForm, cardsFicohsa: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-purple-200 font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono font-bold text-slate-900 focus:outline-none focus:border-[#1c6856]"
                   />
                 </div>
                 <div>
@@ -1728,7 +1725,7 @@ export const DailyEarningsView: React.FC<Props> = ({
                     placeholder="0.00"
                     value={editForm.cardsBanpro}
                     onChange={(e) => setEditForm({ ...editForm, cardsBanpro: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-emerald-200 font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono font-bold text-slate-900 focus:outline-none focus:border-[#1c6856]"
                   />
                 </div>
                 <div>
@@ -1738,36 +1735,36 @@ export const DailyEarningsView: React.FC<Props> = ({
                     placeholder="0.00"
                     value={editForm.cardsLafise}
                     onChange={(e) => setEditForm({ ...editForm, cardsLafise: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-blue-200 font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono font-bold text-slate-900 focus:outline-none focus:border-[#1c6856]"
                   />
                 </div>
               </div>
 
               {/* PedidosYa */}
               <div className="pt-1">
-                <label className="font-bold text-amber-700 block mb-1">
-                  🛵 Delivery / PedidosYa (C$)
+                <label className="font-bold text-slate-700 block mb-1">
+                  Delivery / PedidosYa (C$)
                 </label>
                 <input
                   type="number"
                   placeholder="0.00"
                   value={editForm.salesPedidosYa}
                   onChange={(e) => setEditForm({ ...editForm, salesPedidosYa: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-amber-200 font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 font-mono font-bold text-slate-900 focus:outline-none focus:border-[#1c6856]"
                 />
               </div>
 
               {/* Propinas */}
               <div className="pt-1">
                 <label className="font-bold text-slate-700 block mb-1">
-                  💰 Propinas Recaudadas (10%) (C$)
+                  Propinas Recaudadas (10%) (C$)
                 </label>
                 <input
                   type="number"
                   placeholder="0.00"
                   value={editForm.tipsCollected}
                   onChange={(e) => setEditForm({ ...editForm, tipsCollected: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 font-mono font-bold text-slate-900 focus:outline-none focus:border-[#1c6856]"
                 />
               </div>
             </div>
@@ -1775,14 +1772,14 @@ export const DailyEarningsView: React.FC<Props> = ({
             <div className="flex gap-2 pt-3 border-t border-slate-100">
               <button
                 onClick={handleSaveSales}
-                className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm"
+                className="flex-1 py-2.5 px-4 rounded-lg bg-[#1c6856] hover:bg-[#155244] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
               >
                 <Save className="w-4 h-4" />
                 <span>Guardar y Actualizar Día</span>
               </button>
               <button
                 onClick={() => setActiveModal(null)}
-                className="py-3 px-4 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold transition hover:bg-slate-50"
+                className="py-2.5 px-4 rounded-lg border border-slate-200 text-slate-700 text-xs font-bold transition hover:bg-slate-50 cursor-pointer"
               >
                 Cancelar
               </button>

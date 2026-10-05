@@ -27,23 +27,23 @@ export const ShiftHistoryView: React.FC<Props> = ({ state }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between p-5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+      <div className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
         <div>
           <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
-            <History className="w-5 h-5 text-amber-600" />
+            <History className="w-5 h-5 text-[#1c6856]" />
             Histórico de Cierres de Turno & Conciliaciones
           </h2>
           <p className="text-xs text-slate-500">
             Consultas, actas firmadas, reimpresión de tiques térmicos de 80mm y exportación a Excel
           </p>
         </div>
-        <span className="text-xs font-mono font-bold px-3 py-1.5 bg-slate-100 text-slate-700 rounded-xl border border-slate-200">
+        <span className="text-xs font-mono font-bold px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg border border-slate-200">
           {shifts.length} cierres archivados
         </span>
       </div>
 
       {shifts.length === 0 ? (
-        <div className="p-16 bg-white border border-slate-200/80 rounded-2xl text-center space-y-3 shadow-sm">
+        <div className="p-16 bg-white border border-slate-200 rounded-xl text-center space-y-3 shadow-sm">
           <History className="w-12 h-12 text-slate-300 mx-auto" />
           <h3 className="text-base font-bold text-slate-800">No hay turnos cerrados todavía</h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
@@ -51,7 +51,7 @@ export const ShiftHistoryView: React.FC<Props> = ({ state }) => {
           </p>
         </div>
       ) : (
-        <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
           <div className="divide-y divide-slate-100">
             {shifts.map((shift) => {
               const isSquared = shift.auditStatus === 'SQUARED';
@@ -66,7 +66,7 @@ export const ShiftHistoryView: React.FC<Props> = ({ state }) => {
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-3">
                       <span className="text-base font-black text-slate-900 flex items-center gap-1.5">
-                        <Calendar className="w-4 h-4 text-amber-600" /> {shift.date}
+                        <Calendar className="w-4 h-4 text-[#1c6856]" /> {shift.date}
                       </span>
                       <span
                         className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
@@ -104,7 +104,7 @@ export const ShiftHistoryView: React.FC<Props> = ({ state }) => {
 
                     <div className="text-right border-l border-slate-100 pl-4">
                       <div className="text-xs text-slate-400 uppercase font-semibold">Propina c/u</div>
-                      <div className="text-sm font-mono font-bold text-amber-600">
+                      <div className="text-sm font-mono font-bold text-[#1c6856]">
                         C$ {(shift.individualTip || 0).toFixed(2)}
                       </div>
                     </div>
@@ -117,9 +117,9 @@ export const ShiftHistoryView: React.FC<Props> = ({ state }) => {
                           e.stopPropagation();
                           printThermalClosingTicket(shift);
                         }}
-                        className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition shadow-sm"
+                        className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition shadow-sm cursor-pointer"
                       >
-                        <Printer className="w-4 h-4 text-amber-600" />
+                        <Printer className="w-4 h-4 text-[#1c6856]" />
                       </button>
 
                       <button
@@ -129,7 +129,7 @@ export const ShiftHistoryView: React.FC<Props> = ({ state }) => {
                           e.stopPropagation();
                           exportShiftToExcel(shift, state);
                         }}
-                        className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition shadow-sm"
+                        className="p-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition shadow-sm cursor-pointer"
                       >
                         <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
                       </button>
@@ -147,11 +147,11 @@ export const ShiftHistoryView: React.FC<Props> = ({ state }) => {
       {/* Modal de Detalle de Cierre Pasado */}
       {selectedShift && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/70">
               <div>
                 <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-amber-600" />
+                  <Calendar className="w-5 h-5 text-[#1c6856]" />
                   Acta de Cierre — {selectedShift.date}
                 </h3>
                 <p className="text-xs text-slate-500">
@@ -160,7 +160,7 @@ export const ShiftHistoryView: React.FC<Props> = ({ state }) => {
               </div>
               <button
                 onClick={() => setSelectedShift(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -169,7 +169,7 @@ export const ShiftHistoryView: React.FC<Props> = ({ state }) => {
             <div className="p-6 overflow-y-auto space-y-6 flex-1 text-sm">
               {/* Resumen Cuadre */}
               <div
-                className={`p-5 rounded-2xl border flex items-center justify-between ${
+                className={`p-4 rounded-xl border flex items-center justify-between ${
                   selectedShift.auditStatus === 'SQUARED'
                     ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                     : selectedShift.auditStatus === 'SURPLUS'
@@ -193,7 +193,7 @@ export const ShiftHistoryView: React.FC<Props> = ({ state }) => {
               </div>
 
               {/* Ventas y Vouchers */}
-              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
                 <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-200/80 pb-2">
                   <CreditCard className="w-4 h-4 text-emerald-600" /> Desglose de Ventas y Tarjetas
                 </h4>
@@ -224,15 +224,15 @@ export const ShiftHistoryView: React.FC<Props> = ({ state }) => {
                   </div>
                   <div className="col-span-2 text-right">
                     <span className="text-slate-500 block">Total Ventas Brutas:</span>
-                    <span className="font-black text-amber-600 font-mono text-base">C$ {selectedShift.totalGrossSales?.toFixed(2)}</span>
+                    <span className="font-black text-[#1c6856] font-mono text-base">C$ {selectedShift.totalGrossSales?.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
 
               {/* Propinas y Retiros */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
-                  <span className="text-xs font-bold uppercase text-amber-700 block">Propinas</span>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+                  <span className="text-xs font-bold uppercase text-[#1c6856] block">Propinas</span>
                   <div className="flex justify-between text-xs text-slate-600">
                     <span>Recaudada:</span>
                     <span className="font-mono font-bold text-slate-800">C$ {selectedShift.totalTipCollected?.toFixed(2)}</span>
@@ -243,11 +243,11 @@ export const ShiftHistoryView: React.FC<Props> = ({ state }) => {
                   </div>
                   <div className="flex justify-between text-xs text-slate-800 border-t border-slate-200 pt-1.5 font-bold">
                     <span>Individual:</span>
-                    <span className="font-mono text-amber-600">C$ {selectedShift.individualTip?.toFixed(2)}</span>
+                    <span className="font-mono text-[#1c6856]">C$ {selectedShift.individualTip?.toFixed(2)}</span>
                   </div>
                 </div>
 
-                <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
                   <span className="text-xs font-bold uppercase text-rose-700 block">Retiros y Reservas</span>
                   <div className="flex justify-between text-xs text-slate-600">
                     <span>A Caja Chica:</span>
@@ -265,7 +265,7 @@ export const ShiftHistoryView: React.FC<Props> = ({ state }) => {
               </div>
 
               {selectedShift.closingNotes && (
-                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                   <span className="text-xs text-slate-500 uppercase font-bold block mb-1">Notas de Cierre</span>
                   <p className="text-xs text-slate-700 italic">"{selectedShift.closingNotes}"</p>
                 </div>
@@ -277,15 +277,15 @@ export const ShiftHistoryView: React.FC<Props> = ({ state }) => {
                 <button
                   type="button"
                   onClick={() => printThermalClosingTicket(selectedShift)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-300 shadow-sm"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-300 shadow-sm cursor-pointer"
                 >
-                  <Printer className="w-4 h-4 text-amber-600" />
+                  <Printer className="w-4 h-4 text-[#1c6856]" />
                   <span>Imprimir Tique 80mm</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => exportShiftToExcel(selectedShift, state)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200 shadow-sm"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200 shadow-sm cursor-pointer"
                 >
                   <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
                   <span>Exportar a Excel</span>
@@ -295,7 +295,7 @@ export const ShiftHistoryView: React.FC<Props> = ({ state }) => {
               <button
                 type="button"
                 onClick={() => setSelectedShift(null)}
-                className="px-5 py-2 text-xs font-bold rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700"
+                className="px-5 py-2 text-xs font-bold rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 cursor-pointer"
               >
                 Cerrar
               </button>

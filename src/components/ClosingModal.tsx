@@ -30,6 +30,8 @@ import {
   CheckCircle2,
   TrendingUp,
   Scale,
+  Clock,
+  Info,
 } from 'lucide-react';
 
 interface Props {
@@ -221,26 +223,26 @@ export const ClosingModal: React.FC<Props> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+      <div className="bg-white border border-slate-200 rounded-xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-xl overflow-hidden animate-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/70">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50/90">
           <div>
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-              <h2 className="text-xl font-black text-slate-900">Cierre Oficial de Caja General</h2>
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-600"></span>
+              <h2 className="text-base font-bold text-slate-900">Cierre Oficial de Caja General</h2>
             </div>
             <p className="text-xs text-slate-500">
               Jornada del <strong>{shift.date}</strong> • Apertura por {shift.openedBy} con C$ {shift.totalOpeningEquivNIO.toFixed(2)}
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-2xs">
+            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-2.5 py-1 shadow-2xs">
               <span className="text-[11px] font-bold text-slate-500 uppercase">Cerrado por:</span>
               <select
                 value={closedBy}
                 onChange={(e) => setClosedBy(e.target.value)}
-                className="text-xs font-black text-slate-800 bg-transparent focus:outline-none cursor-pointer"
+                className="text-xs font-bold text-slate-800 bg-transparent focus:outline-none cursor-pointer"
               >
                 {availableAdmins.map((adm) => (
                   <option key={adm} value={adm}>
@@ -251,7 +253,7 @@ export const ClosingModal: React.FC<Props> = ({
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -259,13 +261,13 @@ export const ClosingModal: React.FC<Props> = ({
         </div>
 
         {/* Stepper de 4 Pasos Claros */}
-        <div className="grid grid-cols-4 border-b border-slate-100 text-xs font-bold bg-white">
+        <div className="grid grid-cols-4 border-b border-slate-200 text-xs font-bold bg-white divide-x divide-slate-100">
           <button
             type="button"
             onClick={() => setStep(1)}
             className={`py-3 px-2 text-center border-b-2 transition flex items-center justify-center gap-1.5 cursor-pointer ${
               step === 1
-                ? 'border-amber-500 text-amber-700 bg-amber-50/40'
+                ? 'border-[#1c6856] text-[#1c6856] bg-emerald-50/30'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -279,7 +281,7 @@ export const ClosingModal: React.FC<Props> = ({
             onClick={() => setStep(2)}
             className={`py-3 px-2 text-center border-b-2 transition flex items-center justify-center gap-1.5 cursor-pointer ${
               step === 2
-                ? 'border-indigo-500 text-indigo-700 bg-indigo-50/40'
+                ? 'border-[#1c6856] text-[#1c6856] bg-emerald-50/30'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -293,7 +295,7 @@ export const ClosingModal: React.FC<Props> = ({
             onClick={() => setStep(3)}
             className={`py-3 px-2 text-center border-b-2 transition flex items-center justify-center gap-1.5 cursor-pointer ${
               step === 3
-                ? 'border-amber-500 text-amber-700 bg-amber-50/40'
+                ? 'border-[#1c6856] text-[#1c6856] bg-emerald-50/30'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -310,7 +312,7 @@ export const ClosingModal: React.FC<Props> = ({
             }}
             className={`py-3 px-2 text-center border-b-2 transition flex items-center justify-center gap-1.5 cursor-pointer ${
               step === 4
-                ? 'border-emerald-500 text-emerald-700 bg-emerald-50/40'
+                ? 'border-[#1c6856] text-[#1c6856] bg-emerald-50/30'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -327,15 +329,15 @@ export const ClosingModal: React.FC<Props> = ({
           {/* ════════════════════════════════════════════════════════════════ */}
           {step === 1 && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex-wrap gap-3">
-                <span className="text-sm text-slate-700 font-bold">
+              <div className="flex items-center justify-between p-3.5 bg-white rounded-xl border border-slate-200 flex-wrap gap-3">
+                <span className="text-xs text-slate-700 font-bold">
                   Administrador / Cajero que realiza el Cierre:
                 </span>
                 <div className="flex gap-2">
                   <select
                     value={closedBy}
                     onChange={(e) => setClosedBy(e.target.value)}
-                    className="bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3 py-1.5 text-sm font-bold focus:bg-white focus:outline-none focus:border-amber-500"
+                    className="bg-slate-50 border border-slate-300 text-slate-900 rounded-lg px-2.5 py-1 text-xs font-bold focus:bg-white focus:outline-none focus:border-[#1c6856]"
                   >
                     {availableAdmins.map((adm) => (
                       <option key={adm} value={adm}>
@@ -348,8 +350,8 @@ export const ClosingModal: React.FC<Props> = ({
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
-                    <Banknote className="w-4 h-4 text-emerald-600" />
+                  <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                    <Banknote className="w-4 h-4 text-[#1c6856]" />
                     <span>Arqueo Físico de Gaveta al Cierre (Efectivo Contado)</span>
                   </h3>
                   <span className="text-xs text-slate-500 font-medium">
@@ -365,17 +367,17 @@ export const ClosingModal: React.FC<Props> = ({
                 />
               </div>
 
-              <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+              <div className="p-4 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold text-slate-500 uppercase">Efectivo Físico Contado en Gaveta:</span>
-                  <div className="text-2xl font-black font-mono text-emerald-700">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Efectivo Físico Contado en Gaveta:</span>
+                  <div className="text-2xl font-bold font-mono text-[#1c6856]">
                     C$ {actualCashNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-stone-950 font-black text-xs flex items-center gap-2 cursor-pointer shadow-sm transition"
+                  className="px-5 py-2.5 rounded-lg bg-[#1c6856] hover:bg-[#154f42] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-sm transition"
                 >
                   <span>Continuar a Ventas</span>
                   <ArrowRight className="w-4 h-4" />
@@ -388,16 +390,16 @@ export const ClosingModal: React.FC<Props> = ({
           {/* PASO 2: VENTAS DEL TURNO (DATÁFONOS, PEDIDOSYA, EFECTIVO) ──── */}
           {/* ════════════════════════════════════════════════════════════════ */}
           {step === 2 && (
-            <div className="space-y-5">
+            <div className="space-y-4">
               {/* Tarjetas POS por Banco */}
-              <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <div className="p-5 bg-white rounded-xl border border-slate-200 space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100">
-                      <CreditCard className="w-5 h-5" />
+                    <div className="p-2 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
+                      <CreditCard className="w-4 h-4 text-[#1c6856]" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-black text-slate-900">
+                      <h3 className="text-sm font-bold text-slate-900">
                         1. Cierres de Lote de Tarjetas POS (Datáfonos)
                       </h3>
                       <p className="text-xs text-slate-500">
@@ -407,20 +409,20 @@ export const ClosingModal: React.FC<Props> = ({
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] uppercase font-bold text-slate-400 block">Subtotal Tarjetas</span>
-                    <span className="text-lg font-black font-mono text-indigo-700">
+                    <span className="text-base font-bold font-mono text-slate-900">
                       C$ {totalCards.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* BAC */}
-                  <div className="p-3.5 bg-rose-50/60 rounded-xl border border-rose-200/80">
-                    <label className="block text-xs font-black uppercase text-rose-800 mb-1">
+                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <label className="block text-[11px] font-bold uppercase text-slate-700 mb-1">
                       BAC Credomatic (C$)
                     </label>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-rose-400">C$</span>
+                      <span className="text-xs font-mono font-bold text-slate-400">C$</span>
                       <input
                         type="number"
                         step="0.01"
@@ -428,18 +430,18 @@ export const ClosingModal: React.FC<Props> = ({
                         placeholder="0.00"
                         value={cardsBAC === 0 ? '' : cardsBAC}
                         onChange={(e) => setCardsBAC(parseFloat(e.target.value) || 0)}
-                        className="w-full bg-white border border-rose-200 rounded-xl px-3 py-2 font-mono font-bold text-slate-900 focus:outline-none focus:border-rose-400"
+                        className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono font-bold text-xs text-slate-900 focus:outline-none focus:border-[#1c6856]"
                       />
                     </div>
                   </div>
 
                   {/* Ficohsa */}
-                  <div className="p-3.5 bg-sky-50/60 rounded-xl border border-sky-200/80">
-                    <label className="block text-xs font-black uppercase text-sky-800 mb-1">
+                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <label className="block text-[11px] font-bold uppercase text-slate-700 mb-1">
                       Banco Ficohsa (C$)
                     </label>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-sky-400">C$</span>
+                      <span className="text-xs font-mono font-bold text-slate-400">C$</span>
                       <input
                         type="number"
                         step="0.01"
@@ -447,18 +449,18 @@ export const ClosingModal: React.FC<Props> = ({
                         placeholder="0.00"
                         value={cardsFicohsa === 0 ? '' : cardsFicohsa}
                         onChange={(e) => setCardsFicohsa(parseFloat(e.target.value) || 0)}
-                        className="w-full bg-white border border-sky-200 rounded-xl px-3 py-2 font-mono font-bold text-slate-900 focus:outline-none focus:border-sky-400"
+                        className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono font-bold text-xs text-slate-900 focus:outline-none focus:border-[#1c6856]"
                       />
                     </div>
                   </div>
 
                   {/* Banpro */}
-                  <div className="p-3.5 bg-emerald-50/60 rounded-xl border border-emerald-200/80">
-                    <label className="block text-xs font-black uppercase text-emerald-800 mb-1">
+                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <label className="block text-[11px] font-bold uppercase text-slate-700 mb-1">
                       Banpro Grupo Promerica (C$)
                     </label>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-emerald-400">C$</span>
+                      <span className="text-xs font-mono font-bold text-slate-400">C$</span>
                       <input
                         type="number"
                         step="0.01"
@@ -466,18 +468,18 @@ export const ClosingModal: React.FC<Props> = ({
                         placeholder="0.00"
                         value={cardsBanpro === 0 ? '' : cardsBanpro}
                         onChange={(e) => setCardsBanpro(parseFloat(e.target.value) || 0)}
-                        className="w-full bg-white border border-emerald-200 rounded-xl px-3 py-2 font-mono font-bold text-slate-900 focus:outline-none focus:border-emerald-400"
+                        className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono font-bold text-xs text-slate-900 focus:outline-none focus:border-[#1c6856]"
                       />
                     </div>
                   </div>
 
                   {/* Lafise */}
-                  <div className="p-3.5 bg-amber-50/60 rounded-xl border border-amber-200/80">
-                    <label className="block text-xs font-black uppercase text-amber-800 mb-1">
+                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <label className="block text-[11px] font-bold uppercase text-slate-700 mb-1">
                       Banco LAFISE Bancentro (C$)
                     </label>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-amber-400">C$</span>
+                      <span className="text-xs font-mono font-bold text-slate-400">C$</span>
                       <input
                         type="number"
                         step="0.01"
@@ -485,7 +487,7 @@ export const ClosingModal: React.FC<Props> = ({
                         placeholder="0.00"
                         value={cardsLafise === 0 ? '' : cardsLafise}
                         onChange={(e) => setCardsLafise(parseFloat(e.target.value) || 0)}
-                        className="w-full bg-white border border-amber-200 rounded-xl px-3 py-2 font-mono font-bold text-slate-900 focus:outline-none focus:border-amber-400"
+                        className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono font-bold text-xs text-slate-900 focus:outline-none focus:border-[#1c6856]"
                       />
                     </div>
                   </div>
@@ -493,20 +495,20 @@ export const ClosingModal: React.FC<Props> = ({
               </div>
 
               {/* Delivery PedidosYa, Ventas Efectivo Sistema & Otros Ingresos */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* PedidosYa */}
-                <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-2">
                   <div className="flex items-center gap-2">
-                    <Truck className="w-5 h-5 text-amber-600" />
-                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                    <Truck className="w-4 h-4 text-slate-600" />
+                    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                       2. Delivery PedidosYa (C$)
                     </h3>
                   </div>
-                  <p className="text-xs text-slate-500">
-                    Total vendido en la aplicación de PedidosYa.
+                  <p className="text-[11px] text-slate-500">
+                    Total vendido en la aplicación.
                   </p>
                   <div className="flex items-center gap-2 pt-1">
-                    <span className="text-slate-400 font-mono font-bold">C$</span>
+                    <span className="text-slate-400 font-mono font-bold text-xs">C$</span>
                     <input
                       type="number"
                       step="0.01"
@@ -514,24 +516,24 @@ export const ClosingModal: React.FC<Props> = ({
                       placeholder="0.00"
                       value={salesPedidosYa === 0 ? '' : salesPedidosYa}
                       onChange={(e) => setSalesPedidosYa(parseFloat(e.target.value) || 0)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-lg font-black font-mono text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm font-bold font-mono text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856]"
                     />
                   </div>
                 </div>
 
                 {/* Ventas en Efectivo del Sistema POS */}
-                <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-2">
                   <div className="flex items-center gap-2">
-                    <Receipt className="w-5 h-5 text-emerald-600" />
-                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                    <Receipt className="w-4 h-4 text-[#1c6856]" />
+                    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                       3. Ventas Efectivo POS (C$)
                     </h3>
                   </div>
-                  <p className="text-xs text-slate-500">
-                    Total efectivo según sistema (Loyverse).
+                  <p className="text-[11px] text-slate-500">
+                    Total según sistema (Loyverse).
                   </p>
                   <div className="flex items-center gap-2 pt-1">
-                    <span className="text-slate-400 font-mono font-bold">C$</span>
+                    <span className="text-slate-400 font-mono font-bold text-xs">C$</span>
                     <input
                       type="number"
                       step="0.01"
@@ -539,24 +541,24 @@ export const ClosingModal: React.FC<Props> = ({
                       placeholder="0.00"
                       value={salesCashSystem === 0 ? '' : salesCashSystem}
                       onChange={(e) => setSalesCashSystem(parseFloat(e.target.value) || 0)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-lg font-black font-mono text-emerald-700 focus:bg-white focus:outline-none focus:border-emerald-500"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm font-bold font-mono text-emerald-800 focus:bg-white focus:outline-none focus:border-[#1c6856]"
                     />
                   </div>
                 </div>
 
                 {/* Otros Ingresos */}
-                <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-2">
                   <div className="flex items-center gap-2">
-                    <Coins className="w-5 h-5 text-cyan-600" />
-                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                    <Coins className="w-4 h-4 text-slate-600" />
+                    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                       4. Otros Ingresos (C$)
                     </h3>
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-[11px] text-slate-500">
                     Ingresos adicionales no estándar.
                   </p>
                   <div className="flex items-center gap-2 pt-1">
-                    <span className="text-slate-400 font-mono font-bold">C$</span>
+                    <span className="text-slate-400 font-mono font-bold text-xs">C$</span>
                     <input
                       type="number"
                       step="0.01"
@@ -564,7 +566,7 @@ export const ClosingModal: React.FC<Props> = ({
                       placeholder="0.00"
                       value={otherIncome === 0 ? '' : otherIncome}
                       onChange={(e) => setOtherIncome(parseFloat(e.target.value) || 0)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-lg font-black font-mono text-cyan-700 focus:bg-white focus:outline-none focus:border-cyan-500"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm font-bold font-mono text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856]"
                     />
                   </div>
                   <input
@@ -572,25 +574,25 @@ export const ClosingModal: React.FC<Props> = ({
                     placeholder="Concepto / Detalle (opcional)"
                     value={otherIncomeNotes}
                     onChange={(e) => setOtherIncomeNotes(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-xs text-slate-700 focus:bg-white focus:outline-none focus:border-cyan-500 mt-1"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 focus:bg-white focus:outline-none focus:border-[#1c6856] mt-1"
                   />
                 </div>
               </div>
 
               {/* Total Bruto Consolidado */}
-              <div className="p-5 bg-slate-900 text-white rounded-2xl flex items-center justify-between shadow-md">
+              <div className="p-4 bg-slate-900 text-white rounded-xl flex items-center justify-between shadow-sm">
                 <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
                     Total Ventas Brutas del Turno (Efectivo + Tarjetas + Delivery + Otros Ing.)
                   </span>
-                  <div className="text-2xl font-black font-mono text-emerald-400 mt-1">
+                  <div className="text-2xl font-bold font-mono text-emerald-400 mt-0.5">
                     C$ {totalGrossSales.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setStep(3)}
-                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs flex items-center gap-2 cursor-pointer shadow-sm transition"
+                  className="px-5 py-2.5 rounded-lg bg-[#1c6856] hover:bg-[#154f42] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-sm transition"
                 >
                   <span>Continuar a Propinas</span>
                   <ArrowRight className="w-4 h-4" />
@@ -603,18 +605,20 @@ export const ClosingModal: React.FC<Props> = ({
           {/* PASO 3: PROPINAS DE LA NOCHE ───────────────────────────────── */}
           {/* ════════════════════════════════════════════════════════════════ */}
           {step === 3 && (
-            <div className="space-y-6">
-              <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                  <Coins className="w-5 h-5 text-amber-600" /> Reparto de Propinas del Turno
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Calcula la propina total del turno y la cuota individual para el personal.
-                </p>
+            <div className="space-y-4">
+              <div className="p-5 bg-white rounded-xl border border-slate-200 space-y-4">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                    <Coins className="w-4 h-4 text-[#1c6856]" /> Reparto de Propinas del Turno
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Calcula la propina total del turno y la cuota individual para el personal.
+                  </p>
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
                       Total de Propina Recaudada (Línea 'Impuestos' en Loyverse POS) (C$)
                     </label>
                     <input
@@ -624,12 +628,12 @@ export const ClosingModal: React.FC<Props> = ({
                       value={totalTipCollected === 0 ? '' : totalTipCollected}
                       placeholder="0.00"
                       onChange={(e) => setTotalTipCollected(parseFloat(e.target.value) || 0)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xl font-black font-mono text-amber-700 focus:bg-white focus:outline-none focus:border-amber-500"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-lg font-bold font-mono text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
                       <Users className="w-3.5 h-3.5 text-slate-500" /> Total de Personal en Turno
                     </label>
                     <input
@@ -638,32 +642,32 @@ export const ClosingModal: React.FC<Props> = ({
                       step="1"
                       value={staffCount}
                       onChange={(e) => setStaffCount(parseInt(e.target.value, 10) || 1)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xl font-black font-mono text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-lg font-bold font-mono text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856]"
                     />
                   </div>
                 </div>
 
                 {/* Tarjeta de Cálculo Automático */}
-                <div className="p-5 bg-gradient-to-r from-amber-50 to-amber-100/60 border border-amber-200 rounded-2xl flex items-center justify-between shadow-xs flex-wrap gap-3">
+                <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-lg flex items-center justify-between flex-wrap gap-3">
                   <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-amber-800">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
                       Propina Individual Calculada
                     </span>
-                    <div className="text-3xl font-black text-amber-700 font-mono">
+                    <div className="text-2xl font-bold text-amber-900 font-mono">
                       C$ {individualTip.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                     </div>
-                    <span className="text-xs text-slate-500 font-medium">
+                    <span className="text-[11px] text-slate-500 font-medium">
                       (Para cada uno de los {staffCount} colaboradores)
                     </span>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-2 cursor-pointer bg-white px-3.5 py-2 rounded-xl border border-amber-300 shadow-xs">
+                    <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-amber-300 shadow-2xs">
                       <input
                         type="checkbox"
                         checked={tipPaid}
                         onChange={(e) => setTipPaid(e.target.checked)}
-                        className="w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-0"
+                        className="w-4 h-4 text-[#1c6856] rounded border-slate-300 focus:ring-0"
                       />
                       <span className="text-xs font-bold text-slate-800">
                         ¿Se entregó en efectivo de la gaveta esta noche?
@@ -673,7 +677,7 @@ export const ClosingModal: React.FC<Props> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
                     Nombres del personal / Observaciones de propina
                   </label>
                   <input
@@ -681,7 +685,7 @@ export const ClosingModal: React.FC<Props> = ({
                     value={tipNotes}
                     onChange={(e) => setTipNotes(e.target.value)}
                     placeholder="Ej: Melvin, Nelly, Uriel, Sandor, Oscar..."
-                    className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded-xl px-3 py-2 text-xs focus:bg-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded-lg px-3 py-1.5 text-xs focus:bg-white focus:outline-none focus:border-[#1c6856]"
                   />
                 </div>
               </div>
@@ -692,10 +696,10 @@ export const ClosingModal: React.FC<Props> = ({
           {/* PASO 4: AUDITORÍA, CUADRE REAL Y ACTA OFICIAL ──────────────── */}
           {/* ════════════════════════════════════════════════════════════════ */}
           {step === 4 && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Tarjeta de Diagnóstico de Cuadre */}
               <div
-                className={`p-6 rounded-3xl border shadow-xs text-center space-y-2 ${
+                className={`p-5 rounded-xl border text-center space-y-1.5 ${
                   auditStatus === 'SQUARED'
                     ? 'bg-emerald-50/80 border-emerald-300 text-emerald-950'
                     : auditStatus === 'SURPLUS'
@@ -705,13 +709,13 @@ export const ClosingModal: React.FC<Props> = ({
               >
                 <div className="flex items-center justify-center gap-2">
                   {auditStatus === 'SQUARED' ? (
-                    <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+                    <CheckCircle2 className="w-6 h-6 text-emerald-600" />
                   ) : auditStatus === 'SURPLUS' ? (
-                    <CheckCircle2 className="w-8 h-8 text-blue-600" />
+                    <CheckCircle2 className="w-6 h-6 text-blue-600" />
                   ) : (
-                    <AlertTriangle className="w-8 h-8 text-rose-600" />
+                    <AlertTriangle className="w-6 h-6 text-rose-600" />
                   )}
-                  <span className="text-2xl font-black">
+                  <span className="text-xl font-bold">
                     {auditStatus === 'SQUARED'
                       ? 'CAJA CUADRADA EXACTA'
                       : auditStatus === 'SURPLUS'
@@ -720,7 +724,7 @@ export const ClosingModal: React.FC<Props> = ({
                   </span>
                 </div>
 
-                <div className="text-sm font-semibold">
+                <div className="text-xs font-medium">
                   {auditStatus === 'SQUARED' && 'El efectivo físico coincide exactamente con las ventas y el fondo de apertura.'}
                   {auditStatus === 'SURPLUS' && `Hay un sobrante de + C$ ${differenceNIO.toFixed(2)} sobre lo esperado.`}
                   {auditStatus === 'SHORTAGE' && `Hay un faltante de - C$ ${Math.abs(differenceNIO).toFixed(2)} respecto al efectivo esperado.`}
@@ -729,11 +733,11 @@ export const ClosingModal: React.FC<Props> = ({
 
               {/* Banners Informativos de Integridad Caja Chica / Sincronización */}
               {pendingPettyTransactions.length > 0 && (
-                <div className="p-3.5 bg-amber-50 border-2 border-amber-300 rounded-2xl flex items-center justify-between text-xs text-amber-950 shadow-xs">
+                <div className="p-3 bg-amber-50 border border-amber-300 rounded-lg flex items-center justify-between text-xs text-amber-950">
                   <div className="flex items-center gap-2">
-                    <span className="text-base">⏳</span>
+                    <Clock className="w-4 h-4 text-amber-700 shrink-0" />
                     <div>
-                      <strong className="block font-black text-amber-900">
+                      <strong className="block font-bold text-amber-900">
                         {pendingPettyTransactions.length} movimiento(s) de Caja Chica pendientes en esta PC
                       </strong>
                       <span className="text-[11px] text-amber-800">
@@ -741,18 +745,18 @@ export const ClosingModal: React.FC<Props> = ({
                       </span>
                     </div>
                   </div>
-                  <span className="px-2 py-1 rounded-lg bg-amber-200/80 font-mono font-bold text-amber-900 text-[10px]">
+                  <span className="px-2 py-0.5 rounded-md bg-amber-200/80 font-mono font-bold text-amber-900 text-[10px]">
                     Auto-Sync
                   </span>
                 </div>
               )}
 
               {isPettyCashOpen && (
-                <div className="p-3.5 bg-sky-50 border border-sky-300 rounded-2xl flex items-center justify-between text-xs text-sky-950 shadow-xs">
+                <div className="p-3 bg-sky-50 border border-sky-300 rounded-lg flex items-center justify-between text-xs text-sky-950">
                   <div className="flex items-center gap-2">
-                    <span className="text-base">ℹ️</span>
+                    <Info className="w-4 h-4 text-sky-700 shrink-0" />
                     <div>
-                      <strong className="block font-black text-sky-900">
+                      <strong className="block font-bold text-sky-900">
                         Caja Chica permanece abierta
                       </strong>
                       <span className="text-[11px] text-sky-800">
@@ -760,7 +764,7 @@ export const ClosingModal: React.FC<Props> = ({
                       </span>
                     </div>
                   </div>
-                  <span className="px-2 py-1 rounded-lg bg-sky-100 font-bold text-sky-800 text-[10px]">
+                  <span className="px-2 py-0.5 rounded-md bg-sky-100 font-bold text-sky-800 text-[10px]">
                     Turno Abierto
                   </span>
                 </div>
@@ -769,10 +773,10 @@ export const ClosingModal: React.FC<Props> = ({
               {/* Conciliación Matemática Transparente */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Caja / Arqueo de Gaveta (Idéntico a Loyverse POS) */}
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
-                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center justify-between">
+                <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center justify-between">
                     <span>1. Conciliación de Efectivo (Loyverse POS)</span>
-                    <Banknote className="w-4 h-4 text-emerald-600" />
+                    <Banknote className="w-4 h-4 text-[#1c6856]" />
                   </h4>
 
                   <div className="space-y-1.5 text-xs">
@@ -806,14 +810,14 @@ export const ClosingModal: React.FC<Props> = ({
                       <span>(=) Efectivo Teórico que debe haber:</span>
                       <strong className="font-mono text-slate-900">C$ {expectedCashNIO.toFixed(2)}</strong>
                     </div>
-                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex justify-between font-black text-sm">
+                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex justify-between font-bold text-sm">
                       <span>Efectivo Físico Real Contado:</span>
-                      <strong className="font-mono text-emerald-700">C$ {actualCashNIO.toFixed(2)}</strong>
+                      <strong className="font-mono text-[#1c6856]">C$ {actualCashNIO.toFixed(2)}</strong>
                     </div>
                     <div className="flex justify-between font-bold pt-1">
                       <span>Diferencia de Cuadre:</span>
                       <span
-                        className={`font-mono font-black ${
+                        className={`font-mono font-bold ${
                           differenceNIO === 0
                             ? 'text-emerald-600'
                             : differenceNIO > 0
@@ -828,10 +832,10 @@ export const ClosingModal: React.FC<Props> = ({
                 </div>
 
                 {/* Rendimiento Financiero del Turno (Idéntico a Excel) */}
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
-                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center justify-between">
+                <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center justify-between">
                     <span>2. Estado Financiero Consolidado (Excel)</span>
-                    <TrendingUp className="w-4 h-4 text-indigo-600" />
+                    <TrendingUp className="w-4 h-4 text-slate-700" />
                   </h4>
 
                   <div className="space-y-1.5 text-xs">
@@ -855,7 +859,7 @@ export const ClosingModal: React.FC<Props> = ({
                     )}
                     <div className="border-t border-slate-200 pt-1.5 flex justify-between font-bold text-slate-900">
                       <span>Total Ingresos Facturados:</span>
-                      <strong className="font-mono text-indigo-700 text-sm">C$ {totalGrossSales.toFixed(2)}</strong>
+                      <strong className="font-mono text-slate-900 text-sm">C$ {totalGrossSales.toFixed(2)}</strong>
                     </div>
                     <div className="flex justify-between text-slate-500 pt-1">
                       <span>(-) Compras / Caja Chica (Pag. Efect.):</span>
@@ -867,26 +871,27 @@ export const ClosingModal: React.FC<Props> = ({
                         <span className="font-mono text-rose-600">- C$ {tipsPaidAmount.toFixed(2)}</span>
                       </div>
                     )}
-                    <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 flex justify-between font-black text-sm text-emerald-950">
+                    <div className="bg-emerald-50/80 p-2.5 rounded-lg border border-emerald-200 flex justify-between font-bold text-sm text-emerald-950">
                       <span>Total Neto / Utilidad Operativa:</span>
-                      <strong className="font-mono text-emerald-700">C$ {dailyNetProfit.toFixed(2)}</strong>
+                      <strong className="font-mono text-emerald-800">C$ {dailyNetProfit.toFixed(2)}</strong>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Saldo que queda en gaveta para apertura siguiente */}
-              <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-2xl text-xs text-amber-950 flex items-center justify-between">
+              <div className="p-3.5 bg-amber-50/70 border border-amber-200 rounded-lg text-xs text-amber-950 flex items-center justify-between">
                 <div>
-                  <span className="font-black uppercase tracking-wider block text-[10px] text-amber-800">
+                  <span className="font-bold uppercase tracking-wider block text-[10px] text-amber-800">
                     Fondo que queda en Gaveta para amanecer (Total Córdobas):
                   </span>
-                  <div className="text-xl font-black font-mono text-amber-900 mt-0.5">
+                  <div className="text-xl font-bold font-mono text-amber-900 mt-0.5">
                     C$ {actualCashNIO.toFixed(2)}
                   </div>
                   {totalClosingUSD > 0 && (
-                    <div className="text-[11px] font-bold text-amber-800 mt-1">
-                      💵 Moneda Extranjera: ${totalClosingUSD.toFixed(2)} USD (Entrega a Snyder • Quedan $0.00 en caja)
+                    <div className="text-[11px] font-bold text-amber-800 mt-1 flex items-center gap-1">
+                      <Banknote className="w-3.5 h-3.5 inline text-amber-800" />
+                      <span>Moneda Extranjera: ${totalClosingUSD.toFixed(2)} USD (Entrega a Snyder • Quedan $0.00 en caja)</span>
                     </div>
                   )}
                 </div>
@@ -905,12 +910,12 @@ export const ClosingModal: React.FC<Props> = ({
                   value={closingNotes}
                   onChange={(e) => setClosingNotes(e.target.value)}
                   placeholder="Ej: Se dejó C$ 922 + $180 en gaveta. Cierres de lote de datáfonos sin discrepancias..."
-                  className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-sm text-slate-900 focus:outline-none focus:border-amber-500 shadow-xs"
+                  className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#1c6856]"
                 />
               </div>
 
               {/* Botones de Reimpresión y Exportación Rápida */}
-              <div className="flex flex-wrap gap-3 pt-2">
+              <div className="flex flex-wrap gap-2.5 pt-1">
                 <button
                   type="button"
                   onClick={() => {
@@ -950,9 +955,9 @@ export const ClosingModal: React.FC<Props> = ({
                     };
                     printThermalClosingTicket(previewShift);
                   }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-300 shadow-xs transition cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-300 transition cursor-pointer"
                 >
-                  <Printer className="w-4 h-4 text-amber-600" />
+                  <Printer className="w-3.5 h-3.5 text-slate-600" />
                   <span>Ticket Cierre General A4</span>
                 </button>
 
@@ -1030,10 +1035,10 @@ export const ClosingModal: React.FC<Props> = ({
                       transactions: dayTransactions,
                     });
                   }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold border border-slate-900 shadow-xs transition cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition cursor-pointer"
                 >
-                  <Printer className="w-4 h-4 text-amber-400" />
-                  <span>Imprimir Acta Oficial B/N (Láser Monocromática)</span>
+                  <Printer className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Imprimir Acta Oficial B/N</span>
                 </button>
 
                 <button
@@ -1072,9 +1077,9 @@ export const ClosingModal: React.FC<Props> = ({
                     };
                     exportShiftToExcel(previewShift, state);
                   }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200 shadow-xs transition cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200 transition cursor-pointer"
                 >
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-700" />
                   <span>Exportar a Excel</span>
                 </button>
               </div>
@@ -1083,13 +1088,13 @@ export const ClosingModal: React.FC<Props> = ({
         </div>
 
         {/* Footer con Navegación de 4 Pasos */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-white">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-white">
           <div>
             {step > 1 ? (
               <button
                 type="button"
                 onClick={() => setStep((s) => (s - 1) as any)}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-500 hover:text-slate-900 transition text-sm font-bold cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition text-xs font-bold cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Paso Anterior</span>
@@ -1098,14 +1103,14 @@ export const ClosingModal: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-800 transition cursor-pointer"
+                className="px-3.5 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition cursor-pointer"
               >
                 Cancelar
               </button>
             )}
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-2.5">
             {step < 4 ? (
               <button
                 type="button"
@@ -1113,7 +1118,7 @@ export const ClosingModal: React.FC<Props> = ({
                   if (step === 3) triggerCelebration();
                   setStep((s) => (s + 1) as any);
                 }}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-bold shadow-md shadow-amber-500/20 transition active:scale-95 cursor-pointer"
+                className="flex items-center gap-1.5 px-5 py-2 rounded-lg bg-[#1c6856] hover:bg-[#154f42] text-white text-xs font-bold shadow-sm transition cursor-pointer"
               >
                 <span>Siguiente Paso</span>
                 <ArrowRight className="w-4 h-4" />
@@ -1122,7 +1127,7 @@ export const ClosingModal: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={handleFinishClosing}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-black shadow-md shadow-rose-600/25 transition active:scale-95 cursor-pointer"
+                className="flex items-center gap-1.5 px-6 py-2.5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold shadow-sm transition cursor-pointer"
               >
                 <CheckCheck className="w-4 h-4" />
                 <span>Finalizar y Cerrar Turno</span>

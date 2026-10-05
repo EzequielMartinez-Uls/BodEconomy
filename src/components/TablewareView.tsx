@@ -120,7 +120,7 @@ export const TablewareView: React.FC<Props> = ({
     <div className="space-y-6">
       {/* Resumen Superior */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <div className="text-xs uppercase font-bold tracking-wider text-slate-400 mb-1">
               Unidades en Stock
@@ -128,27 +128,27 @@ export const TablewareView: React.FC<Props> = ({
             <div className="text-2xl font-black text-slate-900 font-mono">{totalItemsCount} uds</div>
             <div className="text-xs text-slate-500 mt-1">{state.tablewareItems.length} tipos de menaje</div>
           </div>
-          <div className="p-3 bg-amber-50 text-amber-600 rounded-xl border border-amber-200/60 shadow-sm">
-            <UtensilsCrossed className="w-6 h-6" />
+          <div className="p-2.5 bg-slate-50 text-[#1c6856] rounded-lg border border-slate-200 shadow-sm">
+            <UtensilsCrossed className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <div className="text-xs uppercase font-bold tracking-wider text-slate-400 mb-1">
               Valor del Menaje
             </div>
-            <div className="text-2xl font-black text-emerald-600 font-mono">
+            <div className="text-2xl font-black text-[#1c6856] font-mono">
               C$ {totalInventoryValue.toLocaleString('es-NI', { maximumFractionDigits: 0 })}
             </div>
             <div className="text-xs text-slate-500 mt-1">Costo de reposición estimado</div>
           </div>
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-200/60 shadow-sm">
-            <Wine className="w-6 h-6" />
+          <div className="p-2.5 bg-emerald-50 text-[#1c6856] rounded-lg border border-emerald-200 shadow-sm">
+            <Wine className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <div className="text-xs uppercase font-bold tracking-wider text-slate-400 mb-1">
               Pérdidas por Roturas
@@ -160,14 +160,14 @@ export const TablewareView: React.FC<Props> = ({
               {state.tablewareLosses.reduce((acc, l) => acc + l.quantity, 0)} piezas rotas/perdidas
             </div>
           </div>
-          <div className="p-3 bg-rose-50 text-rose-600 rounded-xl border border-rose-200/60 shadow-sm">
-            <TrendingDown className="w-6 h-6" />
+          <div className="p-2.5 bg-rose-50 text-rose-600 rounded-lg border border-rose-200 shadow-sm">
+            <TrendingDown className="w-5 h-5" />
           </div>
         </div>
 
         <div
-          className={`p-5 rounded-2xl border flex items-center justify-between shadow-sm ${
-            lowStockCount > 0 ? 'bg-rose-50/70 border-rose-200' : 'bg-white border-slate-200/80'
+          className={`p-4 rounded-xl border flex items-center justify-between shadow-sm ${
+            lowStockCount > 0 ? 'bg-rose-50/70 border-rose-200' : 'bg-white border-slate-200'
           }`}
         >
           <div>
@@ -186,27 +186,27 @@ export const TablewareView: React.FC<Props> = ({
             </div>
           </div>
           <div
-            className={`p-3 rounded-xl border ${
+            className={`p-2.5 rounded-lg border ${
               lowStockCount > 0
                 ? 'bg-rose-100 text-rose-700 border-rose-300'
                 : 'bg-slate-100 text-slate-400 border-slate-200'
             }`}
           >
-            <AlertTriangle className="w-6 h-6" />
+            <AlertTriangle className="w-5 h-5" />
           </div>
         </div>
       </div>
 
       {/* Botones de Acción y Filtro por Área */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
         <div className="flex gap-2">
           {(['TODOS', 'BARRA', 'SALON', 'COCINA'] as const).map((area) => (
             <button
               key={area}
               onClick={() => setActiveArea(area)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                 activeArea === area
-                  ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/20'
+                  ? 'bg-[#1c6856] text-white shadow-sm'
                   : 'bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-200'
               }`}
             >
@@ -218,16 +218,16 @@ export const TablewareView: React.FC<Props> = ({
         <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
           <button
             onClick={() => setLossModalOpen(true)}
-            className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md shadow-rose-600/20 transition active:scale-95 flex-1 sm:flex-none"
+            className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-sm transition active:scale-95 flex-1 sm:flex-none cursor-pointer"
           >
             <AlertTriangle className="w-4 h-4" />
             <span>Registrar Rotura</span>
           </button>
           <button
             onClick={() => setNewModalOpen(true)}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs border border-slate-300 transition active:scale-95 flex-1 sm:flex-none"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs border border-slate-300 transition active:scale-95 flex-1 sm:flex-none cursor-pointer"
           >
-            <PlusCircle className="w-4 h-4 text-amber-600" />
+            <PlusCircle className="w-4 h-4 text-[#1c6856]" />
             <span>+ Artículo</span>
           </button>
           <button
@@ -238,7 +238,7 @@ export const TablewareView: React.FC<Props> = ({
                 state.activeAdminName
               )
             }
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs border border-slate-300 transition active:scale-95 flex-1 sm:flex-none cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs border border-slate-300 transition active:scale-95 flex-1 sm:flex-none cursor-pointer"
           >
             <Printer className="w-4 h-4 text-slate-500" />
             <span>Imprimir A4</span>
@@ -248,7 +248,7 @@ export const TablewareView: React.FC<Props> = ({
             onClick={() =>
               exportTablewareToExcel(state.tablewareItems, state.tablewareLosses)
             }
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-300 transition active:scale-95 flex-1 sm:flex-none cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-300 transition active:scale-95 flex-1 sm:flex-none cursor-pointer"
             title="Exportar inventario y roturas a Excel"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
@@ -258,10 +258,10 @@ export const TablewareView: React.FC<Props> = ({
       </div>
 
       {/* Tabla de Menaje */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Utensils className="w-4 h-4 text-amber-600" />
+            <Utensils className="w-4 h-4 text-[#1c6856]" />
             Catálogo de Cristalería, Vajilla y Utensilios
           </h3>
           <span className="text-xs text-slate-500">
@@ -337,7 +337,7 @@ export const TablewareView: React.FC<Props> = ({
       </div>
 
       {/* Historial de Roturas */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <History className="w-4 h-4 text-rose-600" />
@@ -360,7 +360,7 @@ export const TablewareView: React.FC<Props> = ({
                 className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:bg-slate-50/70 transition"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-200/60">
+                  <div className="p-2 rounded-lg bg-rose-50 text-rose-600 border border-rose-200">
                     <TrendingDown className="w-4 h-4" />
                   </div>
                   <div>
@@ -397,14 +397,14 @@ export const TablewareView: React.FC<Props> = ({
       {/* Modal Registrar Rotura */}
       {lossModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-md overflow-y-auto max-h-[90vh] shadow-2xl">
+          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-md overflow-y-auto max-h-[90vh] shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/70">
               <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-rose-600" /> Reportar Rotura o Baja de Menaje
               </h3>
               <button
                 onClick={() => setLossModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -418,7 +418,7 @@ export const TablewareView: React.FC<Props> = ({
                 <select
                   value={selectedItemId}
                   onChange={(e) => setSelectedItemId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500 font-semibold"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856] font-semibold"
                 >
                   {state.tablewareItems.map((it) => (
                     <option key={it.id} value={it.id}>
@@ -438,7 +438,7 @@ export const TablewareView: React.FC<Props> = ({
                   required
                   value={lossQuantity}
                   onChange={(e) => setLossQuantity(parseInt(e.target.value, 10) || 1)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xl font-black font-mono text-rose-600 focus:bg-white focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xl font-black font-mono text-rose-600 focus:bg-white focus:outline-none focus:border-[#1c6856]"
                 />
               </div>
 
@@ -447,7 +447,7 @@ export const TablewareView: React.FC<Props> = ({
                 <select
                   value={lossReason}
                   onChange={(e) => setLossReason(e.target.value as any)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500 font-medium"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856] font-medium"
                 >
                   <option value="ROTURA_SALON">Caída / Rotura en Salón (Comedor)</option>
                   <option value="ROTURA_BARRA">Rotura en Barra / Coctelería</option>
@@ -466,7 +466,7 @@ export const TablewareView: React.FC<Props> = ({
                   placeholder="Ej: Se cayó de la bandeja del mesero en mesa 3..."
                   value={lossNotes}
                   onChange={(e) => setLossNotes(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856]"
                 />
               </div>
 
@@ -474,13 +474,13 @@ export const TablewareView: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setLossModalOpen(false)}
-                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800"
+                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl font-bold text-xs text-white bg-rose-600 hover:bg-rose-500 shadow-md shadow-rose-600/25 transition active:scale-95"
+                  className="px-6 py-2.5 rounded-lg font-bold text-xs text-white bg-rose-600 hover:bg-rose-500 shadow-sm transition active:scale-95 cursor-pointer"
                 >
                   Confirmar Baja
                 </button>
@@ -493,10 +493,10 @@ export const TablewareView: React.FC<Props> = ({
       {/* Modal Ajustar Stock */}
       {stockAdjustModalItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-sm overflow-y-auto max-h-[90vh] shadow-2xl p-6 space-y-4">
+          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-sm overflow-y-auto max-h-[90vh] shadow-2xl p-6 space-y-4">
             <h3 className="text-base font-black text-slate-900">
               Ajustar Conteo Físico: <br />
-              <span className="text-amber-600">{stockAdjustModalItem.name}</span>
+              <span className="text-[#1c6856]">{stockAdjustModalItem.name}</span>
             </h3>
             <p className="text-xs text-slate-500">
               Ingresa el conteo exacto de unidades físicas encontradas en la revisión de hoy.
@@ -511,7 +511,7 @@ export const TablewareView: React.FC<Props> = ({
                 min="0"
                 value={adjustedStock}
                 onChange={(e) => setAdjustedStock(parseInt(e.target.value, 10) || 0)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-2xl font-black font-mono text-center text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-2xl font-black font-mono text-center text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856]"
               />
             </div>
 
@@ -519,14 +519,14 @@ export const TablewareView: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => setStockAdjustModalItem(null)}
-                className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800"
+                className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={handleSaveStockAdjust}
-                className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-sm transition"
+                className="px-5 py-2.5 rounded-lg bg-[#1c6856] hover:bg-[#155244] text-white font-bold text-xs shadow-sm transition cursor-pointer"
               >
                 Guardar Ajuste
               </button>
@@ -538,14 +538,14 @@ export const TablewareView: React.FC<Props> = ({
       {/* Modal Nuevo Artículo */}
       {newModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-md overflow-y-auto max-h-[90vh] shadow-2xl">
+          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-md overflow-y-auto max-h-[90vh] shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/70">
               <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                <PlusCircle className="w-5 h-5 text-amber-600" /> Añadir Artículo de Menaje
+                <PlusCircle className="w-5 h-5 text-[#1c6856]" /> Añadir Artículo de Menaje
               </h3>
               <button
                 onClick={() => setNewModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -562,7 +562,7 @@ export const TablewareView: React.FC<Props> = ({
                   placeholder="Ej: Plato Hondo para Sopa, Copa Flauta Champán..."
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856]"
                 />
               </div>
 
@@ -572,7 +572,7 @@ export const TablewareView: React.FC<Props> = ({
                   <select
                     value={newArea}
                     onChange={(e) => setNewArea(e.target.value as any)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500 font-semibold"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856] font-semibold"
                   >
                     <option value="BARRA">Barra</option>
                     <option value="SALON">Salón / Comedor</option>
@@ -587,7 +587,7 @@ export const TablewareView: React.FC<Props> = ({
                     min="1"
                     value={newStock}
                     onChange={(e) => setNewStock(parseInt(e.target.value, 10) || 0)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none font-mono"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none font-mono"
                   />
                 </div>
               </div>
@@ -600,7 +600,7 @@ export const TablewareView: React.FC<Props> = ({
                     min="1"
                     value={newMinStock}
                     onChange={(e) => setNewMinStock(parseInt(e.target.value, 10) || 0)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none font-mono"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none font-mono"
                   />
                 </div>
 
@@ -612,7 +612,7 @@ export const TablewareView: React.FC<Props> = ({
                     step="0.01"
                     value={newUnitCost}
                     onChange={(e) => setNewUnitCost(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none font-mono"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none font-mono"
                   />
                 </div>
               </div>
@@ -621,13 +621,13 @@ export const TablewareView: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setNewModalOpen(false)}
-                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800"
+                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl font-bold text-xs text-slate-950 bg-amber-500 hover:bg-amber-400 shadow-sm transition"
+                  className="px-6 py-2.5 rounded-lg font-bold text-xs text-white bg-[#1c6856] hover:bg-[#155244] shadow-sm transition cursor-pointer"
                 >
                   Crear Artículo
                 </button>
