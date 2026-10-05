@@ -17,6 +17,7 @@ import {
   syncOpenShiftToCloud,
   syncCloseShiftToCloud,
   syncTransactionToCloud,
+  updateTransactionInCloud,
   deleteTransactionFromCloud,
   syncGeneralCashShiftToCloud,
   syncGeneralCashOpeningToCloud,
@@ -457,9 +458,22 @@ export function App() {
   };
 
   // Handlers
-  const handleConfirmOpenShift = (newShift: CashShift, updatedPreviousShift?: CashShift) => {
-    const transferAmount = newShift.openingTransferToPettyCash || newShift.transferToPettyCash || 0;
+  const handleConfirmOpenShift = (
+    newShift: CashShift,
+    updatedPreviousShift?: CashShift,
+    pettyOpeningData?: {
+      initialBalance: number;
+      previousDayRemaining: number;
+      generalCashTransfer: number;
+      bossContribution: number;
+    }
+  ) => {
+    const transferAmount = pettyOpeningData?.generalCashTransfer !== undefined
+      ? pettyOpeningData.generalCashTransfer
+      : (newShift.openingTransferToPettyCash || newShift.transferToPettyCash || 0);
+
     let transferTxToSync: PettyCashTransaction | null = null;
+    let newPettyShiftToSync: PettyCashShift | null = null;
 
     setState((prev) => {
       let updatedHistory = prev.shiftHistory;
@@ -475,10 +489,34 @@ export function App() {
       let updatedPettyBalance = prev.pettyCashBalance;
       let updatedPettyShift = prev.currentPettyCashShift;
 
+      // Si se abre también Caja Chica a través del wizard unificado
+      if (pettyOpeningData) {
+        const createdPettyShift: PettyCashShift = {
+          id: `pc-shift-${newShift.date}`,
+          date: newShift.date,
+          status: 'OPEN',
+          openedBy: newShift.openedBy,
+          openedAt: newShift.openedAt,
+          previousDayRemaining: pettyOpeningData.previousDayRemaining,
+          generalCashTransfer: transferAmount,
+          bossContribution: pettyOpeningData.bossContribution || 0,
+          initialBalance: pettyOpeningData.initialBalance,
+          openingNotes: `Apertura unificada del día ${newShift.date}`,
+        };
+        newPettyShiftToSync = createdPettyShift;
+        updatedPettyShift = createdPettyShift;
+        updatedPettyBalance = pettyOpeningData.initialBalance;
+
+        // Limpiar residuos de fondeos iniciales previos
+        updatedPettyTxs = updatedPettyTxs.filter(
+          (t) => !t.id.startsWith('pct-init-boss-') && !t.id.startsWith('pct-init-gen-')
+        );
+      }
+
       if (transferAmount > 0) {
         const transferTx: PettyCashTransaction = {
           id: `pct-transfer-open-${Date.now()}`,
-          shiftId: prev.currentPettyCashShift?.id || `pc-shift-${newShift.date}`,
+          shiftId: `pc-shift-${newShift.date}`,
           date: newShift.openedAt,
           type: 'INFLOW',
           inflowSource: 'TRASLADO_CAJA_GENERAL',
@@ -491,20 +529,22 @@ export function App() {
         };
         transferTxToSync = transferTx;
         updatedPettyTxs = [transferTx, ...updatedPettyTxs];
-        updatedPettyBalance += transferAmount;
 
-        if (updatedPettyShift) {
-          updatedPettyShift = {
-            ...updatedPettyShift,
-            generalCashTransfer: (updatedPettyShift.generalCashTransfer || 0) + transferAmount,
-            initialBalance: updatedPettyShift.initialBalance + transferAmount,
-          };
+        if (!pettyOpeningData) {
+          updatedPettyBalance += transferAmount;
+          if (updatedPettyShift) {
+            updatedPettyShift = {
+              ...updatedPettyShift,
+              generalCashTransfer: (updatedPettyShift.generalCashTransfer || 0) + transferAmount,
+              initialBalance: updatedPettyShift.initialBalance + transferAmount,
+            };
+          }
         }
       }
 
       const openDetails = transferAmount > 0
-        ? `Apertura con C$ ${newShift.totalOpeningEquivNIO.toFixed(2)} en gaveta (Conteo inicial: C$ ${(newShift.openingCashCountedNIO || newShift.totalOpeningEquivNIO + transferAmount).toFixed(2)}, Traspaso a Caja Chica: -C$ ${transferAmount.toFixed(2)})`
-        : `Apertura realizada con C$ ${newShift.totalOpeningEquivNIO.toFixed(2)}`;
+        ? `Apertura unificada: C$ ${newShift.totalOpeningEquivNIO.toFixed(2)} en gaveta General y C$ ${updatedPettyBalance.toFixed(2)} en Caja Chica (Traslado: C$ ${transferAmount.toFixed(2)})`
+        : `Apertura realizada con C$ ${newShift.totalOpeningEquivNIO.toFixed(2)} en Caja General`;
 
       return {
         ...prev,
@@ -529,10 +569,16 @@ export function App() {
     });
     playSound([440, 554.37, 659.25]); // Do mayor alegre
 
-    // Sincronizar apertura de Caja General con Supabase para alertar a otras computadoras y a la web
+    // Sincronizar apertura de Caja General con Supabase
     syncGeneralCashOpeningToCloud(newShift).catch((err) =>
       console.warn('⚠️ Error sincronizando apertura con la nube:', err)
     );
+
+    if (newPettyShiftToSync) {
+      syncOpenShiftToCloud(newPettyShiftToSync).catch((err) =>
+        console.warn('⚠️ Error sincronizando apertura de caja chica con la nube:', err)
+      );
+    }
 
     if (transferTxToSync) {
       syncTransactionToCloud(transferTxToSync).catch((err) =>
@@ -839,6 +885,75 @@ export function App() {
       deleteTransactionFromCloud(deletedTx).catch((err) =>
         console.warn('⚠️ Error al eliminar movimiento en la nube:', err)
       );
+    }
+  };
+
+  const handleEditPettyCashTransaction = async (updatedTx: PettyCashTransaction) => {
+    setState((prev) => {
+      const oldIndex = prev.pettyCashTransactions.findIndex(
+        (t) => t.id === updatedTx.id || (updatedTx.cloudId && t.cloudId === updatedTx.cloudId)
+      );
+      if (oldIndex === -1) return prev;
+      const oldTx = prev.pettyCashTransactions[oldIndex];
+
+      const isForActiveShift =
+        prev.currentPettyCashShift &&
+        (oldTx.shiftId === prev.currentPettyCashShift.id || updatedTx.shiftId === prev.currentPettyCashShift.id);
+
+      // Calcular diferencia de saldo en gaveta física
+      let balanceChange = 0;
+      if (isForActiveShift) {
+        // Revertir efecto de oldTx
+        const oldIsExpense = oldTx.type === 'EXPENSE';
+        const oldIsCash = oldTx.method === 'CASH' || !oldTx.method;
+        const oldDelta = oldIsExpense ? (oldIsCash ? -oldTx.amount : 0) : oldTx.amount;
+
+        // Aplicar efecto de updatedTx
+        const newIsExpense = updatedTx.type === 'EXPENSE';
+        const newIsCash = updatedTx.method === 'CASH' || !updatedTx.method;
+        const newDelta = newIsExpense ? (newIsCash ? -updatedTx.amount : 0) : updatedTx.amount;
+
+        balanceChange = newDelta - oldDelta;
+      }
+
+      const updatedList = [...prev.pettyCashTransactions];
+      updatedList[oldIndex] = {
+        ...updatedTx,
+        syncStatus: 'PENDING',
+      };
+
+      return {
+        ...prev,
+        pettyCashTransactions: updatedList,
+        pettyCashBalance: Math.max(0, parseFloat((prev.pettyCashBalance + balanceChange).toFixed(2))),
+        auditLogs: [
+          {
+            id: `log-${Date.now()}`,
+            timestamp: new Date().toISOString(),
+            user: prev.activeAdminName,
+            action: 'EDITAR_GASTO_CAJA_CHICA',
+            details: `Modificado: ${updatedTx.vendor} - C$ ${updatedTx.amount.toFixed(2)} (${updatedTx.method === 'CASH' ? 'Efectivo' : 'Transferencia'})`,
+          },
+          ...prev.auditLogs,
+        ],
+      };
+    });
+
+    playSound([659.25, 880]);
+
+    // Sincronizar actualización con Supabase
+    try {
+      const ok = await updateTransactionInCloud(updatedTx);
+      if (ok) {
+        setState((prev) => ({
+          ...prev,
+          pettyCashTransactions: prev.pettyCashTransactions.map((t) =>
+            t.id === updatedTx.id ? { ...t, syncStatus: 'SYNCED', syncError: undefined } : t
+          ),
+        }));
+      }
+    } catch (err: any) {
+      console.warn('⚠️ Error sincronizando edición a la nube:', err);
     }
   };
 
@@ -1183,6 +1298,7 @@ export function App() {
               <PettyCashView
                 state={state}
                 onAddTransaction={handleAddPettyCashTransaction}
+                onEditTransaction={handleEditPettyCashTransaction}
                 onDeleteTransaction={handleDeletePettyCashTransaction}
                 onOpenPettyCashShift={handleOpenPettyCashShift}
                 onClosePettyCashShift={handleClosePettyCashShift}
@@ -1227,6 +1343,8 @@ export function App() {
         onClose={() => setOpeningModalOpen(false)}
         lastClosedShift={lastClosedShift}
         shiftHistory={state.shiftHistory}
+        lastClosedPettyCashShift={state.pettyCashShiftHistory[0] || null}
+        currentPettyCashBalance={state.pettyCashBalance}
         activeAdminName={state.activeAdminName}
         defaultExchangeRate={state.defaultExchangeRate}
         availableAdmins={state.availableAdmins}

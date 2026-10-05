@@ -30,6 +30,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  Edit2,
   Trash2,
   Settings,
   Plus,
@@ -40,6 +41,7 @@ import {
 interface Props {
   state: AppState;
   onAddTransaction: (tx: PettyCashTransaction) => void;
+  onEditTransaction?: (tx: PettyCashTransaction) => void;
   onDeleteTransaction: (txId: string) => void;
   onOpenPettyCashShift: (newShift: PettyCashShift) => void;
   onClosePettyCashShift: (closedShift: PettyCashShift) => void;
@@ -79,6 +81,7 @@ export function getCategoryInfo(catValue: string) {
 export const PettyCashView: React.FC<Props> = ({
   state,
   onAddTransaction,
+  onEditTransaction,
   onDeleteTransaction,
   onOpenPettyCashShift,
   onClosePettyCashShift,
@@ -205,6 +208,16 @@ export const PettyCashView: React.FC<Props> = ({
   // Estados para Eliminación y Prevención de Duplicados
   const [txToDelete, setTxToDelete] = useState<PettyCashTransaction | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // Estados para Edición de Transacción
+  const [editingTx, setEditingTx] = useState<PettyCashTransaction | null>(null);
+  const [editVendor, setEditVendor] = useState('');
+  const [editAmount, setEditAmount] = useState('');
+  const [editCategory, setEditCategory] = useState<ExpenseCategory>('OTROS');
+  const [editMethod, setEditMethod] = useState<'CASH' | 'TRANSFER' | 'CARD'>('CASH');
+  const [editDate, setEditDate] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [editReceiptNumber, setEditReceiptNumber] = useState('');
 
   const selectedDateTransactions = useMemo(() => {
     return state.pettyCashTransactions.filter((tx) => {
@@ -480,6 +493,48 @@ export const PettyCashView: React.FC<Props> = ({
     if (!txToDelete) return;
     onDeleteTransaction(txToDelete.id);
     setTxToDelete(null);
+  };
+
+  const handleStartEditTx = (tx: PettyCashTransaction) => {
+    setEditingTx(tx);
+    setEditVendor(tx.vendor);
+    setEditAmount(String(tx.amount));
+    setEditCategory(tx.category || 'OTROS');
+    setEditMethod(tx.method || 'CASH');
+    setEditDate(tx.date ? tx.date.slice(0, 10) : selectedDate);
+    setEditNotes(tx.notes || '');
+    setEditReceiptNumber(tx.receiptNumber || '');
+  };
+
+  const handleSaveEditTx = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTx) return;
+    const numAmount = parseFloat(editAmount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      alert('Por favor ingresa un monto válido mayor a 0.');
+      return;
+    }
+    const cleanVendor = editVendor.trim() || editingTx.vendor;
+    const timePart = editingTx.date && editingTx.date.includes('T') ? editingTx.date.split('T')[1] : '12:00:00';
+    const updatedDate = editDate ? `${editDate}T${timePart}` : editingTx.date;
+    const assignedShiftId = editDate ? `pc-shift-${editDate}` : editingTx.shiftId;
+
+    const updatedTx: PettyCashTransaction = {
+      ...editingTx,
+      vendor: cleanVendor,
+      amount: numAmount,
+      category: editCategory,
+      method: editMethod,
+      date: updatedDate,
+      shiftId: assignedShiftId,
+      notes: editNotes.trim(),
+      receiptNumber: editReceiptNumber.trim() || undefined,
+    };
+
+    if (onEditTransaction) {
+      onEditTransaction(updatedTx);
+    }
+    setEditingTx(null);
   };
 
   // Estructura de fila del Libro Diario Contable
@@ -1536,6 +1591,13 @@ export const PettyCashView: React.FC<Props> = ({
                                       <span>Vale</span>
                                     </button>
                                   )}
+                                  <button
+                                    onClick={() => row.rawTx && handleStartEditTx(row.rawTx)}
+                                    className="p-1 rounded border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600 transition inline-flex items-center justify-center text-[11px] font-bold shadow-xs cursor-pointer"
+                                    title="Editar este movimiento"
+                                  >
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                  </button>
                                   <button
                                     onClick={() => row.rawTx && setTxToDelete(row.rawTx)}
                                     className="p-1 rounded border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 transition inline-flex items-center justify-center text-[11px] font-bold shadow-xs cursor-pointer"
@@ -2700,6 +2762,194 @@ export const PettyCashView: React.FC<Props> = ({
           </div>
         </div>
       )}
+
+      {/* 9.1 MODAL: EDITAR / MODIFICAR REGISTRO O GASTO */}
+      {editingTx && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden animate-scaleUp">
+            {/* Header del Modal */}
+            <div className="px-6 py-5 bg-gradient-to-r from-blue-600 to-indigo-700 text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner">
+                  <Edit2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black tracking-tight">
+                    {editingTx.type === 'EXPENSE' ? 'Editar Gasto / Compra' : 'Editar Fondeo / Ingreso'}
+                  </h3>
+                  <p className="text-[11px] text-blue-100 font-medium">
+                    Modifica los datos sin necesidad de borrar y reescribir
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditingTx(null)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-sm font-bold transition cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Formulario de Edición */}
+            <form onSubmit={handleSaveEditTx} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Concepto / Proveedor */}
+                <div className="md:col-span-2 space-y-1">
+                  <label className="text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                    {editingTx.type === 'EXPENSE' ? 'Concepto o Proveedor *' : 'Descripción / Origen *'}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editVendor}
+                    onChange={(e) => setEditVendor(e.target.value)}
+                    placeholder="Ej: Carnicería San Martín, Hielo..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Monto en Córdobas */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                    Monto (C$) *
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-2.5 text-xs font-black text-slate-400">C$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      required
+                      value={editAmount}
+                      onChange={(e) => setEditAmount(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm font-black font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Fecha Comercial */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                    Fecha del Registro *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Categoría (solo para gastos) */}
+                {editingTx.type === 'EXPENSE' && (
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                      Categoría del Gasto *
+                    </label>
+                    <select
+                      value={editCategory}
+                      onChange={(e) => setEditCategory(e.target.value as ExpenseCategory)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white"
+                    >
+                      {categoryDefs.map((cat) => (
+                        <option key={cat.value} value={cat.value}>
+                          {cat.emoji} {cat.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Método de Pago */}
+                <div className={editingTx.type === 'EXPENSE' ? 'space-y-1' : 'md:col-span-2 space-y-1'}>
+                  <label className="text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                    Método de Pago *
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditMethod('CASH')}
+                      className={`px-3 py-2 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                        editMethod === 'CASH'
+                          ? 'bg-emerald-500 text-white border-emerald-600 shadow-xs'
+                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span>💵</span> Efectivo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditMethod('TRANSFER')}
+                      className={`px-3 py-2 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                        editMethod === 'TRANSFER'
+                          ? 'bg-blue-600 text-white border-blue-700 shadow-xs'
+                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span>🏦</span> Transferencia
+                    </button>
+                  </div>
+                </div>
+
+                {/* N° Comprobante */}
+                <div className="md:col-span-2 space-y-1">
+                  <label className="text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                    N° Factura / Comprobante (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={editReceiptNumber}
+                    onChange={(e) => setEditReceiptNumber(e.target.value)}
+                    placeholder="Ej: FAC-0492 o N° Referencia"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  />
+                </div>
+
+                {/* Notas / Observaciones */}
+                <div className="md:col-span-2 space-y-1">
+                  <label className="text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                    Notas / Justificación
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editNotes}
+                    onChange={(e) => setEditNotes(e.target.value)}
+                    placeholder="Detalles adicionales sobre este movimiento..."
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* Impacto informativo en gaveta */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-[11px] text-slate-600 leading-relaxed">
+                ℹ️ <strong>Impacto automático:</strong> Si cambias el monto o la forma de pago (Efectivo vs Transferencia), el saldo de la gaveta activa se recalculará instantáneamente y se actualizará en la nube.
+              </div>
+
+              {/* Botones de acción */}
+              <div className="pt-2 flex justify-end gap-2.5 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingTx(null)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs cursor-pointer transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs shadow-md shadow-blue-600/25 flex items-center gap-1.5 cursor-pointer transition"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  <span>Guardar Cambios</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+
 
       {/* 10. MODAL: GESTIÓN DE CATEGORÍAS DE GASTOS */}
       {categoriesModalOpen && (

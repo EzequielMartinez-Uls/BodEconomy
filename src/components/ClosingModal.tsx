@@ -103,10 +103,10 @@ export const ClosingModal: React.FC<Props> = ({
   const tipsPaidAmount = tipPaid ? totalTipCollected : 0;
 
   // CÁLCULO REAL DE AUDITORÍA Y CUADRE DE CAJA (Idéntico a Loyverse POS)
-  // Fondo Inicial de Gaveta (en Córdobas) + Ventas Efectivo POS + Depositado desde Caja Chica - Salidas extraordinarias a Caja Chica - Propinas entregadas de gaveta
+  // Fondo Inicial de Gaveta (en Córdobas) + Ventas Efectivo POS - Propinas entregadas de gaveta
   const openingFloat = shift.totalOpeningNIO || shift.totalOpeningEquivNIO || 0;
   const expectedCashNIO = parseFloat(
-    (openingFloat + salesCashSystem + depositedFromPettyCash - transferToPettyCash - tipsPaidAmount).toFixed(2)
+    (openingFloat + salesCashSystem - tipsPaidAmount).toFixed(2)
   );
   const differenceNIO = parseFloat((actualCashNIO - expectedCashNIO).toFixed(2));
 
@@ -574,81 +574,6 @@ export const ClosingModal: React.FC<Props> = ({
                     onChange={(e) => setOtherIncomeNotes(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-xs text-slate-700 focus:bg-white focus:outline-none focus:border-cyan-500 mt-1"
                   />
-                </div>
-              </div>
-
-              {/* Movimientos de Efectivo con Caja Chica (Loyverse POS) */}
-              <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-xl bg-amber-50 text-amber-700 border border-amber-200">
-                      <Banknote className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-black text-slate-900">
-                        5. Movimientos entre Cajas (Loyverse POS)
-                      </h3>
-                      <p className="text-xs text-slate-500">
-                        Registra los traspasos realizados entre la gaveta de Caja General y Caja Chica durante el turno.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Pagos / Salidas hacia Caja Chica */}
-                  <div className="p-4 bg-rose-50/50 rounded-xl border border-rose-200">
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-xs font-black uppercase text-rose-900 block">
-                        (-) Pagos / Salidas a Caja Chica (C$)
-                      </label>
-                      <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full">
-                        Salida de General
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-600 mb-2">
-                      Efectivo retirado de esta gaveta física de Caja General para compras de Caja Chica durante el turno (Línea 'Pagos/Salidas' en Loyverse).
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-rose-500">C$</span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        value={transferToPettyCash === 0 ? '' : transferToPettyCash}
-                        onChange={(e) => setTransferToPettyCash(parseFloat(e.target.value) || 0)}
-                        className="w-full bg-white border border-rose-300 rounded-xl px-3 py-2 font-mono font-bold text-rose-900 focus:outline-none focus:border-rose-500"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Depositado desde Caja Chica hacia General */}
-                  <div className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-200">
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-xs font-black uppercase text-emerald-900 block">
-                        (+) Depositado desde Caja Chica (C$)
-                      </label>
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                        Entrada a General
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-600 mb-2">
-                      Efectivo devuelto o reintegrado desde Caja Chica hacia esta gaveta de Caja General (Línea 'Depositado' en Loyverse).
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-emerald-500">C$</span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        value={depositedFromPettyCash === 0 ? '' : depositedFromPettyCash}
-                        onChange={(e) => setDepositedFromPettyCash(parseFloat(e.target.value) || 0)}
-                        className="w-full bg-white border border-emerald-300 rounded-xl px-3 py-2 font-mono font-bold text-emerald-900 focus:outline-none focus:border-emerald-500"
-                      />
-                    </div>
-                  </div>
                 </div>
               </div>
 

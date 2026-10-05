@@ -85,8 +85,9 @@ async function main() {
   const tag = `v${pkg.version}`;
   console.log(`🔍 Buscando release ${tag}...`);
 
-  const relRes = await fetchJson(
-    `https://api.github.com/repos/EzequielMartinez-Uls/BodEconomy/releases/tags/${tag}`,
+  // Buscar en la lista general de releases para encontrar drafts también
+  const allReleasesRes = await fetchJson(
+    `https://api.github.com/repos/EzequielMartinez-Uls/BodEconomy/releases`,
     {
       headers: {
         'User-Agent': 'NodeJS',
@@ -95,7 +96,41 @@ async function main() {
     }
   );
 
-  let release = relRes.data;
+  let release = Array.isArray(allReleasesRes.data)
+    ? allReleasesRes.data.find((r) => r.tag_name === tag)
+    : null;
+
+  if (release && release.draft) {
+    console.log(`📝 Publicando release draft existente #${release.id}...`);
+    await new Promise((resolve) => {
+      const payload = JSON.stringify({ draft: false });
+      const req = https.request(
+        {
+          hostname: 'api.github.com',
+          path: `/repos/EzequielMartinez-Uls/BodEconomy/releases/${release.id}`,
+          method: 'PATCH',
+          headers: {
+            'User-Agent': 'NodeJS',
+            Authorization: `token ${token}`,
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(payload),
+          },
+        },
+        (res) => {
+          let d = '';
+          res.on('data', (c) => (d += c));
+          res.on('end', () => {
+            try { release = JSON.parse(d); } catch {}
+            resolve();
+          });
+        }
+      );
+      req.on('error', resolve);
+      req.write(payload);
+      req.end();
+    });
+  }
+
   if (!release || !release.id) {
     console.log(`✨ La release ${tag} no existía. Creándola en GitHub...`);
     release = await new Promise((resolve, reject) => {

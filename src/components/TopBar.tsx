@@ -9,6 +9,8 @@ import {
   Sparkles,
   ShieldCheck,
   Cloud,
+  Unlock,
+  Lock,
 } from 'lucide-react';
 import {
   printThermalOpeningTicket,
@@ -290,6 +292,31 @@ export const TopBar: React.FC<Props> = ({
           <span className="hidden md:inline">🖨️ Imprimir Acta (B/N)</span>
           <span className="md:hidden">Acta B/N</span>
         </button>
+
+        {/* Botón Único de Apertura de Turno (cuando la jornada está cerrada) */}
+        {!isShiftOpen && onOpenShiftClick && (
+          <button
+            onClick={onOpenShiftClick}
+            title="Iniciar la apertura del día (Caja Chica y Caja General en un solo flujo)"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black transition shadow-md shadow-emerald-600/25 cursor-pointer active:scale-95 animate-pulse"
+          >
+            <Unlock className="w-3.5 h-3.5 text-white" />
+            <span>🔓 Abrir Turno</span>
+          </button>
+        )}
+
+        {/* Botón de Cierre de Turno (cuando la jornada está abierta) */}
+        {isShiftOpen && onCloseShiftClick && (
+          <button
+            onClick={onCloseShiftClick}
+            title="Proceder al cierre de jornada (Noche)"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black transition shadow-xs cursor-pointer active:scale-95"
+          >
+            <Lock className="w-3.5 h-3.5 text-white" />
+            <span className="hidden sm:inline">Cerrar Turno</span>
+            <span className="sm:hidden">Cierre</span>
+          </button>
+        )}
 
         {/* Acceso Rápido a Impresiones */}
         {isShiftOpen && state.currentShift && (

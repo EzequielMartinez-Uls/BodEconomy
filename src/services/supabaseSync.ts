@@ -311,16 +311,53 @@ export async function syncTransactionToCloud(tx: PettyCashTransaction): Promise<
       : (tx.receiptNumber ? `[TIPO:FONDEO] Doc: ${tx.receiptNumber}` : '[TIPO:FONDEO] Depósito a caja chica');
 
     let cloudJornadaId: number | null = null;
-    const txDateStr = (tx.date || '').slice(0, 10);
-    if (txDateStr) {
+    // 1. Extraer fecha comercial desde shiftId prioritariamente (ej: pc-shift-2026-10-02) para respetar el turno abierto
+    let commercialDate = '';
+    if (tx.shiftId && tx.shiftId.startsWith('pc-shift-')) {
+      commercialDate = tx.shiftId.replace('pc-shift-', '');
+    } else if (tx.date) {
+      commercialDate = tx.date.slice(0, 10);
+    }
+
+    if (commercialDate) {
       const { data: jData } = await supabase
         .from('jornadas_diarias')
         .select('id')
-        .eq('fecha', txDateStr)
+        .eq('fecha', commercialDate)
         .order('id', { ascending: false })
         .limit(1);
       if (jData && jData.length > 0) {
         cloudJornadaId = jData[0].id;
+      }
+    }
+
+    // Si aún no se encontró jornada y hay una ABIERTA, asociar a la jornada abierta activa
+    if (!cloudJornadaId) {
+      const { data: openJornada } = await supabase
+        .from('jornadas_diarias')
+        .select('id')
+        .eq('estado', 'ABIERTA')
+        .order('id', { ascending: false })
+        .limit(1);
+      if (openJornada && openJornada.length > 0) {
+        cloudJornadaId = openJornada[0].id;
+      }
+    }
+
+    // 2. Blindaje Anti-Duplicados (Idempotencia): Verificar si ya existe en Supabase antes de insertar
+    if (cloudJornadaId) {
+      const { data: existingDup } = await supabase
+        .from('compras_gastos')
+        .select('id')
+        .eq('jornada_id', cloudJornadaId)
+        .eq('monto', tx.amount)
+        .eq('metodo_pago', metodoPago)
+        .eq('proveedor', tx.vendor || cleanVendor)
+        .order('id', { ascending: false })
+        .limit(1);
+      if (existingDup && existingDup.length > 0) {
+        console.log(`ℹ️ Transacción ya existía en la nube (ID #${existingDup[0].id}). Se vincula sin duplicar.`);
+        return existingDup[0].id;
       }
     }
 
@@ -346,6 +383,66 @@ export async function syncTransactionToCloud(tx: PettyCashTransaction): Promise<
   } catch (err) {
     console.warn('⚠️ No se pudo registrar transacción en la nube (quedará en bandeja de reintento):', err);
     return null;
+  }
+}
+
+/**
+ * Actualiza una transacción existente (gasto o fondeo) en Supabase
+ */
+export async function updateTransactionInCloud(tx: PettyCashTransaction): Promise<boolean> {
+  try {
+    let targetId: number | null = null;
+    if (tx.cloudId) {
+      targetId = tx.cloudId;
+    } else if (tx.id.startsWith('pct-cloud-')) {
+      const parsed = parseInt(tx.id.replace('pct-cloud-', ''), 10);
+      if (!isNaN(parsed)) targetId = parsed;
+    }
+
+    if (!targetId) {
+      console.warn('⚠️ Transacción sin cloudId para actualizar en la nube:', tx.id);
+      return false;
+    }
+
+    const isExpense = tx.type === 'EXPENSE';
+    const isTransfer = tx.method === 'TRANSFER';
+    const isCard = tx.method === 'CARD';
+    const metodoPago = isTransfer ? 'TRANSFERENCIA' : isCard ? 'TARJETA' : 'EFECTIVO';
+    const estadoPago = isTransfer ? 'PENDIENTE_TRANSFERENCIA' : 'PAGADO';
+    const cloudCategory = isExpense ? mapCategoryToCloud(tx.category) : 'FONDEO';
+    const cleanNotes = tx.notes?.trim();
+    const cleanVendor = tx.vendor?.trim() || (isExpense ? 'Proveedor' : 'Gerencia / Caja General');
+    const concepto =
+      cleanNotes && cleanNotes.toLowerCase() !== cleanVendor.toLowerCase()
+        ? `${cleanVendor} - ${cleanNotes}`
+        : cleanVendor;
+    const observaciones = isExpense
+      ? (tx.receiptNumber ? `Doc: ${tx.receiptNumber}` : null)
+      : (tx.receiptNumber ? `[TIPO:FONDEO] Doc: ${tx.receiptNumber}` : '[TIPO:FONDEO] Depósito a caja chica');
+
+    const updatePayload: any = {
+      monto: tx.amount,
+      concepto,
+      proveedor: tx.vendor,
+      categoria: cloudCategory,
+      metodo_pago: metodoPago,
+      estado_pago: isExpense ? estadoPago : 'PAGADO',
+      observaciones,
+      updated_at: new Date().toISOString(),
+    };
+    if (tx.date) updatePayload.fecha_hora = tx.date;
+
+    const { error } = await supabase
+      .from('compras_gastos')
+      .update(updatePayload)
+      .eq('id', targetId);
+
+    if (error) throw error;
+    console.log(`✅ Transacción ID #${targetId} actualizada exitosamente en Supabase.`);
+    return true;
+  } catch (err) {
+    console.warn('⚠️ Error al actualizar transacción en Supabase:', err);
+    return false;
   }
 }
 

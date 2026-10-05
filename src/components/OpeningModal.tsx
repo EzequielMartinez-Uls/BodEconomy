@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { CashShift, DenominationsNIO, DenominationsUSD } from '../types';
+import React, { useState, useMemo } from 'react';
+import { CashShift, DenominationsNIO, DenominationsUSD, PettyCashShift } from '../types';
 import {
   DEFAULT_DENOMINATIONS_NIO,
   DEFAULT_DENOMINATIONS_USD,
@@ -12,6 +12,7 @@ import {
   X,
   CheckCircle,
   ArrowRight,
+  ArrowLeft,
   ShieldCheck,
   UserCheck,
   RotateCcw,
@@ -24,6 +25,10 @@ import {
   Receipt,
   CheckCheck,
   Coins,
+  ShoppingCart,
+  ArrowRightLeft,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 
 interface Props {
@@ -31,10 +36,21 @@ interface Props {
   onClose: () => void;
   lastClosedShift: CashShift | null;
   shiftHistory?: CashShift[];
+  lastClosedPettyCashShift?: PettyCashShift | null;
+  currentPettyCashBalance?: number;
   activeAdminName: string;
   defaultExchangeRate: number;
   availableAdmins: string[];
-  onConfirmOpen: (shift: CashShift, updatedPreviousShift?: CashShift) => void;
+  onConfirmOpen: (
+    shift: CashShift,
+    updatedPreviousShift?: CashShift,
+    pettyOpeningData?: {
+      initialBalance: number;
+      previousDayRemaining: number;
+      generalCashTransfer: number;
+      bossContribution: number;
+    }
+  ) => void;
 }
 
 export const OpeningModal: React.FC<Props> = ({
@@ -42,6 +58,8 @@ export const OpeningModal: React.FC<Props> = ({
   onClose,
   lastClosedShift,
   shiftHistory = [],
+  lastClosedPettyCashShift = null,
+  currentPettyCashBalance = 0,
   activeAdminName,
   defaultExchangeRate,
   availableAdmins,
@@ -51,27 +69,49 @@ export const OpeningModal: React.FC<Props> = ({
 
   const todayStr = getLocalTodayStr();
 
+  // Wizard de 3 Pasos:
+  // 1: Corroborar Caja Chica primero (remanente de anoche)
+  // 2: Conteo Físico Gaveta General + Pagos y Salidas Loyverse (ganancias de ayer)
+  // 3: Distribución (Dólares apartados Snyder + Fondo Vuelto General + Traslado automático a Caja Chica)
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+
+  // Datos Generales
   const [shiftDate, setShiftDate] = useState<string>(todayStr);
   const [openerName, setOpenerName] = useState(activeAdminName);
   const [exchangeRate, setExchangeRate] = useState(defaultExchangeRate);
-
-  // 1. Conteo Físico Real de Gaveta al Abrir
-  const [denominationsNIO, setDenominationsNIO] = useState<DenominationsNIO>(DEFAULT_DENOMINATIONS_NIO);
-  const [denominationsUSD, setDenominationsUSD] = useState<DenominationsUSD>(DEFAULT_DENOMINATIONS_USD);
   const [notes, setNotes] = useState('');
 
-  // Traspaso a Caja Chica deducido en la Apertura
-  const [transferToPettyCash, setTransferToPettyCash] = useState<string>('');
-  const transferAmount = transferToPettyCash !== '' ? Math.max(0, parseFloat(transferToPettyCash) || 0) : 0;
+  // ----------------------------------------------------
+  // PASO 1: CAJA CHICA (REMANENTE FÍSICO)
+  // ----------------------------------------------------
+  const expectedPettyRemaining = useMemo(() => {
+    if (lastClosedPettyCashShift?.actualCashCounted !== undefined) {
+      return lastClosedPettyCashShift.actualCashCounted;
+    }
+    if (lastClosedPettyCashShift?.expectedBalance !== undefined) {
+      return lastClosedPettyCashShift.expectedBalance;
+    }
+    return currentPettyCashBalance || 0;
+  }, [lastClosedPettyCashShift, currentPettyCashBalance]);
 
-  // Cálculos de Conteo Físico (100% en Córdobas para la gaveta física)
+  const [pettyPhysicalCountInput, setPettyPhysicalCountInput] = useState<string>(
+    expectedPettyRemaining > 0 ? String(expectedPettyRemaining) : '0'
+  );
+  const [isPettyVerified, setIsPettyVerified] = useState<boolean>(false);
+  const pettyPhysicalCount = Math.max(0, parseFloat(pettyPhysicalCountInput) || 0);
+  const pettyDiff = pettyPhysicalCount - expectedPettyRemaining;
+  const isPettySquare = Math.abs(pettyDiff) < 1.0;
+
+  // ----------------------------------------------------
+  // PASO 2: CONTEO FÍSICO GAVETA GENERAL & AUDITORÍA DE AYER
+  // ----------------------------------------------------
+  const [denominationsNIO, setDenominationsNIO] = useState<DenominationsNIO>(DEFAULT_DENOMINATIONS_NIO);
+  const [denominationsUSD, setDenominationsUSD] = useState<DenominationsUSD>(DEFAULT_DENOMINATIONS_USD);
+
   const totalNIO = calculateTotalNIO(denominationsNIO);
-  const totalUSD = calculateTotalUSD(denominationsUSD); // Dólares informativos entregados al jefe
-  const netOpeningNIO = Math.max(0, totalNIO - transferAmount);
-  const netOpeningEquivNIO = netOpeningNIO; // La gaveta solo maneja córdobas; dólares no inflan el fondo
-  const totalEquivNIO = totalNIO; // Efectivo físico en gaveta antes del traslado
+  const totalUSD = calculateTotalUSD(denominationsUSD); // Dólares que se entregan a Snyder
+  const totalEquivNIO = totalNIO; // Efectivo físico en gaveta en Córdobas
 
-  // Corroboración contra el cierre anterior (exclusivamente en Córdobas)
   const expectedFromPrevious =
     lastClosedShift?.totalClosingNIO ||
     lastClosedShift?.actualCashNIO ||
@@ -82,24 +122,7 @@ export const OpeningModal: React.FC<Props> = ({
   const isCountInitiated = totalNIO > 0;
   const isMatchWithPrevious = lastClosedShift ? Math.abs(differenceWithPrevious) < 1.0 : true;
 
-  const isSelectedDateClosed = shiftHistory.some((s) => s.date === shiftDate);
-
-  const handleCopyFromPrevious = () => {
-    if (lastClosedShift?.closingNIO && lastClosedShift?.closingUSD) {
-      setDenominationsNIO({ ...lastClosedShift.closingNIO });
-      setDenominationsUSD({ ...lastClosedShift.closingUSD });
-    } else if (lastClosedShift?.openingNIO && lastClosedShift?.openingUSD) {
-      setDenominationsNIO({ ...lastClosedShift.openingNIO });
-      setDenominationsUSD({ ...lastClosedShift.openingUSD });
-    }
-  };
-
-  const handleResetCount = () => {
-    setDenominationsNIO({ ...DEFAULT_DENOMINATIONS_NIO });
-    setDenominationsUSD({ ...DEFAULT_DENOMINATIONS_USD });
-  };
-
-  // 2. Corroboración de Canales de Venta / Vouchers de Anoche
+  // Corroboración de Canales de Venta / Vouchers de Anoche
   const [vouchersBAC, setVouchersBAC] = useState<string>(
     lastClosedShift?.cardsBAC !== undefined ? String(lastClosedShift.cardsBAC) : ''
   );
@@ -121,7 +144,27 @@ export const OpeningModal: React.FC<Props> = ({
   const [reportOtherIncome, setReportOtherIncome] = useState<string>(
     lastClosedShift?.otherIncome !== undefined ? String(lastClosedShift.otherIncome) : ''
   );
+
+  // Casilla Clave: Pagos y Salidas de Loyverse del día anterior
+  const [loyversePaidOutInput, setLoyversePaidOutInput] = useState<string>('');
+  const loyversePaidOut = Math.max(0, parseFloat(loyversePaidOutInput) || 0);
+
   const [syncCorrectionsToPrevious, setSyncCorrectionsToPrevious] = useState<boolean>(true);
+
+  const handleCopyFromPrevious = () => {
+    if (lastClosedShift?.closingNIO && lastClosedShift?.closingUSD) {
+      setDenominationsNIO({ ...lastClosedShift.closingNIO });
+      setDenominationsUSD({ ...lastClosedShift.closingUSD });
+    } else if (lastClosedShift?.openingNIO && lastClosedShift?.openingUSD) {
+      setDenominationsNIO({ ...lastClosedShift.openingNIO });
+      setDenominationsUSD({ ...lastClosedShift.openingUSD });
+    }
+  };
+
+  const handleResetCount = () => {
+    setDenominationsNIO({ ...DEFAULT_DENOMINATIONS_NIO });
+    setDenominationsUSD({ ...DEFAULT_DENOMINATIONS_USD });
+  };
 
   const handleCopySalesFromPrevious = () => {
     if (lastClosedShift) {
@@ -133,16 +176,6 @@ export const OpeningModal: React.FC<Props> = ({
       setReportLoyverseCash(String(lastClosedShift.salesCashSystem || 0));
       setReportOtherIncome(String(lastClosedShift.otherIncome || 0));
     }
-  };
-
-  const handleResetSalesAudit = () => {
-    setVouchersBAC('');
-    setVouchersFicohsa('');
-    setVouchersBanpro('');
-    setVouchersLafise('');
-    setReportPedidosYa('');
-    setReportLoyverseCash('');
-    setReportOtherIncome('');
   };
 
   const numBAC = vouchersBAC !== '' ? parseFloat(vouchersBAC) || 0 : null;
@@ -178,7 +211,63 @@ export const OpeningModal: React.FC<Props> = ({
     (numPedidosYa ?? repPedidosYa) +
     (numLoyverseCash ?? repLoyverseCash) +
     (numOtherIncome ?? repOtherIncome);
-  const totalSalesDiff = totalVerifiedSales - totalReportedSales;
+
+  // Fórmula exacta explicada por el usuario:
+  // (Córdobas Contados del Cierre + USD en NIO + Pagos y Salidas de Loyverse) - Fondo Inicial Ayer = Efectivo Generado Real
+  const prevOpeningFloat = lastClosedShift?.totalOpeningNIO || lastClosedShift?.totalOpeningEquivNIO || 0;
+  const closingNIOFromPrev = lastClosedShift?.totalClosingNIO || expectedFromPrevious;
+  const closingUSDFromPrev = (lastClosedShift?.totalClosingUSD || 0) * exchangeRate;
+  const efectivoGeneradoRealAyer = Math.max(
+    0,
+    closingNIOFromPrev + closingUSDFromPrev + loyversePaidOut - prevOpeningFloat
+  );
+
+  // ----------------------------------------------------
+  // PASO 3: DISTRIBUCIÓN DE FONDOS PARA HOY
+  // ----------------------------------------------------
+  // El usuario determina con cuánto abre Caja General (fondo de vueltos)
+  // Por defecto sugerimos C$ 1,781 o C$ 2,000 según disponibilidad
+  const [generalDrawerFloatInput, setGeneralDrawerFloatInput] = useState<string>('2000');
+  const [transferToPettyInput, setTransferToPettyInput] = useState<string>('');
+
+  // Sincronizar automáticamente cuando cambie totalNIO
+  React.useEffect(() => {
+    if (totalNIO > 0) {
+      if (totalNIO <= 2000) {
+        setGeneralDrawerFloatInput(String(totalNIO));
+        setTransferToPettyInput('0');
+      } else {
+        // Sugerir dejar fondo de vuelto (ej. 1,781 o 2,000) y pasar el resto a Caja Chica
+        const defaultFloat = totalNIO >= 11481 ? 1781 : 2000;
+        setGeneralDrawerFloatInput(String(defaultFloat));
+        setTransferToPettyInput(String(totalNIO - defaultFloat));
+      }
+    }
+  }, [totalNIO]);
+
+  const handleGeneralFloatChange = (val: string) => {
+    setGeneralDrawerFloatInput(val);
+    const num = Math.max(0, parseFloat(val) || 0);
+    const rest = Math.max(0, totalNIO - num);
+    setTransferToPettyInput(String(rest));
+  };
+
+  const handleTransferToPettyChange = (val: string) => {
+    setTransferToPettyInput(val);
+    const num = Math.max(0, parseFloat(val) || 0);
+    const rest = Math.max(0, totalNIO - num);
+    setGeneralDrawerFloatInput(String(rest));
+  };
+
+  const generalDrawerFloat = Math.max(0, parseFloat(generalDrawerFloatInput) || 0);
+  const transferAmount = Math.max(0, parseFloat(transferToPettyInput) || 0);
+  const resultingPettyInitialBalance = parseFloat((pettyPhysicalCount + transferAmount).toFixed(2));
+
+  const isSelectedDateClosed = shiftHistory.some((s) => s.date === shiftDate);
+
+  // Validaciones antes de avanzar o confirmar
+  const canAdvanceFromStep1 = isPettyVerified;
+  const canAdvanceFromStep2 = totalNIO > 0 || isMatchWithPrevious;
 
   const handleConfirm = () => {
     if (shiftDate > todayStr) {
@@ -186,9 +275,9 @@ export const OpeningModal: React.FC<Props> = ({
       return;
     }
 
-    if (totalEquivNIO <= 0) {
+    if (generalDrawerFloat <= 0) {
       const confirmZero = window.confirm(
-        'El fondo de apertura está en C$ 0.00.\n\n¿Estás seguro de abrir la gaveta sin fondo de vuelto inicial?'
+        'El fondo de apertura de Caja General está en C$ 0.00.\n\n¿Estás seguro de abrir la gaveta sin fondo de vuelto inicial?'
       );
       if (!confirmZero) return;
     }
@@ -209,12 +298,19 @@ export const OpeningModal: React.FC<Props> = ({
     if (diffPedidosYa !== null && Math.abs(diffPedidosYa) >= 0.01) diffItems.push(`PedidosYa (${diffPedidosYa > 0 ? '+' : ''}${diffPedidosYa.toFixed(2)})`);
     if (diffLoyverseCash !== null && Math.abs(diffLoyverseCash) >= 0.01) diffItems.push(`Loyverse (${diffLoyverseCash > 0 ? '+' : ''}${diffLoyverseCash.toFixed(2)})`);
     if (diffOtherIncome !== null && Math.abs(diffOtherIncome) >= 0.01) diffItems.push(`Otros Ing. (${diffOtherIncome > 0 ? '+' : ''}${diffOtherIncome.toFixed(2)})`);
+    if (loyversePaidOut > 0) diffItems.push(`Pagos/Salidas Loyverse (C$ ${loyversePaidOut.toFixed(2)})`);
 
     if (diffItems.length > 0) {
-      const auditSummary = `[Auditoría Vouchers Anoche: ${diffItems.join(', ')}]`;
+      const auditSummary = `[Auditoría Apertura: ${diffItems.join(', ')}]`;
       auditNotes = auditNotes ? `${auditNotes} • ${auditSummary}` : auditSummary;
     }
 
+    if (totalUSD > 0) {
+      const snyderNote = `[Dólares apartados en sobre para Snyder: $${totalUSD.toFixed(2)} USD]`;
+      auditNotes = auditNotes ? `${auditNotes} • ${snyderNote}` : snyderNote;
+    }
+
+    // Datos del nuevo turno de Caja General
     const newShift: CashShift = {
       id: `shift-${shiftDate}-${Date.now()}`,
       date: shiftDate,
@@ -226,10 +322,10 @@ export const OpeningModal: React.FC<Props> = ({
       openingNotes: auditNotes,
       openingNIO: denominationsNIO,
       openingUSD: denominationsUSD,
-      totalOpeningNIO: netOpeningNIO,
-      totalOpeningUSD: totalUSD,
-      totalOpeningEquivNIO: netOpeningEquivNIO,
-      openingCashCountedNIO: totalEquivNIO,
+      totalOpeningNIO: generalDrawerFloat,
+      totalOpeningUSD: 0, // Dólares se apartan para Snyder, 0 en gaveta operativa
+      totalOpeningEquivNIO: generalDrawerFloat,
+      openingCashCountedNIO: totalNIO,
       openingTransferToPettyCash: transferAmount > 0 ? transferAmount : undefined,
       transferToPettyCash: transferAmount > 0 ? transferAmount : undefined,
       loyverseValidation: {
@@ -242,7 +338,7 @@ export const OpeningModal: React.FC<Props> = ({
         totalCards: (numBAC ?? repBAC) + (numFico ?? repFico) + (numBanpro ?? repBanpro) + (numLafise ?? repLafise),
         salesPedidosYa: numPedidosYa ?? repPedidosYa,
         totalLoyverseSales: totalVerifiedSales,
-        notes: diffItems.length === 0 ? 'Vouchers verificados conformes con cierre anterior' : diffItems.join(', '),
+        notes: diffItems.length === 0 ? 'Vouchers y canales verificados conformes' : diffItems.join(', '),
       },
     };
 
@@ -274,7 +370,15 @@ export const OpeningModal: React.FC<Props> = ({
       };
     }
 
-    onConfirmOpen(newShift, updatedPreviousShift);
+    // Datos para apertura sincronizada de Caja Chica
+    const pettyOpeningData = {
+      initialBalance: resultingPettyInitialBalance,
+      previousDayRemaining: pettyPhysicalCount,
+      generalCashTransfer: transferAmount,
+      bossContribution: 0,
+    };
+
+    onConfirmOpen(newShift, updatedPreviousShift, pettyOpeningData);
     onClose();
   };
 
@@ -333,212 +437,425 @@ export const OpeningModal: React.FC<Props> = ({
       setVal: setReportLoyverseCash,
       diff: diffLoyverseCash,
     },
-    {
-      id: 'otherIncome',
-      name: 'Otros Ingresos',
-      icon: <Coins className="w-3.5 h-3.5 text-cyan-600" />,
-      reported: repOtherIncome,
-      val: reportOtherIncome,
-      setVal: setReportOtherIncome,
-      diff: diffOtherIncome,
-    },
   ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-3xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/70">
+      <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-3xl max-h-[94vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+        
+        {/* Header con Indicador de 3 Pasos */}
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/25">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-[#1c6856] text-white flex items-center justify-center shadow-md shadow-emerald-500/25">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-900">
-                Apertura de Caja General
+              <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                <span>Apertura del Día</span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                  Paso {step} de 3
+                </span>
               </h2>
               <p className="text-xs text-slate-500">
-                Conteo físico del fondo para vueltos y corroboración de gaveta
+                {step === 1 && 'Paso 1: Arqueo y corroboración física de Caja Chica'}
+                {step === 2 && 'Paso 2: Conteo de gaveta general & ganancias de ayer'}
+                {step === 3 && 'Paso 3: Distribución de dinero para Caja General y Caja Chica'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 transition cursor-pointer"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto space-y-5 flex-1 bg-slate-50/30">
-          {/* Tarjeta de Corroboración con el Cierre Anterior */}
-          {lastClosedShift ? (
-            <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-3">
-              <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-100 pb-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-800">
-                    Fondo dejado en el Cierre Anterior ({lastClosedShift.date})
-                  </span>
+        {/* Barra de Progreso de 3 Pasos */}
+        <div className="grid grid-cols-3 border-b border-slate-200/80 bg-white text-xs font-bold select-none">
+          <button
+            type="button"
+            onClick={() => setStep(1)}
+            className={`py-3 px-3 flex items-center justify-center gap-2 border-b-2 transition ${
+              step === 1
+                ? 'border-emerald-600 text-emerald-700 bg-emerald-50/40 font-black'
+                : isPettyVerified
+                ? 'border-transparent text-emerald-800 hover:bg-slate-50'
+                : 'border-transparent text-slate-400'
+            }`}
+          >
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${
+              step === 1 ? 'bg-emerald-600 text-white' : isPettyVerified ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-500'
+            }`}>
+              1
+            </span>
+            <span className="truncate">1. Caja Chica</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => isPettyVerified && setStep(2)}
+            disabled={!isPettyVerified}
+            className={`py-3 px-3 flex items-center justify-center gap-2 border-b-2 transition ${
+              step === 2
+                ? 'border-emerald-600 text-emerald-700 bg-emerald-50/40 font-black'
+                : !isPettyVerified
+                ? 'border-transparent text-slate-300 cursor-not-allowed'
+                : 'border-transparent text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${
+              step === 2 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500'
+            }`}>
+              2
+            </span>
+            <span className="truncate">2. Gaveta & Ganancias</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => isPettyVerified && totalNIO > 0 && setStep(3)}
+            disabled={!isPettyVerified || totalNIO === 0}
+            className={`py-3 px-3 flex items-center justify-center gap-2 border-b-2 transition ${
+              step === 3
+                ? 'border-emerald-600 text-emerald-700 bg-emerald-50/40 font-black'
+                : (!isPettyVerified || totalNIO === 0)
+                ? 'border-transparent text-slate-300 cursor-not-allowed'
+                : 'border-transparent text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${
+              step === 3 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500'
+            }`}>
+              3
+            </span>
+            <span className="truncate">3. Distribución Hoy</span>
+          </button>
+        </div>
+
+        {/* Contenido Principal por Pasos */}
+        <div className="p-6 overflow-y-auto space-y-5 flex-1 bg-slate-50/40">
+
+          {/* ========================================================================= */}
+          {/* PASO 1: ARQUEO Y CORROBORACIÓN DE CAJA CHICA */}
+          {/* ========================================================================= */}
+          {step === 1 && (
+            <div className="space-y-5 animate-in fade-in duration-200">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-4">
+                <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                  <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                    <ShoppingCart className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900">
+                      Corroboración Física de Caja Chica
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Cuenta el efectivo que quedó en el sobre o gaveta de Caja Chica antes de abrir el día.
+                    </p>
+                  </div>
                 </div>
-                <span className="text-xs text-slate-500">
-                  Cerrado por: <strong className="text-slate-800">{lastClosedShift.closedBy}</strong>
-                </span>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                  <span className="text-[10px] uppercase font-bold text-slate-500 block">
-                    Saldo Entregado en Cierre
-                  </span>
-                  <strong className="text-base font-black text-slate-900 font-mono">
-                    C$ {expectedFromPrevious.toFixed(2)}
-                  </strong>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-1">
+                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                      Remanente Esperado de Ayer
+                    </span>
+                    <div className="text-2xl font-black text-slate-900 font-mono">
+                      C$ {expectedPettyRemaining.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                    </div>
+                    <span className="text-[11px] text-slate-500 block">
+                      Saldo al cierre de la última jornada
+                    </span>
+                  </div>
+
+                  <div className="bg-purple-50/50 rounded-xl p-4 border border-purple-200 space-y-1.5">
+                    <label className="text-[10px] font-black uppercase text-purple-900 tracking-wider block">
+                      Efectivo Físico Contado en Mano (C$) *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-xs font-black text-purple-400">C$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        required
+                        value={pettyPhysicalCountInput}
+                        onChange={(e) => {
+                          setPettyPhysicalCountInput(e.target.value);
+                          setIsPettyVerified(false);
+                        }}
+                        className="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-purple-300 text-base font-black font-mono text-purple-950 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                      />
+                    </div>
+                    <span className="text-[10px] text-purple-700">
+                      Digita lo que tienes físicamente en la cajita o sobre
+                    </span>
+                  </div>
                 </div>
 
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                  <span className="text-[10px] uppercase font-bold text-slate-500 block">
-                    Tu Conteo Físico Real
-                  </span>
-                  <strong className="text-base font-black text-emerald-700 font-mono">
-                    C$ {totalEquivNIO.toFixed(2)}
-                  </strong>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleCopyFromPrevious}
-                    className="flex-1 px-3 py-2 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition border border-slate-300 flex items-center justify-center gap-1 cursor-pointer"
-                    title="Copiar las denominaciones del cierre anterior como referencia inicial"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Cargar fondo de ayer</span>
-                  </button>
-
-                  {totalEquivNIO > 0 && (
-                    <button
-                      type="button"
-                      onClick={handleResetCount}
-                      className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-rose-600 bg-white hover:bg-rose-50 rounded-xl transition border border-slate-200 cursor-pointer"
-                      title="Limpiar conteo a cero"
-                    >
-                      Limpiar
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Semáforo de Corroboración Físico Siempre Visible */}
-              <div
-                className={`p-3 rounded-xl border text-xs font-bold flex items-center gap-2.5 ${
-                  !isCountInitiated
-                    ? 'bg-amber-50 border-amber-300 text-amber-900'
-                    : isMatchWithPrevious
+                {/* Semáforo de Cuadre de Caja Chica */}
+                <div className={`p-3.5 rounded-xl border text-xs font-bold flex items-center justify-between ${
+                  isPettySquare
                     ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                    : differenceWithPrevious < 0
+                    : pettyDiff < 0
                     ? 'bg-rose-50 border-rose-300 text-rose-900'
                     : 'bg-blue-50 border-blue-300 text-blue-900'
-                }`}
-              >
-                {!isCountInitiated ? (
-                  <>
-                    <span className="text-base">⏳</span>
+                }`}>
+                  <div className="flex items-center gap-2">
+                    {isPettySquare ? (
+                      <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                    )}
                     <span>
-                      Pendiente de conteo físico: Ingresa los billetes y monedas abajo o toca "Cargar fondo de ayer". El saldo entregado en el cierre fue de <strong>C$ {expectedFromPrevious.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>.
+                      {isPettySquare
+                        ? `✓ Remanente de Caja Chica verificado (C$ ${pettyPhysicalCount.toFixed(2)} exactos).`
+                        : pettyDiff < 0
+                        ? `Diferencia: Faltante de C$ ${Math.abs(pettyDiff).toFixed(2)} en Caja Chica (Esperado: C$ ${expectedPettyRemaining.toFixed(2)}, Contado: C$ ${pettyPhysicalCount.toFixed(2)}).`
+                        : `Diferencia: Sobrante de C$ ${pettyDiff.toFixed(2)} en Caja Chica (Esperado: C$ ${expectedPettyRemaining.toFixed(2)}, Contado: C$ ${pettyPhysicalCount.toFixed(2)}).`}
                     </span>
-                  </>
-                ) : isMatchWithPrevious ? (
-                  <>
-                    <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>
-                      Fondo verificado: Coincide exactamente con el efectivo dejado en el cierre anterior (C$ {expectedFromPrevious.toLocaleString('es-NI', { minimumFractionDigits: 2 })}).
-                    </span>
-                  </>
-                ) : differenceWithPrevious < 0 ? (
-                  <>
-                    <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-                    <span>
-                      Diferencia detectada (Faltante): Faltan C$ {Math.abs(differenceWithPrevious).toFixed(2)} respecto al cierre anterior (Esperado: C$ {expectedFromPrevious.toFixed(2)}, Contado: C$ {totalEquivNIO.toFixed(2)}).
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-4 h-4 text-blue-600 shrink-0" />
-                    <span>
-                      Diferencia detectada (Sobrante): Hay C$ {differenceWithPrevious.toFixed(2)} más de lo dejado en el cierre anterior (Esperado: C$ {expectedFromPrevious.toFixed(2)}, Contado: C$ {totalEquivNIO.toFixed(2)}).
-                    </span>
-                  </>
-                )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsPettyVerified(true)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1 ${
+                      isPettyVerified
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-white border border-slate-300 text-slate-800 hover:bg-slate-100'
+                    }`}
+                  >
+                    {isPettyVerified ? '✓ Corroborado' : 'Marcar como Conforme'}
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl text-xs text-blue-800">
-              ℹ️ Primer turno en registrarse. Realiza el conteo de billetes y monedas que conformarán el fondo inicial para vueltos.
+
+              {/* Botón para pasar al Paso 2 */}
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsPettyVerified(true);
+                    setStep(2);
+                  }}
+                  className="px-6 py-3 rounded-xl bg-[#1c6856] hover:bg-[#154f42] text-white font-black text-xs shadow-md shadow-[#1c6856]/20 flex items-center gap-2 cursor-pointer transition active:scale-95"
+                >
+                  <span>Paso 2: Conteo de Gaveta General</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           )}
 
-          {/* Auditoría de Canales de Venta y Vouchers de Anoche */}
-          {lastClosedShift && (
-            <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                <div>
-                  <h3 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    <span>Auditoría de Vouchers y Canales de Venta de Anoche</span>
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Corrobora comprobantes POS y reportes del cierre <strong>{formatDateToFriendly(lastClosedShift.date)}</strong> de <strong>{lastClosedShift.closedBy || 'Turno anterior'}</strong>.
-                  </p>
-                </div>
+          {/* ========================================================================= */}
+          {/* PASO 2: CONTEO FÍSICO GAVETA GENERAL & AUDITORÍA DE AYER */}
+          {/* ========================================================================= */}
+          {step === 2 && (
+            <div className="space-y-5 animate-in fade-in duration-200">
+              {/* Parámetros Básicos */}
+              <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Fecha de la Jornada</span>
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      max={todayStr}
+                      value={shiftDate}
+                      onChange={(e) => setShiftDate(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:bg-white focus:outline-none"
+                    />
+                  </div>
 
-                <div className="flex items-center gap-2 self-start sm:self-auto">
-                  <button
-                    type="button"
-                    onClick={handleCopySalesFromPrevious}
-                    className="px-3 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition border border-slate-300 flex items-center gap-1.5 cursor-pointer"
-                    title="Copiar todas las cifras reportadas anoche como base para auditar"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Copiar cifras de anoche</span>
-                  </button>
-                  {(vouchersBAC !== '' || vouchersFicohsa !== '' || vouchersBanpro !== '' || vouchersLafise !== '' || reportPedidosYa !== '' || reportLoyverseCash !== '') && (
-                    <button
-                      type="button"
-                      onClick={handleResetSalesAudit}
-                      className="px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:text-rose-600 bg-white hover:bg-rose-50 rounded-xl transition border border-slate-200 cursor-pointer"
-                      title="Limpiar entradas de auditoría"
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 flex items-center gap-1">
+                      <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Responsable Apertura</span>
+                    </label>
+                    <select
+                      value={openerName}
+                      onChange={(e) => setOpenerName(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:bg-white focus:outline-none"
                     >
-                      Limpiar
-                    </button>
-                  )}
+                      {availableAdmins.map((adm) => (
+                        <option key={adm} value={adm}>
+                          {adm}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 flex items-center gap-1">
+                      <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Tasa de Cambio</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={exchangeRate}
+                      onChange={(e) => setExchangeRate(parseFloat(e.target.value) || defaultExchangeRate)}
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 focus:bg-white focus:outline-none"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Grid de 6 Canales */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {channelsAuditConfig.map((ch) => {
-                  const hasValue = ch.val !== '';
-                  const isSquare = ch.diff !== null && Math.abs(ch.diff) < 0.01;
-                  const isShortage = ch.diff !== null && ch.diff < -0.01;
-                  const isSurplus = ch.diff !== null && ch.diff > 0.01;
+              {/* Conteo de Billetes y Monedas */}
+              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <Banknote className="w-4 h-4 text-emerald-600" />
+                    <h3 className="text-sm font-black text-slate-900">
+                      Conteo Físico de Billetes y Monedas en Gaveta
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopyFromPrevious}
+                      className="px-2.5 py-1 text-[11px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition border border-slate-300 flex items-center gap-1 cursor-pointer"
+                      title="Copiar denominaciones de anoche"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Copiar de anoche</span>
+                    </button>
+                    {totalEquivNIO > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleResetCount}
+                        className="px-2.5 py-1 text-[11px] font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition border border-rose-200 cursor-pointer"
+                      >
+                        Limpiar
+                      </button>
+                    )}
+                  </div>
+                </div>
 
-                  return (
+                <CashDenominationsInput
+                  denominationsNIO={denominationsNIO}
+                  denominationsUSD={denominationsUSD}
+                  exchangeRate={exchangeRate}
+                  onChangeNIO={setDenominationsNIO}
+                  onChangeUSD={setDenominationsUSD}
+                  previousClosingNIO={lastClosedShift?.closingNIO || null}
+                  previousClosingUSD={lastClosedShift?.closingUSD || null}
+                  expectedTotalEquivNIO={expectedFromPrevious}
+                />
+
+                {/* Resumen del Conteo Físico */}
+                <div className="p-3.5 rounded-xl border bg-slate-50 border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Córdobas (C$)</span>
+                    <strong className="text-base font-black text-slate-900 font-mono">
+                      C$ {totalNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                    </strong>
+                  </div>
+
+                  {totalUSD > 0 && (
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-emerald-700 block">Dólares (USD)</span>
+                      <strong className="text-base font-black text-emerald-700 font-mono">
+                        $ {totalUSD.toFixed(2)} USD
+                      </strong>
+                    </div>
+                  )}
+
+                  <div className={`px-3 py-1.5 rounded-lg border font-bold text-xs ${
+                    !isCountInitiated
+                      ? 'bg-amber-50 border-amber-300 text-amber-900'
+                      : isMatchWithPrevious
+                      ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                      : differenceWithPrevious < 0
+                      ? 'bg-rose-50 border-rose-300 text-rose-900'
+                      : 'bg-blue-50 border-blue-300 text-blue-900'
+                  }`}>
+                    {!isCountInitiated ? (
+                      <span>⏳ Conteo pendiente (Esperado: C$ {expectedFromPrevious.toFixed(2)})</span>
+                    ) : isMatchWithPrevious ? (
+                      <span>✓ Coincide con efectivo dejado en cierre (C$ {expectedFromPrevious.toFixed(2)})</span>
+                    ) : differenceWithPrevious < 0 ? (
+                      <span>Faltante vs Cierre: -C$ {Math.abs(differenceWithPrevious).toFixed(2)}</span>
+                    ) : (
+                      <span>Sobrante vs Cierre: +C$ {differenceWithPrevious.toFixed(2)}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Auditoría de Canales de Venta & Casilla de Pagos y Salidas */}
+              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900 flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      <span>Auditoría de Ventas de Ayer & Pagos y Salidas</span>
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Corrobora comprobantes POS y la casilla "Pagos y Salidas" del reporte de Loyverse.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCopySalesFromPrevious}
+                    className="px-3 py-1 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition border border-slate-300 cursor-pointer"
+                  >
+                    Copiar cifras de anoche
+                  </button>
+                </div>
+
+                {/* Casilla Destacada: Pagos y Salidas Loyverse */}
+                <div className="p-4 bg-amber-50/80 border border-amber-300 rounded-2xl space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <span className="text-xs font-black text-amber-950 uppercase tracking-wide flex items-center gap-1.5">
+                        <span>🧾</span> Casilla: Pagos y Salidas (Reporte de Loyverse)
+                      </span>
+                      <p className="text-[11px] text-amber-800 mt-0.5">
+                        Suma lo que se retiró de gaveta ayer según la hoja de Loyverse. Esto se <strong>suma al efectivo contado</strong> para calcular el <strong>efectivo generado real</strong>.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center pt-1">
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-xs font-black text-amber-500">C$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        value={loyversePaidOutInput}
+                        onChange={(e) => setLoyversePaidOutInput(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-amber-300 text-sm font-black font-mono text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                      />
+                    </div>
+
+                    <div className="bg-white/80 rounded-xl p-2.5 border border-amber-200 text-xs font-mono space-y-0.5">
+                      <div className="text-[10px] text-slate-500 uppercase font-bold">Fórmula de Efectivo Generado Ayer:</div>
+                      <div className="text-slate-700 text-[11px]">
+                        (Contado: C$ {closingNIOFromPrev.toFixed(2)} + Pagos/Salidas: C$ {loyversePaidOut.toFixed(2)}) - Fondo Ayer: C$ {prevOpeningFloat.toFixed(2)}
+                      </div>
+                      <div className="text-emerald-700 font-black text-xs pt-0.5">
+                        = Efectivo Generado Real: C$ {efectivoGeneradoRealAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grid de Canales POS */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {channelsAuditConfig.map((ch) => (
                     <div
                       key={ch.id}
-                      className={`p-3 rounded-xl border transition-colors ${
-                        !hasValue
-                          ? 'bg-slate-50/70 border-slate-200'
-                          : isSquare
-                          ? 'bg-emerald-50/50 border-emerald-300'
-                          : isShortage
-                          ? 'bg-rose-50/60 border-rose-300'
-                          : 'bg-blue-50/60 border-blue-300'
-                      }`}
+                      className="p-3 rounded-xl border bg-slate-50/70 border-slate-200 space-y-1.5 text-xs"
                     >
-                      <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                      <div className="flex items-center justify-between font-bold text-slate-800">
+                        <div className="flex items-center gap-1.5">
                           {ch.icon}
                           <span>{ch.name}</span>
                         </div>
@@ -546,317 +863,243 @@ export const OpeningModal: React.FC<Props> = ({
                           type="button"
                           onClick={() => ch.setVal(String(ch.reported))}
                           className="text-[10px] text-slate-400 hover:text-emerald-700 underline cursor-pointer"
-                          title="Copiar cifra de anoche a este canal"
                         >
-                          Copiar anoche
+                          Copiar
                         </button>
                       </div>
 
-                      <div className="text-[11px] text-slate-500 mb-2 flex items-center justify-between font-mono">
-                        <span>Reportó anoche:</span>
-                        <span className="font-bold text-slate-700">C$ {ch.reported.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span>
+                      <div className="flex justify-between text-[11px] text-slate-500 font-mono">
+                        <span>Reportado:</span>
+                        <span className="font-bold text-slate-700">C$ {ch.reported.toFixed(2)}</span>
                       </div>
 
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-mono font-bold text-slate-400">C$</span>
+                      <div className="relative">
+                        <span className="absolute left-2.5 top-1.5 text-[11px] font-bold text-slate-400">C$</span>
                         <input
                           type="number"
                           step="0.01"
                           placeholder={ch.reported.toFixed(2)}
                           value={ch.val}
                           onChange={(e) => ch.setVal(e.target.value)}
-                          className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-emerald-500"
+                          className="w-full bg-white border border-slate-300 rounded-lg pl-7 pr-2 py-1 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-emerald-500"
                         />
                       </div>
-
-                      {hasValue && ch.diff !== null && (
-                        <div className="mt-2 flex items-center justify-between text-[11px] font-bold">
-                          <span className="text-slate-500 font-normal">Resultado:</span>
-                          {isSquare && (
-                            <span className="text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md flex items-center gap-1">
-                              ✓ Cuadrado
-                            </span>
-                          )}
-                          {isShortage && (
-                            <span className="text-rose-700 bg-rose-100/80 px-2 py-0.5 rounded-md">
-                              Faltante: C$ {Math.abs(ch.diff).toFixed(2)}
-                            </span>
-                          )}
-                          {isSurplus && (
-                            <span className="text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-md">
-                              Sobrante: +C$ {ch.diff.toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-                      )}
                     </div>
-                  );
-                })}
-              </div>
-
-              {/* Resumen Global de Auditoría */}
-              <div className="p-3.5 rounded-xl border bg-slate-50 border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                <div>
-                  <span className="text-slate-500 block text-[11px] uppercase font-bold">Total Canales Reportados</span>
-                  <strong className="text-sm font-black text-slate-800 font-mono">
-                    C$ {totalReportedSales.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
-                  </strong>
-                </div>
-
-                <div className="text-left sm:text-right">
-                  <span className="text-slate-500 block text-[11px] uppercase font-bold">Total Verificado en Apertura</span>
-                  <strong className="text-sm font-black text-emerald-700 font-mono">
-                    C$ {totalVerifiedSales.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
-                  </strong>
-                </div>
-
-                <div className={`px-3 py-1.5 rounded-xl border font-bold text-xs ${
-                  Math.abs(totalSalesDiff) < 0.01
-                    ? 'bg-emerald-100/80 border-emerald-300 text-emerald-900'
-                    : totalSalesDiff < 0
-                    ? 'bg-rose-100/80 border-rose-300 text-rose-900'
-                    : 'bg-blue-100/80 border-blue-300 text-blue-900'
-                }`}>
-                  {Math.abs(totalSalesDiff) < 0.01 ? (
-                    <span>✓ Vouchers y canales 100% Cuadrados</span>
-                  ) : totalSalesDiff < 0 ? (
-                    <span>⚠️ Faltante global de vouchers: -C$ {Math.abs(totalSalesDiff).toFixed(2)}</span>
-                  ) : (
-                    <span>ℹ️ Sobrante global de vouchers: +C$ {totalSalesDiff.toFixed(2)}</span>
-                  )}
+                  ))}
                 </div>
               </div>
 
-              {/* Checkbox de sincronización con el cierre anterior */}
-              <label className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100/70 transition">
-                <input
-                  type="checkbox"
-                  checked={syncCorrectionsToPrevious}
-                  onChange={(e) => setSyncCorrectionsToPrevious(e.target.checked)}
-                  className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
-                />
-                <div className="text-xs">
-                  <span className="font-bold text-slate-800">Actualizar y corregir el cierre anterior con estos vouchers verificados</span>
-                  <span className="block text-slate-500 text-[11px]">
-                    Si detectas un faltante o sobrante en vouchers, sincroniza automáticamente el historial del cierre anterior para mantener la contabilidad impecable.
-                  </span>
-                </div>
-              </label>
+              {/* Botones de Navegación */}
+              <div className="flex justify-between items-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Volver a Caja Chica</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setStep(3)}
+                  disabled={totalNIO === 0}
+                  className="px-6 py-3 rounded-xl bg-[#1c6856] hover:bg-[#154f42] text-white font-black text-xs shadow-md shadow-[#1c6856]/20 flex items-center gap-2 cursor-pointer transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span>Paso 3: Distribuir Fondos de Hoy</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           )}
 
-          {/* Parámetros Generales */}
-          <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* ========================================================================= */}
+          {/* PASO 3: SEPARACIÓN Y DISTRIBUCIÓN DE FONDOS PARA HOY */}
+          {/* ========================================================================= */}
+          {step === 3 && (
+            <div className="space-y-5 animate-in fade-in duration-200">
+              {/* 1. Dólares Apartados para Snyder */}
+              {totalUSD > 0 ? (
+                <div className="bg-emerald-500/10 border-2 border-emerald-500/40 rounded-2xl p-4 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shrink-0 shadow-md shadow-emerald-600/20">
+                      <DollarSign className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-emerald-950">
+                        Dólares Apartados en Sobre para Snyder: ${totalUSD.toFixed(2)} USD
+                      </h4>
+                      <p className="text-xs text-emerald-800 mt-0.5">
+                        Los <strong>${totalUSD.toFixed(2)} USD</strong> contados se guardan en el sobre para que los venga a buscar el jefe. En la gaveta operativa quedan <strong>$0.00 USD</strong>.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-emerald-200 text-emerald-900 font-black text-xs uppercase shrink-0">
+                    Sobre Apartado
+                  </span>
+                </div>
+              ) : (
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600 flex items-center gap-2">
+                  <span>ℹ️</span>
+                  <span>No se registraron dólares en el conteo. La gaveta operará 100% en Córdobas.</span>
+                </div>
+              )}
+
+              {/* 2. Distribución de Córdobas Contados */}
+              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900 flex items-center gap-1.5">
+                      <ArrowRightLeft className="w-4 h-4 text-[#1c6856]" />
+                      <span>Distribución de Córdobas para la Operación de Hoy</span>
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Total Córdobas Contados en Gaveta: <strong className="text-slate-800 font-mono">C$ {totalNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Fondo para Gaveta de Caja General */}
+                  <div className="p-4 rounded-xl border border-emerald-300 bg-emerald-50/40 space-y-2">
+                    <label className="text-xs font-black uppercase text-emerald-900 tracking-wider block">
+                      Fondo para Caja General (Gaveta de Vuelto) *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-xs font-black text-emerald-500">C$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max={totalNIO}
+                        value={generalDrawerFloatInput}
+                        onChange={(e) => handleGeneralFloatChange(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-emerald-300 text-base font-black font-mono text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      />
+                    </div>
+                    <span className="text-[11px] text-emerald-800 block">
+                      Dinero que queda en la gaveta para dar cambio a los clientes
+                    </span>
+                  </div>
+
+                  {/* Traslado a Caja Chica */}
+                  <div className="p-4 rounded-xl border border-purple-300 bg-purple-50/40 space-y-2">
+                    <label className="text-xs font-black uppercase text-purple-900 tracking-wider block">
+                      Traslado Automático a Caja Chica (Compras) *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-xs font-black text-purple-400">C$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max={totalNIO}
+                        value={transferToPettyInput}
+                        onChange={(e) => handleTransferToPettyChange(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-purple-300 text-base font-black font-mono text-purple-950 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                      />
+                    </div>
+                    <span className="text-[11px] text-purple-800 block">
+                      Monto trasladado de las ganancias para compras del día
+                    </span>
+                  </div>
+                </div>
+
+                {/* Comprobación de Suma Exacta */}
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex justify-between items-center font-mono">
+                  <span className="text-slate-600 font-sans">Comprobación:</span>
+                  <span className="font-bold text-slate-800">
+                    C$ {generalDrawerFloat.toFixed(2)} (General) + C$ {transferAmount.toFixed(2)} (Chica) = C$ {(generalDrawerFloat + transferAmount).toFixed(2)} / C$ {totalNIO.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* 3. Saldo Inicial Total Resultante de Caja Chica */}
+              <div className="bg-purple-900 text-white rounded-2xl p-5 shadow-lg space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-purple-700/50">
+                  <div className="flex items-center gap-2">
+                    <ShoppingCart className="w-4 h-4 text-purple-300" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-purple-200">
+                      Saldo Inicial Resultante de Caja Chica para Hoy
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-mono text-purple-300">
+                    Apertura Sincronizada
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-purple-300 block">Remanente de Ayer</span>
+                    <strong className="text-sm font-black font-mono text-white">
+                      C$ {pettyPhysicalCount.toFixed(2)}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-purple-300 block">(+) Traslado de Hoy</span>
+                    <strong className="text-sm font-black font-mono text-purple-200">
+                      + C$ {transferAmount.toFixed(2)}
+                    </strong>
+                  </div>
+
+                  <div className="bg-purple-800/80 rounded-xl p-3 border border-purple-600/50">
+                    <span className="text-[10px] uppercase font-bold text-purple-300 block">Total Fondo Caja Chica</span>
+                    <strong className="text-xl font-black font-mono text-emerald-300">
+                      C$ {resultingPettyInitialBalance.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Observaciones Generales */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Fecha de la Jornada</span>
+                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">
+                  Observaciones de Apertura (Opcional)
                 </label>
                 <input
-                  type="date"
-                  required
-                  max={todayStr}
-                  value={shiftDate}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val > todayStr) {
-                      alert(`No puedes seleccionar una fecha futura (${val}).`);
-                      setShiftDate(todayStr);
-                    } else {
-                      setShiftDate(val);
-                    }
-                  }}
-                  className={`w-full border rounded-xl px-3 py-2 text-sm font-mono font-bold focus:outline-none ${
-                    isSelectedDateClosed
-                      ? 'border-amber-400 bg-amber-50 text-amber-900 focus:ring-2 focus:ring-amber-500/20'
-                      : 'border-slate-300 bg-slate-50 text-slate-900 focus:bg-white focus:border-emerald-500'
-                  }`}
+                  type="text"
+                  placeholder="Ej: Se inicia turno con normalidad..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-emerald-500 font-medium"
                 />
-                <span className="text-[10px] text-slate-400 block mt-1">
-                  {formatDateToFriendly(shiftDate)}
-                </span>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                  <UserCheck className="w-3.5 h-3.5 text-emerald-600" /> Administrador / Cajero
-                </label>
-                <select
-                  value={openerName}
-                  onChange={(e) => setOpenerName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3 py-2 text-sm focus:bg-white focus:outline-none focus:border-emerald-500 font-bold"
+              {/* Botones de Acción */}
+              <div className="flex justify-between items-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition"
                 >
-                  {availableAdmins.map((adm) => (
-                    <option key={adm} value={adm}>
-                      {adm}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Volver a Conteo</span>
+                </button>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                  <DollarSign className="w-3.5 h-3.5 text-emerald-600" /> Tasa de Cambio (C$ / US$)
-                </label>
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400 text-sm font-mono font-bold">C$</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={exchangeRate}
-                    onChange={(e) => setExchangeRate(parseFloat(e.target.value) || defaultExchangeRate)}
-                    className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-3 py-2 text-sm font-mono font-black focus:bg-white focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={handleConfirm}
+                  className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-[#1c6856] hover:from-emerald-500 hover:to-[#154f42] text-white font-black text-sm shadow-xl shadow-emerald-600/25 flex items-center gap-2 cursor-pointer transition active:scale-95"
+                >
+                  <CheckCircle className="w-5 h-5" />
+                  <span>✓ Confirmar Apertura del Día (Ambas Cajas)</span>
+                </button>
               </div>
             </div>
+          )}
 
-            {isSelectedDateClosed && (
-              <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-2.5 text-xs text-amber-900">
-                <span className="text-base">⚠️</span>
-                <div>
-                  <strong className="block font-black">Aviso de Jornada Previa:</strong>
-                  La fecha <strong>{shiftDate}</strong> ya cuenta con un cierre registrado en el historial. El sistema está diseñado para 1 apertura y 1 cierre por día comercial.
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Conteo de Billetes y Monedas */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
-                <Banknote className="w-4 h-4 text-emerald-600" />
-                <span>Conteo Físico de Billetes y Monedas en Gaveta</span>
-              </h3>
-              <span className="text-xs text-slate-500 font-medium">
-                Digita lo que recibes físicamente en mano
-              </span>
-            </div>
-            <CashDenominationsInput
-              denominationsNIO={denominationsNIO}
-              denominationsUSD={denominationsUSD}
-              exchangeRate={exchangeRate}
-              onChangeNIO={setDenominationsNIO}
-              onChangeUSD={setDenominationsUSD}
-              previousClosingNIO={lastClosedShift?.closingNIO || null}
-              previousClosingUSD={lastClosedShift?.closingUSD || null}
-              expectedTotalEquivNIO={expectedFromPrevious}
-            />
-          </div>
-
-          {/* Traspaso a Caja Chica al Abrir (Opcional) */}
-          <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-2xl space-y-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                  🏦
-                </div>
-                <div>
-                  <h4 className="text-xs font-black uppercase tracking-wider text-amber-950">
-                    Traspaso a Caja Chica al Abrir (Pagos / Salidas en Loyverse)
-                  </h4>
-                  <p className="text-[11px] text-amber-800">
-                    Mueve dinero de esta gaveta física de Caja General hacia Caja Chica para compras del turno. En Loyverse POS se registra como <strong>"Pagos / Salidas"</strong>.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-              <div>
-                <label className="block text-[11px] font-bold text-amber-900 uppercase tracking-wider mb-1">
-                  Monto a Trasladar a Caja Chica (C$)
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">C$</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    value={transferToPettyCash}
-                    onChange={(e) => setTransferToPettyCash(e.target.value)}
-                    className="w-full bg-white border border-amber-300 rounded-xl pl-9 pr-3 py-2 text-sm font-mono font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                  />
-                </div>
-              </div>
-
-              <div className="bg-white/80 border border-amber-200/80 rounded-xl p-3 text-xs space-y-1 font-mono">
-                <div className="flex justify-between text-slate-600">
-                  <span>Conteo Físico Gaveta:</span>
-                  <span>C$ {totalEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span>
-                </div>
-                <div className="flex justify-between text-rose-700 font-bold">
-                  <span>(-) Traslado a Caja Chica:</span>
-                  <span>- C$ {transferAmount.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span>
-                </div>
-                <div className="border-t border-amber-200 pt-1 flex justify-between font-black text-slate-900 text-sm">
-                  <span>(=) Fondo Neto Gaveta:</span>
-                  <span className="text-emerald-700">C$ {netOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span>
-                </div>
-                {totalUSD > 0 && (
-                  <div className="pt-1 text-[11px] text-amber-800 font-semibold border-t border-amber-100 flex items-center justify-between">
-                    <span>💵 Dólares recibidos ({totalUSD.toFixed(2)} USD):</span>
-                    <span className="text-amber-900 font-bold">Entrega a Snyder ($0.00 en caja)</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Notas de Apertura */}
-          <div>
-            <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-              Observaciones de Apertura (opcional)
-            </label>
-            <input
-              type="text"
-              placeholder="Ej: Se recibe gaveta en orden con C$ 2,000 en sencillo..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 font-medium shadow-2xs"
-            />
-          </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-white">
-          <div className="text-xs space-y-0.5">
-            <div className="text-slate-500">
-              Conteo Físico: <strong className="text-slate-800 font-mono">C$ {totalEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
-              {transferAmount > 0 && (
-                <span className="text-amber-700 font-bold ml-2">
-                  (A Caja Chica: -C$ {transferAmount.toLocaleString('es-NI', { minimumFractionDigits: 2 })})
-                </span>
-              )}
-            </div>
-            <div className="text-sm">
-              <span className="text-slate-700 font-bold">Fondo Neto en Gaveta General: </span>
-              <strong className="text-xl font-black text-emerald-600 font-mono">
-                C$ {netOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
-              </strong>
-            </div>
+        {/* Footer Informativo */}
+        <div className="px-6 py-3 border-t border-slate-200 bg-white flex items-center justify-between text-xs text-slate-500">
+          <div>
+            Responsable: <strong className="text-slate-800">{openerName}</strong> • Fecha: <strong className="font-mono text-slate-800">{shiftDate}</strong>
           </div>
-
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-800 transition cursor-pointer"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirm}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-black shadow-md shadow-emerald-600/25 transition active:scale-95 cursor-pointer"
-            >
-              <CheckCircle className="w-4 h-4" />
-              <span>Confirmar y Abrir Turno</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+          <div>
+            {step === 1 && 'Paso 1: Arqueo Caja Chica'}
+            {step === 2 && `Gaveta Contada: C$ ${totalNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}`}
+            {step === 3 && `Gaveta General: C$ ${generalDrawerFloat.toFixed(2)} | Caja Chica: C$ ${resultingPettyInitialBalance.toFixed(2)}`}
           </div>
         </div>
       </div>
