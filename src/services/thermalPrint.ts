@@ -2471,3 +2471,263 @@ export function printOfficialOpeningActBN(shift: CashShift, adminName?: string):
   }
 }
 
+/**
+ * Imprime un comprobante individual de pago de nómina en tiquetera térmica de 80mm.
+ * Diseño 100% monocromático B/N de alta nitidez, rectangular, con desglose y firma.
+ */
+export function printThermalIndividualPayrollReceipt(
+  row: {
+    name: string;
+    role: string;
+    baseSalary: number;
+    overtimeHours?: number;
+    overtimeAmount?: number;
+    holidaysCount?: number;
+    holidaysAmount?: number;
+    bonuses?: number;
+    loanDeduction?: number;
+    restaurantServiceDeduction?: number;
+    breakageDeduction?: number;
+    breakageNotes?: string;
+    totalPaid: number;
+  },
+  periodLabel: string,
+  monthName: string,
+  year: number,
+  adminName: string = 'Administración'
+) {
+  try {
+    const totalEarnings =
+      (row.baseSalary || 0) +
+      (row.overtimeAmount || 0) +
+      (row.holidaysAmount || 0) +
+      (row.bonuses || 0);
+
+    const totalDeductions =
+      (row.loanDeduction || 0) +
+      (row.restaurantServiceDeduction || 0) +
+      (row.breakageDeduction || 0);
+
+    const now = new Date();
+    const fechaHora = now.toLocaleDateString('es-NI', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }) + ' ' + now.toLocaleTimeString('es-NI', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const receiptHtml = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <title>Recibo de Pago - ${row.name}</title>
+        <style>
+          @page {
+            size: 80mm auto;
+            margin: 0;
+          }
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            line-height: 1.25;
+            color: #000;
+            background: #fff;
+            width: 76mm;
+            margin: 0 auto;
+            padding: 4mm 2mm 8mm 2mm;
+          }
+          .text-center { text-align: center; }
+          .text-right { text-align: right; }
+          .text-left { text-align: left; }
+          .font-bold { font-weight: bold; }
+          .font-mono { font-family: 'Courier New', Courier, monospace; }
+          .divider-solid {
+            border-top: 1.5px solid #000;
+            margin: 5px 0;
+          }
+          .divider-dashed {
+            border-top: 1px dashed #000;
+            margin: 4px 0;
+          }
+          .divider-double {
+            border-top: 3px double #000;
+            margin: 5px 0;
+          }
+          .table-clean {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          .table-clean td {
+            padding: 1.5px 0;
+            vertical-align: top;
+          }
+          .box-total {
+            border: 2px solid #000;
+            padding: 5px;
+            margin: 6px 0;
+            text-align: center;
+          }
+          .sign-area {
+            margin-top: 22px;
+            padding-top: 4px;
+            text-align: center;
+          }
+          .sign-line {
+            border-top: 1.5px solid #000;
+            width: 85%;
+            margin: 0 auto 4px auto;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="text-center font-bold" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
+          EL BODEGÓN RESTAURANTE
+        </div>
+        <div class="text-center" style="font-size: 9.5px; margin-top: 1px;">
+          COMPROBANTE QUINCENAL DE PAGO
+        </div>
+        <div class="divider-double"></div>
+
+        <table class="table-clean" style="font-size: 10px;">
+          <tr>
+            <td style="width: 32%;"><strong>PERÍODO:</strong></td>
+            <td>${periodLabel} - ${monthName} ${year}</td>
+          </tr>
+          <tr>
+            <td><strong>EMPLEADO:</strong></td>
+            <td class="font-bold">${row.name.toUpperCase()}</td>
+          </tr>
+          <tr>
+            <td><strong>CARGO:</strong></td>
+            <td>${row.role || 'Personal Operativo'}</td>
+          </tr>
+          <tr>
+            <td><strong>FECHA/HORA:</strong></td>
+            <td>${fechaHora}</td>
+          </tr>
+        </table>
+
+        <div class="divider-solid"></div>
+        <div class="text-center font-bold" style="font-size: 10px; margin-bottom: 2px;">
+          1. DETALLE DE HABERES (DEVENGADO)
+        </div>
+        <table class="table-clean" style="font-size: 10.5px;">
+          <tr>
+            <td>Salario Quincenal Base</td>
+            <td class="text-right font-mono">C$ ${(row.baseSalary || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+          </tr>
+          ${(row.overtimeAmount && row.overtimeAmount > 0) ? `
+          <tr>
+            <td>Horas Extras (${row.overtimeHours || 0} hrs)</td>
+            <td class="text-right font-mono">C$ ${(row.overtimeAmount).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+          </tr>` : ''}
+          ${(row.holidaysAmount && row.holidaysAmount > 0) ? `
+          <tr>
+            <td>Feriados Trabajados (${row.holidaysCount || 0} d)</td>
+            <td class="text-right font-mono">C$ ${(row.holidaysAmount).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+          </tr>` : ''}
+          ${(row.bonuses && row.bonuses > 0) ? `
+          <tr>
+            <td>Bonificaciones / Otros</td>
+            <td class="text-right font-mono">C$ ${(row.bonuses).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+          </tr>` : ''}
+          <tr class="font-bold">
+            <td style="padding-top: 3px;">SUBTOTAL DEVENGADO:</td>
+            <td class="text-right font-mono" style="padding-top: 3px;">C$ ${totalEarnings.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+          </tr>
+        </table>
+
+        <div class="divider-dashed"></div>
+        <div class="text-center font-bold" style="font-size: 10px; margin-bottom: 2px;">
+          2. DETALLE DE DEDUCCIONES
+        </div>
+        <table class="table-clean" style="font-size: 10.5px;">
+          ${(row.loanDeduction && row.loanDeduction > 0) ? `
+          <tr>
+            <td>Deducción Préstamos</td>
+            <td class="text-right font-mono">- C$ ${(row.loanDeduction).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+          </tr>` : ''}
+          ${(row.restaurantServiceDeduction && row.restaurantServiceDeduction > 0) ? `
+          <tr>
+            <td>Consumo Restaurante</td>
+            <td class="text-right font-mono">- C$ ${(row.restaurantServiceDeduction).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+          </tr>` : ''}
+          ${(row.breakageDeduction && row.breakageDeduction > 0) ? `
+          <tr>
+            <td>Vajilla / Reposición</td>
+            <td class="text-right font-mono">- C$ ${(row.breakageDeduction).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+          </tr>` : ''}
+          ${totalDeductions === 0 ? `
+          <tr>
+            <td colspan="2" style="font-style: italic; color: #333;">Sin deducciones aplicadas en la quincena.</td>
+          </tr>` : ''}
+          <tr class="font-bold">
+            <td style="padding-top: 3px;">TOTAL DEDUCCIONES:</td>
+            <td class="text-right font-mono" style="padding-top: 3px;">- C$ ${totalDeductions.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+          </tr>
+        </table>
+
+        ${row.breakageNotes ? `
+        <div style="font-size: 9px; margin-top: 3px; border: 1px solid #000; padding: 2px 4px;">
+          <strong>Nota deducción:</strong> ${row.breakageNotes}
+        </div>` : ''}
+
+        <!-- TOTAL NETO RECIBIDO -->
+        <div class="box-total">
+          <div style="font-size: 9px; font-weight: bold; text-transform: uppercase;">
+            TOTAL NETO A PAGAR (CÓRDOBAS)
+          </div>
+          <div style="font-size: 15px; font-weight: 900; font-family: 'Courier New', Courier, monospace; margin-top: 2px;">
+            C$ ${row.totalPaid.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+          </div>
+        </div>
+
+        <!-- FIRMA DE RECIBIDO CONFORME -->
+        <div class="sign-area">
+          <div class="sign-line"></div>
+          <div class="font-bold" style="font-size: 9.5px; text-transform: uppercase;">RECIBÍ CONFORME</div>
+          <div style="font-size: 9px; margin-top: 1px;">${row.name.toUpperCase()}</div>
+          <div style="font-size: 8.5px; margin-top: 4px; text-align: left; padding: 0 4px;">
+            Cédula Identidad: ______________________
+          </div>
+        </div>
+
+        <div class="divider-dashed" style="margin-top: 14px;"></div>
+        <div class="text-center" style="font-size: 8px; color: #222;">
+          Autorizado por: ${adminName}<br>
+          Comprobante Contable Interno • El Bodegón
+        </div>
+
+        <script>
+          setTimeout(function() {
+            window.focus();
+            window.print();
+          }, 250);
+        </script>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank', 'width=450,height=700,menubar=no,toolbar=no,location=no,status=no');
+    if (printWindow) {
+      printWindow.document.write(receiptHtml);
+      printWindow.document.close();
+    } else {
+      window.print();
+    }
+  } catch (err: any) {
+    alert('Error imprimiendo recibo térmico de pago: ' + err.message);
+  }
+}
+
+

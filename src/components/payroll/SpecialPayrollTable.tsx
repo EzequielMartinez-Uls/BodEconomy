@@ -1,6 +1,6 @@
 import React from 'react';
 import { SpecialPayrollRow } from '../../types/payroll';
-import { Plus, Trash2, Building2, ShieldCheck, Banknote, DollarSign } from 'lucide-react';
+import { Plus, Trash2, Building2 } from 'lucide-react';
 
 interface Props {
   rows: SpecialPayrollRow[];
@@ -53,7 +53,7 @@ export const SpecialPayrollTable: React.FC<Props> = ({
     const current = rows[index];
     const updated = { ...current, [field]: value };
 
-    // Si cambió IR laboral o horas extras, recalcular neto
+    // Si cambió IR laboral o extras, recalcular neto
     if (field === 'irLaboral' || field === 'extraHolidayAmount') {
       const ir = field === 'irLaboral' ? (Number(value) || 0) : (current.irLaboral || 0);
       const extra = field === 'extraHolidayAmount' ? (Number(value) || 0) : (current.extraHolidayAmount || 0);
@@ -87,19 +87,21 @@ export const SpecialPayrollTable: React.FC<Props> = ({
   });
 
   return (
-    <div className="space-y-4">
-      {/* Banner de Registro Patronal y Resumen Fiscal */}
-      <div className="p-4 rounded-xl border border-indigo-200 bg-indigo-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="space-y-3">
+      {/* Banner de Registro Patronal y Resumen Fiscal: Diseño Rectangular Corporativo */}
+      <div className="p-3 border border-indigo-300 bg-indigo-50/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-indigo-600 text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0">
+          <div className="w-9 h-9 border border-indigo-700 bg-indigo-700 text-white font-black text-xs flex items-center justify-center shrink-0">
             INSS
           </div>
           <div>
             <div className="text-xs font-black text-indigo-950 uppercase tracking-wider flex items-center gap-2">
               <span>REGISTRO PATRONAL No 1550850</span>
-              <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-bold">Oficial</span>
+              <span className="px-1.5 py-0.2 border border-indigo-400 bg-indigo-100 text-indigo-900 text-[10px] font-bold uppercase">
+                Oficial
+              </span>
             </div>
-            <div className="text-[11px] text-indigo-800 mt-0.5">
+            <div className="text-[11px] text-indigo-900 mt-0.5">
               Cálculo formal de cargas sociales (INSS Laboral 7%, Patronal 21.5%, INATEC 2%, Provisión Aguinaldo 1/12)
             </div>
           </div>
@@ -109,7 +111,7 @@ export const SpecialPayrollTable: React.FC<Props> = ({
             <button
               type="button"
               onClick={onAddRow}
-              className="px-3 py-1.5 rounded-lg bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              className="px-3 py-1.5 border border-indigo-800 bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Agregar Asegurado</span>
@@ -118,133 +120,133 @@ export const SpecialPayrollTable: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* 4 Tarjetas de Resumen Fiscal Señalizadas como Dinero */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-2xs">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+      {/* 4 Tarjetas de Resumen Fiscal: Diseño Rectangular */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+        <div className="p-3 border border-slate-300 bg-white">
+          <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block">
             Salarios Declarados INSS
           </span>
-          <span className="text-lg font-black text-indigo-950 font-mono">
+          <span className="text-lg font-black text-indigo-950 font-mono block mt-0.5">
             <span className="text-xs text-slate-400 font-bold mr-1">C$</span>
             {totalSalario.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
-          <span className="text-[10px] text-slate-400 block mt-0.5">{rows.length} colaboradores cotizantes</span>
+          <span className="text-[10px] text-slate-500 block mt-0.5">{rows.length} colaboradores cotizantes</span>
         </div>
 
-        <div className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-2xs">
-          <span className="text-[10px] font-bold text-rose-600 uppercase tracking-wider block">
+        <div className="p-3 border border-slate-300 bg-white">
+          <span className="text-[10px] font-bold text-rose-700 uppercase tracking-wider block">
             Retención Laboral (7%)
           </span>
-          <span className="text-lg font-black text-rose-700 font-mono">
+          <span className="text-lg font-black text-rose-800 font-mono block mt-0.5">
             <span className="text-xs text-rose-400 font-bold mr-1">- C$</span>
             {totalINSSLaboral.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
-          <span className="text-[10px] text-slate-400 block mt-0.5">Deducido en nómina quincenal</span>
+          <span className="text-[10px] text-slate-500 block mt-0.5">Deducido en nómina quincenal</span>
         </div>
 
-        <div className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-2xs">
-          <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider block">
+        <div className="p-3 border border-slate-300 bg-white">
+          <span className="text-[10px] font-bold text-indigo-800 uppercase tracking-wider block">
             Total Cheque / Transferencia INSS
           </span>
-          <span className="text-lg font-black text-indigo-700 font-mono">
+          <span className="text-lg font-black text-indigo-900 font-mono block mt-0.5">
             <span className="text-xs text-indigo-400 font-bold mr-1">C$</span>
             {totalCotiz.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
-          <span className="text-[10px] text-slate-400 block mt-0.5">Laboral + Patronal (21.5%) + INATEC (2%)</span>
+          <span className="text-[10px] text-slate-500 block mt-0.5">Laboral + Patronal (21.5%) + INATEC (2%)</span>
         </div>
 
-        <div className="p-3.5 rounded-xl border border-[#1c6856]/40 bg-[#1c6856]/5 shadow-2xs">
+        <div className="p-3 border-2 border-[#1c6856] bg-emerald-50/20">
           <span className="text-[10px] font-bold text-[#1c6856] uppercase tracking-wider block">
             Costo Total Empresa
           </span>
-          <span className="text-lg font-black text-[#1c6856] font-mono">
+          <span className="text-lg font-black text-[#1c6856] font-mono block mt-0.5">
             <span className="text-xs text-[#1c6856]/60 font-bold mr-1">C$</span>
             {totalCostEmpresa.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
-          <span className="text-[10px] text-[#1c6856]/80 block mt-0.5">Salario + Aguinaldo + Cargas</span>
+          <span className="text-[10px] text-[#1c6856] font-bold uppercase tracking-wide block mt-0.5">Salario + Aguinaldo + Cargas</span>
         </div>
       </div>
 
-      {/* Tabla INSS 100% Editable y Señalizada */}
-      <div className="border border-slate-200 rounded-xl bg-white shadow-2xs overflow-x-auto">
+      {/* Tabla INSS 100% Editable y Rectangular */}
+      <div className="border border-slate-300 bg-white overflow-x-auto">
         <table className="w-full text-xs text-left border-collapse">
           <thead>
-            <tr className="bg-slate-100/90 text-slate-700 font-extrabold border-b border-slate-200 text-[11px]">
-              <th rowSpan={2} className="p-2 text-center w-10 border-r border-slate-200">#</th>
-              <th rowSpan={2} className="p-2 min-w-[95px] text-center border-r border-slate-200">NSS</th>
-              <th rowSpan={2} className="p-2 min-w-[170px] border-r border-slate-200">Nombres y Apellidos</th>
-              <th rowSpan={2} className="p-2 min-w-[120px] border-r border-slate-200">Cargo</th>
-              <th rowSpan={2} className="p-2 min-w-[95px] text-center border-r border-slate-200">Fecha Ing.</th>
-              <th rowSpan={2} className="p-2 min-w-[120px] text-right border-r border-slate-200 bg-indigo-50/50">Salario C$</th>
-              <th rowSpan={2} className="p-2 min-w-[100px] text-right border-r border-slate-200">Aguinaldo (1/12)</th>
-              <th colSpan={4} className="p-1.5 text-center border-r border-slate-200 bg-amber-50/50">Cotización INSS / INATEC (C$)</th>
-              <th rowSpan={2} className="p-2 min-w-[85px] text-center border-r border-slate-200">IR Lab. C$</th>
-              <th rowSpan={2} className="p-2 min-w-[125px] text-right border-r border-slate-200 bg-slate-100 font-bold">Total Costo Empresa</th>
-              <th rowSpan={2} className="p-2 min-w-[120px] text-right bg-emerald-600 text-white font-bold border-r border-slate-200">Neto Asegurado (C$)</th>
+            <tr className="bg-slate-100 text-slate-800 font-extrabold border-b border-slate-300 text-[11px] uppercase tracking-wider">
+              <th rowSpan={2} className="p-2 text-center w-10 border-r border-slate-300">#</th>
+              <th rowSpan={2} className="p-2 min-w-[95px] text-center border-r border-slate-300">NSS</th>
+              <th rowSpan={2} className="p-2 min-w-[170px] border-r border-slate-300">Nombres y Apellidos</th>
+              <th rowSpan={2} className="p-2 min-w-[120px] border-r border-slate-300">Cargo</th>
+              <th rowSpan={2} className="p-2 min-w-[95px] text-center border-r border-slate-300">Fecha Ing.</th>
+              <th rowSpan={2} className="p-2 min-w-[120px] text-right border-r border-slate-300 bg-indigo-50/60">Salario C$</th>
+              <th rowSpan={2} className="p-2 min-w-[100px] text-right border-r border-slate-300">Aguinaldo (1/12)</th>
+              <th colSpan={4} className="p-1.5 text-center border-r border-slate-300 bg-amber-50/60">Cotización INSS / INATEC (C$)</th>
+              <th rowSpan={2} className="p-2 min-w-[85px] text-center border-r border-slate-300">IR Lab. C$</th>
+              <th rowSpan={2} className="p-2 min-w-[125px] text-right border-r border-slate-300 bg-slate-100 font-bold">Total Costo Empresa</th>
+              <th rowSpan={2} className="p-2 min-w-[120px] text-right bg-emerald-700 text-white font-bold border-r border-slate-300">Neto Asegurado (C$)</th>
               {onDeleteRow && <th rowSpan={2} className="p-2 text-center w-12">Acción</th>}
             </tr>
-            <tr className="bg-slate-50 text-[10px] font-bold text-slate-500 border-b border-slate-200">
-              <th className="p-1 text-right w-22 border-r border-slate-200">Laboral (7%)</th>
-              <th className="p-1 text-right w-24 border-r border-slate-200">Patronal (21.5%)</th>
-              <th className="p-1 text-right w-20 border-r border-slate-200">INATEC (2%)</th>
-              <th className="p-1 text-right w-24 border-r border-slate-200 font-black text-slate-900">Total Cotiz.</th>
+            <tr className="bg-slate-50 text-[10px] font-bold text-slate-600 border-b border-slate-300 uppercase">
+              <th className="p-1 text-right w-22 border-r border-slate-300">Laboral (7%)</th>
+              <th className="p-1 text-right w-24 border-r border-slate-300">Patronal (21.5%)</th>
+              <th className="p-1 text-right w-20 border-r border-slate-300">INATEC (2%)</th>
+              <th className="p-1 text-right w-24 border-r border-slate-300 font-black text-slate-900">Total Cotiz.</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-200">
             {rows.map((row, idx) => (
-              <tr key={row.employeeId || idx} className="hover:bg-slate-50/80 transition-colors">
-                <td className="p-1.5 text-center text-slate-400 font-mono text-[11px] border-r border-slate-100">
+              <tr key={row.employeeId || idx} className="hover:bg-slate-50/90 transition-colors">
+                <td className="p-1.5 text-center text-slate-500 font-mono text-[11px] border-r border-slate-200 bg-slate-50/50">
                   {idx + 1}
                 </td>
 
                 {/* NSS (Editable) */}
-                <td className="p-1 border-r border-slate-100">
+                <td className="p-1 border-r border-slate-200">
                   <input
                     type="text"
                     value={row.nss || ''}
                     onChange={(e) => handleFieldChange(idx, 'nss', e.target.value)}
-                    className="w-full text-center font-mono font-bold text-indigo-700 bg-transparent border border-transparent hover:border-slate-300 focus:border-indigo-600 focus:bg-white rounded px-1 py-0.5 text-xs outline-none transition"
+                    className="w-full text-center font-mono font-bold text-indigo-800 bg-transparent border border-transparent hover:border-slate-300 focus:border-indigo-600 focus:bg-white px-1 py-0.5 text-xs outline-none transition"
                     placeholder="NSS..."
                   />
                 </td>
 
                 {/* Nombres y Apellidos (Editable) */}
-                <td className="p-1 border-r border-slate-100">
+                <td className="p-1 border-r border-slate-200">
                   <input
                     type="text"
                     value={row.name}
                     onChange={(e) => handleFieldChange(idx, 'name', e.target.value)}
-                    className="w-full font-bold text-slate-900 bg-transparent border border-transparent hover:border-slate-300 focus:border-indigo-600 focus:bg-white rounded px-1.5 py-0.5 text-xs outline-none transition"
+                    className="w-full font-bold text-slate-900 bg-transparent border border-transparent hover:border-slate-300 focus:border-indigo-600 focus:bg-white px-1.5 py-0.5 text-xs outline-none transition"
                     placeholder="Nombre completo..."
                   />
                 </td>
 
                 {/* Cargo (Editable) */}
-                <td className="p-1 border-r border-slate-100">
+                <td className="p-1 border-r border-slate-200">
                   <input
                     type="text"
                     value={row.role}
                     onChange={(e) => handleFieldChange(idx, 'role', e.target.value)}
-                    className="w-full text-slate-600 font-medium bg-transparent border border-transparent hover:border-slate-300 focus:border-indigo-600 focus:bg-white rounded px-1.5 py-0.5 text-xs outline-none transition"
+                    className="w-full text-slate-700 font-medium bg-transparent border border-transparent hover:border-slate-300 focus:border-indigo-600 focus:bg-white px-1.5 py-0.5 text-xs outline-none transition"
                     placeholder="Cargo..."
                   />
                 </td>
 
                 {/* Fecha Ingreso (Editable) */}
-                <td className="p-1 border-r border-slate-100 text-center">
+                <td className="p-1 border-r border-slate-200 text-center">
                   <input
                     type="text"
                     value={row.hireDate || ''}
                     onChange={(e) => handleFieldChange(idx, 'hireDate', e.target.value)}
-                    className="w-20 text-center font-mono text-slate-500 bg-transparent border border-transparent hover:border-slate-300 focus:border-indigo-600 focus:bg-white rounded px-1 py-0.5 text-xs outline-none transition"
+                    className="w-20 text-center font-mono text-slate-600 bg-transparent border border-transparent hover:border-slate-300 focus:border-indigo-600 focus:bg-white px-1 py-0.5 text-xs outline-none transition"
                     placeholder="YYYY-MM-DD"
                   />
                 </td>
 
                 {/* Salario Declarado (Editable y Señalizado como Dinero) */}
-                <td className="p-1 border-r border-slate-100 bg-indigo-50/20">
-                  <div className="flex items-center justify-end rounded-md bg-white border border-slate-200 px-1.5 py-0.5 focus-within:border-indigo-600 focus-within:ring-1 focus-within:ring-indigo-600/30">
-                    <span className="text-[10px] font-bold text-indigo-700 select-none mr-1">C$</span>
+                <td className="p-1 border-r border-slate-200 bg-indigo-50/20">
+                  <div className="flex items-center justify-end bg-white border border-slate-300 px-1.5 py-0.5 focus-within:border-indigo-700">
+                    <span className="text-[10px] font-bold text-indigo-800 select-none mr-1">C$</span>
                     <input
                       type="number"
                       step="0.01"
@@ -257,38 +259,38 @@ export const SpecialPayrollTable: React.FC<Props> = ({
                 </td>
 
                 {/* Aguinaldo Provisión (1/12) */}
-                <td className="p-1.5 text-right font-mono text-slate-700 border-r border-slate-100">
+                <td className="p-1.5 text-right font-mono text-slate-700 border-r border-slate-200">
                   <span className="text-[10px] text-slate-400 font-bold mr-1">C$</span>
                   {row.aguinaldoProvision.toFixed(2)}
                 </td>
 
                 {/* 7% Laboral Señalizado */}
-                <td className="p-1.5 text-right font-mono text-rose-700 border-r border-slate-100 font-bold">
+                <td className="p-1.5 text-right font-mono text-rose-700 border-r border-slate-200 font-bold">
                   <span className="text-[10px] text-rose-400 font-bold mr-1">- C$</span>
                   {row.inssLaboral.toFixed(2)}
                 </td>
 
                 {/* 21.5% Patronal */}
-                <td className="p-1.5 text-right font-mono text-slate-700 border-r border-slate-100">
+                <td className="p-1.5 text-right font-mono text-slate-700 border-r border-slate-200">
                   <span className="text-[10px] text-slate-400 font-bold mr-1">C$</span>
                   {row.inssPatronal.toFixed(2)}
                 </td>
 
                 {/* 2% INATEC */}
-                <td className="p-1.5 text-right font-mono text-slate-700 border-r border-slate-100">
+                <td className="p-1.5 text-right font-mono text-slate-700 border-r border-slate-200">
                   <span className="text-[10px] text-slate-400 font-bold mr-1">C$</span>
                   {row.inatecPatronal.toFixed(2)}
                 </td>
 
                 {/* Total Cotización INSS */}
-                <td className="p-1.5 text-right font-mono font-black text-slate-900 border-r border-slate-100 bg-amber-50/20">
+                <td className="p-1.5 text-right font-mono font-black text-slate-900 border-r border-slate-200 bg-amber-50/20">
                   <span className="text-[10px] text-slate-400 font-bold mr-1">C$</span>
                   {row.totalCotizacion.toFixed(2)}
                 </td>
 
                 {/* IR Laboral (Editable) */}
-                <td className="p-1 border-r border-slate-100">
-                  <div className="flex items-center justify-center rounded-md bg-white border border-slate-200 px-1 py-0.5">
+                <td className="p-1 border-r border-slate-200">
+                  <div className="flex items-center justify-center bg-white border border-slate-300 px-1 py-0.5">
                     <span className="text-[10px] font-bold text-slate-400 select-none mr-0.5">C$</span>
                     <input
                       type="number"
@@ -296,13 +298,13 @@ export const SpecialPayrollTable: React.FC<Props> = ({
                       placeholder="0.00"
                       value={row.irLaboral || ''}
                       onChange={(e) => handleFieldChange(idx, 'irLaboral', parseFloat(e.target.value) || 0)}
-                      className="w-14 text-right font-mono text-slate-700 bg-transparent outline-none text-xs"
+                      className="w-14 text-right font-mono text-slate-800 bg-transparent outline-none text-xs"
                     />
                   </div>
                 </td>
 
                 {/* Costo Empresa */}
-                <td className="p-1.5 text-right font-mono font-bold text-slate-800 border-r border-slate-100 bg-slate-50">
+                <td className="p-1.5 text-right font-mono font-bold text-slate-800 border-r border-slate-200 bg-slate-50">
                   <span className="text-[10px] text-slate-400 font-bold mr-1">C$</span>
                   {row.totalCostBodegon.toFixed(2)}
                 </td>
@@ -319,7 +321,7 @@ export const SpecialPayrollTable: React.FC<Props> = ({
                     <button
                       type="button"
                       onClick={() => onDeleteRow(idx)}
-                      className="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
+                      className="p-1 text-slate-400 hover:text-rose-700 hover:bg-rose-50 border border-slate-200 transition cursor-pointer"
                       title="Quitar de planilla especial"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

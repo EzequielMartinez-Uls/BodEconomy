@@ -17,6 +17,7 @@ import {
   printIndividualReceipts,
   printSpecialPayrollINSS,
 } from '../../services/payrollPrint';
+import { printThermalIndividualPayrollReceipt } from '../../services/thermalPrint';
 import { exportPayrollToExcel } from '../../services/payrollExcelExport';
 import {
   syncFromBodegonPass,
@@ -38,6 +39,7 @@ import {
   Settings,
   Globe,
   X,
+  Copy,
 } from 'lucide-react';
 
 interface Props {
@@ -329,6 +331,87 @@ export const PayrollView: React.FC<Props> = ({
     setTimeout(() => setSaveNotice(null), 3500);
   };
 
+  // Duplicar Quincena Anterior: Clona colaboradores y sueldos base reiniciando extras y deducciones temporales
+  const handleDuplicatePreviousPayroll = () => {
+    const previousRecord =
+      (state.payrollHistory || []).find((h) => h.id !== currentPeriodId) ||
+      state.payrollHistory?.[0];
+
+    if (previousRecord && previousRecord.rows && previousRecord.rows.length > 0) {
+      if (
+        !window.confirm(
+          `¿Deseas clonar los colaboradores y salarios de la quincena previa (${previousRecord.id})? Las horas extras, feriados y notas temporales se restablecerán a cero.`
+        )
+      ) {
+        return;
+      }
+
+      const duplicatedRows: BiweeklyPayrollRow[] = previousRecord.rows.map((r) => ({
+        ...r,
+        overtimeHours: 0,
+        overtimeAmount: 0,
+        holidaysCount: 0,
+        holidaysAmount: 0,
+        bonuses: 0,
+        loanDeduction: 0,
+        restaurantServiceDeduction: 0,
+        breakageDeduction: 0,
+        breakageNotes: '',
+        totalPaid: r.baseSalary || 0,
+      }));
+
+      const duplicatedSpecial: SpecialPayrollRow[] = (previousRecord.specialRows || []).map((sr) => {
+        const sal = sr.reportedSalary || 0;
+        const inssLab = parseFloat((sal * 0.07).toFixed(2));
+        const inssPat = parseFloat((sal * 0.215).toFixed(2));
+        const inatec = parseFloat((sal * 0.02).toFixed(2));
+        const aguinaldo = parseFloat((sal / 12).toFixed(2));
+        return {
+          ...sr,
+          extraHolidayAmount: 0,
+          aguinaldoProvision: aguinaldo,
+          inssLaboral: inssLab,
+          inssPatronal: inssPat,
+          inatecPatronal: inatec,
+          totalCotizacion: parseFloat((inssLab + inssPat + inatec).toFixed(2)),
+          totalCostBodegon: parseFloat((sal + aguinaldo + inssPat + inatec).toFixed(2)),
+          netPayAsegurado: parseFloat((sal - inssLab - (sr.irLaboral || 0)).toFixed(2)),
+        };
+      });
+
+      setRows(duplicatedRows);
+      setSpecialRows(duplicatedSpecial);
+      setSaveNotice('¡Nómina duplicada exitosamente de la quincena anterior!');
+      setTimeout(() => setSaveNotice(null), 3500);
+    } else {
+      if (
+        window.confirm(
+          'No se encontró una nómina anterior en el historial. ¿Deseas inicializar la planilla con el personal activo registrado en el sistema?'
+        )
+      ) {
+        const initialRows = (state.payrollEmployees || []).map((emp) => ({
+          employeeId: emp.id,
+          name: emp.name,
+          role: emp.role,
+          baseSalary: emp.baseSalaryBiweekly || 0,
+          overtimeHours: 0,
+          overtimeAmount: 0,
+          holidaysCount: 0,
+          holidaysAmount: 0,
+          bonuses: 0,
+          loanDeduction: 0,
+          restaurantServiceDeduction: 0,
+          breakageDeduction: 0,
+          breakageNotes: '',
+          totalPaid: emp.baseSalaryBiweekly || 0,
+        }));
+        setRows(initialRows);
+        setSaveNotice('¡Planilla inicializada con el personal activo!');
+        setTimeout(() => setSaveNotice(null), 3500);
+      }
+    }
+  };
+
   // Sincronizar automáticamente con Bodegón Pass
   const handleSyncBodegonPass = async () => {
     setSyncing(true);
@@ -471,47 +554,47 @@ export const PayrollView: React.FC<Props> = ({
   ];
 
   return (
-    <div className="space-y-4 max-w-[1400px] mx-auto pb-12 select-none">
-      {/* Barra Superior de Control y Navegación del Módulo */}
-      <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        {/* Pestañas Submenú */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl">
+    <div className="space-y-3 max-w-[1440px] mx-auto pb-12 select-none">
+      {/* Barra Superior de Control y Navegación: Diseño Rectangular Corporativo */}
+      <div className="p-3 border border-slate-300 bg-white flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        {/* Pestañas Submenú Rectangulares */}
+        <div className="flex items-center border border-slate-300 bg-slate-100 p-0.5">
           <button
             onClick={() => setActiveSubTab('quincenal')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
               activeSubTab === 'quincenal'
-                ? 'bg-white text-slate-900 shadow-xs'
+                ? 'bg-white text-slate-900 border border-slate-300 shadow-2xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Calendar className="w-4 h-4 text-[#1c6856]" />
+            <Calendar className="w-3.5 h-3.5 text-[#1c6856]" />
             <span>Planilla Quincenal</span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('especial')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
               activeSubTab === 'especial'
-                ? 'bg-white text-slate-900 shadow-xs'
+                ? 'bg-white text-slate-900 border border-slate-300 shadow-2xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Building2 className="w-4 h-4 text-indigo-600" />
+            <Building2 className="w-3.5 h-3.5 text-indigo-700" />
             <span>Planilla Especial (INSS)</span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('incidencias')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
               activeSubTab === 'incidencias'
-                ? 'bg-white text-slate-900 shadow-xs'
+                ? 'bg-white text-slate-900 border border-slate-300 shadow-2xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <UtensilsCrossed className="w-4 h-4 text-amber-600" />
+            <UtensilsCrossed className="w-3.5 h-3.5 text-amber-700" />
             <span>Incidencias & Vajilla</span>
             {(state.payrollIncidents || []).length > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black">
+              <span className="px-1.5 py-0.2 border border-amber-300 bg-amber-100 text-amber-900 text-[9px] font-black">
                 {state.payrollIncidents.length}
               </span>
             )}
@@ -519,12 +602,12 @@ export const PayrollView: React.FC<Props> = ({
         </div>
 
         {/* Selector de Período Quincenal */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           {/* Mes */}
           <select
             value={month}
             onChange={(e) => setMonth(parseInt(e.target.value, 10))}
-            className="text-xs font-bold border border-slate-200 rounded-lg px-2.5 py-2 bg-slate-50 text-slate-800 outline-hidden cursor-pointer"
+            className="text-xs font-bold border border-slate-300 px-2 py-1.5 bg-white text-slate-800 outline-none cursor-pointer"
           >
             {monthsList.map((m, idx) => (
               <option key={idx + 1} value={idx + 1}>
@@ -537,7 +620,7 @@ export const PayrollView: React.FC<Props> = ({
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value as PayrollPeriod)}
-            className="text-xs font-bold border border-slate-200 rounded-lg px-2.5 py-2 bg-slate-50 text-slate-800 outline-hidden cursor-pointer"
+            className="text-xs font-bold border border-slate-300 px-2 py-1.5 bg-white text-slate-800 outline-none cursor-pointer"
           >
             <option value="FIRST_HALF">1ra Quincena (01 al 15)</option>
             <option value="SECOND_HALF">2da Quincena (16 al Fin)</option>
@@ -547,21 +630,31 @@ export const PayrollView: React.FC<Props> = ({
           <select
             value={year}
             onChange={(e) => setYear(parseInt(e.target.value, 10))}
-            className="text-xs font-bold border border-slate-200 rounded-lg px-2.5 py-2 bg-slate-50 text-slate-800 outline-hidden cursor-pointer"
+            className="text-xs font-bold border border-slate-300 px-2 py-1.5 bg-white text-slate-800 outline-none cursor-pointer"
           >
             <option value={2026}>2026</option>
             <option value={2025}>2025</option>
           </select>
         </div>
 
-        {/* Botones de Acción */}
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Botones de Acción: Rectangulares Formales */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {/* Duplicar Quincena Anterior */}
+          <button
+            onClick={handleDuplicatePreviousPayroll}
+            className="px-2.5 py-1.5 border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+            title="Copiar colaboradores y salarios del período anterior (reinicia extras y notas a cero)"
+          >
+            <Copy className="w-3.5 h-3.5 text-slate-600" />
+            <span>Duplicar Quincena</span>
+          </button>
+
           {/* Sincronizar Bodegón Pass */}
           <div className="flex items-center">
             <button
               onClick={handleSyncBodegonPass}
               disabled={syncing}
-              className="px-3 py-2 bg-emerald-50 text-[#1c6856] hover:bg-emerald-100 border border-emerald-200/80 rounded-l-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+              className="px-2.5 py-1.5 bg-emerald-50 text-[#1c6856] hover:bg-emerald-100 border border-emerald-300 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
               title="Conectar con Bodegón Pass para importar horas extras y feriados"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
@@ -572,7 +665,7 @@ export const PayrollView: React.FC<Props> = ({
                 setTestResult(null);
                 setPassConfigOpen(true);
               }}
-              className="px-2 py-2 bg-emerald-50 text-[#1c6856] hover:bg-emerald-100 border-y border-r border-emerald-200/80 rounded-r-xl text-xs font-bold transition flex items-center cursor-pointer"
+              className="px-1.5 py-1.5 bg-emerald-50 text-[#1c6856] hover:bg-emerald-100 border-y border-r border-emerald-300 text-xs font-bold transition flex items-center cursor-pointer"
               title="Configurar servidor de Bodegón Pass"
             >
               <Settings className="w-3.5 h-3.5" />
@@ -582,7 +675,7 @@ export const PayrollView: React.FC<Props> = ({
           {/* Guardar Quincena */}
           <button
             onClick={handleSavePayroll}
-            className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+            className="px-3 py-1.5 border border-slate-900 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
             title="Guardar cambios de esta quincena en el sistema"
           >
             <Save className="w-3.5 h-3.5" />
@@ -593,7 +686,7 @@ export const PayrollView: React.FC<Props> = ({
           <div className="relative">
             <button
               onClick={() => setPrintMenuOpen((prev) => !prev)}
-              className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-2.5 py-1.5 border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
             >
               <Printer className="w-3.5 h-3.5 text-slate-600" />
               <span>Imprimir Carta</span>
@@ -601,29 +694,29 @@ export const PayrollView: React.FC<Props> = ({
             </button>
 
             {printMenuOpen && (
-              <div className="absolute right-0 mt-1 w-64 bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-1 divide-y divide-slate-100">
+              <div className="absolute right-0 mt-1 w-64 bg-white border border-slate-300 shadow-lg z-50 py-1 divide-y divide-slate-100">
                 <button
                   onClick={handlePrintGeneral}
                   className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer block"
                 >
-                  <div className="font-bold text-slate-900">📄 Sábana General Quincenal</div>
-                  <div className="text-[10px] text-slate-400">Hoja Carta horizontal con todas las firmas</div>
+                  <div className="font-bold text-slate-900">Sábana General Quincenal</div>
+                  <div className="text-[10px] text-slate-500">Hoja Carta horizontal con firmas oficiales</div>
                 </button>
 
                 <button
                   onClick={handlePrintReceipts}
                   className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer block"
                 >
-                  <div className="font-bold text-slate-900">✂️ Recibos de Pago (2 por Hoja)</div>
-                  <div className="text-[10px] text-slate-400">Hoja Carta vertical cortable para sobres</div>
+                  <div className="font-bold text-slate-900">Recibos de Pago (2 por Hoja)</div>
+                  <div className="text-[10px] text-slate-500">Hoja Carta vertical cortable</div>
                 </button>
 
                 <button
                   onClick={handlePrintSpecialINSS}
                   className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer block"
                 >
-                  <div className="font-bold text-slate-900">🏛️ Planilla Especial INSS</div>
-                  <div className="text-[10px] text-slate-400">Reporte con Registro Patronal No 1550850</div>
+                  <div className="font-bold text-slate-900">Planilla Especial INSS</div>
+                  <div className="text-[10px] text-slate-500">Registro Patronal No 1550850</div>
                 </button>
               </div>
             )}
@@ -632,8 +725,8 @@ export const PayrollView: React.FC<Props> = ({
           {/* Exportar a Excel */}
           <button
             onClick={handleExportExcel}
-            className="px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-            title="Exportar archivo .xlsx con ambas hojas y fórmulas oficiales"
+            className="px-2.5 py-1.5 border border-emerald-800 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+            title="Exportar archivo .xlsx con fórmulas"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
             <span>Excel</span>
@@ -642,30 +735,30 @@ export const PayrollView: React.FC<Props> = ({
           {/* Gestionar Personal */}
           <button
             onClick={() => setEmployeesModalOpen(true)}
-            className="px-3 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-            title="Modificar colaboradores, cargos y salarios"
+            className="px-2.5 py-1.5 border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+            title="Modificar catálogo de colaboradores, cargos y salarios"
           >
-            <Users className="w-3.5 h-3.5 text-slate-500" />
+            <Users className="w-3.5 h-3.5 text-slate-600" />
             <span>Personal</span>
           </button>
         </div>
       </div>
 
-      {/* Avisos de Notificación */}
+      {/* Avisos de Notificación Rectangulares */}
       {syncNotice && (
-        <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-xs font-semibold flex items-center justify-between">
+        <div className="p-2.5 border border-blue-400 bg-blue-50 text-blue-950 text-xs font-semibold flex items-center justify-between">
           <span>{syncNotice}</span>
-          <button onClick={() => setSyncNotice(null)} className="text-blue-500 hover:text-blue-700 font-bold ml-2">×</button>
+          <button onClick={() => setSyncNotice(null)} className="text-blue-700 hover:text-blue-900 font-bold ml-2">×</button>
         </div>
       )}
 
       {saveNotice && (
-        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center justify-between">
+        <div className="p-2.5 border border-emerald-400 bg-emerald-50 text-emerald-950 text-xs font-semibold flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-emerald-700" />
             <span>{saveNotice}</span>
           </div>
-          <button onClick={() => setSaveNotice(null)} className="text-emerald-500 hover:text-emerald-700 font-bold ml-2">×</button>
+          <button onClick={() => setSaveNotice(null)} className="text-emerald-700 hover:text-emerald-900 font-bold ml-2">×</button>
         </div>
       )}
 
@@ -676,6 +769,15 @@ export const PayrollView: React.FC<Props> = ({
           onRowChange={handleRowChange}
           onAddRow={handleAddRow}
           onDeleteRow={handleDeleteRow}
+          onPrintRowReceipt={(row) =>
+            printThermalIndividualPayrollReceipt(
+              row,
+              period === 'FIRST_HALF' ? '1ra Quincena (01 al 15)' : '2da Quincena (16 al Fin)',
+              monthsList[month - 1],
+              year,
+              state.activeAdminName || 'Admon Bodegón'
+            )
+          }
           authorizedBy={state.activeAdminName || 'Admon Bodegón'}
         />
       )}

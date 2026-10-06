@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PayrollIncident, IncidentType, PayrollEmployee } from '../../types/payroll';
 import { getLocalTodayStr } from '../../utils/dateUtils';
-import { Plus, Trash2, UtensilsCrossed, ShoppingBag, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, UtensilsCrossed } from 'lucide-react';
 
 interface Props {
   employees: PayrollEmployee[];
@@ -57,38 +57,38 @@ export const PayrollIncidentsView: React.FC<Props> = ({
   const totalIncidents = filteredIncidents.reduce((sum, i) => sum + (i.amount || 0), 0);
 
   return (
-    <div className="space-y-4">
-      {/* Formulario rápido para anotar incidencias */}
-      <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs">
-        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
+    <div className="space-y-3">
+      {/* Formulario rápido para anotar incidencias: Diseño Rectangular Corporativo */}
+      <div className="p-3 border border-slate-300 bg-white">
+        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-200">
           <UtensilsCrossed className="w-4 h-4 text-[#1c6856]" />
           <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
             Registrar Incidencia Diaria (Vajilla Quebrada o Consumo de Personal)
           </h3>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3 items-end">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-2.5 items-end">
           <div>
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+            <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
               Fecha
             </label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full text-xs font-mono border border-slate-200 rounded-lg px-2.5 py-2 outline-hidden focus:border-[#1c6856]"
+              className="w-full text-xs font-mono border border-slate-300 px-2 py-1.5 outline-none focus:border-[#1c6856] bg-white"
               required
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+            <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
               Colaborador
             </label>
             <select
               value={selectedEmpId}
               onChange={(e) => setSelectedEmpId(e.target.value)}
-              className="w-full text-xs font-bold border border-slate-200 rounded-lg px-2.5 py-2 outline-hidden focus:border-[#1c6856] bg-white"
+              className="w-full text-xs font-bold border border-slate-300 px-2 py-1.5 outline-none focus:border-[#1c6856] bg-white"
               required
             >
               {employees.map((emp) => (
@@ -100,13 +100,13 @@ export const PayrollIncidentsView: React.FC<Props> = ({
           </div>
 
           <div>
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+            <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
               Tipo
             </label>
             <select
               value={type}
               onChange={(e) => setType(e.target.value as IncidentType)}
-              className="w-full text-xs font-semibold border border-slate-200 rounded-lg px-2.5 py-2 outline-hidden focus:border-[#1c6856] bg-white"
+              className="w-full text-xs font-semibold border border-slate-300 px-2 py-1.5 outline-none focus:border-[#1c6856] bg-white"
             >
               <option value="VAJILLA_PERDIDA">Vajilla Quebrada / Pérdida</option>
               <option value="SERVICIO_RESTAURANTE">Servicio de Restaurante</option>
@@ -115,7 +115,7 @@ export const PayrollIncidentsView: React.FC<Props> = ({
           </div>
 
           <div>
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+            <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
               Monto (C$)
             </label>
             <input
@@ -124,7 +124,7 @@ export const PayrollIncidentsView: React.FC<Props> = ({
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full text-xs font-mono font-bold border border-slate-200 rounded-lg px-2.5 py-2 outline-hidden focus:border-[#1c6856]"
+              className="w-full text-xs font-mono font-bold border border-slate-300 px-2 py-1.5 outline-none focus:border-[#1c6856] bg-white"
               required
             />
           </div>
@@ -132,7 +132,7 @@ export const PayrollIncidentsView: React.FC<Props> = ({
           <div>
             <button
               type="submit"
-              className="w-full py-2 bg-[#1c6856] hover:bg-[#154f42] text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              className="w-full py-1.5 border border-[#165345] bg-[#1c6856] hover:bg-[#165345] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer uppercase tracking-wider"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Anotar</span>
@@ -145,30 +145,30 @@ export const PayrollIncidentsView: React.FC<Props> = ({
               placeholder="Concepto o detalle opcional (ej: Plato hondo quebrado, salsero, vaso cervecero, 1 almuerzo extra...)"
               value={concept}
               onChange={(e) => setConcept(e.target.value)}
-              className="w-full text-xs border border-slate-200 rounded-lg px-3 py-1.5 outline-hidden focus:border-[#1c6856] placeholder:text-slate-400"
+              className="w-full text-xs border border-slate-300 px-2.5 py-1.5 outline-none focus:border-[#1c6856] placeholder:text-slate-400 bg-white"
             />
           </div>
         </form>
       </div>
 
-      {/* Lista y filtro de incidencias registradas */}
-      <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-2 border-b border-slate-100">
+      {/* Historial de incidencias: Diseño Rectangular Formal */}
+      <div className="p-3 border border-slate-300 bg-white">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-200">
           <div>
             <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
               Historial de Incidencias Registradas
             </h3>
             <span className="text-[11px] text-slate-500">
-              Estas deducciones se inyectan automáticamente en la quincena correspondiente de cada colaborador
+              Estas deducciones se aplican en la quincena correspondiente de cada colaborador
             </span>
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-[11px] font-bold text-slate-500">Filtrar por:</label>
+            <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Filtrar por:</label>
             <select
               value={filterEmpId}
               onChange={(e) => setFilterEmpId(e.target.value)}
-              className="text-xs border border-slate-200 rounded-lg px-2 py-1 outline-hidden bg-white"
+              className="text-xs border border-slate-300 px-2 py-1 outline-none bg-white font-medium"
             >
               <option value="ALL">Todos los colaboradores</option>
               {employees.map((emp) => (
@@ -179,44 +179,44 @@ export const PayrollIncidentsView: React.FC<Props> = ({
         </div>
 
         {filteredIncidents.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 text-xs">
+          <div className="text-center py-8 text-slate-400 text-xs italic">
             No se han registrado incidencias de vajilla rota ni consumos pendientes para este filtro.
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="border border-slate-300 overflow-x-auto">
             <table className="w-full text-xs text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 text-[10px] font-bold text-slate-500 border-b border-slate-200">
-                  <th className="p-2 w-24">Fecha</th>
-                  <th className="p-2">Colaborador</th>
-                  <th className="p-2">Tipo</th>
-                  <th className="p-2">Concepto / Detalle</th>
-                  <th className="p-2 text-right">Monto (C$)</th>
+                <tr className="bg-slate-100 text-[10px] font-bold text-slate-700 border-b border-slate-300 uppercase tracking-wider">
+                  <th className="p-2 w-24 border-r border-slate-300">Fecha</th>
+                  <th className="p-2 border-r border-slate-300">Colaborador</th>
+                  <th className="p-2 border-r border-slate-300">Tipo</th>
+                  <th className="p-2 border-r border-slate-300">Concepto / Detalle</th>
+                  <th className="p-2 text-right border-r border-slate-300">Monto (C$)</th>
                   <th className="p-2 text-center w-12">Acción</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-200">
                 {filteredIncidents.map((inc) => (
-                  <tr key={inc.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="p-2 font-mono text-slate-500">{inc.date}</td>
-                    <td className="p-2 font-bold text-slate-900">{inc.employeeName}</td>
-                    <td className="p-2">
-                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                  <tr key={inc.id} className="hover:bg-slate-50/90 transition-colors">
+                    <td className="p-2 font-mono text-slate-600 border-r border-slate-200">{inc.date}</td>
+                    <td className="p-2 font-bold text-slate-900 border-r border-slate-200">{inc.employeeName}</td>
+                    <td className="p-2 border-r border-slate-200">
+                      <span className={`text-[9px] font-bold uppercase px-1.5 py-0.2 border ${
                         inc.type === 'VAJILLA_PERDIDA'
-                          ? 'bg-rose-100 text-rose-800'
-                          : 'bg-amber-100 text-amber-800'
+                          ? 'border-rose-400 bg-rose-50 text-rose-800'
+                          : 'border-amber-400 bg-amber-50 text-amber-900'
                       }`}>
                         {inc.type === 'VAJILLA_PERDIDA' ? 'Vajilla Quebrada' : inc.type === 'SERVICIO_RESTAURANTE' ? 'Servicio Rest.' : 'Otro'}
                       </span>
                     </td>
-                    <td className="p-2 text-slate-600">{inc.concept}</td>
-                    <td className="p-2 text-right font-mono font-bold text-rose-700">
+                    <td className="p-2 text-slate-700 border-r border-slate-200">{inc.concept}</td>
+                    <td className="p-2 text-right font-mono font-bold text-rose-700 border-r border-slate-200">
                       - C$ {inc.amount.toFixed(2)}
                     </td>
                     <td className="p-2 text-center">
                       <button
                         onClick={() => onDeleteIncident(inc.id)}
-                        className="text-slate-400 hover:text-rose-600 p-1 rounded transition cursor-pointer"
+                        className="text-slate-400 hover:text-rose-700 p-1 transition cursor-pointer"
                         title="Eliminar incidencia"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -226,9 +226,9 @@ export const PayrollIncidentsView: React.FC<Props> = ({
                 ))}
               </tbody>
               <tfoot>
-                <tr className="bg-slate-50 font-bold border-t border-slate-200 text-slate-800">
-                  <td colSpan={4} className="p-2 text-right">Total en Incidencias Listadas:</td>
-                  <td className="p-2 text-right font-mono text-rose-700 font-black">
+                <tr className="bg-slate-900 font-bold border-t-2 border-slate-900 text-white">
+                  <td colSpan={4} className="p-2 text-right uppercase tracking-wider">Total en Incidencias Listadas:</td>
+                  <td className="p-2 text-right font-mono text-rose-300 font-black">
                     - C$ {totalIncidents.toFixed(2)}
                   </td>
                   <td></td>
