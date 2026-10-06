@@ -1952,49 +1952,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
             </tr>
           </table>
 
-          <div class="section-title">1. BALANCE Y LIQUIDACIÓN DEL FONDO DE CAJA CHICA</div>
-          <table>
-            <thead>
-              <tr>
-                <th>CONCEPTO DE FONDO Y MOVIMIENTOS</th>
-                <th style="width: 25%;" class="text-right">IMPORTE (C$)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>(+) Fondo Inicial de Caja Chica Asignado para el Turno</td>
-                <td class="text-right font-mono">C$ ${fondoInicial.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-              </tr>
-              ${(totalInflows && totalInflows > 0) ? `
-              <tr>
-                <td>(+) Depósitos y Fondeos Adicionales en Efectivo (Ingresos a Gaveta)</td>
-                <td class="text-right font-mono font-bold">+ C$ ${totalInflows.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-              </tr>
-              <tr style="font-weight: 600;">
-                <td>(=) Total Efectivo Ingresado a Caja Chica (Fondo + Fondeos)</td>
-                <td class="text-right font-mono">C$ ${(fondoInicial + totalInflows).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-              </tr>
-              ` : ''}
-              <tr>
-                <td>(-) Total Compras y Gastos Pagados en Efectivo (Salidas de Gaveta)</td>
-                <td class="text-right font-mono">- C$ ${expensesCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-              </tr>
-              <tr style="font-weight: bold;">
-                <td>(=) SALDO EFECTIVO RESTANTE EN GAVETA FÍSICA</td>
-                <td class="text-right font-mono" style="font-size: 10px;">C$ ${saldoRemanente.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-              </tr>
-              <tr>
-                <td>(+) Facturas y Compras Pagadas mediante Transferencia Bancaria</td>
-                <td class="text-right font-mono">C$ ${expensesTransf.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-              </tr>
-              <tr class="highlight-row">
-                <td><strong>TOTAL GENERAL DE EGRESOS DEL DÍA (EFECTIVO + TRANSFERENCIAS)</strong></td>
-                <td class="text-right font-mono" style="font-size: 10px;"><strong>C$ ${expensesTotal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div class="section-title">2. RELACIÓN DETALLADA DE COMPRAS Y GASTOS (CUADRO EN VIVO)</div>
+          <div class="section-title">RELACIÓN DETALLADA DE COMPRAS Y GASTOS (CUADRO EN VIVO)</div>
           <table>
             <thead>
               <tr>

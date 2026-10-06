@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { AppState, ExpenseCategory, PaymentMethod, PettyCashShift, PettyCashTransaction } from '../types';
+import { AppState, ExpenseCategory, PaymentMethod, PettyCashShift, PettyCashTransaction, isOpeningPettyCashTx } from '../types';
 import {
   printThermalDailyExpensesTicket,
   printThermalSingleExpenseVoucher,
@@ -229,11 +229,7 @@ export const PettyCashView: React.FC<Props> = ({
 
   const selectedDateTransactions = useMemo(() => {
     return state.pettyCashTransactions.filter((tx) => {
-      if (
-        tx.id.startsWith('pct-init-') ||
-        tx.id.startsWith('pct-transfer-open-') ||
-        tx.id.startsWith('opening-')
-      ) {
+      if (isOpeningPettyCashTx(tx)) {
         return false;
       }
       if (selectedShift) {
@@ -677,7 +673,7 @@ export const PettyCashView: React.FC<Props> = ({
 
     // 2. Transacciones del día ordenadas cronológicamente
     const sorted = [...selectedDateTransactions]
-      .filter((tx) => !tx.id.startsWith('pct-init-boss-') && !tx.id.startsWith('pct-init-gen-') && !tx.id.startsWith('pct-transfer-open-'))
+      .filter((tx) => !isOpeningPettyCashTx(tx))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     for (const tx of sorted) {

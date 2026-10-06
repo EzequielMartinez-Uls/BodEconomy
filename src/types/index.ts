@@ -143,6 +143,47 @@ export interface PettyCashTransaction {
   syncError?: string;
 }
 
+/**
+ * Determina si una transacción de caja chica corresponde al fondeo inicial o traspaso de apertura.
+ * Estas transacciones forman parte del `initialBalance` de la jornada y NO deben contarse
+ * como ingresos extras adicionales ni duplicarse como filas regulares en el arqueo.
+ */
+export function isOpeningPettyCashTx(tx: PettyCashTransaction): boolean {
+  if (!tx) return false;
+  const id = tx.id || '';
+  if (
+    id.startsWith('pct-init-') ||
+    id.startsWith('pct-transfer-open-') ||
+    id.startsWith('opening-')
+  ) {
+    return true;
+  }
+  if (tx.inflowSource === 'FONDO_INICIAL') return true;
+
+  const vendor = (tx.vendor || '').toLowerCase();
+  const notes = (tx.notes || '').toLowerCase();
+
+  // Detección de traspasos de apertura deducidos al abrir Caja General
+  if (
+    notes.includes('deducido al abrir') ||
+    notes.includes('traspaso inicial') ||
+    notes.includes('traspaso al abrir') ||
+    notes.includes('fondeo inicial')
+  ) {
+    return true;
+  }
+
+  if (
+    (tx.inflowSource === 'TRASLADO_CAJA_GENERAL' || tx.type === 'INFLOW') &&
+    (vendor.includes('traslado desde caja general') || vendor.includes('traspaso desde caja general') || vendor.includes('deposito a caja chica')) &&
+    (notes.includes('abrir') || notes.includes('inicial') || notes.includes('apertura'))
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 export interface PettyCashShift {
   id: string; // e.g. 'pc-shift-2026-09-21-1'
   date: string; // YYYY-MM-DD

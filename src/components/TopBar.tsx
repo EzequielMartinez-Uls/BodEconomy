@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AppState } from '../types';
+import { AppState, isOpeningPettyCashTx } from '../types';
 import {
   User,
   ChevronDown,
@@ -72,7 +72,7 @@ export const TopBar: React.FC<Props> = ({
       (state.currentPettyCashShift?.date === dateToUse ? state.currentPettyCashShift : null);
 
     const relevantTxs = (state.pettyCashTransactions || [])
-      .filter((t) => extractLocalDateStr(t.date) === dateToUse || (pettyShift && t.shiftId === pettyShift.id))
+      .filter((t) => !isOpeningPettyCashTx(t) && (extractLocalDateStr(t.date) === dateToUse || (pettyShift && t.shiftId === pettyShift.id)))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     const fondoInicial =

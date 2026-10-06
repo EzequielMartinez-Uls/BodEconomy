@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { AppState, CashShift, PettyCashShift, PettyCashTransaction, TablewareItem, TablewareLoss } from './types';
+import { AppState, CashShift, PettyCashShift, PettyCashTransaction, TablewareItem, TablewareLoss, isOpeningPettyCashTx } from './types';
 import { loadState, saveState, INITIAL_STATE } from './services/storage';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
@@ -208,7 +208,7 @@ export function App() {
         if (currentPettyCashShift && currentPettyCashShift.status === 'OPEN') {
           const shiftId = currentPettyCashShift.id;
           const openTxs = updatedTxs.filter(
-            (t) => t.shiftId === shiftId && !t.id.startsWith('pct-init-') && !t.id.startsWith('pct-transfer-open-') && !t.id.startsWith('opening-')
+            (t) => t.shiftId === shiftId && !isOpeningPettyCashTx(t)
           );
           const openInflows = openTxs.filter((t) => t.type === 'INFLOW').reduce((sum, t) => sum + t.amount, 0);
           const openCashExpenses = openTxs.filter((t) => t.type === 'EXPENSE' && (t.method === 'CASH' || !t.method)).reduce((sum, t) => sum + t.amount, 0);

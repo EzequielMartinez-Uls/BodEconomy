@@ -1,4 +1,4 @@
-import { AppState, CashShift, DenominationsNIO, DenominationsUSD, PettyCashShift, PettyCashTransaction, TablewareItem } from '../types';
+import { AppState, CashShift, DenominationsNIO, DenominationsUSD, PettyCashShift, PettyCashTransaction, TablewareItem, isOpeningPettyCashTx } from '../types';
 import { getLocalTodayStr, addDaysToDateStr, formatDateToFriendly, getLocalDateTimeStr, extractLocalDateStr } from '../utils/dateUtils';
 
 export { formatDateToFriendly, getLocalTodayStr, addDaysToDateStr, getLocalDateTimeStr, extractLocalDateStr };
@@ -534,7 +534,7 @@ export function getPettyCashTransactionsForDate(
   shiftId?: string
 ): PettyCashTransaction[] {
   return transactions.filter((tx) => {
-    if (tx.id.startsWith('pct-init-') || tx.id.startsWith('pct-transfer-open-') || tx.id.startsWith('opening-')) {
+    if (isOpeningPettyCashTx(tx)) {
       return false;
     }
     if (shiftId) {
