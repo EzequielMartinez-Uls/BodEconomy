@@ -43,13 +43,8 @@ spawnSync(npxCmd, ['electron-builder', '--win', '--publish', 'always'], {
   env: process.env,
 });
 
-// 4. Subir todos los archivos a GitHub Releases
-console.log('📤 Verificando y subiendo archivos a GitHub Releases...');
-spawnSync('node', ['scripts/upload-release-assets.cjs'], {
-  stdio: 'inherit',
-  shell: true,
-  env: process.env,
-});
+// 4. Publicar la release en GitHub si quedó en draft
+console.log('📡 Verificando estado y publicando release en GitHub...');
 
 // 5. Publicar el borrador en GitHub si quedó en draft
 try {
