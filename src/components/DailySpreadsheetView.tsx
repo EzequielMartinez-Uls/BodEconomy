@@ -202,7 +202,7 @@ export const DailySpreadsheetView: React.FC<Props> = ({
               C$ {state.pettyCashBalance.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <p className="text-[11px] text-slate-500 mt-1">
-              Saldo disponible en fondo de compras y proveedores
+              Saldo disponible en fondo de compras y gastos operativos
             </p>
           </div>
           <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-[11px]">

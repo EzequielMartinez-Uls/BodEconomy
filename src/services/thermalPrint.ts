@@ -431,7 +431,7 @@ export function printThermalOpeningTicket(shift: CashShift): void {
       <!-- Moneda Nacional Córdobas -->
       <div>
         <div class="section-title">
-          <span>💵</span> 1. Moneda Nacional (Córdobas C$)
+          1. Moneda Nacional (Córdobas C$)
         </div>
         <table>
           <thead>
@@ -452,7 +452,7 @@ export function printThermalOpeningTicket(shift: CashShift): void {
             <tr><td>Monedas C$ 5, 1, 0.50</td><td class="text-center font-mono">—</td><td class="text-right font-mono">C$ ${(((nio[5] || 0) * 5) + ((nio[1] || 0) * 1) + ((nio[0.5] || 0) * 0.5)).toFixed(2)}</td></tr>
           </tbody>
           <tfoot>
-            <tr style="background: #f1f5f9; font-weight: bold;">
+            <tr style="background: #ffffff; font-weight: bold; border-top: 2px solid #000000;">
               <td colspan="2">TOTAL EFECTIVO C$</td>
               <td class="text-right font-mono" style="font-size: 12px;">C$ ${shift.totalOpeningNIO.toFixed(2)}</td>
             </tr>
@@ -463,7 +463,7 @@ export function printThermalOpeningTicket(shift: CashShift): void {
       <!-- Moneda Extranjera Dólares -->
       <div>
         <div class="section-title">
-          <span>💵</span> 2. Moneda Extranjera (Dólares USD)
+          2. Moneda Extranjera (Dólares USD)
         </div>
         <table>
           <thead>
@@ -479,12 +479,10 @@ export function printThermalOpeningTicket(shift: CashShift): void {
             <tr><td>Billete $20</td><td class="text-center font-mono">${usd[20] || 0}</td><td class="text-right font-mono">$ ${((usd[20] || 0) * 20).toFixed(2)}</td></tr>
             <tr><td>Billete $10</td><td class="text-center font-mono">${usd[10] || 0}</td><td class="text-right font-mono">$ ${((usd[10] || 0) * 10).toFixed(2)}</td></tr>
             <tr><td>Billete $5, $2, $1</td><td class="text-center font-mono">—</td><td class="text-right font-mono">$ ${(((usd[5] || 0) * 5) + ((usd[2] || 0) * 2) + ((usd[1] || 0) * 1)).toFixed(2)}</td></tr>
-            <tr style="color: #64748b;"><td>(Conversión a C$)</td><td class="text-center font-mono">x ${shift.exchangeRate.toFixed(2)}</td><td class="text-right font-mono">C$ ${(shift.totalOpeningUSD * shift.exchangeRate).toFixed(2)}</td></tr>
-            <tr style="visibility: hidden;"><td>—</td><td>—</td><td>—</td></tr>
-            <tr style="visibility: hidden;"><td>—</td><td>—</td><td>—</td></tr>
+            <tr><td>(Conversión a C$)</td><td class="text-center font-mono">x ${shift.exchangeRate.toFixed(2)}</td><td class="text-right font-mono">C$ ${(shift.totalOpeningUSD * shift.exchangeRate).toFixed(2)}</td></tr>
           </tbody>
           <tfoot>
-            <tr style="background: #f1f5f9; font-weight: bold;">
+            <tr style="background: #ffffff; font-weight: bold; border-top: 2px solid #000000;">
               <td colspan="2">TOTAL EFECTIVO USD</td>
               <td class="text-right font-mono" style="font-size: 12px;">$ ${shift.totalOpeningUSD.toFixed(2)}</td>
             </tr>
@@ -511,9 +509,9 @@ export function printThermalOpeningTicket(shift: CashShift): void {
 
     <!-- Conciliación de Ventas de Ayer según Loyverse POS (Si fue validada) -->
     ${loy && loy.validated ? `
-      <div class="banner-box" style="border-color: #cbd5e1; background: #ffffff;">
-        <div class="section-title" style="color: #92400e; margin-bottom: 8px;">
-          <span>📊</span> 3. Conciliación de Ventas del Día Anterior (Reporte Loyverse POS)
+      <div class="banner-box">
+        <div class="section-title" style="margin-bottom: 8px;">
+          3. Conciliación de Ventas del Día Anterior (Loyverse POS)
         </div>
         <div class="grid-4" style="margin-bottom: 8px;">
           <div class="info-box">
@@ -521,21 +519,21 @@ export function printThermalOpeningTicket(shift: CashShift): void {
             <span class="info-value">C$ ${(loy.salesCashLoyverse || 0).toFixed(2)}</span>
           </div>
           <div class="info-box">
-            <span class="info-label">Tarjetas (BAC, Fico, Banpro, Lafise)</span>
+            <span class="info-label">Tarjetas POS</span>
             <span class="info-value">C$ ${(loy.totalCards || 0).toFixed(2)}</span>
           </div>
           <div class="info-box">
             <span class="info-label">PedidosYa</span>
             <span class="info-value">C$ ${(loy.salesPedidosYa || 0).toFixed(2)}</span>
           </div>
-          <div class="info-box" style="background: #ecfdf5; border-color: #a7f3d0;">
+          <div class="info-box" style="border: 2px solid #000000;">
             <span class="info-label">Gran Total Loyverse</span>
-            <span class="info-value" style="color: #065f46; font-size: 14px;">C$ ${(loy.totalLoyverseSales || 0).toFixed(2)}</span>
+            <span class="info-value" style="font-size: 13px;">C$ ${(loy.totalLoyverseSales || 0).toFixed(2)}</span>
           </div>
         </div>
-        <div style="font-size: 10.5px; color: #64748b;">
+        <div style="font-size: 9.5px; color: #000000;">
           <strong>Desglose Vouchers Tarjetas:</strong> BAC: C$ ${(loy.cardsBAC || 0).toFixed(2)} • Ficohsa: C$ ${(loy.cardsFicohsa || 0).toFixed(2)} • Banpro: C$ ${(loy.cardsBanpro || 0).toFixed(2)} • Lafise: C$ ${(loy.cardsLafise || 0).toFixed(2)}
-          ${loy.notes ? `<div style="margin-top: 4px; color: #334155;"><strong>Notas Loyverse:</strong> ${loy.notes}</div>` : ''}
+          ${loy.notes ? `<div style="margin-top: 4px;"><strong>Notas Loyverse:</strong> ${loy.notes}</div>` : ''}
         </div>
       </div>
     ` : ''}
@@ -601,7 +599,7 @@ export function printThermalClosingTicket(shift: CashShift): void {
       <!-- Moneda Nacional Córdobas -->
       <div>
         <div class="section-title">
-          <span>💵</span> 1. Moneda Nacional en Gaveta (C$)
+          1. Moneda Nacional en Gaveta (C$)
         </div>
         <table>
           <thead>
@@ -622,7 +620,7 @@ export function printThermalClosingTicket(shift: CashShift): void {
             <tr><td>Monedas C$ 5, 1, 0.50</td><td class="text-center font-mono">—</td><td class="text-right font-mono">C$ ${(((nio[5] || 0) * 5) + ((nio[1] || 0) * 1) + ((nio[0.5] || 0) * 0.5)).toFixed(2)}</td></tr>
           </tbody>
           <tfoot>
-            <tr style="background: #f1f5f9; font-weight: bold;">
+            <tr style="background: #ffffff; font-weight: bold; border-top: 2px solid #000000;">
               <td colspan="2">TOTAL EFECTIVO C$</td>
               <td class="text-right font-mono" style="font-size: 12px;">C$ ${(shift.totalClosingNIO || 0).toFixed(2)}</td>
             </tr>
@@ -633,7 +631,7 @@ export function printThermalClosingTicket(shift: CashShift): void {
       <!-- Moneda Extranjera Dólares -->
       <div>
         <div class="section-title">
-          <span>💵</span> 2. Moneda Extranjera en Gaveta ($)
+          2. Moneda Extranjera en Gaveta ($)
         </div>
         <table>
           <thead>
@@ -649,12 +647,10 @@ export function printThermalClosingTicket(shift: CashShift): void {
             <tr><td>Billete $20</td><td class="text-center font-mono">${usd[20] || 0}</td><td class="text-right font-mono">$ ${((usd[20] || 0) * 20).toFixed(2)}</td></tr>
             <tr><td>Billete $10</td><td class="text-center font-mono">${usd[10] || 0}</td><td class="text-right font-mono">$ ${((usd[10] || 0) * 10).toFixed(2)}</td></tr>
             <tr><td>Billete $5, $2, $1</td><td class="text-center font-mono">—</td><td class="text-right font-mono">$ ${(((usd[5] || 0) * 5) + ((usd[2] || 0) * 2) + ((usd[1] || 0) * 1)).toFixed(2)}</td></tr>
-            <tr style="color: #64748b;"><td>(Conversión a C$)</td><td class="text-center font-mono">x ${shift.exchangeRate.toFixed(2)}</td><td class="text-right font-mono">C$ ${((shift.totalClosingUSD || 0) * shift.exchangeRate).toFixed(2)}</td></tr>
-            <tr style="visibility: hidden;"><td>—</td><td>—</td><td>—</td></tr>
-            <tr style="visibility: hidden;"><td>—</td><td>—</td><td>—</td></tr>
+            <tr><td>(Conversión a C$)</td><td class="text-center font-mono">x ${shift.exchangeRate.toFixed(2)}</td><td class="text-right font-mono">C$ ${((shift.totalClosingUSD || 0) * shift.exchangeRate).toFixed(2)}</td></tr>
           </tbody>
           <tfoot>
-            <tr style="background: #f1f5f9; font-weight: bold;">
+            <tr style="background: #ffffff; font-weight: bold; border-top: 2px solid #000000;">
               <td colspan="2">TOTAL EFECTIVO USD</td>
               <td class="text-right font-mono" style="font-size: 12px;">$ ${(shift.totalClosingUSD || 0).toFixed(2)}</td>
             </tr>
@@ -664,14 +660,14 @@ export function printThermalClosingTicket(shift: CashShift): void {
     </div>
 
     <!-- 2. Reparto de Propinas del Turno -->
-    <div class="banner-box" style="background: #fff; border-color: #cbd5e1;">
-      <div class="section-title" style="color: #d97706; margin-bottom: 8px;">
-        <span>🪙</span> 2. Reparto de Propinas de la Noche
+    <div class="banner-box">
+      <div class="section-title" style="margin-bottom: 8px;">
+        2. Reparto de Propinas de la Noche
       </div>
       <div class="grid-4" style="margin-bottom: 0;">
         <div class="info-box">
           <span class="info-label">Total Propina Recaudada</span>
-          <span class="info-value" style="color: #d97706;">C$ ${(shift.totalTipCollected || 0).toFixed(2)}</span>
+          <span class="info-value">C$ ${(shift.totalTipCollected || 0).toFixed(2)}</span>
         </div>
         <div class="info-box">
           <span class="info-label">Personal en Turno</span>
@@ -679,29 +675,29 @@ export function printThermalClosingTicket(shift: CashShift): void {
         </div>
         <div class="info-box">
           <span class="info-label">Cuota por Persona</span>
-          <span class="info-value" style="color: #d97706;">C$ ${(shift.individualTip || 0).toFixed(2)}</span>
+          <span class="info-value">C$ ${(shift.individualTip || 0).toFixed(2)}</span>
         </div>
-        <div class="info-box" style="background: ${shift.tipPaid ? '#ecfdf5' : '#fffbeb'};">
+        <div class="info-box" style="border: 2px solid #000000;">
           <span class="info-label">Entrega en Efectivo</span>
-          <span class="info-value" style="font-size: 12px; color: ${shift.tipPaid ? '#065f46' : '#92400e'};">
-            ${shift.tipPaid ? 'PAGADA EN EFECTIVO ✅' : 'PENDIENTE / APARTADA'}
+          <span class="info-value" style="font-size: 12px;">
+            ${shift.tipPaid ? 'PAGADA EN EFECTIVO' : 'PENDIENTE / APARTADA'}
           </span>
         </div>
       </div>
       ${shift.tipNotes ? `
-        <div style="font-size: 10px; color: #475569; margin-top: 6px;">
+        <div style="font-size: 9.5px; color: #000000; margin-top: 6px;">
           <strong>Colaboradores / Detalle:</strong> ${shift.tipNotes}
         </div>
       ` : ''}
     </div>
 
     <!-- 3. Fondo Final que queda en Gaveta para Mañana -->
-    <div class="total-card" style="background: #f0fdf4; border-color: #10b981;">
+    <div class="total-card">
       <div>
-        <div class="total-label" style="color: #065f46;">Fondo Físico en Gaveta para Apertura de Mañana</div>
-        <div class="total-sub" style="color: #047857;">Efectivo contado entregado en gaveta (Fondo que corroborará quien abra en el turno siguiente)</div>
+        <div class="total-label">Fondo Físico en Gaveta para Apertura de Mañana</div>
+        <div class="total-sub">Efectivo contado entregado en gaveta general para la siguiente apertura</div>
       </div>
-      <div class="total-amount" style="color: #065f46;">
+      <div class="total-amount">
         C$ ${(shift.actualCashNIO || shift.totalClosingEquivNIO || 0).toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </div>
     </div>
@@ -789,7 +785,7 @@ export function printThermalDailyExpensesTicket(
     </div>
 
     <div class="section-title" style="margin-top: 10px;">
-      <span>🛒</span> Detalle de Movimientos de Caja Chica (${sorted.length})
+      Detalle de Movimientos de Caja Chica (${sorted.length})
     </div>
 
     <table>
@@ -798,7 +794,7 @@ export function printThermalDailyExpensesTicket(
           <th style="width: 35px;">#</th>
           <th style="width: 60px;">Hora</th>
           <th style="width: 130px;">Rubro / Categoría</th>
-          <th>Proveedor / Detalle</th>
+          <th>Concepto</th>
           <th style="width: 90px;">Comprobante</th>
           <th style="width: 70px;">Medio</th>
           <th style="width: 85px;" class="text-right">Entradas (+)</th>
@@ -807,7 +803,7 @@ export function printThermalDailyExpensesTicket(
         </tr>
       </thead>
       <tbody>
-        ${sorted.length === 0 ? '<tr><td colspan="9" class="text-center" style="padding: 16px; color: #94a3b8;">No se registraron movimientos en este día.</td></tr>' : ''}
+        ${sorted.length === 0 ? '<tr><td colspan="9" class="text-center" style="padding: 16px; color: #000000;">No se registraron movimientos en este día.</td></tr>' : ''}
         ${(() => {
           let runningBal = initialBaseBal;
           return sorted.map((tx, idx) => {
@@ -819,40 +815,40 @@ export function printThermalDailyExpensesTicket(
               runningBal -= tx.amount;
             }
             return `
-              <tr style="${isIn ? 'background-color: #f0fdf4;' : ''}">
-                <td class="font-mono text-center" style="color: #64748b;">${idx + 1}</td>
+              <tr>
+                <td class="font-mono text-center">${idx + 1}</td>
                 <td class="font-mono text-center">${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                <td><span class="badge badge-neutral">${tx.category}</span></td>
+                <td><span class="badge">${tx.category}</span></td>
                 <td>
                   <span class="bold">${tx.vendor}</span>
-                  ${tx.notes ? `<div style="font-size: 9.5px; color: #64748b;">${tx.notes}</div>` : ''}
+                  ${tx.notes ? `<div style="font-size: 9px; color: #000000;">${tx.notes}</div>` : ''}
                 </td>
-                <td class="font-mono text-center">${tx.receiptNumber ? `<span class="badge" style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;">#${tx.receiptNumber}</span>` : '<span class="badge" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;">Sin Recibo</span>'}</td>
+                <td class="font-mono text-center">${tx.receiptNumber ? `#${tx.receiptNumber}` : 'Sin Recibo'}</td>
                 <td class="text-center">${isCash ? 'Efectivo' : tx.method === 'CARD' ? 'Tarjeta' : 'Transf.'}</td>
-                <td class="text-right font-mono ${isIn ? 'bold' : ''}" style="${isIn ? 'color: #047857;' : 'color: #94a3b8;'}">${isIn ? `+C$ ${tx.amount.toFixed(2)}` : '—'}</td>
-                <td class="text-right font-mono ${!isIn ? 'bold' : ''}" style="${!isIn ? 'color: #b91c1c;' : 'color: #94a3b8;'}">${!isIn ? `-C$ ${tx.amount.toFixed(2)}` : '—'}</td>
-                <td class="text-right font-mono bold" style="background-color: #fafafa;">C$ ${runningBal.toFixed(2)}</td>
+                <td class="text-right font-mono ${isIn ? 'bold' : ''}">${isIn ? `+C$ ${tx.amount.toFixed(2)}` : '—'}</td>
+                <td class="text-right font-mono ${!isIn ? 'bold' : ''}">${!isIn ? `-C$ ${tx.amount.toFixed(2)}` : '—'}</td>
+                <td class="text-right font-mono bold">C$ ${runningBal.toFixed(2)}</td>
               </tr>
             `;
           }).join('');
         })()}
       </tbody>
       <tfoot>
-        <tr style="background: #f8fafc; font-weight: bold; color: #334155;">
+        <tr style="background: #ffffff; font-weight: bold; border-top: 2px solid #000000; border-bottom: 2px solid #000000;">
           <td colspan="6" style="font-size: 11px; text-align: right;">TOTALES ACUMULADOS:</td>
-          <td class="text-right font-mono" style="color: #047857; font-size: 11.5px;">+C$ ${totalInflows.toFixed(2)}</td>
-          <td class="text-right font-mono" style="color: #b91c1c; font-size: 11.5px;">-C$ ${grandTotalExpenses.toFixed(2)}</td>
-          <td class="text-right font-mono bold" style="font-size: 12px; color: #0f172a;">C$ ${currentBalance.toFixed(2)}</td>
+          <td class="text-right font-mono" style="font-size: 11.5px;">+C$ ${totalInflows.toFixed(2)}</td>
+          <td class="text-right font-mono" style="font-size: 11.5px;">-C$ ${grandTotalExpenses.toFixed(2)}</td>
+          <td class="text-right font-mono bold" style="font-size: 12px;">C$ ${currentBalance.toFixed(2)}</td>
         </tr>
       </tfoot>
     </table>
 
-    <div class="total-card" style="background: #f8fafc; border-color: #cbd5e1;">
+    <div class="total-card">
       <div>
-        <div class="total-label" style="color: #334155;">Saldo Disponible en Mano al Momento</div>
+        <div class="total-label">Saldo Disponible en Mano al Momento</div>
         <div class="total-sub">Dinero físico en gaveta listo para continuar operando en Caja Chica</div>
       </div>
-      <div class="total-amount" style="color: #0f172a;">
+      <div class="total-amount">
         C$ ${currentBalance.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </div>
     </div>
@@ -888,7 +884,7 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
         <div class="total-label">Monto del Comprobante</div>
         <div class="total-sub">Valor pagado y registrado en Caja Chica</div>
       </div>
-      <div class="total-amount" style="font-size: 26px; color: #b91c1c;">
+      <div class="total-amount" style="font-size: 26px; color: #000000;">
         C$ ${tx.amount.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </div>
     </div>
@@ -903,7 +899,7 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
         <span class="info-value">${tx.category}</span>
       </div>
       <div class="info-box">
-        <span class="info-label">Concepto / Detalle</span>
+        <span class="info-label">Concepto</span>
         <span class="info-value">${tx.vendor}</span>
       </div>
       <div class="info-box">
@@ -915,18 +911,18 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
     ${tx.notes ? `
       <div class="info-box" style="margin-bottom: 20px;">
         <span class="info-label">Detalle / Justificación del Gasto</span>
-        <div style="font-size: 12px; color: #1e293b; padding-top: 2px;">${tx.notes}</div>
+        <div style="font-size: 11px; color: #000000; padding-top: 2px;">${tx.notes}</div>
       </div>
     ` : ''}
 
     <div style="margin-top: 40px; margin-bottom: 25px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
-      <div style="border-top: 1px solid #94a3b8; padding-top: 8px; text-align: center;">
-        <div style="font-size: 11px; font-weight: 700; color: #1e293b;">Entregado Por (Caja Chica)</div>
-        <div style="font-size: 10px; color: #64748b; margin-top: 2px;">${tx.registeredBy}</div>
+      <div style="border-top: 1px solid #000000; padding-top: 8px; text-align: center;">
+        <div style="font-size: 11px; font-weight: 700; color: #000000;">Entregado Por (Caja Chica)</div>
+        <div style="font-size: 10px; color: #000000; margin-top: 2px;">${tx.registeredBy}</div>
       </div>
-      <div style="border-top: 1px solid #94a3b8; padding-top: 8px; text-align: center;">
-        <div style="font-size: 11px; font-weight: 700; color: #1e293b;">Recibido Conforme</div>
-        <div style="font-size: 10px; color: #64748b; margin-top: 2px;">Firma y Cédula</div>
+      <div style="border-top: 1px solid #000000; padding-top: 8px; text-align: center;">
+        <div style="font-size: 11px; font-weight: 700; color: #000000;">Recibido Conforme</div>
+        <div style="font-size: 10px; color: #000000; margin-top: 2px;">Firma y Cédula</div>
       </div>
     </div>
 
@@ -979,7 +975,7 @@ export function printThermalTablewareReport(
     </div>
 
     <div class="section-title" style="margin-top: 10px;">
-      <span>🍽️</span> Inventario Físico de Cristalería y Vajilla
+      Inventario Físico de Cristalería y Vajilla
     </div>
     <table>
       <thead>
@@ -994,12 +990,11 @@ export function printThermalTablewareReport(
       </thead>
       <tbody>
         ${items.map((i) => {
-          const isLow = i.currentStock <= i.minimumStock;
           return `
             <tr>
               <td class="bold">${i.name}</td>
               <td>${i.area}</td>
-              <td class="text-center font-mono bold" style="${isLow ? 'color: #b91c1c;' : ''}">${i.currentStock} ${i.unit}</td>
+              <td class="text-center font-mono bold">${i.currentStock} ${i.unit}</td>
               <td class="text-center font-mono">${i.minimumStock}</td>
               <td class="text-right font-mono">C$ ${i.unitCostNIO.toFixed(2)}</td>
               <td class="text-right font-mono bold">C$ ${(i.currentStock * i.unitCostNIO).toFixed(2)}</td>
@@ -1009,8 +1004,8 @@ export function printThermalTablewareReport(
       </tbody>
     </table>
 
-    <div class="section-title" style="margin-top: 16px; color: #991b1b;">
-      <span>⚠️</span> Registro de Roturas y Bajas de Menaje
+    <div class="section-title" style="margin-top: 16px;">
+      Registro de Roturas y Bajas de Menaje
     </div>
     <table>
       <thead>
@@ -1024,7 +1019,7 @@ export function printThermalTablewareReport(
         </tr>
       </thead>
       <tbody>
-        ${losses.length === 0 ? '<tr><td colspan="6" class="text-center" style="padding: 12px; color: #94a3b8;">No hay roturas reportadas en el período.</td></tr>' : ''}
+        ${losses.length === 0 ? '<tr><td colspan="6" class="text-center" style="padding: 12px; color: #000000;">No hay roturas reportadas en el período.</td></tr>' : ''}
         ${losses.map((l) => `
           <tr>
             <td class="font-mono">${new Date(l.date).toLocaleDateString()}</td>
@@ -1032,12 +1027,12 @@ export function printThermalTablewareReport(
             <td class="text-center font-mono bold">-${l.quantity}</td>
             <td>${l.reason}</td>
             <td>${l.registeredBy}</td>
-            <td class="text-right font-mono bold" style="color: #991b1b;">C$ ${l.totalCostNIO.toFixed(2)}</td>
+            <td class="text-right font-mono bold">C$ ${l.totalCostNIO.toFixed(2)}</td>
           </tr>
         `).join('')}
       </tbody>
       <tfoot>
-        <tr style="background: #fef2f2; font-weight: bold; color: #991b1b;">
+        <tr style="background: #ffffff; font-weight: bold; border-top: 2px solid #000000; border-bottom: 2px solid #000000;">
           <td colspan="5">TOTAL PÉRDIDA POR ROTURAS</td>
           <td class="text-right font-mono" style="font-size: 13px;">C$ ${totalLossCost.toFixed(2)}</td>
         </tr>
@@ -1192,7 +1187,7 @@ export function printThermalPettyCashClosingAct(
       <thead>
         <tr>
           <th style="width: 9%; text-align: center;">Hora</th>
-          <th style="width: 33%;">Concepto / Detalle</th>
+          <th style="width: 33%;">Concepto</th>
           <th style="width: 14%;">Rubro</th>
           <th style="width: 12%; text-align: center;">Medio</th>
           <th style="width: 11%;" class="text-right">Entradas (+)</th>
@@ -1681,13 +1676,13 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
             </thead>
             <tbody>
               <tr>
-                <td><strong>💵 Ventas en Efectivo</strong></td>
+                <td><strong>Ventas en Efectivo</strong></td>
                 <td>Recaudación física en gaveta de caja general</td>
                 <td class="text-right font-mono">C$ ${salesCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                 <td class="text-right font-mono">${cashPct}%</td>
               </tr>
               <tr>
-                <td rowspan="4"><strong>💳 Tarjetas POS (Datafast)</strong></td>
+                <td rowspan="4"><strong>Tarjetas POS (Datafast)</strong></td>
                 <td>POS BAC Credomatic</td>
                 <td class="text-right font-mono">C$ ${cardsBAC.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                 <td class="text-right font-mono">${bacPct}%</td>
@@ -1713,7 +1708,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                 <td class="text-right font-mono font-bold">${cardsPct}%</td>
               </tr>
               <tr>
-                <td><strong>🛵 Delivery PedidosYa</strong></td>
+                <td><strong>Delivery PedidosYa</strong></td>
                 <td>Despachos de pedidos por aplicación digital externa</td>
                 <td class="text-right font-mono">C$ ${salesPedidosYa.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                 <td class="text-right font-mono">${pedidosYaPct}%</td>
@@ -1933,7 +1928,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
               <div>
                 <div class="brand">EL BODEGÓN RESTAURANTE & BAR</div>
                 <div class="doc-title">REPORTE DETALLADO DE COMPRAS, GASTOS & CAJA CHICA</div>
-                <div class="doc-subtitle">CONTROL DIARIO DE INSUMOS, PROVEEDORES Y COMPROBANTES</div>
+                <div class="doc-subtitle">CONTROL DIARIO DE GASTOS Y COMPROBANTES DE EGRESOS</div>
               </div>
               <div style="text-align: right; font-size: 8.5px; font-family: monospace;">
                 <div>DOC. OFICIAL N° <strong>CC-${date.replace(/-/g, '')}</strong></div>
@@ -1999,13 +1994,13 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
             </tbody>
           </table>
 
-          <div class="section-title">2. RELACIÓN DETALLADA DE MOVIMIENTOS, COMPRAS Y GASTOS (CUADRO EN VIVO)</div>
+          <div class="section-title">2. RELACIÓN DETALLADA DE COMPRAS Y GASTOS (CUADRO EN VIVO)</div>
           <table>
             <thead>
               <tr>
                 <th style="width: 4%; text-align: center;">#</th>
                 <th style="width: 8%; text-align: center;">HORA</th>
-                <th style="width: 28%;">CONCEPTO / DETALLE EXACTO</th>
+                <th style="width: 28%;">CONCEPTO DEL GASTO</th>
                 <th style="width: 14%;">CATEGORÍA</th>
                 <th style="width: 10%; text-align: center;">MÉTODO</th>
                 <th style="width: 9%; text-align: center;">COMPROBANTE</th>
@@ -2027,14 +2022,14 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
         </div>
 
         <div>
-          <div style="font-size: 7.5px; color: #444; margin-bottom: 4px; text-align: center;">
+          <div style="font-size: 7.5px; color: #000; margin-bottom: 4px; text-align: center;">
             Certifico que cada una de las compras detalladas cuenta con factura, ticket o voucher bancario físico resguardado en archivo.
           </div>
           <div class="signatures">
             <div class="sig-box">
               <div style="height: 20px;"></div>
               <div>
-                <strong>RESPONSABLE DE COMPRAS / CAJA CHICA</strong><br>
+                <strong>RESPONSABLE DE CAJA CHICA</strong><br>
                 <span style="font-size: 7.5px;">Elaborado por: ${responsableCajaChica}</span><br>
                 <span style="font-size: 7.5px;">Firma de Conformidad: ___________________</span>
               </div>
@@ -2255,7 +2250,7 @@ export function printOfficialOpeningActBN(shift: CashShift, adminName?: string):
         }
         th {
           border: 1px solid #000000;
-          background-color: #f2f2f2;
+          background-color: #ffffff;
           padding: 3px 5px;
           font-weight: 900;
           font-size: 8.5px;
@@ -2265,14 +2260,17 @@ export function printOfficialOpeningActBN(shift: CashShift, adminName?: string):
           border: 1px solid #000000;
           padding: 2.5px 5px;
           font-size: 8.5px;
+          background-color: #ffffff;
         }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
         .font-mono { font-family: "Courier New", Courier, monospace; }
         .font-bold { font-weight: bold; }
         .highlight-row {
-          background-color: #e6e6e6;
+          background-color: #ffffff;
           font-weight: bold;
+          border-top: 2px solid #000000;
+          border-bottom: 2px solid #000000;
         }
         .signatures {
           display: flex;
@@ -2343,7 +2341,7 @@ export function printOfficialOpeningActBN(shift: CashShift, adminName?: string):
                 <tr>
                   <td><strong>FONDO FÍSICO CÓRDOBAS:</strong><br>C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   <td><strong>FONDO FÍSICO DÓLARES:</strong><br>US$ ${shift.totalOpeningUSD.toFixed(2)} (C$ ${(shift.totalOpeningUSD * shift.exchangeRate).toLocaleString('es-NI', { minimumFractionDigits: 2 })})</td>
-                  <td colspan="2" style="background-color: #f2f2f2;"><strong>TOTAL FONDO DE APERTURA EN GAVETA:</strong><br><strong style="font-size: 11px;">C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
+                  <td colspan="2" style="border: 1.5px solid #000;"><strong>TOTAL FONDO DE APERTURA EN GAVETA:</strong><br><strong style="font-size: 11px;">C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
                 </tr>
               </table>
 
@@ -2412,7 +2410,7 @@ export function printOfficialOpeningActBN(shift: CashShift, adminName?: string):
                         <td colspan="2"><strong>SUBTOTAL DÓLARES (USD):</strong></td>
                         <td class="text-right font-mono font-bold">$ ${shift.totalOpeningUSD.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                       </tr>
-                      <tr style="background-color: #fafafa;">
+                      <tr>
                         <td colspan="2">Equivalente en Córdobas:</td>
                         <td class="text-right font-mono font-bold">C$ ${(shift.totalOpeningUSD * shift.exchangeRate).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                       </tr>
@@ -2420,11 +2418,11 @@ export function printOfficialOpeningActBN(shift: CashShift, adminName?: string):
                   </table>
 
                   <!-- TOTAL CONSOLIDADO -->
-                  <div style="border: 2px solid #000; padding: 6px; text-align: center; margin-top: 6px; background-color: #f9f9f9;">
+                  <div style="border: 2px solid #000; padding: 6px; text-align: center; margin-top: 6px; background-color: #fff;">
                     ${(shift.openingTransferToPettyCash && shift.openingTransferToPettyCash > 0) ? `
-                    <div style="font-size: 8px; color: #555; text-transform: uppercase;">CONTEO FÍSICO EN GAVETA: C$ ${(shift.openingCashCountedNIO || (shift.totalOpeningEquivNIO + shift.openingTransferToPettyCash)).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
-                    <div style="font-size: 8px; color: #b91c1c; font-weight: bold; text-transform: uppercase;">(-) TRASLADO A CAJA CHICA: - C$ ${shift.openingTransferToPettyCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
-                    <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; margin-top: 3px; border-top: 1px solid #ccc; padding-top: 2px;">(=) FONDO NETO OPERATIVO EN CAJA GENERAL:</div>
+                    <div style="font-size: 8px; color: #333; text-transform: uppercase;">CONTEO FÍSICO EN GAVETA: C$ ${(shift.openingCashCountedNIO || (shift.totalOpeningEquivNIO + shift.openingTransferToPettyCash)).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
+                    <div style="font-size: 8px; color: #000; font-weight: bold; text-transform: uppercase;">(-) TRASLADO A CAJA CHICA: - C$ ${shift.openingTransferToPettyCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
+                    <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; margin-top: 3px; border-top: 1px solid #000; padding-top: 2px;">(=) FONDO NETO OPERATIVO EN CAJA GENERAL:</div>
                     ` : `
                     <div style="font-size: 8px; font-weight: bold; text-transform: uppercase;">FONDO INICIAL CONSOLIDADO EN GAVETA:</div>
                     `}

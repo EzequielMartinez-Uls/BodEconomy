@@ -112,6 +112,8 @@ export const PettyCashView: React.FC<Props> = ({
 
   const [categoriesModalOpen, setCategoriesModalOpen] = useState(false);
   const [newCategoryInput, setNewCategoryInput] = useState('');
+  const [editingCategoryKey, setEditingCategoryKey] = useState<string | null>(null);
+  const [editingCategoryInput, setEditingCategoryInput] = useState('');
   const [openResponsible, setOpenResponsible] = useState<string>(state.activeAdminName);
   const [closeResponsible, setCloseResponsible] = useState<string>(state.activeAdminName);
 
@@ -421,6 +423,32 @@ export const PettyCashView: React.FC<Props> = ({
     setNotes('');
   };
 
+  const handleSaveEditCategory = (oldKey: string) => {
+    const trimmed = editingCategoryInput.trim();
+    if (!trimmed) {
+      alert('El nombre de la categoría no puede estar vacío.');
+      return;
+    }
+    const newKey = trimmed.toUpperCase().replace(/\s+/g, '_');
+    if (newKey !== oldKey && activeCategories.includes(newKey)) {
+      alert(`Ya existe una categoría llamada "${trimmed}".`);
+      return;
+    }
+    const updated = activeCategories.map((c) => (c === oldKey ? newKey : c));
+    onUpdateExpenseCategories?.(updated);
+
+    if (onEditTransaction && oldKey !== newKey) {
+      state.pettyCashTransactions.forEach((tx) => {
+        if (tx.category === oldKey) {
+          onEditTransaction({ ...tx, category: newKey as ExpenseCategory });
+        }
+      });
+    }
+
+    setEditingCategoryKey(null);
+    setEditingCategoryInput('');
+  };
+
   const handleSubmitTransaction = (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -431,7 +459,7 @@ export const PettyCashView: React.FC<Props> = ({
     }
 
     if (modalType === 'EXPENSE' && !vendor.trim()) {
-      alert('Por favor indica qué se compró o el concepto de la compra.');
+      alert('Por favor indica el concepto de la compra o gasto.');
       return;
     }
 
@@ -2744,17 +2772,17 @@ export const PettyCashView: React.FC<Props> = ({
             {/* Formulario de Edición */}
             <form onSubmit={handleSaveEditTx} className="p-5 space-y-3.5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {/* Concepto / Proveedor */}
+                {/* Concepto del Gasto */}
                 <div className="md:col-span-2 space-y-1">
                   <label className="text-[11px] font-semibold uppercase text-slate-600 tracking-wider">
-                    {editingTx.type === 'EXPENSE' ? 'Concepto o Proveedor *' : 'Descripción / Origen *'}
+                    {editingTx.type === 'EXPENSE' ? 'Concepto del Gasto *' : 'Descripción / Origen *'}
                   </label>
                   <input
                     type="text"
                     required
                     value={editVendor}
                     onChange={(e) => setEditVendor(e.target.value)}
-                    placeholder="Ej: Carnicería San Martín, Hielo..."
+                    placeholder="Ej: Lomo de res, 10 bolsas de hielo, Verduras..."
                     className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#1c6856]"
                   />
                 </div>
@@ -2962,30 +2990,85 @@ export const PettyCashView: React.FC<Props> = ({
             <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
               {activeCategories.map((catKey) => {
                 const info = getCategoryInfo(catKey);
+                const isEditing = editingCategoryKey === catKey;
+
+                if (isEditing) {
+                  return (
+                    <div
+                      key={catKey}
+                      className="flex items-center gap-1.5 p-2 rounded-xl border border-purple-300 bg-purple-50/40"
+                    >
+                      <input
+                        type="text"
+                        value={editingCategoryInput}
+                        onChange={(e) => setEditingCategoryInput(e.target.value)}
+                        className="flex-1 px-2.5 py-1 text-xs font-bold rounded-lg border border-purple-400 bg-white text-slate-900 focus:outline-none uppercase"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveEditCategory(catKey);
+                          } else if (e.key === 'Escape') {
+                            setEditingCategoryKey(null);
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleSaveEditCategory(catKey)}
+                        className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition cursor-pointer"
+                        title="Guardar cambio"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingCategoryKey(null)}
+                        className="p-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 transition cursor-pointer"
+                        title="Cancelar"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  );
+                }
+
                 return (
                   <div
                     key={catKey}
                     className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-white transition"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-lg">{info.emoji}</span>
-                      <span className="text-xs font-bold text-slate-800">{info.label}</span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs font-bold text-slate-800 truncate">{info.label}</span>
                     </div>
-                    {activeCategories.length > 1 && (
+                    <div className="flex items-center gap-1 shrink-0">
                       <button
                         type="button"
                         onClick={() => {
-                          if (window.confirm(`¿Seguro que deseas eliminar la categoría "${info.label}"?`)) {
-                            const updated = activeCategories.filter((c) => c !== catKey);
-                            onUpdateExpenseCategories?.(updated);
-                          }
+                          setEditingCategoryKey(catKey);
+                          setEditingCategoryInput(info.label);
                         }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                        title="Eliminar categoría"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-purple-700 hover:bg-purple-50 transition cursor-pointer"
+                        title="Editar nombre"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                    )}
+                      {activeCategories.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(`¿Seguro que deseas eliminar la categoría "${info.label}"?`)) {
+                              const updated = activeCategories.filter((c) => c !== catKey);
+                              onUpdateExpenseCategories?.(updated);
+                            }
+                          }}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                          title="Eliminar categoría"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}

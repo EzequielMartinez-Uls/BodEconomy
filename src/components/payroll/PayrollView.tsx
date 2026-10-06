@@ -245,6 +245,63 @@ export const PayrollView: React.FC<Props> = ({
     });
   };
 
+  // Agregar y eliminar colaboradores en la sábana quincenal
+  const handleAddRow = () => {
+    const newRow: BiweeklyPayrollRow = {
+      employeeId: `emp-custom-${Date.now()}`,
+      name: 'Nuevo Colaborador',
+      role: 'Operativo',
+      baseSalary: 0,
+      overtimeHours: 0,
+      overtimeAmount: 0,
+      holidaysCount: 0,
+      holidaysAmount: 0,
+      bonuses: 0,
+      loanDeduction: 0,
+      restaurantServiceDeduction: 0,
+      breakageDeduction: 0,
+      breakageNotes: '',
+      totalPaid: 0,
+    };
+    setRows((prev) => [...prev, newRow]);
+  };
+
+  const handleDeleteRow = (index: number) => {
+    const empName = rows[index]?.name || 'este colaborador';
+    if (window.confirm(`¿Seguro que deseas remover a "${empName}" de la nómina de esta quincena?`)) {
+      setRows((prev) => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  // Agregar y eliminar en planilla especial INSS
+  const handleAddSpecialRow = () => {
+    const newRow: SpecialPayrollRow = {
+      employeeId: `special-emp-${Date.now()}`,
+      nss: '',
+      name: 'Nuevo Asegurado',
+      role: 'Operativo',
+      hireDate: `${year}-${String(month).padStart(2, '0')}-01`,
+      reportedSalary: 0,
+      extraHolidayAmount: 0,
+      aguinaldoProvision: 0,
+      inssLaboral: 0,
+      inssPatronal: 0,
+      inatecPatronal: 0,
+      totalCotizacion: 0,
+      irLaboral: 0,
+      totalCostBodegon: 0,
+      netPayAsegurado: 0,
+    };
+    setSpecialRows((prev) => [...prev, newRow]);
+  };
+
+  const handleDeleteSpecialRow = (index: number) => {
+    const empName = specialRows[index]?.name || 'este colaborador';
+    if (window.confirm(`¿Seguro que deseas remover a "${empName}" de la planilla especial INSS?`)) {
+      setSpecialRows((prev) => prev.filter((_, i) => i !== index));
+    }
+  };
+
   // Guardar quincena en el historial del estado global
   const handleSavePayroll = () => {
     const record: BiweeklyPayrollRecord = {
@@ -617,6 +674,8 @@ export const PayrollView: React.FC<Props> = ({
         <BiweeklyPayrollTable
           rows={rows}
           onRowChange={handleRowChange}
+          onAddRow={handleAddRow}
+          onDeleteRow={handleDeleteRow}
           authorizedBy={state.activeAdminName || 'Admon Bodegón'}
         />
       )}
@@ -625,6 +684,8 @@ export const PayrollView: React.FC<Props> = ({
         <SpecialPayrollTable
           rows={specialRows}
           onRowChange={handleSpecialRowChange}
+          onAddRow={handleAddSpecialRow}
+          onDeleteRow={handleDeleteSpecialRow}
         />
       )}
 
