@@ -33,8 +33,7 @@
     "win": {
       "icon": "public/icon.ico",
       "target": [
-        "nsis",
-        "portable"
+        "nsis"
       ]
     },
     "nsis": {
