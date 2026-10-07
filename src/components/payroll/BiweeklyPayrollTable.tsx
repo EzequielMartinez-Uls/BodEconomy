@@ -263,26 +263,26 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
         <table className="w-full text-xs text-left border-collapse">
           <thead>
             <tr className="bg-slate-100 text-slate-800 font-extrabold border-b border-slate-300 text-[11px] uppercase tracking-wider">
-              <th rowSpan={2} className="p-2 text-center w-10 border-r border-slate-300">#</th>
-              <th rowSpan={2} className="p-2 min-w-[170px] border-r border-slate-300">Colaborador</th>
-              <th rowSpan={2} className="p-2 min-w-[120px] border-r border-slate-300">Cargo</th>
-              <th rowSpan={2} className="p-2 min-w-[120px] text-right border-r border-slate-300 bg-emerald-50/60">Salario Q. (C$)</th>
-              <th colSpan={2} className="p-1.5 text-center border-r border-slate-300 bg-amber-50/60">Horas Extras</th>
-              <th colSpan={2} className="p-1.5 text-center border-r border-slate-300 bg-blue-50/60">Feriados</th>
-              <th rowSpan={2} className="p-2 min-w-[95px] text-right border-r border-slate-300">Bonif. (C$)</th>
-              <th colSpan={3} className="p-1.5 text-center border-r border-slate-300 bg-rose-50/60">Deducciones (C$)</th>
-              <th rowSpan={2} className="p-2 min-w-[130px] text-right border-r border-slate-300 bg-slate-900 text-white font-bold">TOTAL PAGADO (C$)</th>
-              <th rowSpan={2} className="p-2 min-w-[160px] border-r border-slate-300">Concepto / Detalle Deducción</th>
-              <th rowSpan={2} className="p-2 text-center w-20">Acciones</th>
+              <th rowSpan={2} className="py-2.5 px-2 text-center w-10 border-r border-slate-300 align-middle">#</th>
+              <th rowSpan={2} className="py-2.5 px-3 min-w-[170px] border-r border-slate-300 align-middle">Colaborador</th>
+              <th rowSpan={2} className="py-2.5 px-2 min-w-[120px] border-r border-slate-300 align-middle">Cargo</th>
+              <th rowSpan={2} className="py-2.5 px-3 min-w-[120px] text-right border-r border-slate-300 bg-emerald-50/70 align-middle text-emerald-950 font-bold">Salario Q. (C$)</th>
+              <th colSpan={2} className="py-2 px-2 text-center border-r border-slate-300 bg-amber-100/70 text-amber-950 align-middle font-black text-[11px] tracking-wider">Horas Extras</th>
+              <th colSpan={2} className="py-2 px-2 text-center border-r border-slate-300 bg-blue-100/70 text-blue-950 align-middle font-black text-[11px] tracking-wider">Feriados</th>
+              <th rowSpan={2} className="py-2.5 px-2 min-w-[95px] text-right border-r border-slate-300 align-middle">Bonif. (C$)</th>
+              <th colSpan={3} className="py-2 px-2 text-center border-r border-slate-300 bg-rose-100/70 text-rose-950 align-middle font-black text-[11px] tracking-wider">Deducciones (C$)</th>
+              <th rowSpan={2} className="py-2.5 px-3 min-w-[130px] text-right border-r border-slate-300 bg-slate-900 text-white font-bold align-middle">TOTAL PAGADO (C$)</th>
+              <th rowSpan={2} className="py-2.5 px-3 min-w-[160px] border-r border-slate-300 align-middle">Concepto / Detalle Deducción</th>
+              <th rowSpan={2} className="py-2.5 px-2 text-center w-20 align-middle">Acciones</th>
             </tr>
-            <tr className="bg-slate-50 text-[10px] font-bold text-slate-600 border-b border-slate-300 uppercase">
-              <th className="p-1 text-center w-16 border-r border-slate-300">Cant. (h)</th>
-              <th className="p-1 text-right w-24 border-r border-slate-300">Monto C$</th>
-              <th className="p-1 text-center w-16 border-r border-slate-300">Cant. (d)</th>
-              <th className="p-1 text-right w-24 border-r border-slate-300">Monto C$</th>
-              <th className="p-1 text-right w-22 border-r border-slate-300">Préstamo</th>
-              <th className="p-1 text-right w-22 border-r border-slate-300">Serv. Rest</th>
-              <th className="p-1 text-right w-22 border-r border-slate-300">Vajilla/Otro</th>
+            <tr className="bg-slate-50 text-[10px] font-bold text-slate-700 border-b border-slate-300 uppercase">
+              <th className="py-1 px-1 text-center w-16 border-r border-slate-300 align-middle bg-amber-50/50">Cant. (h)</th>
+              <th className="py-1 px-2 text-right w-24 border-r border-slate-300 align-middle bg-amber-50/50">Monto C$</th>
+              <th className="py-1 px-1 text-center w-16 border-r border-slate-300 align-middle bg-blue-50/50">Cant. (d)</th>
+              <th className="py-1 px-2 text-right w-24 border-r border-slate-300 align-middle bg-blue-50/50">Monto C$</th>
+              <th className="py-1 px-2 text-right w-22 border-r border-slate-300 align-middle bg-rose-50/50">Préstamo</th>
+              <th className="py-1 px-2 text-right w-22 border-r border-slate-300 align-middle bg-rose-50/50">Serv. Rest</th>
+              <th className="py-1 px-2 text-right w-22 border-r border-slate-300 align-middle bg-rose-50/50">Vajilla/Otro</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">

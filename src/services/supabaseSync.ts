@@ -1051,6 +1051,7 @@ export async function fetchFullCloudState(): Promise<{
   activeShift: CashShift | null;
   activePettyShift: PettyCashShift | null;
   shiftHistory: CashShift[];
+  pettyCashShiftHistory: PettyCashShift[];
   gastos: any[];
 }> {
   try {
@@ -1064,6 +1065,7 @@ export async function fetchFullCloudState(): Promise<{
     let activeShift: CashShift | null = null;
     let activePettyShift: PettyCashShift | null = null;
     const shiftHistory: CashShift[] = [];
+    const pettyCashShiftHistory: PettyCashShift[] = [];
 
     for (const j of jornadas) {
       const obs = j.observaciones || '';
@@ -1105,17 +1107,74 @@ export async function fetchFullCloudState(): Promise<{
         }
       } else if (j.estado === 'CERRADA') {
         shiftHistory.push(parseShiftFromJornada(j));
+
+        if (hasPettyClosing) {
+          const matchClose = obs.match(/\[PETTY_CLOSING:(\{.*?\})\]/);
+          let actualCounted = 0;
+          let expBal = 0;
+          let diff = 0;
+          let auditStat: 'SQUARED' | 'SURPLUS' | 'SHORTAGE' = 'SQUARED';
+          let closedByStr = j.responsable || 'Eddy';
+          let closedAtStr = j.fecha_cierre || new Date().toISOString();
+          if (matchClose && matchClose[1]) {
+            try {
+              const pc = JSON.parse(matchClose[1]);
+              actualCounted = Number(pc.actualCashCounted) || 0;
+              expBal = Number(pc.expectedBalance) || actualCounted;
+              diff = Number(pc.difference) || 0;
+              auditStat = pc.auditStatus || 'SQUARED';
+              if (pc.closedBy) closedByStr = pc.closedBy;
+              if (pc.closedAt) closedAtStr = pc.closedAt;
+            } catch {}
+          }
+          let prevDay = 0;
+          let genTrans = 0;
+          let bossCont = 0;
+          let initBal = Number(j.fondo_inicial) || 0;
+          const matchOpen = obs.match(/\[FONDOS_COMPOSITION:(\{.*?\})\]/);
+          if (matchOpen && matchOpen[1]) {
+            try {
+              const p = JSON.parse(matchOpen[1]);
+              prevDay = Number(p.previousDayRemaining) || 0;
+              genTrans = Number(p.generalCashTransfer) || 0;
+              bossCont = Number(p.bossContribution) || 0;
+              initBal = Number(p.initialBalance) || (prevDay + genTrans + bossCont);
+            } catch {}
+          }
+          pettyCashShiftHistory.push({
+            id: `pc-shift-${j.fecha}`,
+            date: j.fecha,
+            status: 'CLOSED',
+            openedBy: j.responsable || 'Eddy',
+            openedAt: j.created_at || new Date().toISOString(),
+            closedBy: closedByStr,
+            closedAt: closedAtStr,
+            previousDayRemaining: prevDay,
+            generalCashTransfer: genTrans,
+            bossContribution: bossCont,
+            initialBalance: initBal,
+            actualCashCounted: actualCounted,
+            expectedBalance: expBal,
+            difference: diff,
+            auditStatus: auditStat,
+            closingNotes: obs,
+          });
+        }
       }
     }
+
+    pettyCashShiftHistory.sort((a, b) => b.date.localeCompare(a.date));
+    shiftHistory.sort((a, b) => b.date.localeCompare(a.date));
 
     return {
       activeShift,
       activePettyShift,
       shiftHistory,
+      pettyCashShiftHistory,
       gastos: gData || [],
     };
   } catch (err) {
     console.warn('⚠️ Error al consultar estado completo de la nube:', err);
-    return { activeShift: null, activePettyShift: null, shiftHistory: [], gastos: [] };
+    return { activeShift: null, activePettyShift: null, shiftHistory: [], pettyCashShiftHistory: [], gastos: [] };
   }
 }

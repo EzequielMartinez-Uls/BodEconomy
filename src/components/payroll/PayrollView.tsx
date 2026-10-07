@@ -127,33 +127,65 @@ export const PayrollView: React.FC<Props> = ({
         return s.includes('maverick') || s.includes('sandor');
       };
 
-      const sanitizedRows = existing.rows
-        .filter((r) => !isExcluded(r.name))
-        .map((r) => {
-          const emp = (state.payrollEmployees || []).find((e) => matchEmployeeName(e.name, r.name));
-          return emp ? { ...r, name: emp.name, role: emp.role } : r;
-        });
+      const uniqueRows: BiweeklyPayrollRow[] = [];
+      for (const r of existing.rows.filter((row) => !isExcluded(row.name))) {
+        const emp = (state.payrollEmployees || []).find((e) => matchEmployeeName(e.name, r.name));
+        const canonicalName = emp ? emp.name : r.name;
+        const canonicalRole = emp ? emp.role : r.role;
+        const canonicalId = emp ? emp.id : r.employeeId;
+        const existingIdx = uniqueRows.findIndex((ur) => matchEmployeeName(ur.name, canonicalName));
+        if (existingIdx === -1) {
+          uniqueRows.push({ ...r, employeeId: canonicalId, name: canonicalName, role: canonicalRole });
+        } else {
+          const ex = uniqueRows[existingIdx];
+          uniqueRows[existingIdx] = {
+            ...ex,
+            overtimeHours: ex.overtimeHours || r.overtimeHours || 0,
+            overtimeAmount: ex.overtimeAmount || r.overtimeAmount || 0,
+            holidaysCount: ex.holidaysCount || r.holidaysCount || 0,
+            holidaysAmount: ex.holidaysAmount || r.holidaysAmount || 0,
+            bonuses: ex.bonuses || r.bonuses || 0,
+            loanDeduction: ex.loanDeduction || r.loanDeduction || 0,
+            restaurantServiceDeduction: ex.restaurantServiceDeduction || r.restaurantServiceDeduction || 0,
+            breakageDeduction: ex.breakageDeduction || r.breakageDeduction || 0,
+            breakageNotes: ex.breakageNotes || r.breakageNotes || '',
+            totalPaid: ex.totalPaid || r.totalPaid || (ex.baseSalary || 0),
+          };
+        }
+      }
 
-      const sanitizedSpecialRows = (existing.specialRows || [])
-        .filter((sr) => !isExcluded(sr.name))
-        .map((sr) => {
-          const emp = (state.payrollEmployees || []).find((e) => matchEmployeeName(e.name, sr.name));
-          return emp
-            ? {
-                ...sr,
-                name: emp.name,
-                role: emp.role,
-                nss: emp.nss || sr.nss,
-                hireDate: emp.hireDate || sr.hireDate,
-              }
-            : sr;
-        });
+      const uniqueSpecial: SpecialPayrollRow[] = [];
+      for (const sr of (existing.specialRows || []).filter((s) => !isExcluded(s.name))) {
+        const emp = (state.payrollEmployees || []).find((e) => matchEmployeeName(e.name, sr.name));
+        const canonicalName = emp ? emp.name : sr.name;
+        const canonicalRole = emp ? emp.role : sr.role;
+        const canonicalId = emp ? emp.id : sr.employeeId;
+        const existingIdx = uniqueSpecial.findIndex((us) => matchEmployeeName(us.name, canonicalName));
+        if (existingIdx === -1) {
+          uniqueSpecial.push({
+            ...sr,
+            employeeId: canonicalId,
+            name: canonicalName,
+            role: canonicalRole,
+            nss: (emp && emp.nss) || sr.nss,
+            hireDate: (emp && emp.hireDate) || sr.hireDate,
+            reportedSalary: (emp && emp.reportedSalaryINSS) || sr.reportedSalary,
+          });
+        }
+      }
 
-      setRows(sanitizedRows);
-      setSpecialRows(sanitizedSpecialRows);
+      setRows(uniqueRows);
+      setSpecialRows(uniqueSpecial);
     } else {
       // Generar filas nuevas calculando incidencias de la bitácora en ese rango
-      const activeEmps = (state.payrollEmployees || []).filter((e) => e.isActive);
+      // Deduplicar empleados activos garantizando exactamente 1 por persona
+      const rawActiveEmps = (state.payrollEmployees || []).filter((e) => e.isActive);
+      const activeEmps: PayrollEmployee[] = [];
+      for (const e of rawActiveEmps) {
+        if (!activeEmps.some((a) => matchEmployeeName(a.name, e.name))) {
+          activeEmps.push(e);
+        }
+      }
 
       const newRows: BiweeklyPayrollRow[] = activeEmps.map((emp) => {
         // Filtrar incidencias de este empleado en la quincena seleccionada

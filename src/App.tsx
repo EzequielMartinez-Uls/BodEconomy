@@ -104,13 +104,16 @@ export function App() {
   // Sincronización en tiempo real con Supabase (Nube Interconectada PC + Móvil)
   useEffect(() => {
     // 1. Al iniciar, chequear estado completo de la nube y sincronizar con otras PCs y la web
-    fetchFullCloudState().then(({ activeShift, activePettyShift, shiftHistory: cloudHistory, gastos }) => {
+    fetchFullCloudState().then(({ activeShift, activePettyShift, shiftHistory: cloudHistory, pettyCashShiftHistory: cloudPettyHistory, gastos }) => {
       setState((prev) => {
         const today = getLocalTodayStr();
 
-        // 1. Supabase es el cerebro oficial del Historial de Turnos de Caja General:
+        // 1. Supabase es el cerebro oficial del Historial de Turnos de Caja General y Caja Chica:
         let mergedHistory = [...cloudHistory];
         mergedHistory.sort((a, b) => b.date.localeCompare(a.date));
+
+        let mergedPettyHistory = [...(cloudPettyHistory || [])];
+        mergedPettyHistory.sort((a, b) => b.date.localeCompare(a.date));
 
         // 2. Determinar Turno Activo de Caja General desde Supabase:
         let currentShift = activeShift || null;
@@ -260,7 +263,7 @@ export function App() {
           const openCashExpenses = openTxs.filter((t) => t.type === 'EXPENSE' && (t.method === 'CASH' || !t.method)).reduce((sum, t) => sum + t.amount, 0);
           recalculatedPettyBalance = parseFloat((currentPettyCashShift.initialBalance + openInflows - openCashExpenses).toFixed(2));
         } else {
-          const lastClosedPetty = prev.pettyCashShiftHistory[0];
+          const lastClosedPetty = mergedPettyHistory[0] || prev.pettyCashShiftHistory[0];
           recalculatedPettyBalance = lastClosedPetty?.actualCashCounted ?? lastClosedPetty?.expectedBalance ?? 0;
         }
 
@@ -269,6 +272,7 @@ export function App() {
           currentShift,
           shiftHistory: mergedHistory,
           currentPettyCashShift,
+          pettyCashShiftHistory: mergedPettyHistory.length > 0 ? mergedPettyHistory : prev.pettyCashShiftHistory,
           pettyCashTransactions: updatedTxs,
           pettyCashBalance: recalculatedPettyBalance,
         };
