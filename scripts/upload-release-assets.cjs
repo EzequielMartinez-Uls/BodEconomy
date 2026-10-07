@@ -26,7 +26,7 @@ const pkg = require('../package.json');
 const tag = `v${pkg.version}`;
 const distDir = path.join(__dirname, '..', 'dist-electron');
 
-async function getReleaseId() {
+async function getRelease() {
   return new Promise((resolve, reject) => {
     const req = https.request(
       {
@@ -44,9 +44,10 @@ async function getReleaseId() {
         res.on('end', () => {
           try {
             const list = JSON.parse(body);
-            const found = list.find((r) => r.tag_name === tag);
+            // Prioritize published release, fallback to draft
+            const found = list.find((r) => r.tag_name === tag && !r.draft) || list.find((r) => r.tag_name === tag);
             if (found && found.id) {
-              resolve(found.id);
+              resolve(found);
             } else {
               reject(new Error(`Release con tag ${tag} no encontrada en la lista: ${body}`));
             }
@@ -54,6 +55,27 @@ async function getReleaseId() {
             reject(e);
           }
         });
+      }
+    );
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+async function deleteAsset(assetId) {
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        hostname: 'api.github.com',
+        path: `/repos/EzequielMartinez-Uls/BodEconomy/releases/assets/${assetId}`,
+        method: 'DELETE',
+        headers: {
+          'User-Agent': 'NodeJS',
+          Authorization: `token ${token}`,
+        },
+      },
+      (res) => {
+        resolve();
       }
     );
     req.on('error', reject);
@@ -90,17 +112,17 @@ function uploadAsset(releaseId, fileName, assetUploadName, contentType) {
       res.on('data', (d) => (body += d));
       res.on('end', () => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
-          console.log(`✅ ${assetUploadName} subido exitosamente (Status: ${res.statusCode})`);
+          console.log(`\n✅ ${assetUploadName} subido exitosamente (Status: ${res.statusCode})`);
           resolve(JSON.parse(body));
         } else {
-          console.error(`❌ Error al subir ${assetUploadName} (Status: ${res.statusCode}):`, body);
+          console.error(`\n❌ Error al subir ${assetUploadName} (Status: ${res.statusCode}):`, body);
           reject(new Error(`Upload failed with status ${res.statusCode}`));
         }
       });
     });
 
     req.on('error', (err) => {
-      console.error(`❌ Error en request de ${assetUploadName}:`, err);
+      console.error(`\n❌ Error en request de ${assetUploadName}:`, err);
       reject(err);
     });
 
@@ -123,16 +145,29 @@ function uploadAsset(releaseId, fileName, assetUploadName, contentType) {
 
 async function main() {
   try {
-    const releaseId = await getReleaseId();
-    console.log(`🎯 Release encontrada (ID: ${releaseId}) para versión ${tag}`);
+    const release = await getRelease();
+    const releaseId = release.id;
+    console.log(`🎯 Release encontrada (ID: ${releaseId}, Tag: ${release.tag_name}, Draft: ${release.draft}) para versión ${tag}`);
+
+    const existingAssets = release.assets || [];
+
+    // Helper to upload or replace
+    async function uploadOrReplace(fileName, uploadName, mimeType) {
+      const foundAsset = existingAssets.find((a) => a.name === uploadName);
+      if (foundAsset) {
+        console.log(`🗑️ Eliminando asset previo ${uploadName} (ID: ${foundAsset.id}) antes de resubir...`);
+        await deleteAsset(foundAsset.id);
+      }
+      await uploadAsset(releaseId, fileName, uploadName, mimeType);
+    }
 
     // 1. Subir latest.yml
-    await uploadAsset(releaseId, 'latest.yml', 'latest.yml', 'text/yaml');
+    await uploadOrReplace('latest.yml', 'latest.yml', 'text/yaml');
 
     // 2. Subir instalador .exe
     const exeFileName = `BodegonControl Setup ${pkg.version}.exe`;
     const exeUploadName = `BodegonControl-Setup-${pkg.version}.exe`;
-    await uploadAsset(releaseId, exeFileName, exeUploadName, 'application/octet-stream');
+    await uploadOrReplace(exeFileName, exeUploadName, 'application/octet-stream');
 
     console.log(`\n🎉 ¡Todos los assets de la release ${tag} subidos y validados exitosamente en GitHub!`);
   } catch (err) {
