@@ -11,6 +11,7 @@ import {
   Cloud,
   Unlock,
   Lock,
+  RefreshCw,
 } from 'lucide-react';
 import {
   printThermalOpeningTicket,
@@ -42,6 +43,29 @@ export const TopBar: React.FC<Props> = ({
   const [cloudModalOpen, setCloudModalOpen] = useState(false);
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const isShiftOpen = state.currentShift?.status === 'OPEN';
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateFeedback, setUpdateFeedback] = useState<string | null>(null);
+
+  const handleManualCheckUpdate = async () => {
+    if (checkingUpdate) return;
+    setCheckingUpdate(true);
+    setUpdateFeedback(null);
+    try {
+      if (window.electronAPI?.checkForUpdates) {
+        await window.electronAPI.checkForUpdates();
+      }
+      setTimeout(() => {
+        setCheckingUpdate(false);
+        setUpdateFeedback('Comprobado');
+        setTimeout(() => setUpdateFeedback(null), 3000);
+      }, 2000);
+    } catch (e) {
+      setCheckingUpdate(false);
+      setUpdateFeedback('Error');
+      setTimeout(() => setUpdateFeedback(null), 3000);
+    }
+  };
+
   const pendingCount = (state.pettyCashTransactions || []).filter(
     (t) => !t.cloudId && !t.id.startsWith('pct-cloud-') && !t.id.startsWith('opening-') && !t.id.startsWith('pct-init-')
   ).length;
@@ -280,6 +304,22 @@ export const TopBar: React.FC<Props> = ({
             </span>
             <span className="sm:hidden">
               {pendingCount > 0 ? `Nube (${pendingCount})` : 'Nube'}
+            </span>
+          </button>
+
+          {/* Botón Buscar Actualización */}
+          <button
+            onClick={handleManualCheckUpdate}
+            disabled={checkingUpdate}
+            title="Buscar si existe una actualización del software en GitHub"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold shadow-2xs transition cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${checkingUpdate ? 'animate-spin text-[#1c6856]' : ''}`} />
+            <span className="hidden xl:inline">
+              {checkingUpdate ? 'Buscando...' : updateFeedback || 'Buscar actualización'}
+            </span>
+            <span className="xl:hidden">
+              {checkingUpdate ? '...' : updateFeedback || 'Actualizar'}
             </span>
           </button>
 

@@ -199,7 +199,7 @@ export const ShiftHistoryView: React.FC<Props> = ({ state }) => {
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-xs">
                   <div>
-                    <span className="text-slate-500 block">Efectivo POS:</span>
+                    <span className="text-slate-500 block">Efectivo:</span>
                     <span className="font-black text-slate-900 font-mono">C$ {selectedShift.salesCashSystem?.toFixed(2)}</span>
                   </div>
                   <div>

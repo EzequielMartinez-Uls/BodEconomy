@@ -52,6 +52,28 @@ export const Sidebar: React.FC<Props> = ({
     percent?: number;
     version?: string;
   }>({ status: 'idle' });
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateFeedback, setUpdateFeedback] = useState<string | null>(null);
+
+  const handleCheckUpdates = async () => {
+    if (checkingUpdate) return;
+    setCheckingUpdate(true);
+    setUpdateFeedback(null);
+    try {
+      if (window.electronAPI?.checkForUpdates) {
+        await window.electronAPI.checkForUpdates();
+      }
+      setTimeout(() => {
+        setCheckingUpdate(false);
+        setUpdateFeedback('Al día');
+        setTimeout(() => setUpdateFeedback(null), 3000);
+      }, 2000);
+    } catch {
+      setCheckingUpdate(false);
+      setUpdateFeedback('Error');
+      setTimeout(() => setUpdateFeedback(null), 3000);
+    }
+  };
 
   useEffect(() => {
     if (activeTab === 'payroll') {
@@ -356,6 +378,23 @@ export const Sidebar: React.FC<Props> = ({
         </button>
 
         {/* Banners de Actualización Automática */}
+        {updateStatus.status === 'idle' && (
+          <button
+            onClick={handleCheckUpdates}
+            disabled={checkingUpdate}
+            className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200 transition cursor-pointer"
+            title="Comprobar si existe una nueva versión en GitHub"
+          >
+            <div className="flex items-center gap-2">
+              <RefreshCw className={`w-3.5 h-3.5 text-slate-400 ${checkingUpdate ? 'animate-spin text-[#1c6856]' : ''}`} />
+              <span>{checkingUpdate ? 'Buscando...' : 'Buscar actualización'}</span>
+            </div>
+            {updateFeedback && (
+              <span className="text-[10px] text-emerald-700 font-bold">{updateFeedback}</span>
+            )}
+          </button>
+        )}
+
         {updateStatus.status === 'downloading' && (
           <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold flex items-center gap-2">
             <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-600 shrink-0" />

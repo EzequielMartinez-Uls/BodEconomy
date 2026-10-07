@@ -328,22 +328,30 @@ export const SettingsModal: React.FC<Props> = ({
               </div>
 
               <div className="pt-3 border-t border-slate-200">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-rose-50 border border-rose-200 text-xs">
-                  <span className="text-rose-800 font-medium">
-                    Restablecer datos maestros a valores iniciales de prueba
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (confirm('¿Estás seguro de que deseas restablecer los datos a los valores iniciales?')) {
-                        onResetState();
-                        onClose();
-                      }
-                    }}
-                    className="px-3 py-1 rounded-md bg-rose-700 hover:bg-rose-800 text-white font-bold transition shadow-xs cursor-pointer"
-                  >
-                    Restablecer
-                  </button>
+                <div className="p-4 rounded-xl bg-rose-50/70 border border-rose-200 text-xs space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-rose-950 block">
+                        Comenzar en Limpio para Operación Real (Producción)
+                      </span>
+                      <p className="text-slate-600 text-[11px] mt-0.5">
+                        Elimina todos los turnos, compras y movimientos de prueba para empezar a usar la aplicación desde cero con datos reales.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm('¿Confirmas que deseas reiniciar todos los datos para comenzar a operar en producción real? Se limpiará el historial de prueba local.')) {
+                          onResetState();
+                          alert('¡Base de datos local reiniciada con éxito! Ya puedes abrir el primer turno oficial.');
+                          onClose();
+                        }
+                      }}
+                      className="px-3.5 py-2 rounded-lg bg-rose-700 hover:bg-rose-800 text-white font-bold transition shadow-xs cursor-pointer shrink-0 ml-3"
+                    >
+                      Limpiar e Iniciar en Cero
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

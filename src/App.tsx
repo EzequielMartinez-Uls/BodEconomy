@@ -109,10 +109,15 @@ export function App() {
         const today = getLocalTodayStr();
 
         // 1. Unificar Historial de Turnos de Caja General
-        const mergedHistory = [...cloudHistory];
-        for (const localS of prev.shiftHistory) {
-          if (!mergedHistory.some((c) => c.date === localS.date)) {
-            mergedHistory.push(localS);
+        let mergedHistory = [...cloudHistory];
+        // Si la nube está completamente limpia para producción, no arrastrar turnos locales de prueba
+        if (cloudHistory.length === 0 && (!gastos || gastos.length === 0)) {
+          mergedHistory = [];
+        } else {
+          for (const localS of prev.shiftHistory) {
+            if (!mergedHistory.some((c) => c.date === localS.date)) {
+              mergedHistory.push(localS);
+            }
           }
         }
         mergedHistory.sort((a, b) => b.date.localeCompare(a.date));
@@ -220,10 +225,25 @@ export function App() {
           return true;
         });
 
-        // Auto-sincronizar transacciones locales pendientes que no se hayan subido a la nube
-        const pendingLocalTxs = updatedTxs.filter(
-          (t) => !t.cloudId && !t.id.startsWith('pct-cloud-') && !t.id.startsWith('opening-') && !t.id.startsWith('pct-transfer-open-')
-        );
+        // Si la base de datos en la nube está completamente limpia para comenzar producción real,
+        // sincronizar el estado local para comenzar desde cero sin residuos de pruebas pasadas.
+        if ((!cloudHistory || cloudHistory.length === 0) && (!gastos || gastos.length === 0)) {
+          currentShift = null;
+          currentPettyCashShift = null;
+          updatedTxs = [];
+        }
+
+        // Auto-sincronizar transacciones locales pendientes solo si pertenecen al turno abierto activo
+        const pendingLocalTxs = updatedTxs.filter((t) => {
+          if (t.cloudId || t.id.startsWith('pct-cloud-') || t.id.startsWith('opening-') || t.id.startsWith('pct-transfer-open-')) {
+            return false;
+          }
+          if (currentPettyCashShift && currentPettyCashShift.status === 'OPEN') {
+            return t.shiftId === currentPettyCashShift.id;
+          }
+          return false;
+        });
+
         if (pendingLocalTxs.length > 0) {
           pendingLocalTxs.forEach((ptx) => {
             syncTransactionToCloud(ptx).then((newCloudId) => {

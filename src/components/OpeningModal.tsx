@@ -213,14 +213,9 @@ export const OpeningModal: React.FC<Props> = ({
     (numOtherIncome ?? repOtherIncome);
 
   // Fórmula exacta explicada por el usuario:
-  // (Córdobas Contados del Cierre + USD en NIO + Pagos y Salidas de Loyverse) - Fondo Inicial Ayer = Efectivo Generado Real
-  const prevOpeningFloat = lastClosedShift?.totalOpeningNIO || lastClosedShift?.totalOpeningEquivNIO || 0;
-  const closingNIOFromPrev = lastClosedShift?.totalClosingNIO || expectedFromPrevious;
-  const closingUSDFromPrev = (lastClosedShift?.totalClosingUSD || 0) * exchangeRate;
-  const efectivoGeneradoRealAyer = Math.max(
-    0,
-    closingNIOFromPrev + closingUSDFromPrev + loyversePaidOut - prevOpeningFloat
-  );
+  // Efectivo generado ayer = Efectivo (ventas de ayer en efectivo) + Pagos y Salidas (Loyverse)
+  const efectivoVentasAyer = numLoyverseCash ?? repLoyverseCash ?? 0;
+  const efectivoGeneradoRealAyer = Math.max(0, efectivoVentasAyer + loyversePaidOut);
 
   // ----------------------------------------------------
   // PASO 3: DISTRIBUCIÓN DE FONDOS PARA HOY
@@ -430,7 +425,7 @@ export const OpeningModal: React.FC<Props> = ({
     },
     {
       id: 'loyverse',
-      name: 'Venta Efectivo (POS)',
+      name: 'Efectivo',
       icon: <Receipt className="w-3.5 h-3.5 text-amber-600" />,
       reported: repLoyverseCash,
       val: reportLoyverseCash,
@@ -816,7 +811,7 @@ export const OpeningModal: React.FC<Props> = ({
                         <Receipt className="w-4 h-4 text-amber-700" /> Casilla: Pagos y Salidas (Reporte de Loyverse)
                       </span>
                       <p className="text-[11px] text-amber-800 mt-0.5">
-                        Suma lo que se retiró de gaveta ayer según la hoja de Loyverse. Esto se <strong>suma al efectivo contado</strong> para calcular el <strong>efectivo generado real</strong>.
+                        Monto retirado de gaveta ayer según el reporte de Loyverse. Se suma a las ventas en <strong>Efectivo</strong> para calcular el <strong>Efectivo Generado del día anterior</strong>.
                       </p>
                     </div>
                   </div>
@@ -838,10 +833,10 @@ export const OpeningModal: React.FC<Props> = ({
                     <div className="bg-white/90 rounded-md p-2 border border-amber-200 text-xs font-mono space-y-0.5">
                       <div className="text-[10px] text-slate-500 uppercase font-bold">Fórmula de Efectivo Generado Ayer:</div>
                       <div className="text-slate-700 text-[11px]">
-                        (Contado: C$ {closingNIOFromPrev.toFixed(2)} + Pagos/Salidas: C$ {loyversePaidOut.toFixed(2)}) - Fondo Ayer: C$ {prevOpeningFloat.toFixed(2)}
+                        Efectivo: C$ {efectivoVentasAyer.toFixed(2)} + Pagos/Salidas: C$ {loyversePaidOut.toFixed(2)}
                       </div>
                       <div className="text-emerald-700 font-bold text-xs pt-0.5">
-                        = Efectivo Generado Real: C$ {efectivoGeneradoRealAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                        = Efectivo Generado Ayer: C$ {efectivoGeneradoRealAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </div>
                     </div>
                   </div>

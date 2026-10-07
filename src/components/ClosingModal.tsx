@@ -526,7 +526,7 @@ export const ClosingModal: React.FC<Props> = ({
                   <div className="flex items-center gap-2">
                     <Receipt className="w-4 h-4 text-[#1c6856]" />
                     <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                      3. Ventas Efectivo POS (C$)
+                      3. Ventas en Efectivo (C$)
                     </h3>
                   </div>
                   <p className="text-[11px] text-slate-500">
@@ -775,7 +775,7 @@ export const ClosingModal: React.FC<Props> = ({
                 {/* Caja / Arqueo de Gaveta (Idéntico a Loyverse POS) */}
                 <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
                   <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center justify-between">
-                    <span>1. Conciliación de Efectivo (Loyverse POS)</span>
+                    <span>1. Conciliación de Efectivo (Loyverse)</span>
                     <Banknote className="w-4 h-4 text-[#1c6856]" />
                   </h4>
 

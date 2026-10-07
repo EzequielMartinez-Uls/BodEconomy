@@ -256,7 +256,7 @@ export const DailySpreadsheetView: React.FC<Props> = ({
                 <tr>
                   <td className="py-2.5 text-slate-700 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                    Ventas en Efectivo (POS Gaveta)
+                    Ventas en Efectivo
                   </td>
                   <td className="py-2.5 text-right font-mono font-bold text-slate-900">
                     C$ {salesCash.toFixed(2)}
