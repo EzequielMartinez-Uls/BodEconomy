@@ -223,7 +223,13 @@ export const Sidebar: React.FC<Props> = ({
                     : 'bg-slate-100 text-slate-700'
                 }`}
               >
-                C$ {Math.round(state.pettyCashBalance).toLocaleString()}
+                C$ {Math.round(
+                  state.currentPettyCashShift?.status === 'OPEN'
+                    ? state.pettyCashBalance
+                    : (state.pettyCashShiftHistory[0]?.actualCashCounted ??
+                        state.pettyCashShiftHistory[0]?.expectedBalance ??
+                        (state.pettyCashShiftHistory.length === 0 ? 0 : state.pettyCashBalance))
+                ).toLocaleString()}
               </span>
             </div>
           </button>

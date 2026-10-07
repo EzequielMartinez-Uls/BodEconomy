@@ -463,39 +463,9 @@ export function loadState(): AppState {
       });
     }
 
-    if (loaded.pettyCashShiftHistory) {
-      loaded.pettyCashShiftHistory = loaded.pettyCashShiftHistory.map((ps) => {
-        if (ps.date === '2026-10-02') {
-          return {
-            ...ps,
-            initialBalance: 5987,
-            totalExpenses: 26289.50,
-            expectedBalance: 42,
-            actualCashCounted: 42,
-            difference: 0,
-            auditStatus: 'SQUARED',
-          };
-        }
-        return ps;
-      });
-    }
-
-    if (loaded.currentShift && loaded.currentShift.date === '2026-10-03') {
-      loaded.currentShift.totalOpeningNIO = 1781;
-      loaded.currentShift.totalOpeningUSD = 0;
-      loaded.currentShift.totalOpeningEquivNIO = 1781;
-    }
-
-    if (loaded.currentPettyCashShift && loaded.currentPettyCashShift.date === '2026-10-03') {
-      loaded.currentPettyCashShift.previousDayRemaining = 42;
-      loaded.currentPettyCashShift.generalCashTransfer = 9700;
-      loaded.currentPettyCashShift.bossContribution = 0;
-      loaded.currentPettyCashShift.initialBalance = 9742;
-    }
-
-    // Recalcular con precisión estricta el saldo físico en gaveta de la jornada abierta
-    // REGLA FUNDAMENTAL: Solo los egresos en EFECTIVO de la jornada ABIERTA salen de la gaveta física.
-    // Las transacciones de días anteriores no tocan la gaveta física de hoy.
+    // Recalcular con precisión estricta el saldo físico en gaveta de la jornada
+    // Si la jornada está ABIERTA: saldo inicial + ingresos extra en efectivo - egresos en efectivo del turno
+    // Si la jornada está CERRADA: saldo físico final del último cierre o 0 si no hay turnos
     if (loaded.currentPettyCashShift && loaded.currentPettyCashShift.status === 'OPEN') {
       const shiftId = loaded.currentPettyCashShift.id;
       const initial = Number(loaded.currentPettyCashShift.initialBalance) || 0;
@@ -507,7 +477,7 @@ export function loadState(): AppState {
       });
 
       const totalInflows = shiftTxs
-        .filter((t) => t.type === 'INFLOW')
+        .filter((t) => t.type === 'INFLOW' && !isOpeningPettyCashTx(t))
         .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
       const cashExpenses = shiftTxs
@@ -515,6 +485,9 @@ export function loadState(): AppState {
         .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
       loaded.pettyCashBalance = Math.max(0, parseFloat((initial + totalInflows - cashExpenses).toFixed(2)));
+    } else {
+      const lastClosed = loaded.pettyCashShiftHistory?.[0];
+      loaded.pettyCashBalance = lastClosed?.actualCashCounted ?? lastClosed?.expectedBalance ?? 0;
     }
 
     return loaded;

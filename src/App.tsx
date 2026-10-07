@@ -226,11 +226,17 @@ export function App() {
         });
 
         // Si la base de datos en la nube está completamente limpia para comenzar producción real,
-        // sincronizar el estado local para comenzar desde cero sin residuos de pruebas pasadas.
+        // purgar todo el estado local y reiniciar a cero absoluto.
         if ((!cloudHistory || cloudHistory.length === 0) && (!gastos || gastos.length === 0)) {
-          currentShift = null;
-          currentPettyCashShift = null;
-          updatedTxs = [];
+          return {
+            ...prev,
+            currentShift: null,
+            shiftHistory: [],
+            currentPettyCashShift: null,
+            pettyCashShiftHistory: [],
+            pettyCashTransactions: [],
+            pettyCashBalance: 0,
+          };
         }
 
         // Auto-sincronizar transacciones locales pendientes solo si pertenecen al turno abierto activo
@@ -259,8 +265,10 @@ export function App() {
           });
         }
 
-        // Recalcular saldo de caja chica si está abierta estrictamente por shiftId
-        let recalculatedPettyBalance = prev.pettyCashBalance;
+        // Recalcular saldo de caja chica estrictamente:
+        // Si está ABIERTA: inicial + fondeos - gastos efectivo
+        // Si está CERRADA: remanente físico del último cierre o 0 si no hay
+        let recalculatedPettyBalance = 0;
         if (currentPettyCashShift && currentPettyCashShift.status === 'OPEN') {
           const shiftId = currentPettyCashShift.id;
           const openTxs = updatedTxs.filter(
@@ -269,6 +277,9 @@ export function App() {
           const openInflows = openTxs.filter((t) => t.type === 'INFLOW').reduce((sum, t) => sum + t.amount, 0);
           const openCashExpenses = openTxs.filter((t) => t.type === 'EXPENSE' && (t.method === 'CASH' || !t.method)).reduce((sum, t) => sum + t.amount, 0);
           recalculatedPettyBalance = parseFloat((currentPettyCashShift.initialBalance + openInflows - openCashExpenses).toFixed(2));
+        } else {
+          const lastClosedPetty = prev.pettyCashShiftHistory[0];
+          recalculatedPettyBalance = lastClosedPetty?.actualCashCounted ?? lastClosedPetty?.expectedBalance ?? 0;
         }
 
         return {
@@ -421,10 +432,40 @@ export function App() {
             let updatedCurrent = prev.currentShift;
             let updatedHistory = [...prev.shiftHistory];
             let updatedPettyShift = prev.currentPettyCashShift;
+            let updatedPettyHistory = [...prev.pettyCashShiftHistory];
+            let updatedPettyBalance = prev.pettyCashBalance;
+
+            const obs = j.observaciones || '';
 
             if (j.estado === 'ABIERTA') {
               if (j.fecha === today) {
                 updatedCurrent = parsedShift;
+
+                // Si incluye apertura de Caja Chica
+                const pettyMatch = obs.match(/\[FONDOS_COMPOSITION:(\{.*?\})\]/);
+                if (pettyMatch && pettyMatch[1]) {
+                  try {
+                    const p = JSON.parse(pettyMatch[1]);
+                    const prevDay = Number(p.previousDayRemaining) || 0;
+                    const genTrans = Number(p.generalCashTransfer) || 0;
+                    const bossCont = Number(p.bossContribution) || 0;
+                    const initBal = Number(p.initialBalance) || (prevDay + genTrans + bossCont);
+
+                    updatedPettyShift = {
+                      id: `pc-shift-${j.fecha}`,
+                      date: j.fecha,
+                      status: 'OPEN',
+                      openedBy: j.responsable || 'Caja Principal',
+                      openedAt: j.created_at || new Date().toISOString(),
+                      previousDayRemaining: prevDay,
+                      generalCashTransfer: genTrans,
+                      bossContribution: bossCont,
+                      initialBalance: initBal,
+                      openingNotes: obs,
+                    };
+                    updatedPettyBalance = initBal;
+                  } catch {}
+                }
               }
             } else if (j.estado === 'CERRADA') {
               if (updatedCurrent?.date === j.fecha) {
@@ -441,6 +482,41 @@ export function App() {
                 updatedHistory.unshift(parsedShift);
               }
               updatedHistory.sort((a, b) => b.date.localeCompare(a.date));
+
+              // Si cerró Caja Chica, registrar en historial de caja chica y actualizar saldo
+              const pettyCloseMatch = obs.match(/\[PETTY_CLOSING:(\{.*?\})\]/);
+              if (pettyCloseMatch && pettyCloseMatch[1]) {
+                try {
+                  const pc = JSON.parse(pettyCloseMatch[1]);
+                  const closedPettyShift: PettyCashShift = {
+                    id: `pc-shift-${j.fecha}`,
+                    date: j.fecha,
+                    status: 'CLOSED',
+                    openedBy: j.responsable || 'Caja Principal',
+                    openedAt: j.created_at || new Date().toISOString(),
+                    closedBy: pc.closedBy || j.responsable || 'Admin',
+                    closedAt: pc.closedAt || j.fecha_cierre || new Date().toISOString(),
+                    previousDayRemaining: Number(j.fondo_inicial) || 0,
+                    generalCashTransfer: 0,
+                    bossContribution: 0,
+                    initialBalance: Number(j.fondo_inicial) || 0,
+                    totalExpenses: Number(j.total_gastos_efectivo) || 0,
+                    expectedBalance: Number(pc.expectedBalance) || 0,
+                    actualCashCounted: Number(pc.actualCashCounted) || 0,
+                    difference: Number(pc.difference) || 0,
+                    auditStatus: pc.auditStatus || 'SQUARED',
+                  };
+
+                  const pIdx = updatedPettyHistory.findIndex((s) => s.date === j.fecha);
+                  if (pIdx !== -1) {
+                    updatedPettyHistory[pIdx] = closedPettyShift;
+                  } else {
+                    updatedPettyHistory.unshift(closedPettyShift);
+                  }
+                  updatedPettyHistory.sort((a, b) => b.date.localeCompare(a.date));
+                  updatedPettyBalance = closedPettyShift.actualCashCounted ?? closedPettyShift.expectedBalance ?? 0;
+                } catch {}
+              }
             } else if (j.estado === 'CANCELADA') {
               if (updatedCurrent?.date === j.fecha) {
                 updatedCurrent = null;
@@ -449,6 +525,7 @@ export function App() {
                 updatedPettyShift = null;
               }
               updatedHistory = updatedHistory.filter((s) => s.date !== j.fecha);
+              updatedPettyHistory = updatedPettyHistory.filter((s) => s.date !== j.fecha);
             }
 
             return {
@@ -456,6 +533,8 @@ export function App() {
               currentShift: updatedCurrent,
               shiftHistory: updatedHistory,
               currentPettyCashShift: updatedPettyShift,
+              pettyCashShiftHistory: updatedPettyHistory,
+              pettyCashBalance: updatedPettyBalance,
             };
           });
           playSound([659.25, 880]);
