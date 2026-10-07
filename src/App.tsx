@@ -21,6 +21,7 @@ import {
   deleteTransactionFromCloud,
   syncGeneralCashShiftToCloud,
   syncGeneralCashOpeningToCloud,
+  syncUnifiedDayOpeningToCloud,
   syncCancelShiftToCloud,
   syncCancelPettyCashShiftToCloud,
   syncDeleteOpeningTransfersFromCloud,
@@ -690,16 +691,10 @@ export function App() {
     });
     playSound([440, 554.37, 659.25]); // Do mayor alegre
 
-    // Sincronizar apertura de Caja General con Supabase
-    syncGeneralCashOpeningToCloud(newShift).catch((err) =>
-      console.warn('⚠️ Error sincronizando apertura con la nube:', err)
+    // Sincronizar apertura unificada de la jornada con Supabase (evita condiciones de carrera y filas duplicadas)
+    syncUnifiedDayOpeningToCloud(newShift, newPettyShiftToSync).catch((err) =>
+      console.warn('⚠️ Error sincronizando apertura unificada con la nube:', err)
     );
-
-    if (newPettyShiftToSync) {
-      syncOpenShiftToCloud(newPettyShiftToSync).catch((err) =>
-        console.warn('⚠️ Error sincronizando apertura de caja chica con la nube:', err)
-      );
-    }
 
     if (transferTxToSync) {
       syncTransactionToCloud(transferTxToSync).catch((err) =>

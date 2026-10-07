@@ -652,35 +652,51 @@ export async function syncGeneralCashShiftToCloud(shift: CashShift): Promise<voi
 }
 
 /**
- * Sincroniza la Apertura de Caja General a Supabase (notifica a otras PCs y a la web)
+ * Sincroniza la Apertura Unificada de la Jornada (General + Caja Chica)
+ * Evita la condición de carrera de crear dos filas separadas en jornadas_diarias
  */
-export async function syncGeneralCashOpeningToCloud(shift: CashShift): Promise<void> {
+export async function syncUnifiedDayOpeningToCloud(
+  generalShift: CashShift,
+  pettyShift?: PettyCashShift | null
+): Promise<void> {
   try {
     const openingData = {
-      totalOpeningNIO: shift.totalOpeningNIO,
-      totalOpeningUSD: shift.totalOpeningUSD,
-      exchangeRate: shift.exchangeRate,
-      openingNotes: shift.openingNotes || '',
-      openedBy: shift.openedBy,
-      totalOpeningEquivNIO: shift.totalOpeningEquivNIO,
+      totalOpeningNIO: generalShift.totalOpeningNIO,
+      totalOpeningUSD: generalShift.totalOpeningUSD,
+      exchangeRate: generalShift.exchangeRate,
+      openingNotes: generalShift.openingNotes || '',
+      openedBy: generalShift.openedBy,
+      totalOpeningEquivNIO: generalShift.totalOpeningEquivNIO,
     };
+
+    const fondosComp = pettyShift
+      ? {
+          previousDayRemaining: pettyShift.previousDayRemaining,
+          generalCashTransfer: pettyShift.generalCashTransfer,
+          bossContribution: pettyShift.bossContribution,
+          initialBalance: pettyShift.initialBalance,
+          openedBy: pettyShift.openedBy,
+        }
+      : undefined;
 
     const { data: existing } = await supabase
       .from('jornadas_diarias')
-      .select('id, observaciones')
-      .eq('fecha', shift.date)
+      .select('id, observaciones, fondo_inicial')
+      .eq('fecha', generalShift.date)
       .limit(1);
 
     if (existing && existing.length > 0) {
       const finalObs = mergeJornadaTags(existing[0].observaciones, {
         openingData,
+        fondosComposition: fondosComp,
       });
 
       await supabase
         .from('jornadas_diarias')
         .update({
           estado: 'ABIERTA',
-          responsable: shift.openedBy,
+          responsable: generalShift.openedBy,
+          fondo_inicial: pettyShift?.initialBalance ?? existing[0].fondo_inicial ?? generalShift.totalOpeningEquivNIO,
           observaciones: finalObs,
           updated_at: new Date().toISOString(),
         })
@@ -688,21 +704,32 @@ export async function syncGeneralCashOpeningToCloud(shift: CashShift): Promise<v
     } else {
       const finalObs = mergeJornadaTags('', {
         openingData,
-        notesAppend: `Apertura realizada por ${shift.openedBy} con C$ ${shift.totalOpeningEquivNIO.toFixed(2)}`,
+        fondosComposition: fondosComp,
+        notesAppend: `Apertura realizada por ${generalShift.openedBy} con C$ ${generalShift.totalOpeningEquivNIO.toFixed(2)} en General` +
+          (pettyShift ? ` y C$ ${pettyShift.initialBalance.toFixed(2)} en Caja Chica` : ''),
       });
 
       await supabase.from('jornadas_diarias').insert({
-        fecha: shift.date,
+        fecha: generalShift.date,
         turno: 'COMPLETO',
         estado: 'ABIERTA',
-        fondo_inicial: shift.totalOpeningEquivNIO,
-        responsable: shift.openedBy,
+        fondo_inicial: pettyShift?.initialBalance ?? generalShift.totalOpeningEquivNIO,
+        total_gastos_efectivo: 0,
+        total_gastos_transferencia: 0,
+        responsable: generalShift.openedBy,
         observaciones: finalObs,
       });
     }
   } catch (err) {
-    console.warn('⚠️ No se pudo respaldar apertura en Supabase (modo offline):', err);
+    console.warn('⚠️ No se pudo respaldar apertura unificada en Supabase:', err);
   }
+}
+
+/**
+ * Sincroniza la Apertura de Caja General a Supabase (notifica a otras PCs y a la web)
+ */
+export async function syncGeneralCashOpeningToCloud(shift: CashShift): Promise<void> {
+  return syncUnifiedDayOpeningToCloud(shift, null);
 }
 
 /**
