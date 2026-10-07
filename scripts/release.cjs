@@ -97,6 +97,14 @@ try {
           } else {
             console.log(`✅ Release ${tag} ya está activa y publicada.`);
           }
+
+          // Asegurar siempre que latest.yml y el .exe estén presentes
+          try {
+            console.log('🛡️ Verificando y asegurando assets completos (latest.yml y .exe)...');
+            execSync('node scripts/upload-release-assets.cjs', { stdio: 'inherit' });
+          } catch (eAsset) {
+            console.warn('Advertencia en verificación de assets:', eAsset.message);
+          }
         } catch (err) {
           console.error('Error parseando respuesta de GitHub:', err);
         }
