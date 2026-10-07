@@ -1425,6 +1425,7 @@ export function App() {
         shiftHistory={state.shiftHistory}
         lastClosedPettyCashShift={state.pettyCashShiftHistory[0] || null}
         currentPettyCashBalance={state.pettyCashBalance}
+        pettyCashTransactions={state.pettyCashTransactions}
         activeAdminName={state.activeAdminName}
         defaultExchangeRate={state.defaultExchangeRate}
         availableAdmins={state.availableAdmins}
@@ -1451,6 +1452,7 @@ export function App() {
         onRestoreState={handleRestoreState}
         onResetState={handleResetState}
         onLoadMockData={handleLoadMockData}
+        onUpdateExpenseCategories={handleUpdateExpenseCategories}
       />
 
       <AdminSelectModal

@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { CashShift, DenominationsNIO, DenominationsUSD, PettyCashShift } from '../types';
+import { CashShift, DenominationsNIO, DenominationsUSD, PettyCashShift, PettyCashTransaction } from '../types';
 import {
   DEFAULT_DENOMINATIONS_NIO,
   DEFAULT_DENOMINATIONS_USD,
   calculateTotalNIO,
   calculateTotalUSD,
 } from '../services/storage';
-import { getLocalTodayStr, formatDateToFriendly } from '../utils/dateUtils';
+import { getLocalTodayStr, formatDateToFriendly, addDaysToDateStr, extractLocalDateStr } from '../utils/dateUtils';
 import { CashDenominationsInput } from './CashDenominationsInput';
 import {
   X,
@@ -29,6 +29,9 @@ import {
   ArrowRightLeft,
   Lock,
   Unlock,
+  Wallet,
+  TrendingUp,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 interface Props {
@@ -38,6 +41,7 @@ interface Props {
   shiftHistory?: CashShift[];
   lastClosedPettyCashShift?: PettyCashShift | null;
   currentPettyCashBalance?: number;
+  pettyCashTransactions?: PettyCashTransaction[];
   activeAdminName: string;
   defaultExchangeRate: number;
   availableAdmins: string[];
@@ -60,6 +64,7 @@ export const OpeningModal: React.FC<Props> = ({
   shiftHistory = [],
   lastClosedPettyCashShift = null,
   currentPettyCashBalance = 0,
+  pettyCashTransactions = [],
   activeAdminName,
   defaultExchangeRate,
   availableAdmins,
@@ -218,6 +223,56 @@ export const OpeningModal: React.FC<Props> = ({
   const efectivoGeneradoRealAyer = Math.max(0, efectivoVentasAyer + loyversePaidOut);
 
   // ----------------------------------------------------
+  // GASTOS DE AYER & GANANCIA NETA (EXCEL ORIGINAL)
+  // ----------------------------------------------------
+  const previousShiftDate = lastClosedShift?.date || addDaysToDateStr(shiftDate, -1);
+
+  // Gastos de Caja Chica registrados para esa jornada
+  const prevDayExpenseTransactions = useMemo(() => {
+    return (pettyCashTransactions || []).filter((tx) => {
+      if (!tx.date || tx.type !== 'EXPENSE') return false;
+      return extractLocalDateStr(tx.date) === previousShiftDate;
+    });
+  }, [pettyCashTransactions, previousShiftDate]);
+
+  // Gastos en Efectivo de ayer (Caja Chica)
+  const initialCashExpensesAyer = useMemo(() => {
+    return prevDayExpenseTransactions
+      .filter((tx) => tx.method === 'CASH' || !tx.method)
+      .reduce((sum, tx) => sum + (tx.amount || 0), 0);
+  }, [prevDayExpenseTransactions]);
+
+  // Gastos en Tarjeta o Transferencia de ayer
+  const initialTransferExpensesAyer = useMemo(() => {
+    return prevDayExpenseTransactions
+      .filter((tx) => tx.method === 'TRANSFER' || tx.method === 'CARD')
+      .reduce((sum, tx) => sum + (tx.amount || 0), 0);
+  }, [prevDayExpenseTransactions]);
+
+  // Propina entregada de ayer (como gasto/salida de la jornada según cierre)
+  const initialTipsAyer = useMemo(() => {
+    return lastClosedShift?.totalTipCollected || 0;
+  }, [lastClosedShift]);
+
+  const [reportCashExpensesAyer, setReportCashExpensesAyer] = useState<string>('');
+  const [reportTransferExpensesAyer, setReportTransferExpensesAyer] = useState<string>('');
+  const [reportTipsExpensesAyer, setReportTipsExpensesAyer] = useState<string>('');
+
+  React.useEffect(() => {
+    setReportCashExpensesAyer(initialCashExpensesAyer > 0 ? String(initialCashExpensesAyer) : '0');
+    setReportTransferExpensesAyer(initialTransferExpensesAyer > 0 ? String(initialTransferExpensesAyer) : '0');
+    setReportTipsExpensesAyer(initialTipsAyer > 0 ? String(initialTipsAyer) : '0');
+  }, [initialCashExpensesAyer, initialTransferExpensesAyer, initialTipsAyer]);
+
+  const numCashExpensesAyer = reportCashExpensesAyer !== '' ? parseFloat(reportCashExpensesAyer) || 0 : initialCashExpensesAyer;
+  const numTransferExpensesAyer = reportTransferExpensesAyer !== '' ? parseFloat(reportTransferExpensesAyer) || 0 : initialTransferExpensesAyer;
+  const numTipsExpensesAyer = reportTipsExpensesAyer !== '' ? parseFloat(reportTipsExpensesAyer) || 0 : initialTipsAyer;
+
+  const totalGastosAyer = numCashExpensesAyer + numTransferExpensesAyer + numTipsExpensesAyer;
+  const gananciaNetaAyer = totalVerifiedSales - totalGastosAyer;
+  const margenNetoAyer = totalVerifiedSales > 0 ? (gananciaNetaAyer / totalVerifiedSales) * 100 : 0;
+
+  // ----------------------------------------------------
   // PASO 3: DISTRIBUCIÓN DE FONDOS PARA HOY
   // ----------------------------------------------------
   // El usuario determina con cuánto abre Caja General (fondo de vueltos)
@@ -338,7 +393,7 @@ export const OpeningModal: React.FC<Props> = ({
     };
 
     let updatedPreviousShift: CashShift | undefined = undefined;
-    if (lastClosedShift && syncCorrectionsToPrevious && diffItems.length > 0) {
+    if (lastClosedShift && syncCorrectionsToPrevious) {
       const corBAC = numBAC ?? repBAC;
       const corFico = numFico ?? repFico;
       const corBanpro = numBanpro ?? repBanpro;
@@ -359,9 +414,13 @@ export const OpeningModal: React.FC<Props> = ({
         salesCashSystem: corCash,
         otherIncome: corOther,
         totalGrossSales: corCash + corTotalCards + corPY + corOther,
-        closingNotes: lastClosedShift.closingNotes
-          ? `${lastClosedShift.closingNotes} • Corroborado en apertura ${shiftDate}: ${diffItems.join(', ')}`
-          : `Corroborado en apertura ${shiftDate}: ${diffItems.join(', ')}`,
+        totalTipCollected: numTipsExpensesAyer,
+        dailyNetProfit: gananciaNetaAyer,
+        closingNotes: diffItems.length > 0
+          ? (lastClosedShift.closingNotes
+              ? `${lastClosedShift.closingNotes} • Corroborado en apertura ${shiftDate}: ${diffItems.join(', ')}`
+              : `Corroborado en apertura ${shiftDate}: ${diffItems.join(', ')}`)
+          : lastClosedShift.closingNotes,
       };
     }
 
@@ -431,6 +490,15 @@ export const OpeningModal: React.FC<Props> = ({
       val: reportLoyverseCash,
       setVal: setReportLoyverseCash,
       diff: diffLoyverseCash,
+    },
+    {
+      id: 'other',
+      name: 'Otros Ingresos',
+      icon: <DollarSign className="w-3.5 h-3.5 text-purple-600" />,
+      reported: repOtherIncome,
+      val: reportOtherIncome,
+      setVal: setReportOtherIncome,
+      diff: diffOtherIncome,
     },
   ];
 
@@ -881,6 +949,160 @@ export const OpeningModal: React.FC<Props> = ({
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Desglose de Gastos de Ayer & Ganancia Neta (Excel Original) */}
+              <div className="bg-white rounded-xl p-5 border border-slate-200 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                      <FileSpreadsheet className="w-4 h-4 text-[#1c6856]" />
+                      <span>Gastos de Ayer & Rendimiento Contable (Excel Original)</span>
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Desglose de compras en efectivo (caja chica), tarjeta/transferencias y propina entregada.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReportCashExpensesAyer(String(initialCashExpensesAyer));
+                      setReportTransferExpensesAyer(String(initialTransferExpensesAyer));
+                      setReportTipsExpensesAyer(String(initialTipsAyer));
+                    }}
+                    className="px-2.5 py-1 text-xs font-bold bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-md transition border border-slate-300 cursor-pointer"
+                  >
+                    Copiar cifras registradas
+                  </button>
+                </div>
+
+                {/* Grid de 3 tarjetas de Gastos de Ayer */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* 1. Compras / Gastos en Efectivo (Caja Chica) */}
+                  <div className="p-3 rounded-lg border bg-slate-50/80 border-slate-200 space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between font-bold text-slate-800">
+                      <div className="flex items-center gap-1.5">
+                        <Coins className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Gastos Efectivo (Caja Chica)</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setReportCashExpensesAyer(String(initialCashExpensesAyer))}
+                        className="text-[10px] text-slate-400 hover:text-[#1c6856] underline cursor-pointer"
+                      >
+                        Copiar
+                      </button>
+                    </div>
+                    <div className="flex justify-between text-[11px] text-slate-500 font-mono">
+                      <span>Registrado:</span>
+                      <span className="font-bold text-slate-700">C$ {initialCashExpensesAyer.toFixed(2)}</span>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-1.5 text-[11px] font-bold text-slate-400">C$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder={initialCashExpensesAyer.toFixed(2)}
+                        value={reportCashExpensesAyer}
+                        onChange={(e) => setReportCashExpensesAyer(e.target.value)}
+                        className="w-full bg-white border border-slate-300 rounded-md pl-7 pr-2 py-1 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-[#1c6856]"
+                      />
+                    </div>
+                    <span className="text-[10px] text-slate-400 block">Compras del día en efectivo</span>
+                  </div>
+
+                  {/* 2. Gastos Tarjeta / Transferencia */}
+                  <div className="p-3 rounded-lg border bg-slate-50/80 border-slate-200 space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between font-bold text-slate-800">
+                      <div className="flex items-center gap-1.5">
+                        <CreditCard className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Tarjeta / Transferencia</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setReportTransferExpensesAyer(String(initialTransferExpensesAyer))}
+                        className="text-[10px] text-slate-400 hover:text-[#1c6856] underline cursor-pointer"
+                      >
+                        Copiar
+                      </button>
+                    </div>
+                    <div className="flex justify-between text-[11px] text-slate-500 font-mono">
+                      <span>Registrado:</span>
+                      <span className="font-bold text-slate-700">C$ {initialTransferExpensesAyer.toFixed(2)}</span>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-1.5 text-[11px] font-bold text-slate-400">C$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder={initialTransferExpensesAyer.toFixed(2)}
+                        value={reportTransferExpensesAyer}
+                        onChange={(e) => setReportTransferExpensesAyer(e.target.value)}
+                        className="w-full bg-white border border-slate-300 rounded-md pl-7 pr-2 py-1 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-[#1c6856]"
+                      />
+                    </div>
+                    <span className="text-[10px] text-slate-400 block">Pagos con banco / transferencia</span>
+                  </div>
+
+                  {/* 3. Propina entregada como gasto/salida */}
+                  <div className="p-3 rounded-lg border bg-slate-50/80 border-slate-200 space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between font-bold text-slate-800">
+                      <div className="flex items-center gap-1.5">
+                        <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Propina (Salida / Gasto)</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setReportTipsExpensesAyer(String(initialTipsAyer))}
+                        className="text-[10px] text-slate-400 hover:text-[#1c6856] underline cursor-pointer"
+                      >
+                        Copiar
+                      </button>
+                    </div>
+                    <div className="flex justify-between text-[11px] text-slate-500 font-mono">
+                      <span>Registrado:</span>
+                      <span className="font-bold text-slate-700">C$ {initialTipsAyer.toFixed(2)}</span>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-1.5 text-[11px] font-bold text-slate-400">C$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder={initialTipsAyer.toFixed(2)}
+                        value={reportTipsExpensesAyer}
+                        onChange={(e) => setReportTipsExpensesAyer(e.target.value)}
+                        className="w-full bg-white border border-slate-300 rounded-md pl-7 pr-2 py-1 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-[#1c6856]"
+                      />
+                    </div>
+                    <span className="text-[10px] text-slate-400 block">Propina entregada al personal</span>
+                  </div>
+                </div>
+
+                {/* Barra Contable de Resumen de Ganancia Neta */}
+                <div className="p-3.5 rounded-lg border bg-slate-900 text-white flex flex-wrap items-center justify-between gap-4 text-xs font-mono">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Venta Bruta Total Ayer</span>
+                    <strong className="text-sm font-bold text-white">
+                      C$ {totalVerifiedSales.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Gastos Ayer</span>
+                    <strong className="text-sm font-bold text-rose-300">
+                      -C$ {totalGastosAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                    </strong>
+                  </div>
+
+                  <div className="border-l border-slate-700 pl-4">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                      Ganancia Neta Ayer {totalVerifiedSales > 0 && `(${margenNetoAyer.toFixed(1)}%)`}
+                    </span>
+                    <strong className={`text-base font-bold ${gananciaNetaAyer >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      C$ {gananciaNetaAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                    </strong>
+                  </div>
                 </div>
               </div>
 

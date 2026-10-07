@@ -14,7 +14,9 @@ import {
   Plus,
   Trash2,
   Sparkles,
+  Tag,
 } from 'lucide-react';
+import { DEFAULT_EXPENSE_CATEGORIES } from '../services/storage';
 
 interface Props {
   isOpen: boolean;
@@ -26,6 +28,7 @@ interface Props {
   onRestoreState: (importedState: AppState) => void;
   onResetState: () => void;
   onLoadMockData?: () => void;
+  onUpdateExpenseCategories?: (categories: string[]) => void;
 }
 
 export const SettingsModal: React.FC<Props> = ({
@@ -38,12 +41,46 @@ export const SettingsModal: React.FC<Props> = ({
   onRestoreState,
   onResetState,
   onLoadMockData,
+  onUpdateExpenseCategories,
 }) => {
   if (!isOpen) return null;
 
   const [rateInput, setRateInput] = useState(state.defaultExchangeRate.toString());
   const [newAdminInput, setNewAdminInput] = useState('');
-  const [activeTab, setActiveTab] = useState<'admins' | 'exchange' | 'backup'>('admins');
+  const [newCategoryInput, setNewCategoryInput] = useState('');
+  const [activeTab, setActiveTab] = useState<'admins' | 'exchange' | 'categories' | 'backup'>('admins');
+
+  const currentCategories = state.expenseCategories || DEFAULT_EXPENSE_CATEGORIES;
+
+  const handleAddCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = newCategoryInput.trim().toUpperCase().replace(/\s+/g, '_');
+    if (!clean) return;
+    if (currentCategories.includes(clean)) {
+      alert('Esta categoría ya existe.');
+      return;
+    }
+    const updated = [...currentCategories, clean];
+    onUpdateExpenseCategories?.(updated);
+    setNewCategoryInput('');
+  };
+
+  const handleRemoveCategory = (catToRemove: string) => {
+    if (currentCategories.length <= 1) {
+      alert('Debe existir al menos una categoría de gasto en el sistema.');
+      return;
+    }
+    if (confirm(`¿Deseas eliminar la categoría "${catToRemove}"?`)) {
+      const updated = currentCategories.filter((c) => c !== catToRemove);
+      onUpdateExpenseCategories?.(updated);
+    }
+  };
+
+  const handleResetCategories = () => {
+    if (confirm('¿Restablecer las categorías de gastos a los valores predeterminados del Bodegón?')) {
+      onUpdateExpenseCategories?.([...DEFAULT_EXPENSE_CATEGORIES]);
+    }
+  };
 
   const handleSaveRate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,6 +160,16 @@ export const SettingsModal: React.FC<Props> = ({
             }`}
           >
             <CircleDollarSign className="w-4 h-4" /> Tasa de Cambio
+          </button>
+          <button
+            onClick={() => setActiveTab('categories')}
+            className={`py-3 px-5 border-b-2 transition flex items-center gap-2 cursor-pointer ${
+              activeTab === 'categories'
+                ? 'border-[#1c6856] text-[#1c6856] bg-white font-bold'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Tag className="w-4 h-4" /> Categorías de Gastos
           </button>
           <button
             onClick={() => setActiveTab('backup')}
@@ -245,6 +292,77 @@ export const SettingsModal: React.FC<Props> = ({
                   <span>Guardar Nueva Tasa</span>
                 </button>
               </form>
+            </div>
+          )}
+
+          {/* TAB CATEGORIES */}
+          {activeTab === 'categories' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 mb-1">
+                    Categorías de Gastos de Caja Chica
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Define y organiza los rubros contables para el registro de compras y gastos de la empresa.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleResetCategories}
+                  className="px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-300 rounded-lg hover:bg-slate-50 transition cursor-pointer"
+                >
+                  Restablecer Predeterminadas
+                </button>
+              </div>
+
+              {/* Formulario Agregar Categoría */}
+              <form onSubmit={handleAddCategory} className="flex gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <input
+                  type="text"
+                  placeholder="Ej: EMPAQUES, MANTENIMIENTO, VERDURAS..."
+                  value={newCategoryInput}
+                  onChange={(e) => setNewCategoryInput(e.target.value)}
+                  className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-bold uppercase placeholder:normal-case placeholder:font-normal focus:outline-none focus:border-[#1c6856]"
+                />
+                <button
+                  type="submit"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#1c6856] hover:bg-[#154f42] text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Agregar</span>
+                </button>
+              </form>
+
+              {/* Lista de Categorías */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-bold uppercase text-slate-500 tracking-wider block">
+                  Categorías Habilitadas ({currentCategories.length})
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto p-1">
+                  {currentCategories.map((cat) => (
+                    <div
+                      key={cat}
+                      className="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition text-xs font-semibold"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-[#1c6856]"></span>
+                        <span className="text-slate-800">{cat.replace(/_/g, ' ')}</span>
+                      </div>
+                      {currentCategories.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCategory(cat)}
+                          title={`Eliminar categoría ${cat}`}
+                          className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 

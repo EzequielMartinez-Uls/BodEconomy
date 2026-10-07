@@ -31,7 +31,7 @@ async function getReleaseId() {
     const req = https.request(
       {
         hostname: 'api.github.com',
-        path: `/repos/EzequielMartinez-Uls/BodEconomy/releases/tags/${tag}`,
+        path: `/repos/EzequielMartinez-Uls/BodEconomy/releases`,
         method: 'GET',
         headers: {
           'User-Agent': 'NodeJS',
@@ -43,9 +43,13 @@ async function getReleaseId() {
         res.on('data', (d) => (body += d));
         res.on('end', () => {
           try {
-            const data = JSON.parse(body);
-            if (data.id) resolve(data.id);
-            else reject(new Error(`Release no encontrada: ${body}`));
+            const list = JSON.parse(body);
+            const found = list.find((r) => r.tag_name === tag);
+            if (found && found.id) {
+              resolve(found.id);
+            } else {
+              reject(new Error(`Release con tag ${tag} no encontrada en la lista: ${body}`));
+            }
           } catch (e) {
             reject(e);
           }
