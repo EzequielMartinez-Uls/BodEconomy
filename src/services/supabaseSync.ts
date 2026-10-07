@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { CashShift, PettyCashShift, PettyCashTransaction, ExpenseCategory } from '../types';
+import { CashShift, PettyCashShift, PettyCashTransaction, ExpenseCategory, isOpeningPettyCashTx } from '../types';
 import { getLocalTodayStr, getLocalDateTimeStr } from '../utils/dateUtils';
 import { DEFAULT_DENOMINATIONS_NIO, DEFAULT_DENOMINATIONS_USD } from './storage';
 
@@ -306,9 +306,15 @@ export async function syncTransactionToCloud(tx: PettyCashTransaction): Promise<
       cleanNotes && cleanNotes.toLowerCase() !== cleanVendor.toLowerCase()
         ? `${cleanVendor} - ${cleanNotes}`
         : cleanVendor;
+    const isOpeningTransfer =
+      tx.inflowSource === 'TRASLADO_CAJA_GENERAL' ||
+      tx.id?.startsWith('pct-transfer-open-') ||
+      isOpeningPettyCashTx(tx);
     const observaciones = isExpense
       ? (tx.receiptNumber ? `Doc: ${tx.receiptNumber}` : null)
-      : (tx.receiptNumber ? `[TIPO:FONDEO] Doc: ${tx.receiptNumber}` : '[TIPO:FONDEO] Depósito a caja chica');
+      : isOpeningTransfer
+        ? (tx.receiptNumber ? `[OPENING_TRANSFER:TRUE] [TIPO:FONDEO] Doc: ${tx.receiptNumber}` : '[OPENING_TRANSFER:TRUE] [TIPO:FONDEO] Traspaso desde Caja General')
+        : (tx.receiptNumber ? `[TIPO:FONDEO] Doc: ${tx.receiptNumber}` : '[TIPO:FONDEO] Depósito a caja chica');
 
     let cloudJornadaId: number | null = null;
     // 1. Extraer fecha comercial desde shiftId prioritariamente (ej: pc-shift-2026-10-02) para respetar el turno abierto
@@ -808,6 +814,42 @@ export async function syncFullDayClosureToCloud({
 }
 
 /**
+ * Elimina de compras_gastos cualquier traspaso o fondeo de apertura residual al cancelar jornada
+ */
+export async function syncDeleteOpeningTransfersFromCloud(shiftDate: string): Promise<void> {
+  try {
+    // 1. Buscar jornadas correspondientes a la fecha
+    const { data: jornadas } = await supabase
+      .from('jornadas_diarias')
+      .select('id')
+      .eq('fecha', shiftDate);
+
+    const jornadaIds = (jornadas || []).map((j) => j.id);
+
+    // 2. Borrar por jornada_id
+    for (const jId of jornadaIds) {
+      await supabase
+        .from('compras_gastos')
+        .delete()
+        .eq('jornada_id', jId)
+        .or('proveedor.ilike.%Caja General%,observaciones.ilike.%OPENING_TRANSFER%,observaciones.ilike.%deducido al abrir%');
+    }
+
+    // 3. Borrar por rango de fecha_hora
+    await supabase
+      .from('compras_gastos')
+      .delete()
+      .gte('fecha_hora', `${shiftDate}T00:00:00`)
+      .lte('fecha_hora', `${shiftDate}T23:59:59`)
+      .or('proveedor.ilike.%Caja General%,observaciones.ilike.%OPENING_TRANSFER%,observaciones.ilike.%deducido al abrir%');
+
+    console.log(`🧹 Fondeos/traspasos de apertura cancelados purgados en la nube para ${shiftDate}`);
+  } catch (err) {
+    console.warn('⚠️ No se pudieron purgar fondeos de apertura cancelados en Supabase:', err);
+  }
+}
+
+/**
  * Cancela una jornada abierta en Supabase (alertando a las demás PCs y a la web)
  */
 export async function syncCancelShiftToCloud(shiftDate: string): Promise<void> {
@@ -821,6 +863,9 @@ export async function syncCancelShiftToCloud(shiftDate: string): Promise<void> {
       })
       .eq('fecha', shiftDate)
       .eq('estado', 'ABIERTA');
+
+    // Purgar transferencias de apertura huérfanas
+    await syncDeleteOpeningTransfersFromCloud(shiftDate);
   } catch (err) {
     console.warn('⚠️ No se pudo cancelar jornada en Supabase:', err);
   }
@@ -858,6 +903,9 @@ export async function syncCancelPettyCashShiftToCloud(shiftDate: string): Promis
         .update(updatePayload)
         .eq('id', row.id);
     }
+
+    // Purgar transferencias de apertura huérfanas
+    await syncDeleteOpeningTransfersFromCloud(shiftDate);
   } catch (err) {
     console.warn('⚠️ No se pudo cancelar turno de caja chica en la nube:', err);
   }

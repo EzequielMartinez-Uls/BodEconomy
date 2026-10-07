@@ -232,6 +232,15 @@ export const PettyCashView: React.FC<Props> = ({
       if (isOpeningPettyCashTx(tx)) {
         return false;
       }
+      if (selectedShift?.generalCashTransfer && selectedShift.generalCashTransfer > 0) {
+        if (tx.type === 'INFLOW') {
+          const v = (tx.vendor || '').toLowerCase();
+          const n = (tx.notes || '').toLowerCase();
+          if (v.includes('caja general') || n.includes('caja general') || v.includes('deposito a caja chica')) {
+            return false;
+          }
+        }
+      }
       if (selectedShift) {
         if (tx.shiftId) {
           return tx.shiftId === selectedShift.id;
@@ -674,6 +683,18 @@ export const PettyCashView: React.FC<Props> = ({
     // 2. Transacciones del día ordenadas cronológicamente
     const sorted = [...selectedDateTransactions]
       .filter((tx) => !isOpeningPettyCashTx(tx))
+      .filter((tx) => {
+        if (selectedShift?.generalCashTransfer && selectedShift.generalCashTransfer > 0) {
+          if (tx.type === 'INFLOW') {
+            const v = (tx.vendor || '').toLowerCase();
+            const n = (tx.notes || '').toLowerCase();
+            if (v.includes('caja general') || n.includes('caja general') || v.includes('deposito a caja chica')) {
+              return false;
+            }
+          }
+        }
+        return true;
+      })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     for (const tx of sorted) {

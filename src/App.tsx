@@ -23,6 +23,7 @@ import {
   syncGeneralCashOpeningToCloud,
   syncCancelShiftToCloud,
   syncCancelPettyCashShiftToCloud,
+  syncDeleteOpeningTransfersFromCloud,
   syncFullDayClosureToCloud,
   fetchFullCloudState,
   parseShiftFromJornada,
@@ -144,14 +145,35 @@ export function App() {
             else if (g.jornada_id === 9) localDate = '2026-10-01';
             else if (g.jornada_id === 11) localDate = '2026-10-03';
 
+            const isFondeo = isFondeoTransaction(g);
+            const provLower = (g.proveedor || '').toLowerCase();
+            const obsLower = (g.observaciones || '').toLowerCase();
+            const concLower = (g.concepto || '').toLowerCase();
+            const isOpeningTransfer = 
+              obsLower.includes('[opening_transfer:true]') ||
+              provLower.includes('traslado desde caja general') ||
+              provLower.includes('traspaso desde caja general') ||
+              concLower.includes('traspaso inicial') ||
+              concLower.includes('deducido al abrir') ||
+              obsLower.includes('deducido al abrir');
+
+            // Filtrar y omitir registros residuales huérfanos de pruebas canceladas conocidas (ej: 13519 de la prueba del 2026-10-06)
+            if (localDate === '2026-10-06' && Math.abs(Number(g.monto) - 13519) < 1 && (isOpeningTransfer || isFondeo)) {
+              if (g.id) {
+                deleteTransactionFromCloud(g.id).catch(() => {});
+              }
+              continue;
+            }
+
             const cloudTx: PettyCashTransaction = {
-              id: `pct-cloud-${g.id}`,
+              id: isOpeningTransfer ? `pct-transfer-open-${localDate}` : `pct-cloud-${g.id}`,
               shiftId: `pc-shift-${localDate}`,
               date: g.fecha_hora || `${localDate}T12:00:00`,
-              type: isFondeoTransaction(g) ? 'INFLOW' : 'EXPENSE',
+              type: isFondeo ? 'INFLOW' : 'EXPENSE',
+              inflowSource: isOpeningTransfer ? 'TRASLADO_CAJA_GENERAL' : (isFondeo ? 'FONDO_INICIAL' : undefined),
               amount: Number(g.monto) || 0,
               method: g.metodo_pago === 'TRANSFERENCIA' ? 'TRANSFER' : g.metodo_pago === 'TARJETA' ? 'CARD' : 'CASH',
-              vendor: g.proveedor || g.concepto || (isFondeoTransaction(g) ? 'Fondeo Caja Chica' : 'Compra'),
+              vendor: g.proveedor || g.concepto || (isFondeo ? 'Fondeo Caja Chica' : 'Compra'),
               category: mapCloudCategoryToLocal(g.categoria),
               registeredBy: g.registrado_por || 'Eddy',
               notes: g.concepto || g.observaciones || '',
@@ -160,6 +182,10 @@ export function App() {
 
             const existingIdx = updatedTxs.findIndex((t) => {
               if (t.id === cloudTx.id || t.cloudId === g.id) return true;
+              if (isOpeningTransfer && (t.inflowSource === 'TRASLADO_CAJA_GENERAL' || t.id.startsWith('pct-transfer-open-'))) {
+                const sameDate = extractLocalDateStr(t.date) === localDate || t.shiftId === `pc-shift-${localDate}`;
+                if (sameDate) return true;
+              }
               const sameAmount = Math.abs(t.amount - cloudTx.amount) < 0.01;
               const sameVendor = t.vendor.trim().toLowerCase() === cloudTx.vendor.trim().toLowerCase();
               if (sameAmount && sameVendor && !t.cloudId) return true;
@@ -169,11 +195,12 @@ export function App() {
             if (existingIdx !== -1) {
               updatedTxs[existingIdx] = {
                 ...updatedTxs[existingIdx],
-                id: `pct-cloud-${g.id}`,
+                id: isOpeningTransfer ? `pct-transfer-open-${localDate}` : `pct-cloud-${g.id}`,
                 cloudId: g.id,
                 shiftId: cloudTx.shiftId,
                 date: cloudTx.date,
                 type: cloudTx.type,
+                inflowSource: cloudTx.inflowSource || updatedTxs[existingIdx].inflowSource,
                 method: cloudTx.method,
                 amount: cloudTx.amount,
                 notes: cloudTx.notes,
@@ -184,9 +211,18 @@ export function App() {
           }
         }
 
+        // Limpiar residuos huérfanos locales de la prueba cancelada del 2026-10-06 (13519)
+        updatedTxs = updatedTxs.filter((t) => {
+          const isOct6 = extractLocalDateStr(t.date) === '2026-10-06' || t.shiftId === 'pc-shift-2026-10-06';
+          if (isOct6 && Math.abs(t.amount - 13519) < 1) {
+            return false;
+          }
+          return true;
+        });
+
         // Auto-sincronizar transacciones locales pendientes que no se hayan subido a la nube
         const pendingLocalTxs = updatedTxs.filter(
-          (t) => !t.cloudId && !t.id.startsWith('pct-cloud-') && !t.id.startsWith('opening-')
+          (t) => !t.cloudId && !t.id.startsWith('pct-cloud-') && !t.id.startsWith('opening-') && !t.id.startsWith('pct-transfer-open-')
         );
         if (pendingLocalTxs.length > 0) {
           pendingLocalTxs.forEach((ptx) => {
@@ -690,11 +726,20 @@ export function App() {
 
   const handleCancelOpenShift = () => {
     const shiftToCancel = state.currentShift;
+    const cancelDate = shiftToCancel?.date;
     setState((prev) => {
       if (!prev.currentShift) return prev;
       return {
         ...prev,
         currentShift: null,
+        pettyCashTransactions: prev.pettyCashTransactions.filter((t) => {
+          if (!cancelDate) return true;
+          const isThisDate = extractLocalDateStr(t.date) === cancelDate || t.shiftId === `pc-shift-${cancelDate}`;
+          if (isThisDate && (isOpeningPettyCashTx(t) || t.inflowSource === 'TRASLADO_CAJA_GENERAL' || t.id.startsWith('pct-transfer-open-'))) {
+            return false;
+          }
+          return true;
+        }),
         auditLogs: [
           {
             id: `log-${Date.now()}`,
@@ -708,8 +753,8 @@ export function App() {
       };
     });
 
-    if (shiftToCancel?.date) {
-      syncCancelShiftToCloud(shiftToCancel.date).catch((err) =>
+    if (cancelDate) {
+      syncCancelShiftToCloud(cancelDate).catch((err) =>
         console.warn('⚠️ Error al cancelar jornada en la nube:', err)
       );
     }
@@ -717,11 +762,26 @@ export function App() {
 
   const handleCancelPettyCashShift = () => {
     const pettyToCancel = state.currentPettyCashShift;
+    const cancelDate = pettyToCancel?.date;
     setState((prev) => {
       if (!prev.currentPettyCashShift) return prev;
       return {
         ...prev,
         currentPettyCashShift: null,
+        pettyCashTransactions: prev.pettyCashTransactions.filter((t) => {
+          if (!cancelDate) return true;
+          const isThisDate = extractLocalDateStr(t.date) === cancelDate || t.shiftId === `pc-shift-${cancelDate}`;
+          if (
+            isThisDate &&
+            (isOpeningPettyCashTx(t) ||
+              t.inflowSource === 'TRASLADO_CAJA_GENERAL' ||
+              t.id.startsWith('pct-transfer-open-') ||
+              t.id.startsWith('pct-init-'))
+          ) {
+            return false;
+          }
+          return true;
+        }),
         auditLogs: [
           {
             id: `log-${Date.now()}`,
@@ -735,8 +795,8 @@ export function App() {
       };
     });
 
-    if (pettyToCancel?.date) {
-      syncCancelPettyCashShiftToCloud(pettyToCancel.date).catch((err) =>
+    if (cancelDate) {
+      syncCancelPettyCashShiftToCloud(cancelDate).catch((err) =>
         console.warn('⚠️ Error al cancelar jornada de caja chica en la nube:', err)
       );
     }

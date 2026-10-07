@@ -158,13 +158,16 @@ export function isOpeningPettyCashTx(tx: PettyCashTransaction): boolean {
   ) {
     return true;
   }
-  if (tx.inflowSource === 'FONDO_INICIAL') return true;
+  if (tx.inflowSource === 'FONDO_INICIAL' || tx.inflowSource === 'TRASLADO_CAJA_GENERAL') {
+    return true;
+  }
 
   const vendor = (tx.vendor || '').toLowerCase();
   const notes = (tx.notes || '').toLowerCase();
 
-  // Detección de traspasos de apertura deducidos al abrir Caja General
+  // Detección de tags o traspasos de apertura deducidos al abrir Caja General
   if (
+    notes.includes('[opening_transfer:true]') ||
     notes.includes('deducido al abrir') ||
     notes.includes('traspaso inicial') ||
     notes.includes('traspaso al abrir') ||
@@ -174,9 +177,11 @@ export function isOpeningPettyCashTx(tx: PettyCashTransaction): boolean {
   }
 
   if (
-    (tx.inflowSource === 'TRASLADO_CAJA_GENERAL' || tx.type === 'INFLOW') &&
-    (vendor.includes('traslado desde caja general') || vendor.includes('traspaso desde caja general') || vendor.includes('deposito a caja chica')) &&
-    (notes.includes('abrir') || notes.includes('inicial') || notes.includes('apertura'))
+    tx.type === 'INFLOW' &&
+    (vendor.includes('traslado desde caja general') ||
+     vendor.includes('traspaso desde caja general') ||
+     vendor.includes('caja general') ||
+     vendor.includes('deposito a caja chica'))
   ) {
     return true;
   }
