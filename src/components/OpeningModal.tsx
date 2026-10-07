@@ -1079,29 +1079,67 @@ export const OpeningModal: React.FC<Props> = ({
                   </div>
                 </div>
 
-                {/* Barra Contable de Resumen de Ganancia Neta */}
-                <div className="p-3.5 rounded-lg border bg-slate-900 text-white flex flex-wrap items-center justify-between gap-4 text-xs font-mono">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Venta Bruta Total Ayer</span>
-                    <strong className="text-sm font-bold text-white">
-                      C$ {totalVerifiedSales.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Gastos Ayer</span>
-                    <strong className="text-sm font-bold text-rose-300">
-                      -C$ {totalGastosAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
-                    </strong>
-                  </div>
-
-                  <div className="border-l border-slate-700 pl-4">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                      Ganancia Neta Ayer {totalVerifiedSales > 0 && `(${margenNetoAyer.toFixed(1)}%)`}
+                {/* Desglose Contable de Liquidación: Ganancia Neta Real */}
+                <div className="p-4 rounded-xl border bg-slate-900 text-white space-y-3 font-mono text-xs">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span className="text-[11px] uppercase font-bold text-slate-300 font-sans flex items-center gap-1.5">
+                      <TrendingUp className="w-4 h-4 text-emerald-400" />
+                      Cálculo de Ganancia Neta de Ayer (Liquidación Completa del Día)
                     </span>
-                    <strong className={`text-base font-bold ${gananciaNetaAyer >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      C$ {gananciaNetaAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
-                    </strong>
+                    <span className="text-[10px] text-slate-400 font-sans">
+                      Fórmula del Excel Oficial
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div className="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/60">
+                      <span className="text-[10px] text-slate-400 block uppercase font-sans">1. Venta Bruta Total</span>
+                      <strong className="text-sm font-bold text-white">
+                        +C$ {totalVerifiedSales.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                      </strong>
+                    </div>
+
+                    <div className="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/60">
+                      <span className="text-[10px] text-rose-300 block uppercase font-sans">2. (-) Compras Efectivo</span>
+                      <strong className="text-sm font-bold text-rose-300">
+                        -C$ {numCashExpensesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                      </strong>
+                    </div>
+
+                    <div className="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/60">
+                      <span className="text-[10px] text-blue-300 block uppercase font-sans">3. (-) Transferencias</span>
+                      <strong className="text-sm font-bold text-blue-300">
+                        -C$ {numTransferExpensesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                      </strong>
+                    </div>
+
+                    <div className="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/60">
+                      <span className="text-[10px] text-amber-300 block uppercase font-sans">4. (-) Propina Personal</span>
+                      <strong className="text-sm font-bold text-amber-300">
+                        -C$ {numTipsExpensesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950/70 p-3 rounded-lg border border-slate-800/80">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">
+                        = Ganancia Neta del Día (Pagando Gastos y Propina)
+                      </span>
+                      <span className="text-[11px] text-slate-400 font-sans">
+                        Utilidad real del restaurante tras pagar todos los egresos del día
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className={`text-xl font-bold font-mono block ${gananciaNetaAyer >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        C$ {gananciaNetaAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                      </span>
+                      {totalVerifiedSales > 0 && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-800 font-sans font-bold inline-block mt-0.5">
+                          Margen Neto: {margenNetoAyer.toFixed(1)}%
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1264,6 +1302,37 @@ export const OpeningModal: React.FC<Props> = ({
                     <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Fondo Caja Chica</span>
                     <strong className="text-lg font-bold font-mono text-emerald-400">
                       C$ {resultingPettyInitialBalance.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Resumen Contable de Auditoría de Ayer */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs font-mono space-y-1.5">
+                <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-slate-500 block">
+                  Resumen Contable Oficial de la Jornada Anterior (Auditado):
+                </span>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <span className="text-slate-500 font-sans block text-[11px]">Venta Bruta:</span>
+                    <strong className="text-slate-800 text-xs">C$ {totalVerifiedSales.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 font-sans block text-[11px]">Compras Efectivo:</span>
+                    <strong className="text-rose-600 text-xs">-C$ {numCashExpensesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 font-sans block text-[11px]">Transferencias:</span>
+                    <strong className="text-blue-600 text-xs">-C$ {numTransferExpensesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 font-sans block text-[11px]">Propina Pagada:</span>
+                    <strong className="text-amber-600 text-xs">-C$ {numTipsExpensesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
+                  </div>
+                  <div className="border-l border-slate-300 pl-3">
+                    <span className="text-slate-500 font-sans block text-[11px]">Ganancia Neta:</span>
+                    <strong className={`text-sm font-bold ${gananciaNetaAyer >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                      C$ {gananciaNetaAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                     </strong>
                   </div>
                 </div>

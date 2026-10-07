@@ -108,40 +108,22 @@ export function App() {
       setState((prev) => {
         const today = getLocalTodayStr();
 
-        // 1. Unificar Historial de Turnos de Caja General
+        // 1. Supabase es el cerebro oficial del Historial de Turnos de Caja General:
         let mergedHistory = [...cloudHistory];
-        // Si la nube está completamente limpia para producción, no arrastrar turnos locales de prueba
-        if (cloudHistory.length === 0 && (!gastos || gastos.length === 0)) {
-          mergedHistory = [];
-        } else {
-          for (const localS of prev.shiftHistory) {
-            if (!mergedHistory.some((c) => c.date === localS.date)) {
-              mergedHistory.push(localS);
-            }
-          }
-        }
         mergedHistory.sort((a, b) => b.date.localeCompare(a.date));
 
-        // 2. Determinar Turno Activo de Caja General
-        let currentShift = prev.currentShift;
-        if (activeShift) {
-          currentShift = activeShift;
-        } else if (currentShift && currentShift.date !== today) {
-          currentShift = null;
-        }
+        // 2. Determinar Turno Activo de Caja General desde Supabase:
+        let currentShift = activeShift || null;
 
-        // 3. Determinar Turno Activo de Caja Chica
-        let currentPettyCashShift = prev.currentPettyCashShift;
-        if (activePettyShift) {
-          currentPettyCashShift = activePettyShift;
-        } else if (currentPettyCashShift && currentPettyCashShift.date !== today) {
-          currentPettyCashShift = null;
-        }
+        // 3. Determinar Turno Activo de Caja Chica desde Supabase:
+        let currentPettyCashShift = activePettyShift || null;
 
-        // 4. Limpiar residuos locales de apertura que causaban duplicados
-        let updatedTxs = prev.pettyCashTransactions.filter(
-          (t) => !t.id.startsWith('pct-init-')
+        // 4. Supabase es el cerebro oficial de Compras y Gastos:
+        // Solo conservamos del estado local las transacciones que fueron creadas offline y están pendientes de subir
+        const pendingOfflineLocalTxs = prev.pettyCashTransactions.filter(
+          (t) => !t.cloudId && !t.id.startsWith('pct-cloud-') && !t.id.startsWith('pct-init-') && t.syncStatus === 'PENDING'
         );
+        let updatedTxs: PettyCashTransaction[] = [...pendingOfflineLocalTxs];
 
         if (gastos && gastos.length > 0) {
           for (const g of gastos) {
