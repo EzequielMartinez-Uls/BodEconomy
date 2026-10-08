@@ -289,7 +289,7 @@ export const GeneralCashView: React.FC<Props> = ({
     const dayPettyExpenses = (state.pettyCashTransactions || [])
       .filter((t) => t.type === 'EXPENSE' && extractLocalDateStr(t.date) === editingShift.date)
       .reduce((sum, t) => sum + (t.amount || 0), 0);
-    const dailyNetProfit = parseFloat((totalGrossSales - dayPettyExpenses).toFixed(2));
+    const dailyNetProfit = parseFloat((totalGrossSales - dayPettyExpenses - totalTipCollected).toFixed(2));
 
     const updated: CashShift = {
       ...editingShift,

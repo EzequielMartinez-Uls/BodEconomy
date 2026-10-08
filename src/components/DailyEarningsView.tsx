@@ -283,7 +283,17 @@ export const DailyEarningsView: React.FC<Props> = ({
         item.pettyCashExpenses += tx.amount || 0;
       }
       item.totalExpenses = item.pettyCashExpenses + item.transfersPaid;
-      item.netEarnings = item.totalGrossSales - item.totalExpenses;
+    });
+
+    // Calcular ganancia neta para cada día: si está cerrado, usar el valor auditado oficial de cierre (Excel); si está abierto, restar gastos y propinas
+    map.forEach((item) => {
+      const shift = (state.shiftHistory || []).find((s) => s.date === item.date) ||
+        (state.currentShift?.date === item.date ? state.currentShift : null);
+      if (shift?.dailyNetProfit !== undefined && shift.dailyNetProfit !== null && shift.status === 'CLOSED') {
+        item.netEarnings = Number(shift.dailyNetProfit);
+      } else {
+        item.netEarnings = item.totalGrossSales - item.totalExpenses - (item.tipsCollected || 0);
+      }
     });
 
     // Ordenar cronológicamente descendente (más reciente primero)
