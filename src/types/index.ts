@@ -248,6 +248,16 @@ export interface AuditLogEntry {
 
 export * from './payroll';
 
+export interface VendorItem {
+  id: string;
+  name: string;
+  defaultCategory: ExpenseCategory | string;
+  phone?: string;
+  notes?: string;
+  active: boolean;
+  createdAt?: string;
+}
+
 export interface AppState {
   currentShift: CashShift | null;
   shiftHistory: CashShift[];
@@ -262,6 +272,7 @@ export interface AppState {
   activeAdminName: string;
   availableAdmins: string[];
   expenseCategories: string[];
+  vendorsList?: VendorItem[];
   
   // Módulo de Nóminas y Planillas
   payrollEmployees: import('./payroll').PayrollEmployee[];

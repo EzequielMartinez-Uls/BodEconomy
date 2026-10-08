@@ -1,4 +1,4 @@
-import { AppState, CashShift, DenominationsNIO, DenominationsUSD, PettyCashShift, PettyCashTransaction, TablewareItem, isOpeningPettyCashTx } from '../types';
+import { AppState, CashShift, DenominationsNIO, DenominationsUSD, PettyCashShift, PettyCashTransaction, TablewareItem, isOpeningPettyCashTx, VendorItem } from '../types';
 import { getLocalTodayStr, addDaysToDateStr, formatDateToFriendly, getLocalDateTimeStr, extractLocalDateStr } from '../utils/dateUtils';
 
 export { formatDateToFriendly, getLocalTodayStr, addDaysToDateStr, getLocalDateTimeStr, extractLocalDateStr };
@@ -73,6 +73,38 @@ export const DEFAULT_EXPENSE_CATEGORIES = [
   'LACTEOS',
   'PAGOS_PERSONAL',
   'OTROS',
+];
+
+export const DEFAULT_VENDORS: VendorItem[] = [
+  { id: 'v-carnic', name: 'CARNIC', defaultCategory: 'CARNES', active: true },
+  { id: 'v-carniceria-sm', name: 'Carnicería SM', defaultCategory: 'CARNES', active: true },
+  { id: 'v-camarones', name: 'Camarones', defaultCategory: 'CARNES', active: true },
+  { id: 'v-pollo', name: 'Pollo', defaultCategory: 'POLLO', active: true },
+  { id: 'v-hielo-olito', name: 'Hielo Olito', defaultCategory: 'HIELO', active: true },
+  { id: 'v-coca-cola', name: 'Coca Cola', defaultCategory: 'BEBIDAS', active: true },
+  { id: 'v-fuente-pura', name: 'Fuente Pura', defaultCategory: 'BEBIDAS', active: true },
+  { id: 'v-agua', name: 'Agua', defaultCategory: 'BEBIDAS', active: true },
+  { id: 'v-chelinas', name: 'Chelinas', defaultCategory: 'BEBIDAS', active: true },
+  { id: 'v-flor-de-cana', name: 'Flor de Caña', defaultCategory: 'BEBIDAS_ALCOHOLICAS', active: true },
+  { id: 'v-cerveceria', name: 'Pago de cerveceria', defaultCategory: 'BEBIDAS_ALCOHOLICAS', active: true },
+  { id: 'v-delivery', name: 'Delivery', defaultCategory: 'DELIVERYS_ACARREOS', active: true },
+  { id: 'v-rapivoy', name: 'Rapivoy', defaultCategory: 'DELIVERYS_ACARREOS', active: true },
+  { id: 'v-triciclo', name: 'Triciclo', defaultCategory: 'DELIVERYS_ACARREOS', active: true },
+  { id: 'v-mercado', name: 'Mercado', defaultCategory: 'FRUTAS_VEGETALES', active: true },
+  { id: 'v-supermercado', name: 'Supermercado', defaultCategory: 'SUPERMERCADO', active: true },
+  { id: 'v-comercial-paniagua', name: 'Comercial Paniagua', defaultCategory: 'SUPERMERCADO', active: true },
+  { id: 'v-sym', name: 'SyM', defaultCategory: 'SUPERMERCADO', active: true },
+  { id: 'v-cerro-de-oro', name: 'Cerro de Oro', defaultCategory: 'SUPERMERCADO', active: true },
+  { id: 'v-pan-y-paz', name: 'Pan y Paz', defaultCategory: 'SUPERMERCADO', active: true },
+  { id: 'v-cafe-soluble', name: 'Café Soluble', defaultCategory: 'SUPERMERCADO', active: true },
+  { id: 'v-dokar', name: 'Dokar', defaultCategory: 'SUPERMERCADO', active: true },
+  { id: 'v-pulperia', name: 'Pulpería', defaultCategory: 'SUPERMERCADO', active: true },
+  { id: 'v-quesillo', name: 'Quesillo', defaultCategory: 'LACTEOS', active: true },
+  { id: 'v-gas', name: 'Gas', defaultCategory: 'OTROS', active: true },
+  { id: 'v-tortilleria', name: 'Tortillería', defaultCategory: 'OTROS', active: true },
+  { id: 'v-ferreteria', name: 'Ferretería', defaultCategory: 'OTROS', active: true },
+  { id: 'v-alcaldia', name: 'Alcaldía', defaultCategory: 'OTROS', active: true },
+  { id: 'v-eddy-martinez', name: 'Eddy Martínez', defaultCategory: 'GASTOS ADMINISTRATIVOS', active: true },
 ];
 
 import { PayrollEmployee } from '../types/payroll';
@@ -221,6 +253,7 @@ export const INITIAL_STATE: AppState = {
   activeAdminName: 'Eddy',
   availableAdmins: ['Eddy', 'Xiomara', 'Ezequiel', 'Snyder'],
   expenseCategories: DEFAULT_EXPENSE_CATEGORIES,
+  vendorsList: DEFAULT_VENDORS,
   
   // Nóminas y Planillas
   payrollEmployees: DEFAULT_PAYROLL_EMPLOYEES,
@@ -248,6 +281,11 @@ export function loadState(): AppState {
     // Categorías de gastos editables
     if (!loaded.expenseCategories || loaded.expenseCategories.length === 0) {
       loaded.expenseCategories = [...DEFAULT_EXPENSE_CATEGORIES];
+    }
+
+    // Catálogo de proveedores
+    if (!loaded.vendorsList || loaded.vendorsList.length === 0) {
+      loaded.vendorsList = [...DEFAULT_VENDORS];
     }
 
     // Mapeo para actualizar nombres antiguos a los oficiales completos

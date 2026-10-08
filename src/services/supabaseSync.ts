@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
-import { CashShift, PettyCashShift, PettyCashTransaction, ExpenseCategory, isOpeningPettyCashTx } from '../types';
+import { CashShift, PettyCashShift, PettyCashTransaction, ExpenseCategory, isOpeningPettyCashTx, VendorItem } from '../types';
 import { getLocalTodayStr, getLocalDateTimeStr } from '../utils/dateUtils';
-import { DEFAULT_DENOMINATIONS_NIO, DEFAULT_DENOMINATIONS_USD } from './storage';
+import { DEFAULT_DENOMINATIONS_NIO, DEFAULT_DENOMINATIONS_USD, DEFAULT_VENDORS, DEFAULT_EXPENSE_CATEGORIES } from './storage';
 
 const SUPABASE_URL = 'https://kwkyvdoacselhbrnvney.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3a3l2ZG9hY3NlbGhicm52bmV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyMjkzMDUsImV4cCI6MjEwMzgwNTMwNX0.rKU17TVTQkSqY0_Te-osW8EJhSBoYITEn9_Xug4dTAI';
@@ -551,7 +551,7 @@ export async function fetchCloudActiveShift(): Promise<{
 }> {
   try {
     const [{ data: jData }, { data: gData }] = await Promise.all([
-      supabase.from('jornadas_diarias').select('*').order('id', { ascending: false }).limit(1),
+      supabase.from('jornadas_diarias').select('*').neq('turno', 'CONFIG').order('id', { ascending: false }).limit(1),
       supabase.from('compras_gastos').select('*').order('fecha_hora', { ascending: false }).limit(200),
     ]);
 
@@ -1084,7 +1084,7 @@ export async function fetchFullCloudState(): Promise<{
   try {
     const today = getLocalTodayStr();
     const [{ data: jData }, { data: gData }] = await Promise.all([
-      supabase.from('jornadas_diarias').select('*').order('fecha', { ascending: false }).limit(45),
+      supabase.from('jornadas_diarias').select('*').neq('turno', 'CONFIG').order('fecha', { ascending: false }).limit(45),
       supabase.from('compras_gastos').select('*').order('fecha_hora', { ascending: false }).limit(350),
     ]);
 
@@ -1205,3 +1205,309 @@ export async function fetchFullCloudState(): Promise<{
     return { activeShift: null, activePettyShift: null, shiftHistory: [], pettyCashShiftHistory: [], gastos: [] };
   }
 }
+
+/**
+ * Consulta y sincroniza el catálogo de Proveedores y Categorías desde Supabase
+ */
+export async function fetchCloudCatalogs(): Promise<{
+  vendors: VendorItem[];
+  categories: string[];
+}> {
+  try {
+    // 1. Obtener registro de configuración del catálogo
+    const { data: configRows } = await supabase
+      .from('jornadas_diarias')
+      .select('id, observaciones')
+      .eq('responsable', 'SYSTEM_CATALOGS')
+      .limit(1);
+
+    let cloudVendors: VendorItem[] = [];
+    let cloudCategories: string[] = [];
+
+    if (configRows && configRows.length > 0) {
+      const obs = configRows[0].observaciones || '';
+      const tag = '[SYSTEM_CATALOGS:';
+      const start = obs.indexOf(tag);
+      if (start !== -1) {
+        const lastBracket = obs.lastIndexOf(']');
+        const jsonStr = obs.substring(start + tag.length, lastBracket);
+        try {
+          const parsed = JSON.parse(jsonStr);
+          if (Array.isArray(parsed.vendors)) cloudVendors = parsed.vendors;
+          if (Array.isArray(parsed.categories)) cloudCategories = parsed.categories;
+        } catch (e) {
+          console.warn('Error parsing SYSTEM_CATALOGS json:', e);
+        }
+      }
+    }
+
+    // 2. Extraer proveedores y categorías históricas de compras_gastos para asegurar que no falte ninguno
+    const { data: gastosRows } = await supabase
+      .from('compras_gastos')
+      .select('proveedor, categoria');
+
+    const historicalVendorsMap = new Map<string, string>();
+    const historicalCategoriesSet = new Set<string>();
+
+    if (gastosRows) {
+      for (const row of gastosRows) {
+        if (row.proveedor && row.proveedor.trim()) {
+          const p = row.proveedor.trim();
+          if (!historicalVendorsMap.has(p.toLowerCase())) {
+            historicalVendorsMap.set(p.toLowerCase(), row.categoria || 'OTROS');
+          }
+        }
+        if (row.categoria && row.categoria.trim()) {
+          historicalCategoriesSet.add(row.categoria.trim());
+        }
+      }
+    }
+
+    // Fusionar proveedores
+    const finalVendors: VendorItem[] = cloudVendors.length > 0 ? [...cloudVendors] : [...DEFAULT_VENDORS];
+    const existingNames = new Set(finalVendors.map(v => v.name.toLowerCase().trim()));
+
+    // Agregar proveedores de compras_gastos que no estuvieran en la lista
+    historicalVendorsMap.forEach((cat, name) => {
+      if (!existingNames.has(name)) {
+        const origRow = gastosRows?.find(r => r.proveedor?.toLowerCase().trim() === name);
+        const origName = origRow?.proveedor?.trim() || name;
+        finalVendors.push({
+          id: `v-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          name: origName,
+          defaultCategory: cat,
+          active: true,
+        });
+        existingNames.add(name);
+      }
+    });
+
+    // Fusionar categorías
+    const finalCategoriesSet = new Set<string>([
+      ...DEFAULT_EXPENSE_CATEGORIES,
+      ...cloudCategories,
+      ...historicalCategoriesSet,
+    ]);
+    finalCategoriesSet.delete('FONDEO'); // 'FONDEO' es tipo de movimiento, no categoría de gasto operativo
+    const finalCategories = Array.from(finalCategoriesSet);
+
+    return {
+      vendors: finalVendors,
+      categories: finalCategories,
+    };
+  } catch (err) {
+    console.warn('⚠️ Error al consultar catálogos en la nube (usando locales):', err);
+    return {
+      vendors: [...DEFAULT_VENDORS],
+      categories: [...DEFAULT_EXPENSE_CATEGORIES],
+    };
+  }
+}
+
+/**
+ * Guarda y actualiza el catálogo oficial de Proveedores y Categorías en Supabase
+ */
+export async function syncCatalogsToCloud(
+  vendors: VendorItem[],
+  categories: string[]
+): Promise<boolean> {
+  try {
+    const payload = {
+      version: 1,
+      updatedAt: new Date().toISOString(),
+      vendors,
+      categories,
+    };
+
+    const obsString = `[SYSTEM_CATALOGS:${JSON.stringify(payload)}]`;
+
+    const { data: existing } = await supabase
+      .from('jornadas_diarias')
+      .select('id')
+      .eq('responsable', 'SYSTEM_CATALOGS')
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      const { error } = await supabase
+        .from('jornadas_diarias')
+        .update({
+          observaciones: obsString,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existing[0].id);
+
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from('jornadas_diarias')
+        .insert({
+          fecha: '1999-01-01',
+          turno: 'CONFIG',
+          estado: 'CERRADA',
+          fondo_inicial: 0,
+          total_gastos_efectivo: 0,
+          total_gastos_transferencia: 0,
+          responsable: 'SYSTEM_CATALOGS',
+          observaciones: obsString,
+          fecha_cierre: '1999-01-01T00:00:00Z',
+        });
+
+      if (error) throw error;
+    }
+
+    console.log(`✅ Catálogo de ${vendors.length} proveedores y ${categories.length} categorías guardado en Supabase.`);
+    return true;
+  } catch (err) {
+    console.warn('⚠️ Error al guardar catálogo en Supabase:', err);
+    return false;
+  }
+}
+
+export interface ExpenseAnalyticsData {
+  totalAmount: number;
+  cashAmount: number;
+  cashPercent: number;
+  transferAmount: number;
+  transferPercent: number;
+  byCategory: {
+    category: string;
+    label: string;
+    total: number;
+    count: number;
+    percent: number;
+  }[];
+  byVendor: {
+    vendor: string;
+    total: number;
+    count: number;
+    percent: number;
+    mainCategory: string;
+  }[];
+  totalTransactionsCount: number;
+}
+
+/**
+ * Consulta todas las compras/gastos de Supabase y calcula estadísticas y distribución
+ */
+export async function fetchCloudExpensesAnalytics(
+  dateFilter: 'ALL' | 'MONTH' | 'WEEK' = 'ALL'
+): Promise<ExpenseAnalyticsData> {
+  try {
+    let query = supabase
+      .from('compras_gastos')
+      .select('*')
+      .order('fecha_hora', { ascending: false });
+
+    const todayStr = getLocalTodayStr();
+    if (dateFilter === 'MONTH') {
+      const monthPrefix = todayStr.slice(0, 7); // 'YYYY-MM'
+      query = query.gte('fecha_hora', `${monthPrefix}-01T00:00:00`);
+    } else if (dateFilter === 'WEEK') {
+      const d = new Date();
+      d.setDate(d.getDate() - 7);
+      const weekAgoStr = d.toISOString().slice(0, 10);
+      query = query.gte('fecha_hora', `${weekAgoStr}T00:00:00`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const rows = data || [];
+    const realExpenses = rows.filter((r) => !isFondeoTransaction(r));
+
+    let totalAmount = 0;
+    let cashAmount = 0;
+    let transferAmount = 0;
+
+    const catMap = new Map<string, { total: number; count: number }>();
+    const vendorMap = new Map<string, { total: number; count: number; catCounts: Map<string, number> }>();
+
+    for (const item of realExpenses) {
+      const monto = Number(item.monto) || 0;
+      totalAmount += monto;
+
+      if (item.metodo_pago === 'TRANSFERENCIA') {
+        transferAmount += monto;
+      } else {
+        cashAmount += monto;
+      }
+
+      // Por Categoría
+      const cat = item.categoria || 'OTROS';
+      const curCat = catMap.get(cat) || { total: 0, count: 0 };
+      curCat.total += monto;
+      curCat.count += 1;
+      catMap.set(cat, curCat);
+
+      // Por Proveedor
+      const vendorName = item.proveedor ? item.proveedor.trim() : 'Sin Proveedor';
+      const curVendor = vendorMap.get(vendorName) || {
+        total: 0,
+        count: 0,
+        catCounts: new Map<string, number>(),
+      };
+      curVendor.total += monto;
+      curVendor.count += 1;
+      curVendor.catCounts.set(cat, (curVendor.catCounts.get(cat) || 0) + 1);
+      vendorMap.set(vendorName, curVendor);
+    }
+
+    const cashPercent = totalAmount > 0 ? (cashAmount / totalAmount) * 100 : 0;
+    const transferPercent = totalAmount > 0 ? (transferAmount / totalAmount) * 100 : 0;
+
+    const byCategory = Array.from(catMap.entries())
+      .map(([category, info]) => ({
+        category,
+        label: category.replace(/_/g, ' '),
+        total: info.total,
+        count: info.count,
+        percent: totalAmount > 0 ? (info.total / totalAmount) * 100 : 0,
+      }))
+      .sort((a, b) => b.total - a.total);
+
+    const byVendor = Array.from(vendorMap.entries())
+      .map(([vendor, info]) => {
+        let topCat = 'OTROS';
+        let topCount = -1;
+        info.catCounts.forEach((cnt, c) => {
+          if (cnt > topCount) {
+            topCount = cnt;
+            topCat = c;
+          }
+        });
+
+        return {
+          vendor,
+          total: info.total,
+          count: info.count,
+          percent: totalAmount > 0 ? (info.total / totalAmount) * 100 : 0,
+          mainCategory: topCat,
+        };
+      })
+      .sort((a, b) => b.total - a.total);
+
+    return {
+      totalAmount,
+      cashAmount,
+      cashPercent,
+      transferAmount,
+      transferPercent,
+      byCategory,
+      byVendor,
+      totalTransactionsCount: realExpenses.length,
+    };
+  } catch (err) {
+    console.warn('⚠️ Error al calcular análisis de gastos en Supabase:', err);
+    return {
+      totalAmount: 0,
+      cashAmount: 0,
+      cashPercent: 0,
+      transferAmount: 0,
+      transferPercent: 0,
+      byCategory: [],
+      byVendor: [],
+      totalTransactionsCount: 0,
+    };
+  }
+}
+

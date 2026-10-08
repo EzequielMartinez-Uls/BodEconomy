@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { AppState, CashShift, PettyCashShift, PettyCashTransaction, TablewareItem, TablewareLoss, isOpeningPettyCashTx } from './types';
+import { AppState, CashShift, PettyCashShift, PettyCashTransaction, TablewareItem, TablewareLoss, isOpeningPettyCashTx, VendorItem } from './types';
 import { loadState, saveState, INITIAL_STATE } from './services/storage';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
@@ -27,6 +27,7 @@ import {
   syncDeleteOpeningTransfersFromCloud,
   syncFullDayClosureToCloud,
   fetchFullCloudState,
+  fetchCloudCatalogs,
   parseShiftFromJornada,
   mapCloudCategoryToLocal,
   isFondeoTransaction,
@@ -34,12 +35,6 @@ import {
   supabase,
 } from './services/supabaseSync';
 import { getLocalTodayStr, getLocalDateTimeStr, extractLocalDateStr } from './utils/dateUtils';
-import {
-  MOCK_YESTERDAY_DATE,
-  MOCK_YESTERDAY_SHIFT,
-  MOCK_YESTERDAY_PETTY_SHIFT,
-  MOCK_YESTERDAY_PETTY_TRANSACTIONS,
-} from './services/mockTestDay';
 
 export function App() {
   const [state, setState] = useState<AppState>(loadState);
@@ -104,7 +99,16 @@ export function App() {
 
   // Sincronización en tiempo real con Supabase (Nube Interconectada PC + Móvil)
   useEffect(() => {
-    // 1. Al iniciar, chequear estado completo de la nube y sincronizar con otras PCs y la web
+    // 1. Al iniciar, chequear catálogos oficiales de proveedores y categorías desde Supabase
+    fetchCloudCatalogs().then(({ vendors, categories }) => {
+      setState((prev) => ({
+        ...prev,
+        vendorsList: vendors,
+        expenseCategories: categories,
+      }));
+    }).catch(console.warn);
+
+    // 2. Al iniciar, chequear estado completo de la nube y sincronizar con otras PCs y la web
     fetchFullCloudState().then(({ activeShift, activePettyShift, shiftHistory: cloudHistory, pettyCashShiftHistory: cloudPettyHistory, gastos }) => {
       setState((prev) => {
         const today = getLocalTodayStr();
@@ -899,6 +903,23 @@ export function App() {
     }));
   };
 
+  const handleUpdateVendors = (vendors: VendorItem[]) => {
+    setState((prev) => ({
+      ...prev,
+      vendorsList: vendors,
+      auditLogs: [
+        {
+          id: `log-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          user: prev.activeAdminName,
+          action: 'ACTUALIZAR_CATALOGO_PROVEEDORES',
+          details: `Catálogo de proveedores actualizado: ${vendors.length} proveedores configurados`,
+        },
+        ...prev.auditLogs,
+      ],
+    }));
+  };
+
   const handleAddPettyCashTransaction = async (tx: PettyCashTransaction) => {
     const txWithStatus: PettyCashTransaction = {
       ...tx,
@@ -1226,45 +1247,7 @@ export function App() {
     }));
   };
 
-  const handleRestoreState = (importedState: AppState) => {
-    setState(importedState);
-  };
 
-  const handleResetState = () => {
-    try {
-      localStorage.clear();
-    } catch (e) {
-      console.error(e);
-    }
-    setState(INITIAL_STATE);
-  };
-
-  const handleLoadMockData = () => {
-    setState((prev) => {
-      const updatedHistory = [
-        MOCK_YESTERDAY_SHIFT,
-        ...prev.shiftHistory.filter((s) => s.date !== MOCK_YESTERDAY_DATE),
-      ].sort((a, b) => b.date.localeCompare(a.date));
-
-      const updatedPettyHistory = [
-        MOCK_YESTERDAY_PETTY_SHIFT,
-        ...(prev.pettyCashShiftHistory || []).filter((s) => s.date !== MOCK_YESTERDAY_DATE),
-      ].sort((a, b) => b.date.localeCompare(a.date));
-
-      const updatedTxs = [
-        ...prev.pettyCashTransactions.filter((tx) => !tx.id.startsWith(`pct-${MOCK_YESTERDAY_DATE}`)),
-        ...MOCK_YESTERDAY_PETTY_TRANSACTIONS,
-      ];
-
-      return {
-        ...prev,
-        shiftHistory: updatedHistory,
-        pettyCashShiftHistory: updatedPettyHistory,
-        pettyCashTransactions: updatedTxs,
-        pettyCashBalance: 660,
-      };
-    });
-  };
 
   const handleUpdateShiftSales = (
     date: string,
@@ -1509,10 +1492,8 @@ export function App() {
         onUpdateExchangeRate={handleUpdateExchangeRate}
         onAddAdmin={handleAddAdmin}
         onRemoveAdmin={handleRemoveAdmin}
-        onRestoreState={handleRestoreState}
-        onResetState={handleResetState}
-        onLoadMockData={handleLoadMockData}
         onUpdateExpenseCategories={handleUpdateExpenseCategories}
+        onUpdateVendors={handleUpdateVendors}
       />
 
       <AdminSelectModal

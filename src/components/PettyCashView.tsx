@@ -2362,11 +2362,26 @@ export const PettyCashView: React.FC<Props> = ({
                 <input
                   type="text"
                   required
-                  placeholder="Ej: Lomo de res, 10 bolsas de hielo, Verduras del mercado..."
+                  list="registered-vendors-list"
+                  placeholder="Ej: CARNIC, Hielo Olito, Supermercado..."
                   value={vendor}
-                  onChange={(e) => setVendor(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setVendor(val);
+                    const matched = (state.vendorsList || []).find(
+                      (v) => v.name.toLowerCase().trim() === val.toLowerCase().trim()
+                    );
+                    if (matched && matched.defaultCategory) {
+                      setCategory(matched.defaultCategory as ExpenseCategory);
+                    }
+                  }}
                   className="w-full px-3 py-2 text-xs font-semibold rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-[#1c6856]"
                 />
+                <datalist id="registered-vendors-list">
+                  {(state.vendorsList || []).map((v) => (
+                    <option key={v.id} value={v.name} />
+                  ))}
+                </datalist>
               </div>
 
               {/* Forma de Pago */}
@@ -2797,8 +2812,18 @@ export const PettyCashView: React.FC<Props> = ({
                   <input
                     type="text"
                     required
+                    list="registered-vendors-list"
                     value={editVendor}
-                    onChange={(e) => setEditVendor(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditVendor(val);
+                      const matched = (state.vendorsList || []).find(
+                        (v) => v.name.toLowerCase().trim() === val.toLowerCase().trim()
+                      );
+                      if (matched && matched.defaultCategory) {
+                        setEditCategory(matched.defaultCategory as ExpenseCategory);
+                      }
+                    }}
                     placeholder="Ej: Lomo de res, 10 bolsas de hielo, Verduras..."
                     className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#1c6856]"
                   />
