@@ -924,7 +924,7 @@ export const DailyEarningsView: React.FC<Props> = ({
               </h3>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Evolución día por día: Efectivo (Verde) vs Tarjetas (Índigo) vs Delivery (Naranja)
+              Comparativa día a día: Lo Generado (Ventas) vs Gastos de Caja Chica (barras a la par)
             </p>
           </div>
 
@@ -972,8 +972,12 @@ export const DailyEarningsView: React.FC<Props> = ({
             <span className="text-slate-700">PedidosYa</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-md bg-rose-400 inline-block" />
-            <span className="text-slate-700">Gastos Caja Chica</span>
+            <span className="w-3 h-3 rounded-md bg-purple-500 inline-block" />
+            <span className="text-slate-700">Otros Ingresos</span>
+          </div>
+          <div className="flex items-center gap-1.5 pl-2 border-l border-slate-200">
+            <span className="w-3 h-3 rounded-md bg-rose-500 inline-block" />
+            <span className="text-slate-900 font-extrabold">Gastos Caja Chica (A la par)</span>
           </div>
         </div>
 
@@ -986,14 +990,18 @@ export const DailyEarningsView: React.FC<Props> = ({
           <div className="relative pt-6 pb-2">
             <div className="h-56 flex items-end justify-between gap-2 sm:gap-3 px-2">
               {chartDays.map((d, idx) => {
-                const total = d.totalGrossSales;
+                const salesTotal = d.totalGrossSales;
+                const expensesTotal = d.totalExpenses;
                 const isSelected = d.date === selectedDate;
                 const isHovered = hoveredBarIndex === idx;
 
-                const cashH = maxSales > 0 ? (d.cashSales / maxSales) * 100 : 0;
-                const cardH = maxSales > 0 ? (d.totalCards / maxSales) * 100 : 0;
-                const deliveryH = maxSales > 0 ? (d.pedidosYaSales / maxSales) * 100 : 0;
-                const totalH = Math.min(cashH + cardH + deliveryH, 100);
+                const salesHeightPct = maxSales > 0 ? (salesTotal / maxSales) * 100 : 0;
+                const expensesHeightPct = maxSales > 0 ? (expensesTotal / maxSales) * 100 : 0;
+
+                const cashPctOfSales = salesTotal > 0 ? (d.cashSales / salesTotal) * 100 : 0;
+                const cardPctOfSales = salesTotal > 0 ? (d.totalCards / salesTotal) * 100 : 0;
+                const pedidosYaPctOfSales = salesTotal > 0 ? (d.pedidosYaSales / salesTotal) * 100 : 0;
+                const otherPctOfSales = salesTotal > 0 ? ((d.otherIncomeSales || 0) / salesTotal) * 100 : 0;
 
                 return (
                   <div
@@ -1005,52 +1013,115 @@ export const DailyEarningsView: React.FC<Props> = ({
                   >
                     {/* Tooltip Emergente */}
                     {isHovered && (
-                      <div className="absolute -top-24 z-20 bg-slate-900 text-white p-2.5 rounded-xl shadow-xl text-left whitespace-nowrap border border-slate-700 animate-in fade-in zoom-in-95 pointer-events-none">
-                        <div className="font-bold text-xs text-amber-400 capitalize">{d.dayLabel}</div>
-                        <div className="text-[11px] font-mono mt-1 space-y-0.5">
-                          <div className="text-emerald-300">Efectivo: C$ {d.cashSales.toFixed(2)}</div>
-                          <div className="text-indigo-300">Tarjetas: C$ {d.totalCards.toFixed(2)}</div>
-                          <div className="text-white font-extrabold pt-0.5 border-t border-slate-700">
-                            Total: C$ {d.totalGrossSales.toFixed(2)}
+                      <div className="absolute -top-36 z-30 bg-slate-900/95 backdrop-blur-xs text-white p-3 rounded-xl shadow-2xl text-left whitespace-nowrap border border-slate-700 animate-in fade-in zoom-in-95 pointer-events-none">
+                        <div className="font-extrabold text-xs text-amber-400 capitalize flex items-center justify-between gap-3">
+                          <span>{d.dayLabel}</span>
+                          <span className="text-[10px] text-slate-400 font-mono">{d.date}</span>
+                        </div>
+                        <div className="text-[11px] font-mono mt-2 space-y-1">
+                          <div className="text-emerald-300 flex items-center justify-between gap-4">
+                            <span>Efectivo:</span>
+                            <span className="font-bold">C$ {d.cashSales.toFixed(2)}</span>
+                          </div>
+                          <div className="text-indigo-300 flex items-center justify-between gap-4">
+                            <span>Tarjetas:</span>
+                            <span className="font-bold">C$ {d.totalCards.toFixed(2)}</span>
+                          </div>
+                          {d.pedidosYaSales > 0 && (
+                            <div className="text-amber-300 flex items-center justify-between gap-4">
+                              <span>PedidosYa:</span>
+                              <span className="font-bold">C$ {d.pedidosYaSales.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {(d.otherIncomeSales || 0) > 0 && (
+                            <div className="text-purple-300 flex items-center justify-between gap-4">
+                              <span>Otros Ingresos:</span>
+                              <span className="font-bold">C$ {(d.otherIncomeSales || 0).toFixed(2)}</span>
+                            </div>
+                          )}
+                          <div className="text-slate-100 font-extrabold pt-1 border-t border-slate-700 flex items-center justify-between gap-4">
+                            <span>Total Generado:</span>
+                            <span className="text-white">C$ {salesTotal.toFixed(2)}</span>
+                          </div>
+                          <div className="text-rose-300 pt-1 border-t border-slate-800 flex items-center justify-between gap-4">
+                            <span>Gastos Caja:</span>
+                            <span className="font-bold">- C$ {expensesTotal.toFixed(2)}</span>
+                          </div>
+                          <div className="text-emerald-400 font-black pt-1 border-t border-slate-700 flex items-center justify-between gap-4">
+                            <span>Ganancia Neta:</span>
+                            <span>C$ {d.netEarnings.toFixed(2)}</span>
                           </div>
                         </div>
                       </div>
                     )}
 
-                    {/* Valor numérico encima de la barra si está seleccionada */}
+                    {/* Badge numérico encima de las barras si está seleccionada */}
                     {isSelected && (
-                      <span className="text-[9px] font-mono font-extrabold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded mb-1 animate-bounce">
-                        C$ {Math.round(total)}
-                      </span>
+                      <div className="flex items-center gap-1 mb-1 animate-bounce">
+                        <span className="text-[9px] font-mono font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1 py-0.5 rounded shadow-2xs">
+                          C$ {Math.round(salesTotal)}
+                        </span>
+                      </div>
                     )}
 
-                    {/* Columna de la Barra Apilada */}
+                    {/* Contenedor de las dos barras A LA PAR (Generado vs Gastos) */}
                     <div
-                      className={`w-full max-w-[42px] rounded-t-xl overflow-hidden flex flex-col justify-end transition-all duration-300 ${
+                      className={`w-full max-w-[52px] h-full flex items-end justify-center gap-1 sm:gap-1.5 p-1 rounded-xl transition-all duration-300 ${
                         isSelected
-                          ? 'ring-2 ring-indigo-600 ring-offset-2 shadow-md'
-                          : 'opacity-85 hover:opacity-100'
+                          ? 'bg-indigo-50/70 ring-2 ring-indigo-600 ring-offset-2 shadow-sm'
+                          : 'hover:bg-slate-50'
                       }`}
-                      style={{ height: `${Math.max(totalH, 4)}%` }}
                     >
-                      {deliveryH > 0 && (
-                        <div
-                          className="w-full bg-amber-500"
-                          style={{ height: `${(deliveryH / (totalH || 1)) * 100}%` }}
-                        />
-                      )}
-                      {cardH > 0 && (
-                        <div
-                          className="w-full bg-indigo-600"
-                          style={{ height: `${(cardH / (totalH || 1)) * 100}%` }}
-                        />
-                      )}
-                      {cashH > 0 && (
-                        <div
-                          className="w-full bg-emerald-500"
-                          style={{ height: `${(cashH / (totalH || 1)) * 100}%` }}
-                        />
-                      )}
+                      {/* Barra 1: Lo Generado (Ventas Apiladas) */}
+                      <div
+                        className="w-1/2 max-w-[20px] rounded-t-md overflow-hidden flex flex-col justify-end transition-all duration-300 shadow-2xs"
+                        style={{ height: `${Math.max(salesHeightPct, salesTotal > 0 ? 5 : 2)}%` }}
+                        title={`Generado: C$ ${salesTotal.toFixed(2)}`}
+                      >
+                        {salesTotal === 0 ? (
+                          <div className="w-full h-[2px] bg-slate-200 rounded-full" />
+                        ) : (
+                          <>
+                            {otherPctOfSales > 0 && (
+                              <div
+                                className="w-full bg-purple-500"
+                                style={{ height: `${otherPctOfSales}%` }}
+                              />
+                            )}
+                            {pedidosYaPctOfSales > 0 && (
+                              <div
+                                className="w-full bg-amber-500"
+                                style={{ height: `${pedidosYaPctOfSales}%` }}
+                              />
+                            )}
+                            {cardPctOfSales > 0 && (
+                              <div
+                                className="w-full bg-indigo-600"
+                                style={{ height: `${cardPctOfSales}%` }}
+                              />
+                            )}
+                            {cashPctOfSales > 0 && (
+                              <div
+                                className="w-full bg-emerald-500"
+                                style={{ height: `${cashPctOfSales}%` }}
+                              />
+                            )}
+                          </>
+                        )}
+                      </div>
+
+                      {/* Barra 2: Gastos de Caja Chica (A LA PAR) */}
+                      <div
+                        className="w-1/2 max-w-[20px] rounded-t-md overflow-hidden flex flex-col justify-end transition-all duration-300 shadow-2xs"
+                        style={{ height: `${Math.max(expensesHeightPct, expensesTotal > 0 ? 5 : 2)}%` }}
+                        title={`Gastos Caja Chica: C$ ${expensesTotal.toFixed(2)}`}
+                      >
+                        {expensesTotal === 0 ? (
+                          <div className="w-full h-[2px] bg-slate-200 rounded-full" />
+                        ) : (
+                          <div className="w-full h-full bg-rose-500 hover:bg-rose-600 transition-colors" />
+                        )}
+                      </div>
                     </div>
 
                     {/* Etiqueta del Eje X */}
