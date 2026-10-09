@@ -2064,12 +2064,6 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                     <td class="text-right font-mono">- C$ ${tipsDeductedFromDrawer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   ` : ''}
-                  ${transferPetty > 0 ? `
-                  <tr>
-                    <td>(-) Traslado a Caja Chica</td>
-                    <td class="text-right font-mono">- C$ ${transferPetty.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                  ` : ''}
                   ${otherWithdrawals > 0 ? `
                   <tr>
                     <td>(-) Otras Deducciones y Reservas</td>

@@ -1084,12 +1084,6 @@ export const ClosingModal: React.FC<Props> = ({
                         <strong className="font-mono text-emerald-700">+ C$ {depositedFromPettyCash.toFixed(2)}</strong>
                       </div>
                     )}
-                    {transferToPettyCash > 0 && (
-                      <div className="flex justify-between text-slate-600">
-                        <span>(-) Pagos / Salidas a Caja Chica:</span>
-                        <strong className="font-mono text-rose-600">- C$ {transferToPettyCash.toFixed(2)}</strong>
-                      </div>
-                    )}
                     {tipsPaidAmount > 0 && (
                       <div className="flex justify-between text-slate-600">
                         <span>(-) Propinas Pagadas en Efectivo:</span>

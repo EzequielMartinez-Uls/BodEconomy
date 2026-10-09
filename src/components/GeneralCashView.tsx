@@ -604,22 +604,6 @@ export const GeneralCashView: React.FC<Props> = ({
               <span className="text-[11px] text-slate-500">C$ + USD convertidos</span>
             </div>
           </div>
-
-          {Boolean(currentShift.transferToPettyCash && currentShift.transferToPettyCash > 0) && (
-            <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 flex items-center justify-between flex-wrap gap-2 text-xs">
-              <div>
-                <span className="font-semibold text-slate-700 block">
-                  Traspasos entregados a Caja Chica (Salidas de Gaveta):
-                </span>
-                <div className="text-base font-bold text-rose-700 font-mono mt-0.5">
-                  - C$ {currentShift.transferToPettyCash?.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
-                </div>
-              </div>
-              <span className="text-[11px] text-slate-500">
-                Deducido del arqueo nocturno para cuadre exacto de efectivo.
-              </span>
-            </div>
-          )}
         </div>
       ) : (
         <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-2xs space-y-4">
