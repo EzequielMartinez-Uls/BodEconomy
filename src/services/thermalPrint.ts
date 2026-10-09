@@ -2501,6 +2501,8 @@ export function printOfficialOpeningActBN(
 
     const hasNioBreakdown = nioRows.some((r) => r.q > 0);
     const hasUsdBreakdown = usdRows.some((r) => r.q > 0);
+    const nioTotalCounted = nioRows.reduce((sum, r) => sum + (r.q * r.v), 0);
+    const openingTransferToPetty = shift.openingTransferToPettyCash || shift.transferToPettyCash || 0;
 
     // Datos contables de ganancias de ayer (resumen verificado)
     const rawSummary = earningsSummary || shift.openingEarningsSummary;
@@ -2742,10 +2744,25 @@ export function printOfficialOpeningActBN(
                       </td>
                     </tr>
                   `}
+                  ${openingTransferToPetty > 0 ? `
+                  <tr style="border-top: 1px solid #000; font-size: 9.5px;">
+                    <td colspan="2">Efectivo Físico Inicial Contado:</td>
+                    <td class="text-right font-mono font-bold">C$ ${nioTotalCounted.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr style="color: #b91c1c; font-size: 9.5px;">
+                    <td colspan="2">(-) Traslado Inicial a Caja Chica:</td>
+                    <td class="text-right font-mono font-bold">- C$ ${openingTransferToPetty.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr class="highlight-row">
+                    <td colspan="2"><strong>FONDO NETO EN GAVETA (NIO):</strong></td>
+                    <td class="text-right font-mono font-bold" style="font-size: 11px;">C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  ` : `
                   <tr class="highlight-row">
                     <td colspan="2"><strong>SUBTOTAL CÓRDOBAS (NIO):</strong></td>
                     <td class="text-right font-mono font-bold" style="font-size: 12px;">C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
+                  `}
                 </tbody>
               </table>
             </div>

@@ -169,11 +169,34 @@ export const ClosingModal: React.FC<Props> = ({
     auditStatus = 'SHORTAGE';
   }
 
-  // Gastos de Caja Chica del Día para ver la ganancia neta real (Compras en Efectivo de Insumos)
-  const dayPettyExpenses = useMemo(() => {
+  // Gastos de Caja Chica del Día para ver la ganancia neta real
+  const dayPettyExpensesCash = useMemo(() => {
     return (state.pettyCashTransactions || [])
-      .filter((t) => t.type === 'EXPENSE' && extractLocalDateStr(t.date) === shift.date)
+      .filter((t) => t.type === 'EXPENSE' && extractLocalDateStr(t.date) === shift.date && (t.method === 'CASH' || !t.method))
       .reduce((sum, t) => sum + (t.amount || 0), 0);
+  }, [state.pettyCashTransactions, shift.date]);
+
+  const dayPettyExpensesTransf = useMemo(() => {
+    return (state.pettyCashTransactions || [])
+      .filter((t) => t.type === 'EXPENSE' && extractLocalDateStr(t.date) === shift.date && (t.method === 'TRANSFER' || t.method === 'CARD'))
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+  }, [state.pettyCashTransactions, shift.date]);
+
+  const dayPettyExpenses = dayPettyExpensesCash + dayPettyExpensesTransf;
+
+  const dayTransactions = useMemo(() => {
+    return (state.pettyCashTransactions || [])
+      .filter((t) => extractLocalDateStr(t.date) === shift.date)
+      .map((t) => ({
+        id: t.id,
+        hora: new Date(t.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        categoria: t.category,
+        concepto: t.vendor + (t.notes ? ` - ${t.notes}` : ''),
+        proveedor: t.vendor,
+        metodo: t.method === 'CASH' ? 'Efectivo' : t.method === 'CARD' ? 'Tarjeta' : 'Transferencia',
+        monto: t.amount,
+        tipo: t.type === 'INFLOW' ? ('INGRESO' as const) : ('GASTO' as const),
+      }));
   }, [state.pettyCashTransactions, shift.date]);
 
   const pendingPettyTransactions = useMemo(() => {
@@ -274,6 +297,33 @@ export const ClosingModal: React.FC<Props> = ({
     };
 
     onConfirmClose(closedShift);
+
+    // 🖨️ Mandar obligatoriamente a imprimir el Acta Oficial Completa de Cierre del Día (2 Hojas B/N: General + Chica)
+    printOfficialActBN({
+      shift: closedShift,
+      date: shift.date,
+      modo: 'TODO',
+      salesCash: salesCashSystem,
+      cardsBAC,
+      cardsFicohsa,
+      cardsBanpro,
+      cardsLafise,
+      totalCards,
+      salesPedidosYa,
+      totalGross: totalGrossSales,
+      netProfit: dailyNetProfit,
+      marginPercent: totalGrossSales > 0 ? (dailyNetProfit / totalGrossSales) * 100 : 0,
+      responsableCaja: closedBy,
+      observacionesGeneral: closingNotes,
+      fondoInicial: state.currentPettyCashShift?.initialBalance ?? 2000,
+      expensesCash: dayPettyExpensesCash,
+      expensesTransf: dayPettyExpensesTransf,
+      expensesTotal: dayPettyExpenses,
+      saldoRemanente: state.pettyCashBalance,
+      responsableCajaChica: state.currentPettyCashShift?.openedBy || closedBy,
+      transactions: dayTransactions,
+    });
+
     onClose();
   };
 
@@ -1402,10 +1452,10 @@ export const ClosingModal: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={handleFinishClosing}
-                className="flex items-center gap-1.5 px-6 py-2.5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold shadow-sm transition cursor-pointer"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold shadow-sm transition cursor-pointer"
               >
-                <CheckCheck className="w-4 h-4" />
-                <span>Finalizar y Cerrar Turno</span>
+                <Printer className="w-4 h-4 text-rose-200" />
+                <span>Finalizar Cierre e Imprimir Acta Oficial Completa (2 Hojas)</span>
               </button>
             )}
           </div>

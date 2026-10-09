@@ -469,9 +469,8 @@ export const OpeningModal: React.FC<Props> = ({
     };
 
     onConfirmOpen(newShift, updatedPreviousShift, pettyOpeningData);
-    if (autoPrintActa) {
-      printOfficialOpeningActBN(newShift, openerName, openingEarningsSummary);
-    }
+    // 🖨️ Mandar obligatoriamente a imprimir el Acta Oficial de Apertura (1 Hoja B/N)
+    printOfficialOpeningActBN(newShift, openerName, openingEarningsSummary, 'SOLO_FONDO');
     onClose();
   };
 
@@ -1440,7 +1439,7 @@ export const OpeningModal: React.FC<Props> = ({
                 />
               </div>
 
-              {/* Opción de Impresión Automática del Acta Oficial */}
+              {/* Impresión Oficial Obligatoria del Acta Oficial de Apertura */}
               <div className="bg-emerald-50 border border-emerald-200/80 rounded-xl p-3 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-[#1c6856] text-white flex items-center justify-center shrink-0">
@@ -1448,22 +1447,17 @@ export const OpeningModal: React.FC<Props> = ({
                   </div>
                   <div>
                     <span className="text-xs font-bold text-slate-900 block">
-                      Imprimir Acta Oficial de Apertura (2 Hojas A4)
+                      Impresión Oficial Obligatoria (1 Hoja B/N)
                     </span>
                     <span className="text-[11px] text-slate-500 block">
-                      Hoja 1: Fondo de gaveta • Hoja 2 (Final): Ganancias de ayer (tarjetas, PedidosYa, efectivo real c/ salidas y gastos)
+                      Al confirmar, se abrirá el acta oficial con el conteo de billetes, subtotal en gaveta y firma del cajero.
                     </span>
                   </div>
                 </div>
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-[#1c6856] bg-white px-3 py-1.5 rounded-lg border border-emerald-200 shadow-2xs hover:bg-emerald-50/50 transition">
-                  <input
-                    type="checkbox"
-                    checked={autoPrintActa}
-                    onChange={(e) => setAutoPrintActa(e.target.checked)}
-                    className="w-4 h-4 rounded text-[#1c6856] focus:ring-[#1c6856] cursor-pointer"
-                  />
-                  <span>Imprimir al abrir</span>
-                </label>
+                <div className="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-xs font-bold border border-emerald-200 flex items-center gap-1.5 shrink-0">
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>Obligatorio</span>
+                </div>
               </div>
 
               {/* Botones de Acción */}
@@ -1483,7 +1477,7 @@ export const OpeningModal: React.FC<Props> = ({
                   className="px-6 py-2.5 rounded-lg bg-[#1c6856] hover:bg-[#154f42] text-white font-bold text-sm shadow-sm flex items-center gap-2 cursor-pointer transition"
                 >
                   <CheckCircle className="w-4 h-4" />
-                  <span>{autoPrintActa ? 'Confirmar Apertura e Imprimir Acta' : 'Confirmar Apertura del Día (Ambas Cajas)'}</span>
+                  <span>Confirmar Apertura e Imprimir Acta Oficial (1 Hoja)</span>
                 </button>
               </div>
             </div>
