@@ -2446,7 +2446,7 @@ export function printOfficialOpeningActBN(
   shift: CashShift,
   adminName?: string,
   earningsSummary?: CashShift['openingEarningsSummary'],
-  mode: 'AMBAS' | 'SOLO_GANANCIAS' | 'SOLO_FONDO' = 'AMBAS'
+  mode: 'SOLO_FONDO' | 'SOLO_GANANCIAS' | 'AMBAS' = 'SOLO_FONDO'
 ): void {
   try {
     const date = shift.date;
@@ -2477,27 +2477,30 @@ export function printOfficialOpeningActBN(
     });
 
     const nioRows = [
-      { l: '1,000', v: 1000, q: shift.openingNIO[1000] || 0 },
-      { l: '500', v: 500, q: shift.openingNIO[500] || 0 },
-      { l: '200', v: 200, q: shift.openingNIO[200] || 0 },
-      { l: '100', v: 100, q: shift.openingNIO[100] || 0 },
-      { l: '50', v: 50, q: shift.openingNIO[50] || 0 },
-      { l: '20', v: 20, q: shift.openingNIO[20] || 0 },
-      { l: '10', v: 10, q: shift.openingNIO[10] || 0 },
-      { l: 'Monedas de 5', v: 5, q: shift.openingNIO[5] || 0 },
-      { l: 'Monedas de 1', v: 1, q: shift.openingNIO[1] || 0 },
-      { l: 'Monedas de 0.50', v: 0.5, q: shift.openingNIO[0.5] || 0 },
+      { l: '1,000', v: 1000, q: shift.openingNIO?.[1000] || 0 },
+      { l: '500', v: 500, q: shift.openingNIO?.[500] || 0 },
+      { l: '200', v: 200, q: shift.openingNIO?.[200] || 0 },
+      { l: '100', v: 100, q: shift.openingNIO?.[100] || 0 },
+      { l: '50', v: 50, q: shift.openingNIO?.[50] || 0 },
+      { l: '20', v: 20, q: shift.openingNIO?.[20] || 0 },
+      { l: '10', v: 10, q: shift.openingNIO?.[10] || 0 },
+      { l: 'Monedas de 5', v: 5, q: shift.openingNIO?.[5] || 0 },
+      { l: 'Monedas de 1', v: 1, q: shift.openingNIO?.[1] || 0 },
+      { l: 'Monedas de 0.50', v: 0.5, q: shift.openingNIO?.[0.5] || 0 },
     ];
 
     const usdRows = [
-      { l: '100', v: 100, q: shift.openingUSD[100] || 0 },
-      { l: '50', v: 50, q: shift.openingUSD[50] || 0 },
-      { l: '20', v: 20, q: shift.openingUSD[20] || 0 },
-      { l: '10', v: 10, q: shift.openingUSD[10] || 0 },
-      { l: '5', v: 5, q: shift.openingUSD[5] || 0 },
-      { l: '2', v: 2, q: shift.openingUSD[2] || 0 },
-      { l: '1', v: 1, q: shift.openingUSD[1] || 0 },
+      { l: '100', v: 100, q: shift.openingUSD?.[100] || 0 },
+      { l: '50', v: 50, q: shift.openingUSD?.[50] || 0 },
+      { l: '20', v: 20, q: shift.openingUSD?.[20] || 0 },
+      { l: '10', v: 10, q: shift.openingUSD?.[10] || 0 },
+      { l: '5', v: 5, q: shift.openingUSD?.[5] || 0 },
+      { l: '2', v: 2, q: shift.openingUSD?.[2] || 0 },
+      { l: '1', v: 1, q: shift.openingUSD?.[1] || 0 },
     ];
+
+    const hasNioBreakdown = nioRows.some((r) => r.q > 0);
+    const hasUsdBreakdown = usdRows.some((r) => r.q > 0);
 
     // Datos contables de ganancias de ayer (resumen verificado)
     const rawSummary = earningsSummary || shift.openingEarningsSummary;
@@ -2664,6 +2667,9 @@ export function printOfficialOpeningActBN(
       </style>
     `;
 
+    const showSheet1 = mode === 'AMBAS' || mode === 'SOLO_FONDO';
+    const showSheet2 = mode === 'AMBAS' || mode === 'SOLO_GANANCIAS';
+
     // ── HOJA 1: ARQUEO FÍSICO Y FONDO DE APERTURA ──────────────────────────────
     const sheet1Html = `
       <div class="sheet">
@@ -2716,7 +2722,7 @@ export function printOfficialOpeningActBN(
                   </tr>
                 </thead>
                 <tbody>
-                  ${nioRows
+                  ${hasNioBreakdown ? nioRows
                     .map(
                       (r) => `
                     <tr>
@@ -2726,7 +2732,16 @@ export function printOfficialOpeningActBN(
                     </tr>
                   `
                     )
-                    .join('')}
+                    .join('') : `
+                    <tr>
+                      <td colspan="2" style="padding: 16px 8px; font-style: italic; color: #444;">
+                        Fondo de apertura recibido en efectivo para gaveta operativa
+                      </td>
+                      <td class="text-right font-mono font-bold" style="padding: 16px 8px; font-size: 11px;">
+                        C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  `}
                   <tr class="highlight-row">
                     <td colspan="2"><strong>SUBTOTAL CÓRDOBAS (NIO):</strong></td>
                     <td class="text-right font-mono font-bold" style="font-size: 12px;">C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
@@ -2749,7 +2764,7 @@ export function printOfficialOpeningActBN(
                   </tr>
                 </thead>
                 <tbody>
-                  ${usdRows
+                  ${hasUsdBreakdown ? usdRows
                     .map(
                       (r) => `
                     <tr>
@@ -2759,7 +2774,16 @@ export function printOfficialOpeningActBN(
                     </tr>
                   `
                     )
-                    .join('')}
+                    .join('') : `
+                    <tr>
+                      <td colspan="2" style="padding: 16px 8px; font-style: italic; color: #444;">
+                        ${(shift.openingNotes && shift.openingNotes.toLowerCase().includes('sobre')) ? 'Dólares apartados en sobre para Gerencia' : 'Sin dólares recibidos en gaveta'}
+                      </td>
+                      <td class="text-right font-mono font-bold" style="padding: 16px 8px;">
+                        $ 0.00
+                      </td>
+                    </tr>
+                  `}
                   <tr class="highlight-row">
                     <td colspan="2"><strong>SUBTOTAL DÓLARES:</strong></td>
                     <td class="text-right font-mono font-bold" style="font-size: 12px;">$ ${shift.totalOpeningUSD.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
@@ -2809,7 +2833,7 @@ export function printOfficialOpeningActBN(
           <!-- PIE DE HOJA 1 -->
           <div style="margin-top: 12px; padding-top: 6px; border-top: 1px solid #000;">
             <div style="font-size: 9px; color: #444; text-align: center;">
-              El Bodegón Restaurante & Bar • Documento Oficial de Apertura • Página 1 de 2
+              El Bodegón Restaurante & Bar • Documento Oficial de Apertura • ${showSheet2 ? 'Página 1 de 2' : 'Página 1 de 1'}
             </div>
           </div>
         </div>
@@ -3006,9 +3030,6 @@ export function printOfficialOpeningActBN(
         </div>
       </div>
     `;
-
-    const showSheet1 = mode === 'AMBAS' || mode === 'SOLO_FONDO';
-    const showSheet2 = mode === 'AMBAS' || mode === 'SOLO_GANANCIAS';
 
     const titleToolbar = mode === 'SOLO_GANANCIAS'
       ? 'Liquidación y Ganancias de Ayer'

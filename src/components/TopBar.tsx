@@ -78,16 +78,26 @@ export const TopBar: React.FC<Props> = ({
     month: 'long',
   });
 
-  const handlePrintActaTopBar = (modo: 'TODO' | 'GENERAL' | 'CHICA' | 'APERTURA') => {
+  const handlePrintActaTopBar = (modo: 'TODO' | 'GENERAL' | 'CHICA' | 'APERTURA' | 'GANANCIAS_AYER') => {
     const shift = activeShift;
     const dateToUse = shift?.date || targetDateStr;
 
     if (modo === 'APERTURA') {
       if (shift) {
-        const yesterdayEarnings = computeYesterdayEarningsSummary(state, shift.date);
-        printOfficialOpeningActBN(shift, state.activeAdminName, yesterdayEarnings);
+        printOfficialOpeningActBN(shift, state.activeAdminName, undefined, 'SOLO_FONDO');
       } else {
         alert('No hay un turno de caja disponible para imprimir el acta de apertura.');
+      }
+      setPrintModalOpen(false);
+      return;
+    }
+
+    if (modo === 'GANANCIAS_AYER') {
+      if (shift) {
+        const yesterdayEarnings = computeYesterdayEarningsSummary(state, shift.date);
+        printOfficialOpeningActBN(shift, state.activeAdminName, yesterdayEarnings, 'SOLO_GANANCIAS');
+      } else {
+        alert('No hay un turno de caja disponible.');
       }
       setPrintModalOpen(false);
       return;

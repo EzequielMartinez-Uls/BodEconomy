@@ -668,6 +668,8 @@ export async function syncUnifiedDayOpeningToCloud(
       openingNotes: generalShift.openingNotes || '',
       openedBy: generalShift.openedBy,
       totalOpeningEquivNIO: generalShift.totalOpeningEquivNIO,
+      openingNIO: generalShift.openingNIO,
+      openingUSD: generalShift.openingUSD,
     };
 
     const fondosComp = pettyShift
@@ -952,6 +954,8 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
   let totalOpeningUSD = existingShift?.totalOpeningUSD || 0;
   let exchangeRate = existingShift?.exchangeRate || 36.0;
   let openingNotes = existingShift?.openingNotes || '';
+  let openingNIO = existingShift?.openingNIO || DEFAULT_DENOMINATIONS_NIO;
+  let openingUSD = existingShift?.openingUSD || DEFAULT_DENOMINATIONS_USD;
 
   const openMatch = obs.match(/\[OPENING_DATA:(\{.*?\})\]/);
   if (openMatch && openMatch[1]) {
@@ -961,6 +965,8 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
       totalOpeningUSD = Number(p.totalOpeningUSD) || totalOpeningUSD;
       exchangeRate = Number(p.exchangeRate) || exchangeRate;
       if (p.openingNotes) openingNotes = p.openingNotes;
+      if (p.openingNIO) openingNIO = p.openingNIO;
+      if (p.openingUSD) openingUSD = p.openingUSD;
     } catch {}
   }
 
@@ -1060,8 +1066,8 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
     closedAt: j.fecha_cierre || existingShift?.closedAt || undefined,
     verifiedPreviousClosingId: existingShift?.verifiedPreviousClosingId || null,
     openingNotes,
-    openingNIO: existingShift?.openingNIO || DEFAULT_DENOMINATIONS_NIO,
-    openingUSD: existingShift?.openingUSD || DEFAULT_DENOMINATIONS_USD,
+    openingNIO,
+    openingUSD,
     totalOpeningNIO,
     totalOpeningUSD,
     totalOpeningEquivNIO,

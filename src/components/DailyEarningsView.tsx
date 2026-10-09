@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { AppState, DailyEarningsSummary, CashShift } from '../types';
-import { printOfficialActBN, printOfficialOpeningActBN } from '../services/thermalPrint';
+import { printOfficialActBN, printOfficialOpeningActBN, computeYesterdayEarningsSummary } from '../services/thermalPrint';
 import { exportDailyEarningsToExcel, exportMonthlyEarningsToExcel } from '../services/excelExport';
 import { PrintOfficialActModal } from './PrintOfficialActModal';
 import { getLocalTodayStr, addDaysToDateStr, extractLocalDateStr } from '../utils/dateUtils';
@@ -401,16 +401,27 @@ export const DailyEarningsView: React.FC<Props> = ({
       : 0;
 
   // Manejador para imprimir el acta oficial en Blanco y Negro (1 o 2 Hojas)
-  const handlePrintActa = (modo: 'TODO' | 'GENERAL' | 'CHICA' | 'APERTURA') => {
+  const handlePrintActa = (modo: 'TODO' | 'GENERAL' | 'CHICA' | 'APERTURA' | 'GANANCIAS_AYER') => {
     const shift =
       (state.shiftHistory || []).find((s) => s.date === selectedDate) ||
       (state.currentShift?.date === selectedDate ? state.currentShift : null);
 
     if (modo === 'APERTURA') {
       if (shift) {
-        printOfficialOpeningActBN(shift, state.activeAdminName);
+        printOfficialOpeningActBN(shift, state.activeAdminName, undefined, 'SOLO_FONDO');
       } else {
         alert('No se encontró un turno de caja registrado para esta fecha para imprimir el acta de apertura.');
+      }
+      setShowPrintActaModal(false);
+      return;
+    }
+
+    if (modo === 'GANANCIAS_AYER') {
+      if (shift) {
+        const yesterdayEarnings = computeYesterdayEarningsSummary(state, shift.date);
+        printOfficialOpeningActBN(shift, state.activeAdminName, yesterdayEarnings, 'SOLO_GANANCIAS');
+      } else {
+        alert('No se encontró un turno de caja para esta fecha.');
       }
       setShowPrintActaModal(false);
       return;

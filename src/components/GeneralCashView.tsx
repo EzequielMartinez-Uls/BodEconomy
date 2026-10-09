@@ -101,14 +101,20 @@ export const GeneralCashView: React.FC<Props> = ({
   const [transferNotes, setTransferNotes] = useState('');
   const [selectedShiftForActa, setSelectedShiftForActa] = useState<CashShift | null>(null);
 
-  const handlePrintActaForShift = (modo: 'TODO' | 'GENERAL' | 'CHICA' | 'APERTURA') => {
+  const handlePrintActaForShift = (modo: 'TODO' | 'GENERAL' | 'CHICA' | 'APERTURA' | 'GANANCIAS_AYER') => {
     if (!selectedShiftForActa) return;
     const shift = selectedShiftForActa;
     const dateStr = shift.date;
 
     if (modo === 'APERTURA') {
+      printOfficialOpeningActBN(shift, state.activeAdminName, undefined, 'SOLO_FONDO');
+      setSelectedShiftForActa(null);
+      return;
+    }
+
+    if (modo === 'GANANCIAS_AYER') {
       const yesterdayEarnings = computeYesterdayEarningsSummary(state, shift.date);
-      printOfficialOpeningActBN(shift, state.activeAdminName, yesterdayEarnings);
+      printOfficialOpeningActBN(shift, state.activeAdminName, yesterdayEarnings, 'SOLO_GANANCIAS');
       setSelectedShiftForActa(null);
       return;
     }
@@ -522,14 +528,13 @@ export const GeneralCashView: React.FC<Props> = ({
 
               <button
                 onClick={() => {
-                  const yesterdayEarnings = computeYesterdayEarningsSummary(state, currentShift.date);
-                  printOfficialOpeningActBN(currentShift, state.activeAdminName, yesterdayEarnings);
+                  printOfficialOpeningActBN(currentShift, state.activeAdminName, undefined, 'SOLO_FONDO');
                 }}
                 className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-black text-white font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
-                title="Imprimir Acta Oficial de Apertura Completa (2 Hojas A4: Fondo + Ganancias de Ayer)"
+                title="Imprimir Acta Oficial de Apertura (1 Hoja A4: Arqueo y Fondo de Gaveta)"
               >
                 <Printer className="w-3.5 h-3.5 text-amber-400" />
-                <span>Acta Apertura (B/N)</span>
+                <span>Acta Apertura (1 Hoja B/N)</span>
               </button>
 
               <button

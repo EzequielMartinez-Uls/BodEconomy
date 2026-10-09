@@ -1,11 +1,11 @@
 import React from 'react';
-import { Printer, X, ChevronRight, FileText, Sunrise, Banknote, ShoppingCart } from 'lucide-react';
+import { Printer, X, ChevronRight, FileText, Sunrise, Banknote, ShoppingCart, TrendingUp } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   dateStr: string; // YYYY-MM-DD
-  onPrint: (modo: 'TODO' | 'GENERAL' | 'CHICA' | 'APERTURA') => void;
+  onPrint: (modo: 'TODO' | 'GENERAL' | 'CHICA' | 'APERTURA' | 'GANANCIAS_AYER') => void;
 }
 
 export const PrintOfficialActModal: React.FC<Props> = ({
@@ -112,14 +112,36 @@ export const PrintOfficialActModal: React.FC<Props> = ({
               <div className="flex items-center gap-2">
                 <Sunrise className="w-4 h-4 text-[#1c6856] shrink-0" />
                 <span className="font-bold text-xs text-slate-900">
-                  ACTA OFICIAL DE APERTURA (2 HOJAS B/N)
+                  ACTA OFICIAL DE APERTURA (1 HOJA B/N)
                 </span>
                 <span className="text-[9.5px] font-bold uppercase px-2 py-0.5 rounded-md bg-emerald-50 text-[#1c6856] border border-emerald-200">
-                  Apertura + Ganancias
+                  Fondo de Gaveta
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 mt-0.5 pl-6">
-                Hoja 1: Fondo de gaveta y billetes • Hoja 2 (Final): Ganancias de ayer (tarjetas, PedidosYa, efectivo real c/ salidas y gastos).
+                Arqueo físico de inicio, conteo de billetes en gaveta, fondo operativo y firmas.
+              </p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition shrink-0" />
+          </button>
+
+          {/* Opción 3: Estado de Ganancias de Ayer */}
+          <button
+            onClick={() => onPrint('GANANCIAS_AYER')}
+            className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-indigo-400 bg-slate-50 hover:bg-white text-slate-900 transition cursor-pointer flex items-center justify-between group shadow-2xs"
+          >
+            <div>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-indigo-600 shrink-0" />
+                <span className="font-bold text-xs text-slate-900">
+                  ESTADO DE GANANCIAS JORNADA ANTERIOR (1 HOJA B/N)
+                </span>
+                <span className="text-[9.5px] font-bold uppercase px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  Auditoría de Ventas
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-0.5 pl-6">
+                Ventas multibanco (POS), PedidosYa, efectivo real c/ salidas, gastos y ganancia neta.
               </p>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition shrink-0" />
