@@ -255,7 +255,7 @@ export const OpeningModal: React.FC<Props> = ({
 
   // Propina entregada de ayer (como gasto/salida de la jornada según cierre)
   const initialTipsAyer = useMemo(() => {
-    return lastClosedShift?.totalTipCollected || 0;
+    return lastClosedShift?.tipDistributedTotal || lastClosedShift?.totalTipCollected || 0;
   }, [lastClosedShift]);
 
   const [reportCashExpensesAyer, setReportCashExpensesAyer] = useState<string>('');
@@ -265,12 +265,14 @@ export const OpeningModal: React.FC<Props> = ({
   React.useEffect(() => {
     setReportCashExpensesAyer(initialCashExpensesAyer > 0 ? String(initialCashExpensesAyer) : '0');
     setReportTransferExpensesAyer(initialTransferExpensesAyer > 0 ? String(initialTransferExpensesAyer) : '0');
-    setReportTipsExpensesAyer(initialTipsAyer > 0 ? String(initialTipsAyer) : '0');
+    if (initialTipsAyer > 0) {
+      setReportTipsExpensesAyer(String(initialTipsAyer));
+    }
   }, [initialCashExpensesAyer, initialTransferExpensesAyer, initialTipsAyer]);
 
   const numCashExpensesAyer = reportCashExpensesAyer !== '' ? parseFloat(reportCashExpensesAyer) || 0 : initialCashExpensesAyer;
   const numTransferExpensesAyer = reportTransferExpensesAyer !== '' ? parseFloat(reportTransferExpensesAyer) || 0 : initialTransferExpensesAyer;
-  const numTipsExpensesAyer = reportTipsExpensesAyer !== '' ? parseFloat(reportTipsExpensesAyer) || 0 : initialTipsAyer;
+  const numTipsExpensesAyer = reportTipsExpensesAyer !== '' && parseFloat(reportTipsExpensesAyer) > 0 ? parseFloat(reportTipsExpensesAyer) : initialTipsAyer;
 
   const totalGastosAyer = numCashExpensesAyer + numTransferExpensesAyer + numTipsExpensesAyer;
   const gananciaNetaAyer = totalVerifiedSales - totalGastosAyer;

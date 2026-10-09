@@ -979,6 +979,8 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
   let otherIncomeNotes = existingShift?.otherIncomeNotes || '';
   let totalGrossSales = existingShift?.totalGrossSales || 0;
   let totalTipCollected = existingShift?.totalTipCollected || 0;
+  let tipPaid = existingShift?.tipPaid;
+  let tipDistributedTotal = existingShift?.tipDistributedTotal;
 
   const salesMatch = obs.match(/\[VENTAS_DATA:(\{.*?\})\]/);
   if (salesMatch && salesMatch[1]) {
@@ -995,6 +997,8 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
       if (s.otherIncomeNotes) otherIncomeNotes = s.otherIncomeNotes;
       totalGrossSales = Number(s.totalGrossSales) || (salesCash + totalCards + salesPedidosYa + otherIncome);
       totalTipCollected = Number(s.tips) || Number(s.totalTipCollected) || 0;
+      if (s.tipPaid !== undefined) tipPaid = Boolean(s.tipPaid);
+      if (s.tipDistributedTotal !== undefined) tipDistributedTotal = Number(s.tipDistributedTotal);
     } catch {}
   }
 
@@ -1030,7 +1034,14 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
       if (a.totalClosingUSD !== undefined) totalClosingUSD = Number(a.totalClosingUSD);
       if (a.closingNIO) closingNIO = a.closingNIO;
       if (a.closingUSD) closingUSD = a.closingUSD;
+      if (a.tipPaid !== undefined) tipPaid = Boolean(a.tipPaid);
+      if (a.totalTipCollected !== undefined) totalTipCollected = Number(a.totalTipCollected);
+      if (a.tipDistributedTotal !== undefined) tipDistributedTotal = Number(a.tipDistributedTotal);
     } catch {}
+  }
+
+  if (isClosed && totalTipCollected > 0 && tipPaid === undefined) {
+    tipPaid = true;
   }
 
   if (isClosed && (!totalClosingEquivNIO || totalClosingEquivNIO === 0) && netCashAfterTipsNIO > 0) {
@@ -1070,6 +1081,8 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
     otherIncomeNotes,
     totalGrossSales,
     totalTipCollected,
+    tipPaid,
+    tipDistributedTotal: tipDistributedTotal || (totalTipCollected > 0 ? totalTipCollected : undefined),
     actualCashNIO,
     netCashAfterTipsNIO,
     expectedCashNIO,

@@ -2402,9 +2402,10 @@ export function computeYesterdayEarningsSummary(
   const gastosTransferencia = dayPettyTxs
     .filter((t) => t.method === 'TRANSFER' || t.method === 'CARD')
     .reduce((sum, t) => sum + (t.amount || 0), 0);
-  const propinasEntregadas = yesterdayShift.tipPaid
-    ? (yesterdayShift.tipDistributedTotal || yesterdayShift.totalTipCollected || 0)
-    : 0;
+  const tipAmountAyer =
+    yesterdayShift.tipDistributedTotal || yesterdayShift.totalTipCollected || 0;
+  const propinasEntregadas =
+    yesterdayShift.tipPaid !== false ? tipAmountAyer : 0;
   const totalGastos = gastosEfectivo + gastosTransferencia + propinasEntregadas;
 
   // 4. Ganancia Neta
@@ -2515,9 +2516,11 @@ export function printOfficialOpeningActBN(
     const gastosEfectivo = rawSummary?.gastosEfectivo ?? 0;
     const gastosTransferencia = rawSummary?.gastosTransferencia ?? 0;
     const propinasEntregadas = rawSummary?.propinasEntregadas ?? 0;
-    const totalGastos = rawSummary?.totalGastos ?? (gastosEfectivo + gastosTransferencia + propinasEntregadas);
+    const totalGastos = gastosEfectivo + gastosTransferencia + propinasEntregadas;
 
-    const gananciaNeta = rawSummary?.gananciaNeta ?? (totalGenerado - totalGastos);
+    const gananciaNeta = rawSummary?.gananciaNeta !== undefined && rawSummary.gananciaNeta !== 0
+      ? rawSummary.gananciaNeta
+      : (totalGenerado - totalGastos);
     const margenPorcentaje = rawSummary?.margenPorcentaje ?? (totalGenerado > 0 ? (gananciaNeta / totalGenerado) * 100 : 0);
 
     const printStyles = `
