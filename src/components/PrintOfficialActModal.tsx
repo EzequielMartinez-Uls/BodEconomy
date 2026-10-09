@@ -112,14 +112,14 @@ export const PrintOfficialActModal: React.FC<Props> = ({
               <div className="flex items-center gap-2">
                 <Sunrise className="w-4 h-4 text-[#1c6856] shrink-0" />
                 <span className="font-bold text-xs text-slate-900">
-                  ACTA OFICIAL DE APERTURA (1 HOJA B/N)
+                  ACTA OFICIAL DE APERTURA (2 HOJAS B/N)
                 </span>
                 <span className="text-[9.5px] font-bold uppercase px-2 py-0.5 rounded-md bg-emerald-50 text-[#1c6856] border border-emerald-200">
-                  Apertura
+                  Apertura + Ganancias
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 mt-0.5 pl-6">
-                Desglose inicial de billetes NIO/USD, tasa oficial, checklist de gaveta y firmas.
+                Hoja 1: Fondo de gaveta y billetes • Hoja 2 (Final): Ganancias de ayer (tarjetas, PedidosYa, efectivo real c/ salidas y gastos).
               </p>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition shrink-0" />

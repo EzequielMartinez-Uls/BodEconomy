@@ -8,6 +8,7 @@ import {
 } from '../services/storage';
 import { getLocalTodayStr, formatDateToFriendly, addDaysToDateStr, extractLocalDateStr } from '../utils/dateUtils';
 import { CashDenominationsInput } from './CashDenominationsInput';
+import { printOfficialOpeningActBN, printYesterdayEarningsActBN } from '../services/thermalPrint';
 import {
   X,
   CheckCircle,
@@ -32,6 +33,7 @@ import {
   Wallet,
   TrendingUp,
   FileSpreadsheet,
+  Printer,
 } from 'lucide-react';
 
 interface Props {
@@ -85,6 +87,7 @@ export const OpeningModal: React.FC<Props> = ({
   const [openerName, setOpenerName] = useState(activeAdminName);
   const [exchangeRate, setExchangeRate] = useState(defaultExchangeRate);
   const [notes, setNotes] = useState('');
+  const [autoPrintActa, setAutoPrintActa] = useState<boolean>(true);
 
   // ----------------------------------------------------
   // PASO 1: CAJA CHICA (REMANENTE FÍSICO)
@@ -118,10 +121,11 @@ export const OpeningModal: React.FC<Props> = ({
   const totalEquivNIO = totalNIO; // Efectivo físico en gaveta en Córdobas
 
   const expectedFromPrevious =
+    lastClosedShift?.netCashAfterTipsNIO ||
+    lastClosedShift?.totalClosingEquivNIO ||
     lastClosedShift?.totalClosingNIO ||
     lastClosedShift?.actualCashNIO ||
     lastClosedShift?.totalOpeningNIO ||
-    lastClosedShift?.totalOpeningEquivNIO ||
     0;
   const differenceWithPrevious = totalNIO - expectedFromPrevious;
   const isCountInitiated = totalNIO > 0;
@@ -360,6 +364,44 @@ export const OpeningModal: React.FC<Props> = ({
       auditNotes = auditNotes ? `${auditNotes} • ${snyderNote}` : snyderNote;
     }
 
+    // Consolidación de Ganancias del Día Anterior (Hoja 2 del Acta Oficial)
+    const corBAC = numBAC ?? repBAC;
+    const corFico = numFico ?? repFico;
+    const corBanpro = numBanpro ?? repBanpro;
+    const corLafise = numLafise ?? repLafise;
+    const corTotalCards = corBAC + corFico + corBanpro + corLafise;
+    const corPY = numPedidosYa ?? repPedidosYa;
+    const corCash = numLoyverseCash ?? repLoyverseCash;
+    const corOther = numOtherIncome ?? repOtherIncome;
+    const corEfectivoReal = Math.max(0, corCash + loyversePaidOut);
+    const corTotalGenerado = corTotalCards + corPY + corEfectivoReal + corOther;
+    const corGastosEfectivo = numCashExpensesAyer;
+    const corGastosTransf = numTransferExpensesAyer;
+    const corPropinas = numTipsExpensesAyer;
+    const corTotalGastos = corGastosEfectivo + corGastosTransf + corPropinas;
+    const corGananciaNeta = corTotalGenerado - corTotalGastos;
+    const corMargenPct = corTotalGenerado > 0 ? (corGananciaNeta / corTotalGenerado) * 100 : 0;
+
+    const openingEarningsSummary = {
+      cardsBAC: corBAC,
+      cardsFicohsa: corFico,
+      cardsBanpro: corBanpro,
+      cardsLafise: corLafise,
+      totalCards: corTotalCards,
+      salesPedidosYa: corPY,
+      salesCashLoyverse: corCash,
+      loyversePaidOut,
+      efectivoRealGenerado: corEfectivoReal,
+      otherIncome: corOther,
+      totalGenerado: corTotalGenerado,
+      gastosEfectivo: corGastosEfectivo,
+      gastosTransferencia: corGastosTransf,
+      propinasEntregadas: corPropinas,
+      totalGastos: corTotalGastos,
+      gananciaNeta: corGananciaNeta,
+      margenPorcentaje: corMargenPct,
+    };
+
     // Datos del nuevo turno de Caja General
     const newShift: CashShift = {
       id: `shift-${shiftDate}-${Date.now()}`,
@@ -378,15 +420,16 @@ export const OpeningModal: React.FC<Props> = ({
       openingCashCountedNIO: totalNIO,
       openingTransferToPettyCash: transferAmount > 0 ? transferAmount : undefined,
       transferToPettyCash: transferAmount > 0 ? transferAmount : undefined,
+      openingEarningsSummary,
       loyverseValidation: {
         validated: true,
-        salesCashLoyverse: numLoyverseCash ?? repLoyverseCash,
-        cardsBAC: numBAC ?? repBAC,
-        cardsFicohsa: numFico ?? repFico,
-        cardsBanpro: numBanpro ?? repBanpro,
-        cardsLafise: numLafise ?? repLafise,
-        totalCards: (numBAC ?? repBAC) + (numFico ?? repFico) + (numBanpro ?? repBanpro) + (numLafise ?? repLafise),
-        salesPedidosYa: numPedidosYa ?? repPedidosYa,
+        salesCashLoyverse: corCash,
+        cardsBAC: corBAC,
+        cardsFicohsa: corFico,
+        cardsBanpro: corBanpro,
+        cardsLafise: corLafise,
+        totalCards: corTotalCards,
+        salesPedidosYa: corPY,
         totalLoyverseSales: totalVerifiedSales,
         notes: diffItems.length === 0 ? 'Vouchers y canales verificados conformes' : diffItems.join(', '),
       },
@@ -394,15 +437,6 @@ export const OpeningModal: React.FC<Props> = ({
 
     let updatedPreviousShift: CashShift | undefined = undefined;
     if (lastClosedShift && syncCorrectionsToPrevious) {
-      const corBAC = numBAC ?? repBAC;
-      const corFico = numFico ?? repFico;
-      const corBanpro = numBanpro ?? repBanpro;
-      const corLafise = numLafise ?? repLafise;
-      const corTotalCards = corBAC + corFico + corBanpro + corLafise;
-      const corPY = numPedidosYa ?? repPedidosYa;
-      const corCash = numLoyverseCash ?? repLoyverseCash;
-      const corOther = numOtherIncome ?? repOtherIncome;
-
       updatedPreviousShift = {
         ...lastClosedShift,
         cardsBAC: corBAC,
@@ -415,7 +449,7 @@ export const OpeningModal: React.FC<Props> = ({
         otherIncome: corOther,
         totalGrossSales: corCash + corTotalCards + corPY + corOther,
         totalTipCollected: numTipsExpensesAyer,
-        dailyNetProfit: gananciaNetaAyer,
+        dailyNetProfit: corGananciaNeta,
         closingNotes: diffItems.length > 0
           ? (lastClosedShift.closingNotes
               ? `${lastClosedShift.closingNotes} • Corroborado en apertura ${shiftDate}: ${diffItems.join(', ')}`
@@ -433,6 +467,9 @@ export const OpeningModal: React.FC<Props> = ({
     };
 
     onConfirmOpen(newShift, updatedPreviousShift, pettyOpeningData);
+    if (autoPrintActa) {
+      printOfficialOpeningActBN(newShift, openerName, openingEarningsSummary);
+    }
     onClose();
   };
 
@@ -1145,7 +1182,7 @@ export const OpeningModal: React.FC<Props> = ({
               </div>
 
               {/* Botones de Navegación */}
-              <div className="flex justify-between items-center pt-2">
+              <div className="flex justify-between items-center pt-2 flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => setStep(1)}
@@ -1155,15 +1192,64 @@ export const OpeningModal: React.FC<Props> = ({
                   <span>Volver a Caja Chica</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setStep(3)}
-                  disabled={totalNIO === 0}
-                  className="px-5 py-2.5 rounded-lg bg-[#1c6856] hover:bg-[#154f42] text-white font-bold text-xs shadow-sm flex items-center gap-2 cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <span>Paso 3: Distribuir Fondos de Hoy</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const tempShift: CashShift = {
+                        id: `temp-${Date.now()}`,
+                        date: shiftDate,
+                        status: 'OPEN',
+                        exchangeRate,
+                        openedBy: openerName,
+                        openedAt: new Date().toISOString(),
+                        verifiedPreviousClosingId: lastClosedShift?.id || null,
+                        openingNotes: '',
+                        openingNIO: denominationsNIO,
+                        openingUSD: denominationsUSD,
+                        totalOpeningNIO: totalNIO,
+                        totalOpeningUSD: totalUSD,
+                        totalOpeningEquivNIO: totalNIO,
+                        openingCashCountedNIO: totalNIO,
+                      };
+                      const summary = {
+                        cardsBAC: numBAC ?? repBAC,
+                        cardsFicohsa: numFico ?? repFico,
+                        cardsBanpro: numBanpro ?? repBanpro,
+                        cardsLafise: numLafise ?? repLafise,
+                        totalCards: (numBAC ?? repBAC) + (numFico ?? repFico) + (numBanpro ?? repBanpro) + (numLafise ?? repLafise),
+                        salesPedidosYa: numPedidosYa ?? repPedidosYa,
+                        salesCashLoyverse: numLoyverseCash ?? repLoyverseCash,
+                        loyversePaidOut,
+                        efectivoRealGenerado: Math.max(0, (numLoyverseCash ?? repLoyverseCash) + loyversePaidOut),
+                        otherIncome: numOtherIncome ?? repOtherIncome,
+                        totalGenerado: ((numBAC ?? repBAC) + (numFico ?? repFico) + (numBanpro ?? repBanpro) + (numLafise ?? repLafise)) + (numPedidosYa ?? repPedidosYa) + Math.max(0, (numLoyverseCash ?? repLoyverseCash) + loyversePaidOut) + (numOtherIncome ?? repOtherIncome),
+                        gastosEfectivo: numCashExpensesAyer,
+                        gastosTransferencia: numTransferExpensesAyer,
+                        propinasEntregadas: numTipsExpensesAyer,
+                        totalGastos: totalGastosAyer,
+                        gananciaNeta: gananciaNetaAyer,
+                        margenPorcentaje: margenNetoAyer,
+                      };
+                      printYesterdayEarningsActBN(tempShift, openerName, summary);
+                    }}
+                    className="px-4 py-2 rounded-lg border border-emerald-600 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition shadow-2xs"
+                    title="Imprimir directamente la hoja de ganancias y ventas de ayer"
+                  >
+                    <Printer className="w-4 h-4 text-emerald-700" />
+                    <span>🖨️ Imprimir Ganancias de Ayer</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStep(3)}
+                    disabled={totalNIO === 0}
+                    className="px-5 py-2.5 rounded-lg bg-[#1c6856] hover:bg-[#154f42] text-white font-bold text-xs shadow-sm flex items-center gap-2 cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span>Paso 3: Distribuir Fondos de Hoy</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -1352,6 +1438,32 @@ export const OpeningModal: React.FC<Props> = ({
                 />
               </div>
 
+              {/* Opción de Impresión Automática del Acta Oficial */}
+              <div className="bg-emerald-50 border border-emerald-200/80 rounded-xl p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#1c6856] text-white flex items-center justify-center shrink-0">
+                    <Printer className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-900 block">
+                      Imprimir Acta Oficial de Apertura (2 Hojas A4)
+                    </span>
+                    <span className="text-[11px] text-slate-500 block">
+                      Hoja 1: Fondo de gaveta • Hoja 2 (Final): Ganancias de ayer (tarjetas, PedidosYa, efectivo real c/ salidas y gastos)
+                    </span>
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-[#1c6856] bg-white px-3 py-1.5 rounded-lg border border-emerald-200 shadow-2xs hover:bg-emerald-50/50 transition">
+                  <input
+                    type="checkbox"
+                    checked={autoPrintActa}
+                    onChange={(e) => setAutoPrintActa(e.target.checked)}
+                    className="w-4 h-4 rounded text-[#1c6856] focus:ring-[#1c6856] cursor-pointer"
+                  />
+                  <span>Imprimir al abrir</span>
+                </label>
+              </div>
+
               {/* Botones de Acción */}
               <div className="flex justify-between items-center pt-2">
                 <button
@@ -1369,7 +1481,7 @@ export const OpeningModal: React.FC<Props> = ({
                   className="px-6 py-2.5 rounded-lg bg-[#1c6856] hover:bg-[#154f42] text-white font-bold text-sm shadow-sm flex items-center gap-2 cursor-pointer transition"
                 >
                   <CheckCircle className="w-4 h-4" />
-                  <span>Confirmar Apertura del Día (Ambas Cajas)</span>
+                  <span>{autoPrintActa ? 'Confirmar Apertura e Imprimir Acta' : 'Confirmar Apertura del Día (Ambas Cajas)'}</span>
                 </button>
               </div>
             </div>

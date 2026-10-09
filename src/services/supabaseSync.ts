@@ -601,6 +601,7 @@ export async function syncGeneralCashShiftToCloud(shift: CashShift): Promise<voi
 
     const auditObj = {
       actualCashNIO: shift.actualCashNIO || 0,
+      netCashAfterTipsNIO: shift.netCashAfterTipsNIO || (shift.totalTipCollected ? Math.max(0, (shift.actualCashNIO || 0) - shift.totalTipCollected) : shift.actualCashNIO || 0),
       expectedCashNIO: shift.expectedCashNIO || 0,
       differenceNIO: shift.differenceNIO || 0,
       auditStatus: shift.auditStatus || 'SQUARED',
@@ -1000,11 +1001,12 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
   // 3. Datos de auditoría de cierre
   const auditMatch = obs.match(/\[CLOSING_AUDIT:(\{.*?\})\]/);
   let actualCashNIO = existingShift?.actualCashNIO || totalOpeningEquivNIO + salesCash - totalTipCollected;
+  let netCashAfterTipsNIO = existingShift?.netCashAfterTipsNIO || (totalTipCollected > 0 ? Math.max(0, actualCashNIO - totalTipCollected) : actualCashNIO);
   let expectedCashNIO = existingShift?.expectedCashNIO || totalOpeningEquivNIO + salesCash - totalTipCollected;
   let differenceNIO = existingShift?.differenceNIO || 0;
   let auditStatus: 'SQUARED' | 'SURPLUS' | 'SHORTAGE' = existingShift?.auditStatus || 'SQUARED';
   let dailyNetProfit = existingShift?.dailyNetProfit || totalGrossSales;
-  let totalClosingEquivNIO = existingShift?.totalClosingEquivNIO || (isClosed ? actualCashNIO : undefined);
+  let totalClosingEquivNIO = existingShift?.totalClosingEquivNIO || (isClosed ? netCashAfterTipsNIO : undefined);
   let totalClosingNIO = existingShift?.totalClosingNIO || (isClosed ? actualCashNIO : undefined);
   let totalClosingUSD = existingShift?.totalClosingUSD || (isClosed ? 0 : undefined);
   let closingNIO = existingShift?.closingNIO;
@@ -1014,6 +1016,11 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
     try {
       const a = JSON.parse(auditMatch[1]);
       if (a.actualCashNIO !== undefined) actualCashNIO = Number(a.actualCashNIO);
+      if (a.netCashAfterTipsNIO !== undefined) {
+        netCashAfterTipsNIO = Number(a.netCashAfterTipsNIO);
+      } else if (totalTipCollected > 0) {
+        netCashAfterTipsNIO = Math.max(0, actualCashNIO - totalTipCollected);
+      }
       if (a.expectedCashNIO !== undefined) expectedCashNIO = Number(a.expectedCashNIO);
       if (a.differenceNIO !== undefined) differenceNIO = Number(a.differenceNIO);
       if (a.auditStatus) auditStatus = a.auditStatus;
@@ -1026,8 +1033,8 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
     } catch {}
   }
 
-  if (isClosed && (!totalClosingEquivNIO || totalClosingEquivNIO === 0) && actualCashNIO > 0) {
-    totalClosingEquivNIO = actualCashNIO;
+  if (isClosed && (!totalClosingEquivNIO || totalClosingEquivNIO === 0) && netCashAfterTipsNIO > 0) {
+    totalClosingEquivNIO = netCashAfterTipsNIO;
     totalClosingNIO = actualCashNIO;
   }
 
@@ -1064,6 +1071,7 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
     totalGrossSales,
     totalTipCollected,
     actualCashNIO,
+    netCashAfterTipsNIO,
     expectedCashNIO,
     differenceNIO,
     auditStatus,

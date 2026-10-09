@@ -73,6 +73,27 @@ export interface CashShift {
     notes?: string;
   };
 
+  // Resumen de Ganancias de Ayer calculado en Apertura (Hoja Final del Acta de Apertura)
+  openingEarningsSummary?: {
+    cardsBAC: number;
+    cardsFicohsa: number;
+    cardsBanpro: number;
+    cardsLafise: number;
+    totalCards: number;
+    salesPedidosYa: number;
+    salesCashLoyverse: number;
+    loyversePaidOut: number; // Pagos y Salidas Loyverse
+    efectivoRealGenerado: number; // Ventas Efectivo + Pagos y Salidas
+    otherIncome?: number;
+    totalGenerado: number; // Tarjetas + PedidosYa + Efectivo Real + Otros
+    gastosEfectivo: number; // Compras en efectivo Caja Chica
+    gastosTransferencia: number; // Gastos bancarios/tarjeta Caja Chica
+    propinasEntregadas: number; // Propinas pagadas de ayer
+    totalGastos: number; // gastosEfectivo + gastosTransferencia + propinasEntregadas
+    gananciaNeta: number; // totalGenerado - totalGastos
+    margenPorcentaje: number;
+  };
+
   // Cierre (populated when status === 'CLOSED')
   closedBy?: string; // e.g. 'Xiomara'
   closedAt?: string; // ISO datetime
@@ -120,6 +141,7 @@ export interface CashShift {
   // Cuadre
   expectedCashNIO?: number;
   actualCashNIO?: number;
+  netCashAfterTipsNIO?: number; // Efectivo físico neto en gaveta tras descontar propinas entregadas
   differenceNIO?: number; // actual - expected
   auditStatus?: 'SQUARED' | 'SURPLUS' | 'SHORTAGE';
   closingNotes?: string;
@@ -158,30 +180,17 @@ export function isOpeningPettyCashTx(tx: PettyCashTransaction): boolean {
   ) {
     return true;
   }
-  if (tx.inflowSource === 'FONDO_INICIAL' || tx.inflowSource === 'TRASLADO_CAJA_GENERAL') {
+  if (tx.inflowSource === 'FONDO_INICIAL') {
     return true;
   }
 
-  const vendor = (tx.vendor || '').toLowerCase();
   const notes = (tx.notes || '').toLowerCase();
 
-  // Detección de tags o traspasos de apertura deducidos al abrir Caja General
+  // Detección de tags o traspasos de apertura generados estrictamente al abrir jornada
   if (
     notes.includes('[opening_transfer:true]') ||
-    notes.includes('deducido al abrir') ||
-    notes.includes('traspaso inicial') ||
     notes.includes('traspaso al abrir') ||
     notes.includes('fondeo inicial')
-  ) {
-    return true;
-  }
-
-  if (
-    tx.type === 'INFLOW' &&
-    (vendor.includes('traslado desde caja general') ||
-     vendor.includes('traspaso desde caja general') ||
-     vendor.includes('caja general') ||
-     vendor.includes('deposito a caja chica'))
   ) {
     return true;
   }

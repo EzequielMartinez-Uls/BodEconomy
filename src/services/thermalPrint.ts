@@ -621,9 +621,19 @@ export function printThermalClosingTicket(shift: CashShift): void {
           </tbody>
           <tfoot>
             <tr style="background: #ffffff; font-weight: bold; border-top: 2px solid #000000;">
-              <td colspan="2">TOTAL EFECTIVO C$</td>
-              <td class="text-right font-mono" style="font-size: 12px;">C$ ${(shift.totalClosingNIO || 0).toFixed(2)}</td>
+              <td colspan="2">TOTAL CONTADO EN BILLETES C$</td>
+              <td class="text-right font-mono" style="font-size: 11px;">C$ ${(shift.totalClosingNIO || 0).toFixed(2)}</td>
             </tr>
+            ${(shift.tipPaid && shift.totalTipCollected && shift.totalTipCollected > 0) ? `
+            <tr style="color: #b91c1c; font-weight: bold;">
+              <td colspan="2">(-) Menos Propinas a Entregar</td>
+              <td class="text-right font-mono">- C$ ${shift.totalTipCollected.toFixed(2)}</td>
+            </tr>
+            <tr style="background: #ffffff; font-weight: 900; border-top: 1px solid #000000;">
+              <td colspan="2">(=) TOTAL EFECTIVO NETO RESTANTE C$</td>
+              <td class="text-right font-mono" style="font-size: 12px;">C$ ${(shift.netCashAfterTipsNIO ?? ((shift.totalClosingNIO || 0) - shift.totalTipCollected)).toFixed(2)}</td>
+            </tr>
+            ` : ''}
           </tfoot>
         </table>
       </div>
@@ -694,11 +704,16 @@ export function printThermalClosingTicket(shift: CashShift): void {
     <!-- 3. Fondo Final que queda en Gaveta para Mañana -->
     <div class="total-card">
       <div>
-        <div class="total-label">Fondo Físico en Gaveta para Apertura de Mañana</div>
-        <div class="total-sub">Efectivo contado entregado en gaveta general para la siguiente apertura</div>
+        <div class="total-label">Fondo Neto en Gaveta para Apertura de Mañana</div>
+        <div class="total-sub">
+          ${(shift.tipPaid && shift.totalTipCollected && shift.totalTipCollected > 0)
+            ? `Efectivo contado (C$ ${(shift.totalClosingNIO || shift.actualCashNIO || 0).toFixed(2)}) menos propinas entregadas (-C$ ${shift.totalTipCollected.toFixed(2)})`
+            : 'Efectivo contado entregado en gaveta general para la siguiente apertura'
+          }
+        </div>
       </div>
       <div class="total-amount">
-        C$ ${(shift.actualCashNIO || shift.totalClosingEquivNIO || 0).toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        C$ ${(shift.netCashAfterTipsNIO ?? (shift.tipPaid && shift.totalTipCollected ? ((shift.totalClosingNIO || shift.actualCashNIO || 0) - shift.totalTipCollected) : (shift.actualCashNIO || shift.totalClosingEquivNIO || 0))).toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </div>
     </div>
 
@@ -1610,6 +1625,10 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
     const individualTip = shift?.individualTip || 0;
     const tipPaid = shift?.tipPaid;
 
+    const netCashAfterTips = shift?.netCashAfterTipsNIO !== undefined
+      ? shift.netCashAfterTipsNIO
+      : (tipPaid && tipCollected > 0 ? Math.max(0, actualNIO - tipCollected) : actualNIO);
+
     // Filas compactas de denominaciones de cierre
     const nioRows = [
       { l: '1000', v: 1000, q: closingNIO[1000] || 0 },
@@ -1658,7 +1677,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
             <tr>
               <td><strong>VENTAS EN EFECTIVO:</strong><br>C$ ${salesCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               <td><strong>VENTAS BRUTAS TOTALES:</strong><br><strong>C$ ${totalGross.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
-              <td><strong>EFECTIVO FÍSICO GAVETA:</strong><br><strong>C$ ${actualNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
+              <td><strong>EFECTIVO NETO GAVETA:</strong><br><strong>C$ ${netCashAfterTips.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
               <td><strong>RESULTADO ARQUEO:</strong><br><strong style="font-size: 9.5px;">${auditStatus === 'SQUARED' || diffNIO === 0 ? '✓ CUADRADO EXACTO' : diffNIO > 0 ? `▲ SOBRANTE (+C$ ${diffNIO.toFixed(2)})` : `▼ FALTANTE (-C$ ${Math.abs(diffNIO).toFixed(2)})`}</strong></td>
             </tr>
           </table>
@@ -1765,10 +1784,25 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                     <td colspan="2">Subtotal Dólares (USD):</td>
                     <td class="text-right font-mono">$ ${(shift?.totalClosingUSD || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
+                  <tr style="border-top: 1px solid #000000;">
+                    <td colspan="2">Total Billetes/Monedas Contados:</td>
+                    <td class="text-right font-mono font-bold">C$ ${actualNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  ${tipPaid && tipCollected > 0 ? `
+                  <tr style="color: #b91c1c; font-weight: bold;">
+                    <td colspan="2">(-) Menos Propinas a Entregar:</td>
+                    <td class="text-right font-mono font-bold">- C$ ${tipCollected.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr class="highlight-row" style="border-top: 2px solid #000000;">
+                    <td colspan="2"><strong>TOTAL EFECTIVO NETO EN GAVETA:</strong></td>
+                    <td class="text-right font-mono font-bold" style="font-size: 10px;">C$ ${netCashAfterTips.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  ` : `
                   <tr class="highlight-row">
                     <td colspan="2"><strong>TOTAL FÍSICO GAVETA (C$)</strong></td>
                     <td class="text-right font-mono font-bold" style="font-size: 9.5px;">C$ ${actualNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
+                  `}
                 </tbody>
               </table>
             </div>
@@ -1795,8 +1829,8 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                     <td class="text-right font-mono">C$ ${expectedNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   <tr style="font-weight: bold;">
-                    <td>Efectivo Físico Real Contado</td>
-                    <td class="text-right font-mono">C$ ${actualNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                    <td>Efectivo Físico Neto en Gaveta</td>
+                    <td class="text-right font-mono">C$ ${netCashAfterTips.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   <tr class="highlight-row" style="font-size: 9.5px;">
                     <td><strong>DIFERENCIA EXACTA DE CUADRE:</strong></td>
@@ -2074,7 +2108,16 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
 // ============================================================================
 // ACTA OFICIAL DE APERTURA Y ENTREGA DE FONDO DE CAJA (A4 / B&N)
 // ============================================================================
-export function printOfficialOpeningActBN(shift: CashShift, adminName?: string): void {
+// ACTA OFICIAL DE APERTURA Y ENTREGA DE FONDO DE CAJA (A4 / B&N - 2 HOJAS)
+// Hoja 1: Fondo de Gaveta y Parámetros de Apertura
+// Hoja 2 (Hoja Final): Liquidación y Estado de Ganancias de la Jornada Anterior
+// ============================================================================
+export function printOfficialOpeningActBN(
+  shift: CashShift,
+  adminName?: string,
+  earningsSummary?: CashShift['openingEarningsSummary'],
+  mode: 'AMBAS' | 'SOLO_GANANCIAS' | 'SOLO_FONDO' = 'AMBAS'
+): void {
   try {
     const date = shift.date;
     const [y, m, d] = date.split('-').map(Number);
@@ -2091,6 +2134,16 @@ export function printOfficialOpeningActBN(shift: CashShift, adminName?: string):
       minute: '2-digit',
       second: '2-digit',
       hour12: true,
+    });
+
+    // Fecha del turno anterior auditado
+    const prevDateObj = new Date(fechaObj.getTime() - 86400000);
+    const prevDiaSemana = prevDateObj.toLocaleDateString('es-NI', { weekday: 'long' });
+    const prevDiaSemanaCap = prevDiaSemana.charAt(0).toUpperCase() + prevDiaSemana.slice(1);
+    const prevFechaLarga = prevDateObj.toLocaleDateString('es-NI', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
     });
 
     const nioRows = [
@@ -2115,6 +2168,28 @@ export function printOfficialOpeningActBN(shift: CashShift, adminName?: string):
       { l: '2', v: 2, q: shift.openingUSD[2] || 0 },
       { l: '1', v: 1, q: shift.openingUSD[1] || 0 },
     ];
+
+    // Datos contables de ganancias de ayer
+    const rawSummary = earningsSummary || shift.openingEarningsSummary;
+    const cardsBAC = rawSummary?.cardsBAC ?? shift.loyverseValidation?.cardsBAC ?? shift.cardsBAC ?? 0;
+    const cardsFicohsa = rawSummary?.cardsFicohsa ?? shift.loyverseValidation?.cardsFicohsa ?? shift.cardsFicohsa ?? 0;
+    const cardsBanpro = rawSummary?.cardsBanpro ?? shift.loyverseValidation?.cardsBanpro ?? shift.cardsBanpro ?? 0;
+    const cardsLafise = rawSummary?.cardsLafise ?? shift.loyverseValidation?.cardsLafise ?? shift.cardsLafise ?? 0;
+    const totalCards = rawSummary?.totalCards ?? (shift.loyverseValidation?.totalCards || (cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise));
+    const salesPedidosYa = rawSummary?.salesPedidosYa ?? shift.loyverseValidation?.salesPedidosYa ?? shift.salesPedidosYa ?? 0;
+    const salesCashLoyverse = rawSummary?.salesCashLoyverse ?? shift.loyverseValidation?.salesCashLoyverse ?? shift.salesCashSystem ?? 0;
+    const loyversePaidOut = rawSummary?.loyversePaidOut ?? 0;
+    const efectivoRealGenerado = rawSummary?.efectivoRealGenerado ?? Math.max(0, salesCashLoyverse + loyversePaidOut);
+    const otherIncome = rawSummary?.otherIncome ?? shift.otherIncome ?? 0;
+    const totalGenerado = rawSummary?.totalGenerado ?? (totalCards + salesPedidosYa + efectivoRealGenerado + otherIncome);
+
+    const gastosEfectivo = rawSummary?.gastosEfectivo ?? 0;
+    const gastosTransferencia = rawSummary?.gastosTransferencia ?? 0;
+    const propinasEntregadas = rawSummary?.propinasEntregadas ?? shift.totalTipCollected ?? 0;
+    const totalGastos = rawSummary?.totalGastos ?? (gastosEfectivo + gastosTransferencia + propinasEntregadas);
+
+    const gananciaNeta = rawSummary?.gananciaNeta ?? (totalGenerado - totalGastos);
+    const margenPorcentaje = rawSummary?.margenPorcentaje ?? (totalGenerado > 0 ? (gananciaNeta / totalGenerado) * 100 : 0);
 
     const printStyles = `
       <style>
@@ -2158,6 +2233,12 @@ export function printOfficialOpeningActBN(shift: CashShift, adminName?: string):
           flex-direction: column;
           justify-content: space-between;
           padding-top: 10px;
+          page-break-after: always;
+          break-after: page;
+        }
+        .sheet:last-child {
+          page-break-after: auto;
+          break-after: auto;
         }
         .header-box {
           border-bottom: 2px solid #000000;
@@ -2234,7 +2315,7 @@ export function printOfficialOpeningActBN(shift: CashShift, adminName?: string):
           display: flex;
           justify-content: space-between;
           margin-top: 10px;
-          gap: 40px;
+          gap: 30px;
         }
         .sig-box {
           flex: 1;
@@ -2246,10 +2327,383 @@ export function printOfficialOpeningActBN(shift: CashShift, adminName?: string):
         @media print {
           .no-print { display: none !important; }
           body { padding: 0 !important; }
-          .sheet { padding-top: 0 !important; }
+          .sheet { padding-top: 0 !important; min-height: 98vh !important; }
         }
       </style>
     `;
+
+    // ── HOJA 1: ARQUEO FÍSICO Y FONDO DE APERTURA ──────────────────────────────
+    const sheet1Html = `
+      <div class="sheet">
+        <div>
+          <div class="header-box">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <div class="brand">RESTAURANTE EL BODEGÓN</div>
+                <div class="doc-title">ACTA OFICIAL DE APERTURA Y ENTREGA DE FONDO DE CAJA</div>
+                <div class="doc-subtitle">ARQUEO INICIAL FÍSICO, RECEPCIÓN CONFORME Y ESTADO OPERATIVO</div>
+              </div>
+              <div style="text-align: right; font-size: 8.5px; font-family: monospace;">
+                <div>DOC. OFICIAL N° <strong>AP-${date.replace(/-/g, '')}</strong></div>
+                <div>HORA APERTURA: ${horaApertura}</div>
+              </div>
+            </div>
+          </div>
+
+          <table class="meta-table">
+            <tr>
+              <td style="width: 25%;"><strong>FECHA CONTABLE:</strong><br>${diaSemanaCap}, ${fechaLarga}</td>
+              <td style="width: 25%;"><strong>ENTREGADO POR:</strong><br>${adminName || shift.openedBy} (Administración)</td>
+              <td style="width: 25%;"><strong>RECIBIDO POR:</strong><br>${shift.openedBy} (Cajero/a en Turno)</td>
+              <td style="width: 25%;"><strong>TASA DE CAMBIO:</strong><br>C$ ${shift.exchangeRate.toFixed(2)} por US$ 1.00</td>
+            </tr>
+            <tr>
+              <td><strong>FONDO FÍSICO CÓRDOBAS:</strong><br>C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+              <td><strong>FONDO FÍSICO DÓLARES:</strong><br>US$ ${shift.totalOpeningUSD.toFixed(2)} (C$ ${(shift.totalOpeningUSD * shift.exchangeRate).toLocaleString('es-NI', { minimumFractionDigits: 2 })})</td>
+              <td colspan="2" style="border: 1.5px solid #000;"><strong>TOTAL FONDO DE APERTURA EN GAVETA:</strong><br><strong style="font-size: 11px;">C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
+            </tr>
+          </table>
+
+          <!-- TABLA DENOMINACIONES 2 COLUMNAS -->
+          <div class="section-title">1. DESGLOSE FÍSICO DE DENOMINACIONES RECIBIDAS EN GAVETA</div>
+          <div style="display: flex; gap: 8px;">
+            <!-- Córdobas -->
+            <div style="flex: 1;">
+              <table>
+                <thead>
+                  <tr>
+                    <th colspan="3" style="text-align: center;">MONEDA NACIONAL — CÓRDOBAS (NIO)</th>
+                  </tr>
+                  <tr>
+                    <th>DENOMINACIÓN</th>
+                    <th class="text-center">CANTIDAD</th>
+                    <th class="text-right">SUBTOTAL (C$)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${nioRows
+                    .map(
+                      (r) => `
+                    <tr>
+                      <td>Billete/Moneda C$ ${r.l}</td>
+                      <td class="text-center font-mono">${r.q}</td>
+                      <td class="text-right font-mono">C$ ${(r.q * r.v).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  `
+                    )
+                    .join('')}
+                  <tr class="highlight-row">
+                    <td colspan="2"><strong>SUBTOTAL CÓRDOBAS (NIO):</strong></td>
+                    <td class="text-right font-mono font-bold">C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Dólares -->
+            <div style="flex: 1;">
+              <table>
+                <thead>
+                  <tr>
+                    <th colspan="3" style="text-align: center;">MONEDA EXTRANJERA — DÓLARES (USD)</th>
+                  </tr>
+                  <tr>
+                    <th>DENOMINACIÓN</th>
+                    <th class="text-center">CANTIDAD</th>
+                    <th class="text-right">SUBTOTAL (US$)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${usdRows
+                    .map(
+                      (r) => `
+                    <tr>
+                      <td>Billete US$ ${r.l}</td>
+                      <td class="text-center font-mono">${r.q}</td>
+                      <td class="text-right font-mono">$ ${(r.q * r.v).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  `
+                    )
+                    .join('')}
+                  <tr class="highlight-row">
+                    <td colspan="2"><strong>SUBTOTAL DÓLARES (USD):</strong></td>
+                    <td class="text-right font-mono font-bold">$ ${shift.totalOpeningUSD.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2">Equivalente en Córdobas:</td>
+                    <td class="text-right font-mono font-bold">C$ ${(shift.totalOpeningUSD * shift.exchangeRate).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- TOTAL CONSOLIDADO -->
+              <div style="border: 2px solid #000; padding: 6px; text-align: center; margin-top: 6px; background-color: #fff;">
+                ${(shift.openingTransferToPettyCash && shift.openingTransferToPettyCash > 0) ? `
+                <div style="font-size: 8px; color: #333; text-transform: uppercase;">CONTEO FÍSICO EN GAVETA: C$ ${(shift.openingCashCountedNIO || (shift.totalOpeningEquivNIO + shift.openingTransferToPettyCash)).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
+                <div style="font-size: 8px; color: #000; font-weight: bold; text-transform: uppercase;">(-) TRASLADO A CAJA CHICA: - C$ ${shift.openingTransferToPettyCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
+                <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; margin-top: 3px; border-top: 1px solid #000; padding-top: 2px;">(=) FONDO NETO OPERATIVO EN CAJA GENERAL:</div>
+                ` : `
+                <div style="font-size: 8px; font-weight: bold; text-transform: uppercase;">FONDO INICIAL CONSOLIDADO EN GAVETA:</div>
+                `}
+                <div style="font-size: 14px; font-weight: 900; font-family: monospace; margin-top: 2px;">
+                  C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- NOTAS -->
+          <div class="section-title">2. OBSERVACIONES DE APERTURA</div>
+          <div style="border: 1px solid #000; padding: 6px 8px; font-size: 9px; min-height: 28px;">
+            ${shift.openingNotes || 'Fondo entregado conforme sin anomalías. Operación comercial iniciada con éxito.'}
+          </div>
+        </div>
+
+        <div>
+          <div class="signatures">
+            <div class="sig-box">
+              <div style="height: 18px;"></div>
+              <div>
+                <strong>ADMINISTRADOR(A) / ENTREGA FONDO</strong><br>
+                <span style="font-size: 7.5px;">Nombre: ${adminName || shift.openedBy}</span><br>
+                <span style="font-size: 7.5px;">Firma: ________________________</span>
+              </div>
+            </div>
+            <div class="sig-box">
+              <div style="height: 18px;"></div>
+              <div>
+                <strong>CAJERO(A) EN TURNO / RECIBE CONFORME</strong><br>
+                <span style="font-size: 7.5px;">Nombre: ${shift.openedBy}</span><br>
+                <span style="font-size: 7.5px;">Firma: ________________________</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- PIE DE HOJA 1 -->
+          <div style="margin-top: 10px; padding-top: 6px; border-top: 1px solid #ddd;">
+            <div style="font-size: 8px; color: #666; text-align: center;">
+              El Bodegón Restaurante & Bar • Documento Oficial de Apertura • Página 1 de 2
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // ── HOJA 2: ESTADO DE GANANCIAS Y LIQUIDACIÓN COMERCIAL DEL DÍA ANTERIOR ────
+    const sheet2Html = `
+      <div class="sheet">
+        <div>
+          <div class="header-box">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <div class="brand">RESTAURANTE EL BODEGÓN</div>
+                <div class="doc-title">ESTADO DE GANANCIAS Y LIQUIDACIÓN COMERCIAL DE LA JORNADA ANTERIOR</div>
+                <div class="doc-subtitle">INGRESOS MULTIBANCO, EFECTIVO REAL CON PAGOS/SALIDAS, GASTOS DIARIOS Y GANANCIA NETA</div>
+              </div>
+              <div style="text-align: right; font-size: 8.5px; font-family: monospace;">
+                <div>DOC. OFICIAL N° <strong>GAN-${date.replace(/-/g, '')}</strong></div>
+                <div>AUDITADO EN APERTURA</div>
+              </div>
+            </div>
+          </div>
+
+          <table class="meta-table">
+            <tr>
+              <td style="width: 25%;"><strong>JORNADA AUDITADA:</strong><br>${prevDiaSemanaCap}, ${prevFechaLarga}</td>
+              <td style="width: 25%;"><strong>AUDITADO POR:</strong><br>${adminName || shift.openedBy}</td>
+              <td style="width: 25%;"><strong>TOTAL GENERADO POR TODO:</strong><br><strong>C$ ${totalGenerado.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
+              <td style="width: 25%;"><strong>TOTAL GASTOS DEL DÍA:</strong><br><strong style="color: #b91c1c;">- C$ ${totalGastos.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
+            </tr>
+            <tr>
+              <td><strong>EFECTIVO REAL (C/ SALIDAS):</strong><br>C$ ${efectivoRealGenerado.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+              <td><strong>TOTAL TARJETAS DATAFAST:</strong><br>C$ ${totalCards.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+              <td><strong>DELIVERY PEDIDOSYA:</strong><br>C$ ${salesPedidosYa.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+              <td style="border: 1.5px solid #000; background-color: #f8fafc;"><strong>GANANCIA NETA LÍQUIDA:</strong><br><strong style="font-size: 11px;">C$ ${gananciaNeta.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong> (${margenPorcentaje.toFixed(1)}%)</td>
+            </tr>
+          </table>
+
+          <!-- 1. INGRESOS GENERADOS POR CANAL -->
+          <div class="section-title">1. INGRESOS GENERADOS POR CANAL Y VOUCHERS DEL DÍA ANTERIOR</div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 28%;">CANAL / CONCEPTO</th>
+                <th style="width: 40%;">DESGLOSE / ENTIDAD</th>
+                <th style="width: 20%;" class="text-right">MONTO (C$)</th>
+                <th style="width: 12%;" class="text-right">% TOTAL</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td rowspan="4"><strong>Tarjetas POS (Datafast)</strong></td>
+                <td>POS BAC Credomatic</td>
+                <td class="text-right font-mono">C$ ${cardsBAC.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono">${(totalGenerado > 0 ? (cardsBAC / totalGenerado) * 100 : 0).toFixed(1)}%</td>
+              </tr>
+              <tr>
+                <td>POS Banco Ficohsa</td>
+                <td class="text-right font-mono">C$ ${cardsFicohsa.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono">${(totalGenerado > 0 ? (cardsFicohsa / totalGenerado) * 100 : 0).toFixed(1)}%</td>
+              </tr>
+              <tr>
+                <td>POS Banpro Grupo Promerica</td>
+                <td class="text-right font-mono">C$ ${cardsBanpro.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono">${(totalGenerado > 0 ? (cardsBanpro / totalGenerado) * 100 : 0).toFixed(1)}%</td>
+              </tr>
+              <tr>
+                <td>POS Banco LAFISE Bancentro</td>
+                <td class="text-right font-mono">C$ ${cardsLafise.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono">${(totalGenerado > 0 ? (cardsLafise / totalGenerado) * 100 : 0).toFixed(1)}%</td>
+              </tr>
+              <tr style="font-weight: bold; background-color: #fafafa;">
+                <td colspan="2" style="text-align: right; padding-right: 8px;">SUBTOTAL TODAS LAS TARJETAS POS:</td>
+                <td class="text-right font-mono font-bold">C$ ${totalCards.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono font-bold">${(totalGenerado > 0 ? (totalCards / totalGenerado) * 100 : 0).toFixed(1)}%</td>
+              </tr>
+              <tr>
+                <td><strong>Delivery PedidosYa</strong></td>
+                <td>Despachos de pedidos por aplicación digital externa</td>
+                <td class="text-right font-mono">C$ ${salesPedidosYa.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono">${(totalGenerado > 0 ? (salesPedidosYa / totalGenerado) * 100 : 0).toFixed(1)}%</td>
+              </tr>
+              <tr>
+                <td><strong>Ventas en Efectivo de Sistema</strong></td>
+                <td>Recaudación de ventas en efectivo según Loyverse POS</td>
+                <td class="text-right font-mono">C$ ${salesCashLoyverse.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono">${(totalGenerado > 0 ? (salesCashLoyverse / totalGenerado) * 100 : 0).toFixed(1)}%</td>
+              </tr>
+              <tr>
+                <td><strong>(+) Pagos y Salidas (Loyverse)</strong></td>
+                <td>Salidas operativas registradas en el punto de venta</td>
+                <td class="text-right font-mono font-bold">+ C$ ${loyversePaidOut.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono">—</td>
+              </tr>
+              <tr style="font-weight: bold; background-color: #f5f5f5;">
+                <td colspan="2" style="text-align: right; padding-right: 8px;">(=) EFECTIVO REAL GENERADO (VENTAS + PAGOS/SALIDAS):</td>
+                <td class="text-right font-mono font-bold">C$ ${efectivoRealGenerado.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono font-bold">${(totalGenerado > 0 ? (efectivoRealGenerado / totalGenerado) * 100 : 0).toFixed(1)}%</td>
+              </tr>
+              ${(otherIncome && otherIncome > 0) ? `
+              <tr>
+                <td><strong>Otros Ingresos</strong></td>
+                <td>Ingresos extraordinarios o eventos especiales</td>
+                <td class="text-right font-mono">C$ ${otherIncome.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono">${(totalGenerado > 0 ? (otherIncome / totalGenerado) * 100 : 0).toFixed(1)}%</td>
+              </tr>
+              ` : ''}
+              <tr class="highlight-row">
+                <td colspan="2"><strong>TOTAL GENERADO POR TODO (INGRESOS BRUTOS REALES)</strong></td>
+                <td class="text-right font-mono" style="font-size: 10px;"><strong>C$ ${totalGenerado.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
+                <td class="text-right font-mono"><strong>100.0%</strong></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- 2. GASTOS DEL DÍA -->
+          <div class="section-title">2. GASTOS DEL DÍA Y EGRESOS OPERATIVOS AUDITADOS</div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 50%;">RUBRO / CONCEPTO DEL EGRESO</th>
+                <th style="width: 25%;">CANAL / ORIGEN</th>
+                <th style="width: 25%;" class="text-right">MONTO DEDUCIDO (C$)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Compras y Gastos en Efectivo (Caja Chica)</strong></td>
+                <td>Pagos en efectivo de gaveta chica para insumos y compras</td>
+                <td class="text-right font-mono">- C$ ${gastosEfectivo.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+              </tr>
+              <tr>
+                <td><strong>Gastos por Transferencias Bancarias / Tarjeta</strong></td>
+                <td>Pagos a proveedores por transferencia electrónica o tarjeta</td>
+                <td class="text-right font-mono">- C$ ${gastosTransferencia.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+              </tr>
+              <tr>
+                <td><strong>Propinas del Turno Entregadas</strong></td>
+                <td>Propinas recaudadas y entregadas al personal de servicio y cocina</td>
+                <td class="text-right font-mono">- C$ ${propinasEntregadas.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+              </tr>
+              <tr class="highlight-row">
+                <td colspan="2"><strong>TOTAL GASTOS Y SALIDAS DEL DÍA</strong></td>
+                <td class="text-right font-mono" style="font-size: 10px;"><strong>- C$ ${totalGastos.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- 3. CONSOLIDACIÓN DE GANANCIA NETA -->
+          <div class="section-title">3. ESTADO DE GANANCIAS (LO GENERADO POR TODO MENOS LOS GASTOS DEL DÍA)</div>
+          <table>
+            <tbody>
+              <tr>
+                <td style="width: 70%;"><strong>(+) Total Generado por Todo</strong> (Tarjetas Datafast + PedidosYa + Efectivo Real con Pagos/Salidas)</td>
+                <td style="width: 30%;" class="text-right font-mono font-bold">C$ ${totalGenerado.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+              </tr>
+              <tr>
+                <td><strong>(-) Total Gastos y Egresos Operativos del Día</strong> (Compras Efectivo + Transferencias + Propinas)</td>
+                <td class="text-right font-mono font-bold">- C$ ${totalGastos.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+              </tr>
+              <tr class="highlight-row" style="font-size: 10.5px;">
+                <td><strong>(=) GANANCIA NETA DEL DÍA (UTILIDAD LÍQUIDA REAL DE LA JORNADA)</strong></td>
+                <td class="text-right font-mono font-bold" style="font-size: 11.5px;">
+                  C$ ${gananciaNeta.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                </td>
+              </tr>
+              <tr>
+                <td>Margen Operativo Neto de Rentabilidad</td>
+                <td class="text-right font-mono font-bold">${margenPorcentaje.toFixed(1)}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div>
+          <div class="signatures">
+            <div class="sig-box">
+              <div style="height: 18px;"></div>
+              <div>
+                <strong>CAJERO(A) / RESPONSABLE APERTURA</strong><br>
+                <span style="font-size: 7.5px;">Nombre: ${shift.openedBy}</span><br>
+                <span style="font-size: 7.5px;">Firma: ________________________</span>
+              </div>
+            </div>
+            <div class="sig-box">
+              <div style="height: 18px;"></div>
+              <div>
+                <strong>ADMINISTRADOR(A) / AUDITOR</strong><br>
+                <span style="font-size: 7.5px;">Revisado Conforme</span><br>
+                <span style="font-size: 7.5px;">Firma: ________________________</span>
+              </div>
+            </div>
+            <div class="sig-box">
+              <div style="height: 18px;"></div>
+              <div>
+                <strong>GERENCIA GENERAL</strong><br>
+                <span style="font-size: 7.5px;">Visto Bueno y Aprobación</span><br>
+                <span style="font-size: 7.5px;">Firma y Sello: _________________</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- PIE DE HOJA 2 -->
+          <div style="margin-top: 10px; padding-top: 6px; border-top: 1px solid #ddd;">
+            <div style="font-size: 8px; color: #666; text-align: center;">
+              El Bodegón Restaurante & Bar • Documento Oficial de Ganancias • Página 2 de 2
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const showSheet1 = mode === 'AMBAS' || mode === 'SOLO_FONDO';
+    const showSheet2 = mode === 'AMBAS' || mode === 'SOLO_GANANCIAS';
+
+    const titleToolbar = mode === 'SOLO_GANANCIAS'
+      ? 'Liquidación y Ganancias de Ayer'
+      : mode === 'SOLO_FONDO'
+      ? 'Acta Oficial de Apertura (Fondo Gaveta)'
+      : 'Acta de Apertura (Hoja 1: Fondo | Hoja 2: Ganancias)';
 
     const fullHtml = `
       <!DOCTYPE html>
@@ -2257,14 +2711,14 @@ export function printOfficialOpeningActBN(shift: CashShift, adminName?: string):
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Acta Oficial de Apertura — El Bodegón</title>
+        <title>${titleToolbar} — El Bodegón</title>
         ${printStyles}
       </head>
       <body>
         <div class="print-toolbar no-print">
           <div style="display: flex; align-items: center; gap: 10px;">
             <span style="background: #000; color: #fff; padding: 3px 8px; border-radius: 4px; font-weight: 900; font-size: 11px;">B/N OFICIAL</span>
-            <span style="font-weight: bold; font-size: 13px; color: #fff;">Acta Oficial de Apertura y Entrega de Caja</span>
+            <span style="font-weight: bold; font-size: 13px; color: #fff;">${titleToolbar}</span>
           </div>
           <div style="display: flex; gap: 8px;">
             <button onclick="window.print()" style="background: #059669; color: #fff; border: none; padding: 6px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">🖨️ Mandar a Imprimir</button>
@@ -2273,138 +2727,8 @@ export function printOfficialOpeningActBN(shift: CashShift, adminName?: string):
         </div>
 
         <div style="padding: 56px 16px 20px;" class="no-print-padding">
-          <div class="sheet">
-            <div>
-              <div class="header-box">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                  <div>
-                    <div class="brand">RESTAURANTE EL BODEGÓN</div>
-                    <div class="doc-title">ACTA OFICIAL DE APERTURA Y ENTREGA DE FONDO DE CAJA</div>
-                    <div class="doc-subtitle">ARQUEO INICIAL FÍSICO, RECEPCIÓN CONFORME Y ESTADO OPERATIVO</div>
-                  </div>
-                  <div style="text-align: right; font-size: 8.5px; font-family: monospace;">
-                    <div>DOC. OFICIAL N° <strong>AP-${date.replace(/-/g, '')}</strong></div>
-                    <div>HORA APERTURA: ${horaApertura}</div>
-                  </div>
-                </div>
-              </div>
-
-              <table class="meta-table">
-                <tr>
-                  <td style="width: 25%;"><strong>FECHA CONTABLE:</strong><br>${diaSemanaCap}, ${fechaLarga}</td>
-                  <td style="width: 25%;"><strong>ENTREGADO POR:</strong><br>${adminName || shift.openedBy} (Administración)</td>
-                  <td style="width: 25%;"><strong>RECIBIDO POR:</strong><br>${shift.openedBy} (Cajero/a en Turno)</td>
-                  <td style="width: 25%;"><strong>TASA DE CAMBIO:</strong><br>C$ ${shift.exchangeRate.toFixed(2)} por US$ 1.00</td>
-                </tr>
-                <tr>
-                  <td><strong>FONDO FÍSICO CÓRDOBAS:</strong><br>C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-                  <td><strong>FONDO FÍSICO DÓLARES:</strong><br>US$ ${shift.totalOpeningUSD.toFixed(2)} (C$ ${(shift.totalOpeningUSD * shift.exchangeRate).toLocaleString('es-NI', { minimumFractionDigits: 2 })})</td>
-                  <td colspan="2" style="border: 1.5px solid #000;"><strong>TOTAL FONDO DE APERTURA EN GAVETA:</strong><br><strong style="font-size: 11px;">C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
-                </tr>
-              </table>
-
-              <!-- TABLA DENOMINACIONES 2 COLUMNAS -->
-              <div class="section-title">1. DESGLOSE FÍSICO DE DENOMINACIONES RECIBIDAS EN GAVETA</div>
-              <div style="display: flex; gap: 8px;">
-                <!-- Córdobas -->
-                <div style="flex: 1;">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th colspan="3" style="text-align: center;">MONEDA NACIONAL — CÓRDOBAS (NIO)</th>
-                      </tr>
-                      <tr>
-                        <th>DENOMINACIÓN</th>
-                        <th class="text-center">CANTIDAD</th>
-                        <th class="text-right">SUBTOTAL (C$)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${nioRows
-                        .map(
-                          (r) => `
-                        <tr>
-                          <td>Billete/Moneda C$ ${r.l}</td>
-                          <td class="text-center font-mono">${r.q}</td>
-                          <td class="text-right font-mono">C$ ${(r.q * r.v).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-                        </tr>
-                      `
-                        )
-                        .join('')}
-                      <tr class="highlight-row">
-                        <td colspan="2"><strong>SUBTOTAL CÓRDOBAS (NIO):</strong></td>
-                        <td class="text-right font-mono font-bold">C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <!-- Dólares -->
-                <div style="flex: 1;">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th colspan="3" style="text-align: center;">MONEDA EXTRANJERA — DÓLARES (USD)</th>
-                      </tr>
-                      <tr>
-                        <th>DENOMINACIÓN</th>
-                        <th class="text-center">CANTIDAD</th>
-                        <th class="text-right">SUBTOTAL (US$)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${usdRows
-                        .map(
-                          (r) => `
-                        <tr>
-                          <td>Billete US$ ${r.l}</td>
-                          <td class="text-center font-mono">${r.q}</td>
-                          <td class="text-right font-mono">$ ${(r.q * r.v).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-                        </tr>
-                      `
-                        )
-                        .join('')}
-                      <tr class="highlight-row">
-                        <td colspan="2"><strong>SUBTOTAL DÓLARES (USD):</strong></td>
-                        <td class="text-right font-mono font-bold">$ ${shift.totalOpeningUSD.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-                      </tr>
-                      <tr>
-                        <td colspan="2">Equivalente en Córdobas:</td>
-                        <td class="text-right font-mono font-bold">C$ ${(shift.totalOpeningUSD * shift.exchangeRate).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-
-                  <!-- TOTAL CONSOLIDADO -->
-                  <div style="border: 2px solid #000; padding: 6px; text-align: center; margin-top: 6px; background-color: #fff;">
-                    ${(shift.openingTransferToPettyCash && shift.openingTransferToPettyCash > 0) ? `
-                    <div style="font-size: 8px; color: #333; text-transform: uppercase;">CONTEO FÍSICO EN GAVETA: C$ ${(shift.openingCashCountedNIO || (shift.totalOpeningEquivNIO + shift.openingTransferToPettyCash)).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
-                    <div style="font-size: 8px; color: #000; font-weight: bold; text-transform: uppercase;">(-) TRASLADO A CAJA CHICA: - C$ ${shift.openingTransferToPettyCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
-                    <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; margin-top: 3px; border-top: 1px solid #000; padding-top: 2px;">(=) FONDO NETO OPERATIVO EN CAJA GENERAL:</div>
-                    ` : `
-                    <div style="font-size: 8px; font-weight: bold; text-transform: uppercase;">FONDO INICIAL CONSOLIDADO EN GAVETA:</div>
-                    `}
-                    <div style="font-size: 14px; font-weight: 900; font-family: monospace; margin-top: 2px;">
-                      C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- NOTAS -->
-              <div class="section-title">2. OBSERVACIONES DE APERTURA</div>
-              <div style="border: 1px solid #000; padding: 6px 8px; font-size: 9px; min-height: 35px;">
-                ${shift.openingNotes || 'Fondo entregado conforme sin anomalías. Operación comercial iniciada con éxito.'}
-              </div>
-            </div>
-
-            <!-- PIE DE DOCUMENTO -->
-            <div style="margin-top: 15px; padding-top: 8px; border-top: 1px solid #ddd;">
-              <div style="font-size: 8px; color: #666; text-align: center;">
-                El Bodegón Restaurante & Bar • Documento Oficial de Apertura • Página 1 de 1
-              </div>
-            </div>
-          </div>
+          ${showSheet1 ? sheet1Html : ''}
+          ${showSheet2 ? sheet2Html : ''}
         </div>
 
         <script>
@@ -2425,9 +2749,21 @@ export function printOfficialOpeningActBN(shift: CashShift, adminName?: string):
       window.print();
     }
   } catch (err: any) {
-    alert('Error imprimiendo acta de apertura: ' + err.message);
+    alert('Error imprimiendo acta de apertura y ganancias: ' + err.message);
   }
 }
+
+/**
+ * Imprime directamente la Hoja de Ganancias y Liquidación de Ayer
+ */
+export function printYesterdayEarningsActBN(
+  shift: CashShift,
+  adminName?: string,
+  earningsSummary?: CashShift['openingEarningsSummary']
+): void {
+  printOfficialOpeningActBN(shift, adminName, earningsSummary, 'SOLO_GANANCIAS');
+}
+
 
 /**
  * Imprime un comprobante individual de pago de nómina en tiquetera térmica de 80mm.

@@ -93,8 +93,7 @@ export const ClosingModal: React.FC<Props> = ({
   // Cálculos reactivos de Efectivo en Gaveta (100% Córdobas en gaveta física)
   const totalClosingNIO = calculateTotalNIO(closingNIO);
   const totalClosingUSD = calculateTotalUSD(closingUSD); // Dólares informativos que se entregan a Snyder
-  const actualCashNIO = parseFloat(totalClosingNIO.toFixed(2)); // En gaveta solo quedan Córdobas
-  const totalClosingEquivNIO = actualCashNIO;
+  const actualCashNIO = parseFloat(totalClosingNIO.toFixed(2)); // Total contado en gaveta
 
   // Cálculos de Ventas
   const totalCards = cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise;
@@ -104,13 +103,18 @@ export const ClosingModal: React.FC<Props> = ({
   const individualTip = staffCount > 0 ? parseFloat((totalTipCollected / staffCount).toFixed(2)) : 0;
   const tipsPaidAmount = tipPaid ? totalTipCollected : 0;
 
+  // EFECTIVO NETO EN GAVETA TRAS RESTAR PROPINAS:
+  // Al total contado en córdobas en caja general se le resta lo que se entrega en propina
+  const netCashAfterTipsNIO = parseFloat(Math.max(0, actualCashNIO - tipsPaidAmount).toFixed(2));
+  const totalClosingEquivNIO = netCashAfterTipsNIO; // Lo que realmente amanece en gaveta para la apertura
+
   // CÁLCULO REAL DE AUDITORÍA Y CUADRE DE CAJA (Idéntico a Loyverse POS)
   // Fondo Inicial de Gaveta (en Córdobas) + Ventas Efectivo POS - Propinas entregadas de gaveta
   const openingFloat = shift.totalOpeningNIO || shift.totalOpeningEquivNIO || 0;
   const expectedCashNIO = parseFloat(
     (openingFloat + salesCashSystem - tipsPaidAmount).toFixed(2)
   );
-  const differenceNIO = parseFloat((actualCashNIO - expectedCashNIO).toFixed(2));
+  const differenceNIO = parseFloat((netCashAfterTipsNIO - expectedCashNIO).toFixed(2));
 
   let auditStatus: 'SQUARED' | 'SURPLUS' | 'SHORTAGE' = 'SQUARED';
   if (Math.abs(differenceNIO) < 1.0) {
@@ -178,6 +182,7 @@ export const ClosingModal: React.FC<Props> = ({
       totalClosingNIO,
       totalClosingUSD,
       totalClosingEquivNIO,
+      netCashAfterTipsNIO,
 
       // Ventas Reales del Turno
       cardsBAC,
@@ -810,9 +815,21 @@ export const ClosingModal: React.FC<Props> = ({
                       <span>(=) Efectivo Teórico que debe haber:</span>
                       <strong className="font-mono text-slate-900">C$ {expectedCashNIO.toFixed(2)}</strong>
                     </div>
-                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex justify-between font-bold text-sm">
-                      <span>Efectivo Físico Real Contado:</span>
-                      <strong className="font-mono text-[#1c6856]">C$ {actualCashNIO.toFixed(2)}</strong>
+                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-1">
+                      <div className="flex justify-between text-xs text-slate-700">
+                        <span>Total Contado en Gaveta:</span>
+                        <strong className="font-mono text-slate-900">C$ {actualCashNIO.toFixed(2)}</strong>
+                      </div>
+                      {tipsPaidAmount > 0 && (
+                        <div className="flex justify-between text-xs text-rose-600">
+                          <span>(-) Menos Propinas a Entregar:</span>
+                          <strong className="font-mono">- C$ {tipsPaidAmount.toFixed(2)}</strong>
+                        </div>
+                      )}
+                      <div className="flex justify-between font-bold text-sm text-[#1c6856] border-t border-slate-200 pt-1">
+                        <span>(=) Efectivo Físico Neto en Gaveta:</span>
+                        <strong className="font-mono">C$ {netCashAfterTipsNIO.toFixed(2)}</strong>
+                      </div>
                     </div>
                     <div className="flex justify-between font-bold pt-1">
                       <span>Diferencia de Cuadre:</span>
@@ -883,20 +900,25 @@ export const ClosingModal: React.FC<Props> = ({
               <div className="p-3.5 bg-amber-50/70 border border-amber-200 rounded-lg text-xs text-amber-950 flex items-center justify-between">
                 <div>
                   <span className="font-bold uppercase tracking-wider block text-[10px] text-amber-800">
-                    Fondo que queda en Gaveta para amanecer (Total Córdobas):
+                    Fondo Neto que queda en Gaveta para amanecer (Total Córdobas):
                   </span>
                   <div className="text-xl font-bold font-mono text-amber-900 mt-0.5">
-                    C$ {actualCashNIO.toFixed(2)}
+                    C$ {netCashAfterTipsNIO.toFixed(2)}
                   </div>
+                  {tipsPaidAmount > 0 && (
+                    <div className="text-[11px] text-amber-900 font-medium mt-0.5">
+                      (Conteo inicial C$ {actualCashNIO.toFixed(2)} menos C$ {tipsPaidAmount.toFixed(2)} entregados en propina)
+                    </div>
+                  )}
                   {totalClosingUSD > 0 && (
                     <div className="text-[11px] font-bold text-amber-800 mt-1 flex items-center gap-1">
                       <Banknote className="w-3.5 h-3.5 inline text-amber-800" />
-                      <span>Moneda Extranjera: ${totalClosingUSD.toFixed(2)} USD (Entrega a Snyder • Quedan $0.00 en caja)</span>
+                      <span>Moneda Extranjera: ${totalClosingUSD.toFixed(2)} USD (Apartados para Snyder • Quedan $0.00 en caja)</span>
                     </div>
                   )}
                 </div>
                 <span className="text-[11px] text-slate-500 max-w-xs text-right">
-                  Quien abra mañana tomará este saldo total y decidirá en la apertura el traslado a Caja Chica.
+                  Fondo efectivo neto real que queda en caja general para la siguiente apertura.
                 </span>
               </div>
 

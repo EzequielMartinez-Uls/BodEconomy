@@ -54,6 +54,7 @@ interface Props {
   onCancelPettyCashShift?: () => void;
   onUpdateExpenseCategories?: (categories: string[]) => void;
   onForceSyncClick?: () => void;
+  onOpenShiftClick?: () => void;
 }
 
 const BUILTIN_CATEGORY_METADATA: Record<string, { label: string; emoji: string; badgeClass: string }> = {
@@ -94,6 +95,7 @@ export const PettyCashView: React.FC<Props> = ({
   onCancelPettyCashShift,
   onUpdateExpenseCategories,
   onForceSyncClick,
+  onOpenShiftClick,
 }) => {
   const todayStr = useMemo(() => getLocalTodayStr(), []);
 
@@ -231,15 +233,6 @@ export const PettyCashView: React.FC<Props> = ({
     return state.pettyCashTransactions.filter((tx) => {
       if (isOpeningPettyCashTx(tx)) {
         return false;
-      }
-      if (selectedShift?.generalCashTransfer && selectedShift.generalCashTransfer > 0) {
-        if (tx.type === 'INFLOW') {
-          const v = (tx.vendor || '').toLowerCase();
-          const n = (tx.notes || '').toLowerCase();
-          if (v.includes('caja general') || n.includes('caja general') || v.includes('deposito a caja chica')) {
-            return false;
-          }
-        }
       }
       if (selectedShift) {
         if (tx.shiftId) {
@@ -683,18 +676,6 @@ export const PettyCashView: React.FC<Props> = ({
     // 2. Transacciones del día ordenadas cronológicamente
     const sorted = [...selectedDateTransactions]
       .filter((tx) => !isOpeningPettyCashTx(tx))
-      .filter((tx) => {
-        if (selectedShift?.generalCashTransfer && selectedShift.generalCashTransfer > 0) {
-          if (tx.type === 'INFLOW') {
-            const v = (tx.vendor || '').toLowerCase();
-            const n = (tx.notes || '').toLowerCase();
-            if (v.includes('caja general') || n.includes('caja general') || v.includes('deposito a caja chica')) {
-              return false;
-            }
-          }
-        }
-        return true;
-      })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     for (const tx of sorted) {
@@ -825,11 +806,18 @@ export const PettyCashView: React.FC<Props> = ({
         <div className="flex items-center gap-2.5 flex-wrap">
           {!currentOpenShift ? (
             <button
-              onClick={() => handleStartOpenShiftModal()}
+              onClick={() => {
+                if (onOpenShiftClick) {
+                  onOpenShiftClick();
+                } else {
+                  handleStartOpenShiftModal();
+                }
+              }}
               className="px-4 py-2 rounded-lg bg-[#1c6856] hover:bg-[#155344] active:bg-[#0f3d32] text-white font-semibold text-xs flex items-center gap-2 transition cursor-pointer shadow-xs"
+              title="Apertura unificada del día: Caja General y Caja Chica se abren juntas"
             >
               <Unlock className="w-4 h-4" />
-              <span>Abrir Jornada (Día)</span>
+              <span>Abrir Jornada (Apertura Global)</span>
             </button>
           ) : (
             <div className="text-right">

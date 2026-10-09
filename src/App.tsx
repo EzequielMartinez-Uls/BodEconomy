@@ -145,17 +145,19 @@ export function App() {
             const obsLower = (g.observaciones || '').toLowerCase();
             const concLower = (g.concepto || '').toLowerCase();
             const isOpeningTransfer = 
-              obsLower.includes('[opening_transfer:true]') ||
-              provLower.includes('traslado desde caja general') ||
-              provLower.includes('traspaso desde caja general') ||
-              concLower.includes('traspaso inicial') ||
-              concLower.includes('deducido al abrir') ||
-              obsLower.includes('deducido al abrir');
+              obsLower.includes('[opening_transfer:true]') &&
+              (concLower.includes('traspaso inicial') || concLower.includes('al abrir') || obsLower.includes('deducido al abrir'));
+
+            // Limpiar y omitir el depósito duplicado de camarones ID 251 del 2026-10-08
+            if (g.id === 251) {
+              deleteTransactionFromCloud({ id: 'pct-cloud-251', cloudId: 251 } as any).catch(() => {});
+              continue;
+            }
 
             // Filtrar y omitir registros residuales huérfanos de pruebas canceladas conocidas (ej: 13519 de la prueba del 2026-10-06)
             if (localDate === '2026-10-06' && Math.abs(Number(g.monto) - 13519) < 1 && (isOpeningTransfer || isFondeo)) {
               if (g.id) {
-                deleteTransactionFromCloud(g.id).catch(() => {});
+                deleteTransactionFromCloud({ id: `pct-cloud-${g.id}`, cloudId: g.id } as any).catch(() => {});
               }
               continue;
             }
@@ -165,7 +167,7 @@ export function App() {
               shiftId: `pc-shift-${localDate}`,
               date: g.fecha_hora || `${localDate}T12:00:00`,
               type: isFondeo ? 'INFLOW' : 'EXPENSE',
-              inflowSource: isOpeningTransfer ? 'TRASLADO_CAJA_GENERAL' : (isFondeo ? 'FONDO_INICIAL' : undefined),
+              inflowSource: isOpeningTransfer ? 'FONDO_INICIAL' : undefined,
               amount: Number(g.monto) || 0,
               method: g.metodo_pago === 'TRANSFERENCIA' ? 'TRANSFER' : g.metodo_pago === 'TARJETA' ? 'CARD' : 'CASH',
               vendor: g.proveedor || g.concepto || (isFondeo ? 'Fondeo Caja Chica' : 'Compra'),
@@ -1420,6 +1422,7 @@ export function App() {
             {activeTab === 'pettyCash' && (
               <PettyCashView
                 state={state}
+                onOpenShiftClick={() => setOpeningModalOpen(true)}
                 onAddTransaction={handleAddPettyCashTransaction}
                 onEditTransaction={handleEditPettyCashTransaction}
                 onDeleteTransaction={handleDeletePettyCashTransaction}
