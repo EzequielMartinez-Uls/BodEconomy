@@ -45,7 +45,7 @@ export const Sidebar: React.FC<Props> = ({
   const isShiftOpen = state.currentShift?.status === 'OPEN';
   const isPettyCashLow = state.pettyCashBalance < 2000;
   const [payrollExpanded, setPayrollExpanded] = useState(activeTab === 'payroll');
-  const [appVersion, setAppVersion] = useState('v1.0.34');
+  const [appVersion, setAppVersion] = useState('v1.0.35');
 
   const [updateStatus, setUpdateStatus] = useState<{
     status: 'idle' | 'available' | 'downloading' | 'ready';

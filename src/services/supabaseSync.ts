@@ -670,6 +670,8 @@ export async function syncUnifiedDayOpeningToCloud(
       totalOpeningEquivNIO: generalShift.totalOpeningEquivNIO,
       openingNIO: generalShift.openingNIO,
       openingUSD: generalShift.openingUSD,
+      openingCashCountedNIO: generalShift.openingCashCountedNIO,
+      openingTransferToPettyCash: generalShift.openingTransferToPettyCash || generalShift.transferToPettyCash,
     };
 
     const fondosComp = pettyShift
@@ -956,6 +958,18 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
   let openingNotes = existingShift?.openingNotes || '';
   let openingNIO = existingShift?.openingNIO || DEFAULT_DENOMINATIONS_NIO;
   let openingUSD = existingShift?.openingUSD || DEFAULT_DENOMINATIONS_USD;
+  let openingCashCountedNIO = existingShift?.openingCashCountedNIO || 0;
+  let openingTransferToPettyCash = existingShift?.openingTransferToPettyCash || existingShift?.transferToPettyCash || 0;
+
+  const fondosMatch = obs.match(/\[FONDOS_COMPOSITION:(\{.*?\})\]/);
+  if (fondosMatch && fondosMatch[1]) {
+    try {
+      const fc = JSON.parse(fondosMatch[1]);
+      if (fc.generalCashTransfer) {
+        openingTransferToPettyCash = Number(fc.generalCashTransfer) || openingTransferToPettyCash;
+      }
+    } catch {}
+  }
 
   const openMatch = obs.match(/\[OPENING_DATA:(\{.*?\})\]/);
   if (openMatch && openMatch[1]) {
@@ -967,7 +981,13 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
       if (p.openingNotes) openingNotes = p.openingNotes;
       if (p.openingNIO) openingNIO = p.openingNIO;
       if (p.openingUSD) openingUSD = p.openingUSD;
+      if (p.openingCashCountedNIO) openingCashCountedNIO = Number(p.openingCashCountedNIO);
+      if (p.openingTransferToPettyCash) openingTransferToPettyCash = Number(p.openingTransferToPettyCash);
     } catch {}
+  }
+
+  if (!openingCashCountedNIO && openingTransferToPettyCash > 0) {
+    openingCashCountedNIO = totalOpeningNIO + openingTransferToPettyCash;
   }
 
   // El fondo de gaveta física de apertura es estrictamente en Córdobas (los dólares se entregan al jefe Snyder)
@@ -1071,6 +1091,9 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
     totalOpeningNIO,
     totalOpeningUSD,
     totalOpeningEquivNIO,
+    openingCashCountedNIO: openingCashCountedNIO > 0 ? openingCashCountedNIO : undefined,
+    openingTransferToPettyCash: openingTransferToPettyCash > 0 ? openingTransferToPettyCash : undefined,
+    transferToPettyCash: openingTransferToPettyCash > 0 ? openingTransferToPettyCash : existingShift?.transferToPettyCash,
     closingNIO,
     closingUSD,
     totalClosingNIO,

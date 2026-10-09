@@ -2503,6 +2503,7 @@ export function printOfficialOpeningActBN(
     const hasUsdBreakdown = usdRows.some((r) => r.q > 0);
     const nioTotalCounted = nioRows.reduce((sum, r) => sum + (r.q * r.v), 0);
     const openingTransferToPetty = shift.openingTransferToPettyCash || shift.transferToPettyCash || 0;
+    const initialCashCounted = shift.openingCashCountedNIO || (openingTransferToPetty > 0 ? (shift.totalOpeningNIO + openingTransferToPetty) : (nioTotalCounted > 0 ? nioTotalCounted : shift.totalOpeningNIO));
 
     // Datos contables de ganancias de ayer (resumen verificado)
     const rawSummary = earningsSummary || shift.openingEarningsSummary;
@@ -2698,12 +2699,21 @@ export function printOfficialOpeningActBN(
               <td style="width: 25%;"><strong>TASA DE CAMBIO:</strong><br>C$ ${shift.exchangeRate.toFixed(2)} por US$ 1.00</td>
             </tr>
             <tr>
+              ${openingTransferToPetty > 0 ? `
+              <td><strong>TOTAL EFECTIVO CONTADO:</strong><br><span class="font-mono font-bold" style="font-size: 12px;">C$ ${initialCashCounted.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span></td>
+              <td><strong>TRASLADO A CAJA CHICA:</strong><br><span class="font-mono font-bold" style="font-size: 12px; color: #b91c1c;">- C$ ${openingTransferToPetty.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span></td>
+              <td colspan="2" style="border: 2px solid #000; background-color: #f8fafc;">
+                <strong>FONDO NETO EN GAVETA (VUELTO OPERATIVO):</strong><br>
+                <strong class="font-mono" style="font-size: 14px;">C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
+              </td>
+              ` : `
               <td><strong>FONDO FÍSICO CÓRDOBAS:</strong><br><span class="font-mono font-bold" style="font-size: 12px;">C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span></td>
               <td><strong>FONDO FÍSICO DÓLARES:</strong><br><span class="font-mono font-bold" style="font-size: 12px;">US$ ${shift.totalOpeningUSD.toFixed(2)}</span> (C$ ${(shift.totalOpeningUSD * shift.exchangeRate).toLocaleString('es-NI', { minimumFractionDigits: 2 })})</td>
               <td colspan="2" style="border: 2px solid #000; background-color: #f8fafc;">
                 <strong>TOTAL FONDO DE APERTURA EN GAVETA:</strong><br>
                 <strong class="font-mono" style="font-size: 14px;">C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
               </td>
+              `}
             </tr>
           </table>
 
@@ -2814,9 +2824,9 @@ export function printOfficialOpeningActBN(
 
               <!-- TOTAL CONSOLIDADO -->
               <div style="border: 2px solid #000; padding: 10px; text-align: center; margin-top: 10px; background-color: #fff;">
-                ${(shift.openingTransferToPettyCash && shift.openingTransferToPettyCash > 0) ? `
-                <div style="font-size: 9.5px; color: #333; text-transform: uppercase;">CONTEO FÍSICO EN GAVETA: C$ ${(shift.openingCashCountedNIO || (shift.totalOpeningEquivNIO + shift.openingTransferToPettyCash)).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
-                <div style="font-size: 10px; color: #b91c1c; font-weight: bold; text-transform: uppercase; margin-top: 2px;">(-) TRASLADO A CAJA CHICA: - C$ ${shift.openingTransferToPettyCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
+                ${openingTransferToPetty > 0 ? `
+                <div style="font-size: 9.5px; color: #333; text-transform: uppercase;">CONTEO FÍSICO INICIAL EN GAVETA: C$ ${initialCashCounted.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
+                <div style="font-size: 10px; color: #b91c1c; font-weight: bold; text-transform: uppercase; margin-top: 2px;">(-) TRASLADO A CAJA CHICA (COMPRAS): - C$ ${openingTransferToPetty.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
                 <div style="font-size: 10.5px; font-weight: bold; text-transform: uppercase; margin-top: 5px; border-top: 1.5px solid #000; padding-top: 4px;">(=) FONDO NETO EN CAJA GENERAL:</div>
                 ` : `
                 <div style="font-size: 10px; font-weight: bold; text-transform: uppercase;">FONDO INICIAL EN GAVETA:</div>
