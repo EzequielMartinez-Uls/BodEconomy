@@ -609,7 +609,7 @@ export const PettyCashView: React.FC<Props> = ({
           vendor: 'Fondo de caja anterior',
           tipoPago: '-',
           montoTotalBanco: null,
-          reembolsoCajaChica: null,
+          reembolsoCajaChica: selectedShift.previousDayRemaining,
           gastosCajaChica: null,
           saldoGaveta: runningSaldo,
         });
@@ -1444,6 +1444,21 @@ export const PettyCashView: React.FC<Props> = ({
                   >
                     Todos ({selectedDateTransactions.length})
                   </button>
+                  {(() => {
+                    const inflowsCount = selectedDateTransactions.filter((tx) => tx.type === 'INFLOW').length;
+                    return (
+                      <button
+                        onClick={() => setSelectedCategoryFilter('INFLOW')}
+                        className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+                          selectedCategoryFilter === 'INFLOW'
+                            ? 'bg-emerald-700 text-white shadow-xs'
+                            : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
+                        }`}
+                      >
+                        Depositos / Fondeos {inflowsCount > 0 && `(${inflowsCount})`}
+                      </button>
+                    );
+                  })()}
                   {categoryDefs.map((cat) => {
                     const count = selectedDateTransactions.filter((tx) => tx.type === 'EXPENSE' && tx.category === cat.value).length;
                     return (
