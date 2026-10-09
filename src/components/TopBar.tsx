@@ -19,6 +19,7 @@ import {
   printThermalDailyExpensesTicket,
   printOfficialActBN,
   printOfficialOpeningActBN,
+  computeYesterdayEarningsSummary,
   OfficialActTransaction,
 } from '../services/thermalPrint';
 import { CloudSyncModal } from './CloudSyncModal';
@@ -83,7 +84,8 @@ export const TopBar: React.FC<Props> = ({
 
     if (modo === 'APERTURA') {
       if (shift) {
-        printOfficialOpeningActBN(shift, state.activeAdminName);
+        const yesterdayEarnings = computeYesterdayEarningsSummary(state, shift.date);
+        printOfficialOpeningActBN(shift, state.activeAdminName, yesterdayEarnings);
       } else {
         alert('No hay un turno de caja disponible para imprimir el acta de apertura.');
       }

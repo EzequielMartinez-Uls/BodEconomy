@@ -6,6 +6,7 @@ import {
   printOfficialActBN,
   printOfficialOpeningActBN,
   printYesterdayEarningsActBN,
+  computeYesterdayEarningsSummary,
 } from '../services/thermalPrint';
 import { exportShiftToExcel } from '../services/excelExport';
 import { extractLocalDateStr, getLocalTodayStr } from '../utils/dateUtils';
@@ -106,7 +107,8 @@ export const GeneralCashView: React.FC<Props> = ({
     const dateStr = shift.date;
 
     if (modo === 'APERTURA') {
-      printOfficialOpeningActBN(shift, state.activeAdminName);
+      const yesterdayEarnings = computeYesterdayEarningsSummary(state, shift.date);
+      printOfficialOpeningActBN(shift, state.activeAdminName, yesterdayEarnings);
       setSelectedShiftForActa(null);
       return;
     }
@@ -519,7 +521,10 @@ export const GeneralCashView: React.FC<Props> = ({
               </button>
 
               <button
-                onClick={() => printOfficialOpeningActBN(currentShift, state.activeAdminName)}
+                onClick={() => {
+                  const yesterdayEarnings = computeYesterdayEarningsSummary(state, currentShift.date);
+                  printOfficialOpeningActBN(currentShift, state.activeAdminName, yesterdayEarnings);
+                }}
                 className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-black text-white font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
                 title="Imprimir Acta Oficial de Apertura Completa (2 Hojas A4: Fondo + Ganancias de Ayer)"
               >
@@ -528,7 +533,10 @@ export const GeneralCashView: React.FC<Props> = ({
               </button>
 
               <button
-                onClick={() => printYesterdayEarningsActBN(currentShift, state.activeAdminName, currentShift.openingEarningsSummary)}
+                onClick={() => {
+                  const yesterdayEarnings = computeYesterdayEarningsSummary(state, currentShift.date);
+                  printYesterdayEarningsActBN(currentShift, state.activeAdminName, yesterdayEarnings);
+                }}
                 className="px-3 py-1.5 rounded-lg border border-emerald-700 bg-emerald-800 hover:bg-emerald-900 text-white font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
                 title="Imprimir únicamente el Estado de Ganancias y Ventas de Ayer (Hoja 2 A4)"
               >

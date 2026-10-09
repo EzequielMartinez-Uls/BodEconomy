@@ -1,4 +1,5 @@
-import { CashShift, PettyCashShift, PettyCashTransaction, TablewareItem, TablewareLoss } from '../types';
+import { AppState, CashShift, PettyCashShift, PettyCashTransaction, TablewareItem, TablewareLoss } from '../types';
+import { addDaysToDateStr, extractLocalDateStr, getLocalTodayStr } from '../utils/dateUtils';
 
 function openPrintWindow(title: string, bodyContent: string): void {
   const printWindow = window.open('', '_blank', 'width=1020,height=920,menubar=no,toolbar=no,location=no,status=no');
@@ -1632,6 +1633,12 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
     const closingNIO = (shift?.closingNIO || {}) as Record<string | number, number>;
     const closingUSD = (shift?.closingUSD || {}) as Record<string | number, number>;
 
+    const tipCollected = shift?.totalTipCollected || 0;
+    const staffCount = shift?.staffCount || 0;
+    const individualTip = shift?.individualTip || 0;
+    const tipPaid = shift?.tipPaid;
+    const tipsDeductedFromDrawer = tipPaid ? (shift?.tipDistributedTotal || tipCollected) : 0;
+
     const transferPetty = shift?.transferToPettyCash || 0;
     const overtimeCash = shift?.overtimePaidCash || 0;
     const extraDaysCash = shift?.extraDaysPaidCash || 0;
@@ -1639,16 +1646,12 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
     const reservePayroll = shift?.reservePayroll || 0;
     const reserveVacations = shift?.reserveVacations || 0;
     const reserveSnyder = shift?.reserveSnyder || 0;
-    const totalWithdrawals = shift?.totalWithdrawals || (transferPetty + overtimeCash + extraDaysCash + reserveDGI + reservePayroll + reserveVacations + reserveSnyder);
-
-    const tipCollected = shift?.totalTipCollected || 0;
-    const staffCount = shift?.staffCount || 0;
-    const individualTip = shift?.individualTip || 0;
-    const tipPaid = shift?.tipPaid;
+    const otherWithdrawals = overtimeCash + extraDaysCash + reserveDGI + reservePayroll + reserveVacations + reserveSnyder;
+    const totalWithdrawals = transferPetty + tipsDeductedFromDrawer + otherWithdrawals;
 
     const netCashAfterTips = shift?.netCashAfterTipsNIO !== undefined
       ? shift.netCashAfterTipsNIO
-      : (tipPaid && tipCollected > 0 ? Math.max(0, actualNIO - tipCollected) : actualNIO);
+      : (tipsDeductedFromDrawer > 0 ? Math.max(0, actualNIO - tipsDeductedFromDrawer) : actualNIO);
 
     // Filas compactas de denominaciones de cierre
     const nioRows = [
@@ -1809,10 +1812,10 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                     <td colspan="2">Total Billetes/Monedas Contados:</td>
                     <td class="text-right font-mono font-bold">C$ ${actualNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
-                  ${tipPaid && tipCollected > 0 ? `
+                  ${tipsDeductedFromDrawer > 0 ? `
                   <tr style="color: #b91c1c; font-weight: bold;">
-                    <td colspan="2">(-) Menos Propinas a Entregar:</td>
-                    <td class="text-right font-mono font-bold">- C$ ${tipCollected.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                    <td colspan="2">(-) Menos Propinas Entregadas:</td>
+                    <td class="text-right font-mono font-bold">- C$ ${tipsDeductedFromDrawer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   <tr class="highlight-row" style="border-top: 2px solid #000000;">
                     <td colspan="2"><strong>TOTAL EFECTIVO NETO EN GAVETA:</strong></td>
@@ -1841,11 +1844,25 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                     <td>(+) Ventas en Efectivo del Día</td>
                     <td class="text-right font-mono">C$ ${salesCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
+                  ${tipsDeductedFromDrawer > 0 ? `
                   <tr>
-                    <td>(-) Total Salidas y Deducciones</td>
-                    <td class="text-right font-mono">- C$ ${totalWithdrawals.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                    <td>(-) Propinas Pagadas de Gaveta</td>
+                    <td class="text-right font-mono">- C$ ${tipsDeductedFromDrawer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
-                  <tr style="font-weight: bold;">
+                  ` : ''}
+                  ${transferPetty > 0 ? `
+                  <tr>
+                    <td>(-) Traslado a Caja Chica</td>
+                    <td class="text-right font-mono">- C$ ${transferPetty.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  ` : ''}
+                  ${otherWithdrawals > 0 ? `
+                  <tr>
+                    <td>(-) Otras Deducciones y Reservas</td>
+                    <td class="text-right font-mono">- C$ ${otherWithdrawals.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  ` : ''}
+                  <tr style="border-top: 1px solid #000; font-weight: bold; background-color: #f8fafc;">
                     <td>(=) Efectivo Teórico Esperado</td>
                     <td class="text-right font-mono">C$ ${expectedNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
@@ -1866,18 +1883,23 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
               <table>
                 <tbody>
                   <tr>
+                    <td>Propinas de Gaveta: C$ ${tipsDeductedFromDrawer.toFixed(2)}</td>
                     <td>Traslado a Caja Chica: C$ ${transferPetty.toFixed(2)}</td>
+                  </tr>
+                  <tr>
                     <td>Horas Extras Efectivo: C$ ${overtimeCash.toFixed(2)}</td>
-                  </tr>
-                  <tr>
                     <td>Reserva Tributaria DGI: C$ ${reserveDGI.toFixed(2)}</td>
-                    <td>Reserva Planilla: C$ ${reservePayroll.toFixed(2)}</td>
                   </tr>
                   <tr>
+                    <td>Reserva Planilla: C$ ${reservePayroll.toFixed(2)}</td>
                     <td>Reserva Vacaciones: C$ ${reserveVacations.toFixed(2)}</td>
-                    <td>Retiro Socios / Snyder: C$ ${reserveSnyder.toFixed(2)}</td>
                   </tr>
-                  <tr style="font-weight: bold;">
+                  ${reserveSnyder > 0 ? `
+                  <tr>
+                    <td colspan="2">Retiro Socios / Snyder: C$ ${reserveSnyder.toFixed(2)}</td>
+                  </tr>
+                  ` : ''}
+                  <tr style="font-weight: bold; border-top: 1px solid #000; background-color: #f8fafc;">
                     <td>TOTAL RETIROS Y RESERVAS:</td>
                     <td class="text-right font-mono">C$ ${totalWithdrawals.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
@@ -1894,12 +1916,19 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                     <td>Fondo Equipo: <strong>C$ ${(shift.tipTeamPool ?? Math.max(0, tipCollected - (shift.tipYahairaAmount ?? 100))).toFixed(2)}</strong></td>
                     <td>Por Persona (${staffCount} p.): <strong>C$ ${individualTip.toFixed(2)}</strong></td>
                   </tr>
+                  <tr>
+                    <td colspan="2">Total Repartido: <strong>C$ ${tipsDeductedFromDrawer.toFixed(2)}</strong></td>
+                    <td colspan="2">Estado: <strong>${tipPaid ? 'ENTREGADA EN EFECTIVO' : 'NO PAGADA'}</strong></td>
+                  </tr>
                   ` : `
                   <tr>
                     <td>Total Recaudado: <strong>C$ ${tipCollected.toFixed(2)}</strong></td>
                     <td>Personal: <strong>${staffCount} pers.</strong></td>
-                    <td>Individual: <strong>C$ ${individualTip.toFixed(2)}</strong></td>
-                    <td>Estado: <strong>${tipPaid ? 'PAGADA' : 'PENDIENTE'}</strong></td>
+                    <td>Por Persona: <strong>C$ ${individualTip.toFixed(2)}</strong></td>
+                    <td>Total Repartido: <strong>C$ ${(tipsDeductedFromDrawer || tipCollected).toFixed(2)}</strong></td>
+                  </tr>
+                  <tr>
+                    <td colspan="4">Estado: <strong>${tipPaid ? 'ENTREGADA EN EFECTIVO' : 'NO PAGADA'}</strong></td>
                   </tr>
                   `}
                 </tbody>
@@ -1922,19 +1951,19 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
               ${tipCollected > 0 ? `
               <tr>
                 <td><strong>(-) Propinas del Turno Entregadas</strong> (Propinas retiradas de caja para el personal)</td>
-                <td class="text-right font-mono">- C$ ${(tipPaid ? tipCollected : 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono">- C$ ${tipsDeductedFromDrawer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
               ` : ''}
               <tr class="highlight-row" style="font-size: 10px;">
                 <td><strong>(=) TOTAL NETO / UTILIDAD OPERATIVA LÍQUIDA DE LA JORNADA</strong></td>
                 <td class="text-right font-mono font-bold">
-                  C$ ${(totalGross - expensesCash - (tipPaid ? tipCollected : 0)).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                  C$ ${(totalGross - expensesCash - tipsDeductedFromDrawer).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                 </td>
               </tr>
               <tr>
                 <td>Margen Operativo Neto Sobre Ingresos Totales</td>
                 <td class="text-right font-mono font-bold">
-                  ${totalGross > 0 ? (((totalGross - expensesCash - (tipPaid ? tipCollected : 0)) / totalGross) * 100).toFixed(1) : '0.0'}%
+                  ${totalGross > 0 ? (((totalGross - expensesCash - tipsDeductedFromDrawer) / totalGross) * 100).toFixed(1) : '0.0'}%
                 </td>
               </tr>
             </tbody>
@@ -2138,6 +2167,86 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
 // ============================================================================
 // ACTA OFICIAL DE APERTURA Y ENTREGA DE FONDO DE CAJA (A4 / B&N)
 // ============================================================================
+// CÁLCULO DE GANANCIAS DEL DÍA ANTERIOR PARA APERTURA (HOJA 2)
+// ============================================================================
+export function computeYesterdayEarningsSummary(
+  state: AppState,
+  referenceDateStr?: string
+): CashShift['openingEarningsSummary'] {
+  const currentDate = referenceDateStr || state.currentShift?.date || getLocalTodayStr();
+  const yesterdayDate = addDaysToDateStr(currentDate, -1);
+
+  // 1. Buscar turno de la fecha anterior en shiftHistory o el último cerrado
+  const history = state.shiftHistory || [];
+  const yesterdayShift =
+    history.find((s) => s.date === yesterdayDate) ||
+    history.filter((s) => s.status === 'CLOSED').sort((a, b) => b.date.localeCompare(a.date))[0];
+
+  if (!yesterdayShift) {
+    return undefined;
+  }
+
+  // 2. Canales de venta del turno de ayer
+  const cardsBAC = yesterdayShift.cardsBAC || 0;
+  const cardsFicohsa = yesterdayShift.cardsFicohsa || 0;
+  const cardsBanpro = yesterdayShift.cardsBanpro || 0;
+  const cardsLafise = yesterdayShift.cardsLafise || 0;
+  const totalCards =
+    yesterdayShift.totalCards || (cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise);
+  const salesPedidosYa = yesterdayShift.salesPedidosYa || 0;
+  const salesCashLoyverse = yesterdayShift.salesCashSystem || 0;
+  const loyversePaidOut = yesterdayShift.transferToPettyCash || 0;
+  const efectivoRealGenerado = Math.max(0, salesCashLoyverse + loyversePaidOut);
+  const otherIncome = yesterdayShift.otherIncome || 0;
+  const totalGenerado =
+    yesterdayShift.totalGrossSales ||
+    totalCards + salesPedidosYa + efectivoRealGenerado + otherIncome;
+
+  // 3. Gastos de Caja Chica de la fecha de ayer
+  const dayPettyTxs = (state.pettyCashTransactions || []).filter(
+    (t) => t.type === 'EXPENSE' && extractLocalDateStr(t.date) === yesterdayShift.date
+  );
+  const gastosEfectivo = dayPettyTxs
+    .filter((t) => t.method === 'CASH')
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
+  const gastosTransferencia = dayPettyTxs
+    .filter((t) => t.method === 'TRANSFER' || t.method === 'CARD')
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
+  const propinasEntregadas = yesterdayShift.tipPaid
+    ? (yesterdayShift.tipDistributedTotal || yesterdayShift.totalTipCollected || 0)
+    : 0;
+  const totalGastos = gastosEfectivo + gastosTransferencia + propinasEntregadas;
+
+  // 4. Ganancia Neta
+  const gananciaNeta =
+    yesterdayShift.dailyNetProfit !== undefined
+      ? yesterdayShift.dailyNetProfit
+      : totalGenerado - totalGastos;
+  const margenPorcentaje =
+    totalGenerado > 0 ? (gananciaNeta / totalGenerado) * 100 : 0;
+
+  return {
+    cardsBAC,
+    cardsFicohsa,
+    cardsBanpro,
+    cardsLafise,
+    totalCards,
+    salesPedidosYa,
+    salesCashLoyverse,
+    loyversePaidOut,
+    efectivoRealGenerado,
+    otherIncome,
+    totalGenerado,
+    gastosEfectivo,
+    gastosTransferencia,
+    propinasEntregadas,
+    totalGastos,
+    gananciaNeta,
+    margenPorcentaje,
+  };
+}
+
+// ============================================================================
 // ACTA OFICIAL DE APERTURA Y ENTREGA DE FONDO DE CAJA (A4 / B&N - 2 HOJAS)
 // Hoja 1: Fondo de Gaveta y Parámetros de Apertura
 // Hoja 2 (Hoja Final): Liquidación y Estado de Ganancias de la Jornada Anterior
@@ -2199,23 +2308,23 @@ export function printOfficialOpeningActBN(
       { l: '1', v: 1, q: shift.openingUSD[1] || 0 },
     ];
 
-    // Datos contables de ganancias de ayer
+    // Datos contables de ganancias de ayer (resumen verificado)
     const rawSummary = earningsSummary || shift.openingEarningsSummary;
-    const cardsBAC = rawSummary?.cardsBAC ?? shift.loyverseValidation?.cardsBAC ?? shift.cardsBAC ?? 0;
-    const cardsFicohsa = rawSummary?.cardsFicohsa ?? shift.loyverseValidation?.cardsFicohsa ?? shift.cardsFicohsa ?? 0;
-    const cardsBanpro = rawSummary?.cardsBanpro ?? shift.loyverseValidation?.cardsBanpro ?? shift.cardsBanpro ?? 0;
-    const cardsLafise = rawSummary?.cardsLafise ?? shift.loyverseValidation?.cardsLafise ?? shift.cardsLafise ?? 0;
+    const cardsBAC = rawSummary?.cardsBAC ?? shift.loyverseValidation?.cardsBAC ?? 0;
+    const cardsFicohsa = rawSummary?.cardsFicohsa ?? shift.loyverseValidation?.cardsFicohsa ?? 0;
+    const cardsBanpro = rawSummary?.cardsBanpro ?? shift.loyverseValidation?.cardsBanpro ?? 0;
+    const cardsLafise = rawSummary?.cardsLafise ?? shift.loyverseValidation?.cardsLafise ?? 0;
     const totalCards = rawSummary?.totalCards ?? (shift.loyverseValidation?.totalCards || (cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise));
-    const salesPedidosYa = rawSummary?.salesPedidosYa ?? shift.loyverseValidation?.salesPedidosYa ?? shift.salesPedidosYa ?? 0;
-    const salesCashLoyverse = rawSummary?.salesCashLoyverse ?? shift.loyverseValidation?.salesCashLoyverse ?? shift.salesCashSystem ?? 0;
+    const salesPedidosYa = rawSummary?.salesPedidosYa ?? shift.loyverseValidation?.salesPedidosYa ?? 0;
+    const salesCashLoyverse = rawSummary?.salesCashLoyverse ?? shift.loyverseValidation?.salesCashLoyverse ?? 0;
     const loyversePaidOut = rawSummary?.loyversePaidOut ?? 0;
     const efectivoRealGenerado = rawSummary?.efectivoRealGenerado ?? Math.max(0, salesCashLoyverse + loyversePaidOut);
-    const otherIncome = rawSummary?.otherIncome ?? shift.otherIncome ?? 0;
+    const otherIncome = rawSummary?.otherIncome ?? 0;
     const totalGenerado = rawSummary?.totalGenerado ?? (totalCards + salesPedidosYa + efectivoRealGenerado + otherIncome);
 
     const gastosEfectivo = rawSummary?.gastosEfectivo ?? 0;
     const gastosTransferencia = rawSummary?.gastosTransferencia ?? 0;
-    const propinasEntregadas = rawSummary?.propinasEntregadas ?? shift.totalTipCollected ?? 0;
+    const propinasEntregadas = rawSummary?.propinasEntregadas ?? 0;
     const totalGastos = rawSummary?.totalGastos ?? (gastosEfectivo + gastosTransferencia + propinasEntregadas);
 
     const gananciaNeta = rawSummary?.gananciaNeta ?? (totalGenerado - totalGastos);
