@@ -121,6 +121,9 @@ export interface CashShift {
   individualTip?: number;
   tipPaid?: boolean;
   tipNotes?: string;
+  tipYahairaWorked?: boolean; // Acuerdo laboral: cuota especial fija si trabajó
+  tipYahairaAmount?: number; // Monto asignado (por defecto C$ 100)
+  tipTeamPool?: number; // Fondo restante a repartir entre el resto del equipo (totalTipCollected - tipYahairaAmount)
 
   // Deducciones / Retiros de Caja
   transferToPettyCash?: number; // Pagos/Salidas hacia Caja Chica (traspasos en el turno)

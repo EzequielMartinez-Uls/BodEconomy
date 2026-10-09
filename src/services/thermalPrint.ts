@@ -679,6 +679,20 @@ export function printThermalClosingTicket(shift: CashShift): void {
           <span class="info-label">Total Propina Recaudada</span>
           <span class="info-value">C$ ${(shift.totalTipCollected || 0).toFixed(2)}</span>
         </div>
+        ${shift.tipYahairaWorked ? `
+        <div class="info-box" style="border: 1.5px solid #000000;">
+          <span class="info-label">Yahaira Rivas (Fijo)</span>
+          <span class="info-value font-mono">C$ ${(shift.tipYahairaAmount ?? 100).toFixed(2)}</span>
+        </div>
+        <div class="info-box">
+          <span class="info-label">Fondo Equipo (${shift.staffCount || 1} p.)</span>
+          <span class="info-value font-mono">C$ ${(shift.tipTeamPool ?? Math.max(0, (shift.totalTipCollected || 0) - (shift.tipYahairaAmount ?? 100))).toFixed(2)}</span>
+        </div>
+        <div class="info-box">
+          <span class="info-label">Cuota por Persona</span>
+          <span class="info-value font-mono">C$ ${(shift.individualTip || 0).toFixed(2)}</span>
+        </div>
+        ` : `
         <div class="info-box">
           <span class="info-label">Personal en Turno</span>
           <span class="info-value">${shift.staffCount || 1} colaboradores</span>
@@ -693,7 +707,14 @@ export function printThermalClosingTicket(shift: CashShift): void {
             ${shift.tipPaid ? 'PAGADA EN EFECTIVO' : 'PENDIENTE / APARTADA'}
           </span>
         </div>
+        `}
       </div>
+      ${shift.tipYahairaWorked ? `
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 9px; margin-top: 5px; border-top: 1px dashed #000; padding-top: 3px;">
+          <span><strong>Acuerdo Laboral:</strong> Yahaira Rivas C$ ${(shift.tipYahairaAmount ?? 100).toFixed(2)} + ${shift.staffCount || 1} compañeros de C$ ${(shift.individualTip || 0).toFixed(2)}</span>
+          <span style="font-weight: bold;">${shift.tipPaid ? '✓ PAGADA DE GAVETA' : 'PENDIENTE'}</span>
+        </div>
+      ` : ''}
       ${shift.tipNotes ? `
         <div style="font-size: 9.5px; color: #000000; margin-top: 6px;">
           <strong>Colaboradores / Detalle:</strong> ${shift.tipNotes}
@@ -1866,12 +1887,21 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
               <div class="section-title" style="margin-top: 4px;">5. PROPINAS DEL TURNO (LÍNEA IMPUESTOS)</div>
               <table>
                 <tbody>
+                  ${shift?.tipYahairaWorked ? `
+                  <tr>
+                    <td>Total Recaudado: <strong>C$ ${tipCollected.toFixed(2)}</strong></td>
+                    <td>Yahaira Rivas (Fijo): <strong>C$ ${(shift.tipYahairaAmount ?? 100).toFixed(2)}</strong></td>
+                    <td>Fondo Equipo: <strong>C$ ${(shift.tipTeamPool ?? Math.max(0, tipCollected - (shift.tipYahairaAmount ?? 100))).toFixed(2)}</strong></td>
+                    <td>Por Persona (${staffCount} p.): <strong>C$ ${individualTip.toFixed(2)}</strong></td>
+                  </tr>
+                  ` : `
                   <tr>
                     <td>Total Recaudado: <strong>C$ ${tipCollected.toFixed(2)}</strong></td>
                     <td>Personal: <strong>${staffCount} pers.</strong></td>
                     <td>Individual: <strong>C$ ${individualTip.toFixed(2)}</strong></td>
                     <td>Estado: <strong>${tipPaid ? 'PAGADA' : 'PENDIENTE'}</strong></td>
                   </tr>
+                  `}
                 </tbody>
               </table>
             </div>

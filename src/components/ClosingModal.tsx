@@ -32,6 +32,7 @@ import {
   Scale,
   Clock,
   Info,
+  UserCheck,
 } from 'lucide-react';
 
 interface Props {
@@ -86,6 +87,12 @@ export const ClosingModal: React.FC<Props> = ({
   const [staffCount, setStaffCount] = useState<number>(shift.staffCount || 10);
   const [tipPaid, setTipPaid] = useState<boolean>(shift.tipPaid !== undefined ? shift.tipPaid : true);
   const [tipNotes, setTipNotes] = useState<string>(shift.tipNotes || '');
+  const [tipYahairaWorked, setTipYahairaWorked] = useState<boolean>(
+    shift.tipYahairaWorked !== undefined ? shift.tipYahairaWorked : true
+  );
+  const [tipYahairaAmount, setTipYahairaAmount] = useState<number>(
+    shift.tipYahairaAmount !== undefined ? shift.tipYahairaAmount : 100
+  );
 
   // 4. Observaciones
   const [closingNotes, setClosingNotes] = useState<string>('');
@@ -99,8 +106,10 @@ export const ClosingModal: React.FC<Props> = ({
   const totalCards = cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise;
   const totalGrossSales = salesCashSystem + totalCards + salesPedidosYa + otherIncome;
 
-  // Cálculos de Propinas
-  const individualTip = staffCount > 0 ? parseFloat((totalTipCollected / staffCount).toFixed(2)) : 0;
+  // Cálculos de Propinas (Acuerdo Laboral: Cuota Yahaira Rivas + Fondo Común Equipo)
+  const actualYahairaTip = tipYahairaWorked ? Math.min(totalTipCollected, Math.max(0, tipYahairaAmount)) : 0;
+  const tipTeamPool = parseFloat(Math.max(0, totalTipCollected - actualYahairaTip).toFixed(2));
+  const individualTip = staffCount > 0 ? parseFloat((tipTeamPool / staffCount).toFixed(2)) : 0;
   const tipsPaidAmount = tipPaid ? totalTipCollected : 0;
 
   // EFECTIVO NETO EN GAVETA TRAS RESTAR PROPINAS:
@@ -202,6 +211,9 @@ export const ClosingModal: React.FC<Props> = ({
       individualTip,
       tipPaid,
       tipNotes,
+      tipYahairaWorked,
+      tipYahairaAmount: actualYahairaTip,
+      tipTeamPool,
 
       // Auditoría Real
       actualCashNIO,
@@ -639,7 +651,7 @@ export const ClosingModal: React.FC<Props> = ({
 
                   <div>
                     <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5 text-slate-500" /> Total de Personal en Turno
+                      <Users className="w-3.5 h-3.5 text-slate-500" /> Personal para Reparto Común (sin Yahaira)
                     </label>
                     <input
                       type="number"
@@ -652,27 +664,119 @@ export const ClosingModal: React.FC<Props> = ({
                   </div>
                 </div>
 
-                {/* Tarjeta de Cálculo Automático */}
-                <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-lg flex items-center justify-between flex-wrap gap-3">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
-                      Propina Individual Calculada
-                    </span>
-                    <div className="text-2xl font-bold text-amber-900 font-mono">
-                      C$ {individualTip.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                {/* ── APARTADO ESPECIAL: ACUERDO LABORAL YAHAIRA RIVAS ── */}
+                <div className="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-2.5">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-emerald-100 text-[#1c6856] rounded-lg">
+                        <UserCheck className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-emerald-950 block">
+                          Acuerdo Especial: Propina Yahaira Rivas
+                        </span>
+                        <span className="text-[11px] text-emerald-800">
+                          Cuota fija acordada por el equipo si laboró en la jornada
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-[11px] text-slate-500 font-medium">
-                      (Para cada uno de los {staffCount} colaboradores)
-                    </span>
+
+                    <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1 rounded-lg border border-emerald-300 shadow-2xs">
+                      <input
+                        type="checkbox"
+                        checked={tipYahairaWorked}
+                        onChange={(e) => setTipYahairaWorked(e.target.checked)}
+                        className="w-4 h-4 text-[#1c6856] rounded border-emerald-300 focus:ring-0 cursor-pointer"
+                      />
+                      <span className="text-xs font-bold text-slate-800">
+                        {tipYahairaWorked ? '✓ Asistió a Trabajar' : '✗ No Asistió'}
+                      </span>
+                    </label>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  {tipYahairaWorked ? (
+                    <div className="pt-1 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-t border-emerald-200/80 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-700 font-medium text-[11px]">Monto Fijo para Yahaira:</span>
+                        <div className="flex items-center gap-1">
+                          <span className="font-mono font-bold text-slate-500 text-xs">C$</span>
+                          <input
+                            type="number"
+                            step="1"
+                            min="0"
+                            value={tipYahairaAmount}
+                            onChange={(e) => setTipYahairaAmount(parseFloat(e.target.value) || 0)}
+                            className="w-20 bg-white border border-emerald-300 rounded px-2 py-0.5 font-mono font-bold text-emerald-900 text-xs text-right focus:outline-none focus:border-[#1c6856]"
+                          />
+                        </div>
+                      </div>
+                      <span className="text-[11px] text-emerald-900 font-semibold">
+                        Descuento aplicado: C$ {totalTipCollected.toFixed(2)} - C$ {actualYahairaTip.toFixed(2)} = <strong>C$ {tipTeamPool.toFixed(2)} restantes</strong>
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="pt-1 text-[11px] text-slate-600 border-t border-emerald-200/80">
+                      Yahaira no laboró en el turno. El 100% de la propina recaudada (C$ {totalTipCollected.toFixed(2)}) se distribuye entre los {staffCount} compañeros de equipo.
+                    </div>
+                  )}
+                </div>
+
+                {/* Tarjeta de Resumen y Reparto Automático */}
+                <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-lg space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-b border-amber-200/80 pb-3">
+                    {tipYahairaWorked && (
+                      <div className="bg-white p-2.5 rounded-lg border border-amber-200">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">
+                          Cuota Yahaira Rivas
+                        </span>
+                        <div className="text-lg font-bold text-emerald-900 font-mono">
+                          C$ {actualYahairaTip.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-medium">
+                          Monto fijo por acuerdo
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="bg-white p-2.5 rounded-lg border border-amber-200">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block">
+                        Fondo Restante Equipo
+                      </span>
+                      <div className="text-lg font-bold text-amber-900 font-mono">
+                        C$ {tipTeamPool.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                      </div>
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        A repartir entre {staffCount} personas
+                      </span>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-lg border border-amber-200">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block">
+                        Cuota por Colaborador
+                      </span>
+                      <div className="text-lg font-bold text-amber-900 font-mono">
+                        C$ {individualTip.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                      </div>
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        C$ {tipTeamPool.toFixed(2)} ÷ {staffCount} pers.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
+                    <div className="text-xs text-slate-700">
+                      <span>Total Salida de Gaveta: </span>
+                      <strong className="font-mono text-slate-900">
+                        C$ {totalTipCollected.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                      </strong>
+                    </div>
+
                     <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-amber-300 shadow-2xs">
                       <input
                         type="checkbox"
                         checked={tipPaid}
                         onChange={(e) => setTipPaid(e.target.checked)}
-                        className="w-4 h-4 text-[#1c6856] rounded border-slate-300 focus:ring-0"
+                        className="w-4 h-4 text-[#1c6856] rounded border-slate-300 focus:ring-0 cursor-pointer"
                       />
                       <span className="text-xs font-bold text-slate-800">
                         ¿Se entregó en efectivo de la gaveta esta noche?
@@ -965,6 +1069,9 @@ export const ClosingModal: React.FC<Props> = ({
                       individualTip,
                       tipPaid,
                       tipNotes,
+                      tipYahairaWorked,
+                      tipYahairaAmount: actualYahairaTip,
+                      tipTeamPool,
                       transferToPettyCash,
                       depositedFromPettyCash,
                       totalWithdrawals: transferToPettyCash + tipsPaidAmount,
@@ -1010,6 +1117,9 @@ export const ClosingModal: React.FC<Props> = ({
                       individualTip,
                       tipPaid,
                       tipNotes,
+                      tipYahairaWorked,
+                      tipYahairaAmount: actualYahairaTip,
+                      tipTeamPool,
                       transferToPettyCash,
                       depositedFromPettyCash,
                       totalWithdrawals: transferToPettyCash + tipsPaidAmount,
@@ -1090,6 +1200,9 @@ export const ClosingModal: React.FC<Props> = ({
                       individualTip,
                       tipPaid,
                       tipNotes,
+                      tipYahairaWorked,
+                      tipYahairaAmount: actualYahairaTip,
+                      tipTeamPool,
                       actualCashNIO,
                       expectedCashNIO,
                       differenceNIO,

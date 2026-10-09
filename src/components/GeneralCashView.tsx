@@ -77,6 +77,8 @@ export const GeneralCashView: React.FC<Props> = ({
     salesCashSystem: '',
     totalTipCollected: '',
     tipPaid: true,
+    tipYahairaWorked: true,
+    tipYahairaAmount: '100',
     actualCashNIO: '',
     closingNotes: '',
   });
@@ -253,6 +255,8 @@ export const GeneralCashView: React.FC<Props> = ({
       salesCashSystem: shiftToEdit.salesCashSystem ? String(shiftToEdit.salesCashSystem) : '',
       totalTipCollected: shiftToEdit.totalTipCollected ? String(shiftToEdit.totalTipCollected) : '',
       tipPaid: shiftToEdit.tipPaid !== undefined ? shiftToEdit.tipPaid : true,
+      tipYahairaWorked: shiftToEdit.tipYahairaWorked !== undefined ? shiftToEdit.tipYahairaWorked : true,
+      tipYahairaAmount: shiftToEdit.tipYahairaAmount !== undefined ? String(shiftToEdit.tipYahairaAmount) : '100',
       actualCashNIO: String(shiftToEdit.actualCashNIO || shiftToEdit.totalClosingNIO || shiftToEdit.totalClosingEquivNIO || ''),
       closingNotes: shiftToEdit.closingNotes || '',
     });
@@ -273,9 +277,14 @@ export const GeneralCashView: React.FC<Props> = ({
     const totalGrossSales = salesCashSystem + totalCards + salesPedidosYa;
     const totalTipCollected = parseFloat(editForm.totalTipCollected) || 0;
     const staffCount = editingShift.staffCount || 10;
-    const individualTip = staffCount > 0 ? parseFloat((totalTipCollected / staffCount).toFixed(2)) : 0;
     const tipPaid = editForm.tipPaid;
     const tipsPaidAmount = tipPaid ? totalTipCollected : 0;
+
+    const tipYahairaWorked = editForm.tipYahairaWorked;
+    const tipYahairaAmount = parseFloat(editForm.tipYahairaAmount) || 100;
+    const actualYahairaTip = tipYahairaWorked ? Math.min(totalTipCollected, Math.max(0, tipYahairaAmount)) : 0;
+    const tipTeamPool = parseFloat(Math.max(0, totalTipCollected - actualYahairaTip).toFixed(2));
+    const individualTip = staffCount > 0 ? parseFloat((tipTeamPool / staffCount).toFixed(2)) : 0;
 
     const openingFloat = editingShift.totalOpeningNIO || editingShift.totalOpeningEquivNIO || 0;
     const expectedCashNIO = parseFloat((openingFloat + salesCashSystem - tipsPaidAmount).toFixed(2));
@@ -315,6 +324,9 @@ export const GeneralCashView: React.FC<Props> = ({
       staffCount,
       individualTip,
       tipPaid,
+      tipYahairaWorked,
+      tipYahairaAmount: actualYahairaTip,
+      tipTeamPool,
       actualCashNIO,
       netCashAfterTipsNIO,
       totalClosingNIO: actualCashNIO,
@@ -1114,6 +1126,37 @@ export const GeneralCashView: React.FC<Props> = ({
                 <label htmlFor="editTipPaid" className="text-xs font-bold text-amber-950 cursor-pointer">
                   Propinas entregadas de gaveta (restar del arqueo para cuadrar caja)
                 </label>
+              </div>
+
+              {/* Acuerdo Yahaira Rivas */}
+              <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-emerald-950">Acuerdo Especial: Yahaira Rivas</span>
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editForm.tipYahairaWorked}
+                      onChange={(e) => setEditForm({ ...editForm, tipYahairaWorked: e.target.checked })}
+                      className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                    />
+                    <span className="text-xs font-bold text-emerald-900">
+                      {editForm.tipYahairaWorked ? 'Asistió a laborar' : 'No asistió'}
+                    </span>
+                  </label>
+                </div>
+                {editForm.tipYahairaWorked && (
+                  <div className="flex items-center justify-between text-xs pt-1 border-t border-emerald-200/80">
+                    <span className="text-emerald-800">Cuota Fija Yahaira (C$):</span>
+                    <input
+                      type="number"
+                      step="1"
+                      min="0"
+                      value={editForm.tipYahairaAmount}
+                      onChange={(e) => setEditForm({ ...editForm, tipYahairaAmount: e.target.value })}
+                      className="w-24 p-1 bg-white border border-emerald-300 rounded font-mono font-bold text-right text-emerald-900"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Notas */}
