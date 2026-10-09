@@ -124,6 +124,9 @@ export interface CashShift {
   tipYahairaWorked?: boolean; // Acuerdo laboral: cuota especial fija si trabajó
   tipYahairaAmount?: number; // Monto asignado (por defecto C$ 100)
   tipTeamPool?: number; // Fondo restante a repartir entre el resto del equipo (totalTipCollected - tipYahairaAmount)
+  tipIsRounded?: boolean; // Si se aplicó la regla de redondeo a billetes de C$ 10
+  tipDistributedTotal?: number; // Total real de propina entregado en efectivo tras redondeo (staffCount * individualTip + tipYahairaAmount)
+  tipRoundingDiff?: number; // Diferencia entre propina recaudada en POS y la entregada en físico (totalTipCollected - tipDistributedTotal)
 
   // Deducciones / Retiros de Caja
   transferToPettyCash?: number; // Pagos/Salidas hacia Caja Chica (traspasos en el turno)

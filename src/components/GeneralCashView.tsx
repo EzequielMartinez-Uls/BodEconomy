@@ -79,6 +79,8 @@ export const GeneralCashView: React.FC<Props> = ({
     tipPaid: true,
     tipYahairaWorked: true,
     tipYahairaAmount: '100',
+    tipIsRounded: false,
+    individualTip: '',
     actualCashNIO: '',
     closingNotes: '',
   });
@@ -257,6 +259,8 @@ export const GeneralCashView: React.FC<Props> = ({
       tipPaid: shiftToEdit.tipPaid !== undefined ? shiftToEdit.tipPaid : true,
       tipYahairaWorked: shiftToEdit.tipYahairaWorked !== undefined ? shiftToEdit.tipYahairaWorked : true,
       tipYahairaAmount: shiftToEdit.tipYahairaAmount !== undefined ? String(shiftToEdit.tipYahairaAmount) : '100',
+      tipIsRounded: shiftToEdit.tipIsRounded !== undefined ? shiftToEdit.tipIsRounded : false,
+      individualTip: shiftToEdit.individualTip !== undefined ? String(shiftToEdit.individualTip) : '',
       actualCashNIO: String(shiftToEdit.actualCashNIO || shiftToEdit.totalClosingNIO || shiftToEdit.totalClosingEquivNIO || ''),
       closingNotes: shiftToEdit.closingNotes || '',
     });
@@ -278,13 +282,24 @@ export const GeneralCashView: React.FC<Props> = ({
     const totalTipCollected = parseFloat(editForm.totalTipCollected) || 0;
     const staffCount = editingShift.staffCount || 10;
     const tipPaid = editForm.tipPaid;
-    const tipsPaidAmount = tipPaid ? totalTipCollected : 0;
-
     const tipYahairaWorked = editForm.tipYahairaWorked;
     const tipYahairaAmount = parseFloat(editForm.tipYahairaAmount) || 100;
     const actualYahairaTip = tipYahairaWorked ? Math.min(totalTipCollected, Math.max(0, tipYahairaAmount)) : 0;
     const tipTeamPool = parseFloat(Math.max(0, totalTipCollected - actualYahairaTip).toFixed(2));
-    const individualTip = staffCount > 0 ? parseFloat((tipTeamPool / staffCount).toFixed(2)) : 0;
+    const rawIndividualTip = staffCount > 0 ? parseFloat((tipTeamPool / staffCount).toFixed(2)) : 0;
+
+    let individualTip = rawIndividualTip;
+    if (editForm.individualTip !== '' && !isNaN(parseFloat(editForm.individualTip))) {
+      individualTip = parseFloat(editForm.individualTip);
+    } else if (editForm.tipIsRounded) {
+      const intVal = Math.floor(rawIndividualTip);
+      const lastDigit = intVal % 10;
+      individualTip = lastDigit <= 5 ? Math.floor(intVal / 10) * 10 : Math.ceil(intVal / 10) * 10;
+    }
+
+    const tipDistributedTotal = parseFloat((actualYahairaTip + (staffCount * individualTip)).toFixed(2));
+    const tipRoundingDiff = parseFloat((totalTipCollected - tipDistributedTotal).toFixed(2));
+    const tipsPaidAmount = tipPaid ? tipDistributedTotal : 0;
 
     const openingFloat = editingShift.totalOpeningNIO || editingShift.totalOpeningEquivNIO || 0;
     const expectedCashNIO = parseFloat((openingFloat + salesCashSystem - tipsPaidAmount).toFixed(2));
@@ -308,7 +323,7 @@ export const GeneralCashView: React.FC<Props> = ({
     const dayPettyExpenses = (state.pettyCashTransactions || [])
       .filter((t) => t.type === 'EXPENSE' && extractLocalDateStr(t.date) === editingShift.date)
       .reduce((sum, t) => sum + (t.amount || 0), 0);
-    const dailyNetProfit = parseFloat((totalGrossSales - dayPettyExpenses - totalTipCollected).toFixed(2));
+    const dailyNetProfit = parseFloat((totalGrossSales - dayPettyExpenses - tipsPaidAmount).toFixed(2));
 
     const updated: CashShift = {
       ...editingShift,
@@ -327,6 +342,9 @@ export const GeneralCashView: React.FC<Props> = ({
       tipYahairaWorked,
       tipYahairaAmount: actualYahairaTip,
       tipTeamPool,
+      tipIsRounded: editForm.tipIsRounded,
+      tipDistributedTotal,
+      tipRoundingDiff,
       actualCashNIO,
       netCashAfterTipsNIO,
       totalClosingNIO: actualCashNIO,
@@ -1154,6 +1172,38 @@ export const GeneralCashView: React.FC<Props> = ({
                       value={editForm.tipYahairaAmount}
                       onChange={(e) => setEditForm({ ...editForm, tipYahairaAmount: e.target.value })}
                       className="w-24 p-1 bg-white border border-emerald-300 rounded font-mono font-bold text-right text-emerald-900"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Redondeo de Propinas */}
+              <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-amber-950">Redondeo a Billetes de C$ 10</span>
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editForm.tipIsRounded}
+                      onChange={(e) => setEditForm({ ...editForm, tipIsRounded: e.target.checked })}
+                      className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
+                    />
+                    <span className="text-xs font-bold text-amber-900">
+                      {editForm.tipIsRounded ? 'Redondeo Activo' : 'Cálculo Exacto'}
+                    </span>
+                  </label>
+                </div>
+                {editForm.tipIsRounded && (
+                  <div className="flex items-center justify-between text-xs pt-1 border-t border-amber-200/80">
+                    <span className="text-amber-800">Cuota Personal (C$):</span>
+                    <input
+                      type="number"
+                      step="1"
+                      min="0"
+                      placeholder="Auto"
+                      value={editForm.individualTip}
+                      onChange={(e) => setEditForm({ ...editForm, individualTip: e.target.value })}
+                      className="w-24 p-1 bg-white border border-amber-300 rounded font-mono font-bold text-right text-amber-900"
                     />
                   </div>
                 )}

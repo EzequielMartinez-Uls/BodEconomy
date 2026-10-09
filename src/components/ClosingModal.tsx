@@ -33,6 +33,8 @@ import {
   Clock,
   Info,
   UserCheck,
+  Sparkles,
+  RotateCcw,
 } from 'lucide-react';
 
 interface Props {
@@ -93,6 +95,13 @@ export const ClosingModal: React.FC<Props> = ({
   const [tipYahairaAmount, setTipYahairaAmount] = useState<number>(
     shift.tipYahairaAmount !== undefined ? shift.tipYahairaAmount : 100
   );
+  // Redondeo opcional a billetes de C$ 10 (Regla del Bodegón: <= 5 baja, >= 6 sube)
+  const [tipIsRounded, setTipIsRounded] = useState<boolean>(
+    shift.tipIsRounded !== undefined ? shift.tipIsRounded : false
+  );
+  const [manualIndividualTip, setManualIndividualTip] = useState<number | null>(
+    shift.individualTip !== undefined && shift.tipIsRounded ? shift.individualTip : null
+  );
 
   // 4. Observaciones
   const [closingNotes, setClosingNotes] = useState<string>('');
@@ -109,8 +118,34 @@ export const ClosingModal: React.FC<Props> = ({
   // Cálculos de Propinas (Acuerdo Laboral: Cuota Yahaira Rivas + Fondo Común Equipo)
   const actualYahairaTip = tipYahairaWorked ? Math.min(totalTipCollected, Math.max(0, tipYahairaAmount)) : 0;
   const tipTeamPool = parseFloat(Math.max(0, totalTipCollected - actualYahairaTip).toFixed(2));
-  const individualTip = staffCount > 0 ? parseFloat((tipTeamPool / staffCount).toFixed(2)) : 0;
-  const tipsPaidAmount = tipPaid ? totalTipCollected : 0;
+  const rawIndividualTip = staffCount > 0 ? parseFloat((tipTeamPool / staffCount).toFixed(2)) : 0;
+
+  // Regla del Bodegón: <= 5 baja a la decena anterior, >= 6 sube a la siguiente
+  const calculateBodegonRound = (amt: number): number => {
+    if (amt <= 0) return 0;
+    const intVal = Math.floor(amt);
+    const lastDigit = intVal % 10;
+    return lastDigit <= 5 ? Math.floor(intVal / 10) * 10 : Math.ceil(intVal / 10) * 10;
+  };
+  const roundedCalculatedTip = calculateBodegonRound(rawIndividualTip);
+
+  // Cuota individual efectiva
+  const individualTip = manualIndividualTip !== null
+    ? manualIndividualTip
+    : tipIsRounded
+    ? roundedCalculatedTip
+    : rawIndividualTip;
+
+  // Total Real de Propina a Distribuir en Mano (lo que físicamente se entrega al personal)
+  const tipDistributedTotal = parseFloat(
+    (actualYahairaTip + (staffCount * individualTip)).toFixed(2)
+  );
+
+  // Diferencia de ajuste por redondeo (propina recaudada en POS vs entregada real)
+  const tipRoundingDiff = parseFloat((totalTipCollected - tipDistributedTotal).toFixed(2));
+
+  // La propina que de verdad se declara y sale de la gaveta es la resultante del reparto real
+  const tipsPaidAmount = tipPaid ? tipDistributedTotal : 0;
 
   // EFECTIVO NETO EN GAVETA TRAS RESTAR PROPINAS:
   // Al total contado en córdobas en caja general se le resta lo que se entrega en propina
@@ -214,6 +249,9 @@ export const ClosingModal: React.FC<Props> = ({
       tipYahairaWorked,
       tipYahairaAmount: actualYahairaTip,
       tipTeamPool,
+      tipIsRounded,
+      tipDistributedTotal,
+      tipRoundingDiff,
 
       // Auditoría Real
       actualCashNIO,
@@ -722,7 +760,59 @@ export const ClosingModal: React.FC<Props> = ({
                 </div>
 
                 {/* Tarjeta de Resumen y Reparto Automático */}
-                <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-lg space-y-3">
+                <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-lg space-y-3.5">
+                  {/* Barra de Herramienta de Redondeo (Evitar Monedas) */}
+                  <div className="flex items-center justify-between flex-wrap gap-2.5 p-2.5 bg-white rounded-lg border border-amber-300 shadow-2xs">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1 bg-amber-100 text-amber-800 rounded-md">
+                        <Sparkles className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 block">
+                          Redondeo a Billetes de C$ 10 (Sin Monedas)
+                        </span>
+                        <span className="text-[10.5px] text-slate-500">
+                          Regla Bodegón: terminación ≤ 5 baja (ej: 235 ➔ 230), ≥ 6 sube (ej: 236 ➔ 240)
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {!tipIsRounded && manualIndividualTip === null ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTipIsRounded(true);
+                            setManualIndividualTip(null);
+                          }}
+                          className="px-3 py-1.5 bg-[#1c6856] hover:bg-[#154f42] text-white rounded-lg font-bold text-xs flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Aplicar Redondeo Automático</span>
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-[11px] border border-emerald-300">
+                            ✓ Redondeo Activo (C$ {individualTip.toFixed(2)})
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTipIsRounded(false);
+                              setManualIndividualTip(null);
+                            }}
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs flex items-center gap-1 transition cursor-pointer border border-slate-300"
+                            title="Volver al cálculo exacto con centavos"
+                          >
+                            <RotateCcw className="w-3 h-3 text-slate-500" />
+                            <span>Quitar Redondeo</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Grid de Desglose de Reparto */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-b border-amber-200/80 pb-3">
                     {tipYahairaWorked && (
                       <div className="bg-white p-2.5 rounded-lg border border-amber-200">
@@ -750,25 +840,66 @@ export const ClosingModal: React.FC<Props> = ({
                       </span>
                     </div>
 
-                    <div className="bg-white p-2.5 rounded-lg border border-amber-200">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block">
-                        Cuota por Colaborador
-                      </span>
-                      <div className="text-lg font-bold text-amber-900 font-mono">
-                        C$ {individualTip.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                    <div className="bg-white p-2.5 rounded-lg border border-amber-200 relative">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block">
+                          Cuota por Colaborador
+                        </span>
+                        {tipIsRounded && (
+                          <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 rounded">
+                            Billetes
+                          </span>
+                        )}
                       </div>
-                      <span className="text-[10px] text-slate-500 font-medium">
-                        C$ {tipTeamPool.toFixed(2)} ÷ {staffCount} pers.
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-xs font-mono font-bold text-slate-400">C$</span>
+                        <input
+                          type="number"
+                          step="1"
+                          min="0"
+                          value={individualTip}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value) || 0;
+                            setManualIndividualTip(val);
+                            setTipIsRounded(true);
+                          }}
+                          className="w-24 font-bold text-lg text-amber-950 font-mono bg-amber-50/50 border border-amber-300 rounded px-1.5 py-0.5 focus:bg-white focus:outline-none focus:border-[#1c6856]"
+                        />
+                      </div>
+                      <span className="text-[10px] text-slate-500 font-medium block mt-0.5">
+                        {tipIsRounded
+                          ? `(Exacto era C$ ${rawIndividualTip.toFixed(2)})`
+                          : `C$ ${tipTeamPool.toFixed(2)} ÷ ${staffCount} pers.`}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
-                    <div className="text-xs text-slate-700">
-                      <span>Total Salida de Gaveta: </span>
-                      <strong className="font-mono text-slate-900">
-                        C$ {totalTipCollected.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
-                      </strong>
+                  {/* Resumen Final de Declaración y Gaveta */}
+                  <div className="flex items-center justify-between flex-wrap gap-2 pt-1 text-xs">
+                    <div className="space-y-0.5">
+                      <div className="text-slate-700">
+                        <span>Total Real a Entregar de Gaveta: </span>
+                        <strong className="font-mono text-slate-900 text-sm">
+                          C$ {tipDistributedTotal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                        </strong>
+                      </div>
+                      {tipIsRounded && (
+                        <div className="text-[11px] font-medium">
+                          {tipRoundingDiff > 0 ? (
+                            <span className="text-emerald-700">
+                              + C$ {tipRoundingDiff.toFixed(2)} quedan en gaveta física (remanente de monedas no entregadas).
+                            </span>
+                          ) : tipRoundingDiff < 0 ? (
+                            <span className="text-blue-700">
+                              - C$ {Math.abs(tipRoundingDiff).toFixed(2)} se completaron de gaveta para redondear billetes.
+                            </span>
+                          ) : (
+                            <span className="text-slate-500">
+                              El reparto coincide exactamente al centavo.
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-amber-300 shadow-2xs">
@@ -1072,6 +1203,9 @@ export const ClosingModal: React.FC<Props> = ({
                       tipYahairaWorked,
                       tipYahairaAmount: actualYahairaTip,
                       tipTeamPool,
+                      tipIsRounded,
+                      tipDistributedTotal,
+                      tipRoundingDiff,
                       transferToPettyCash,
                       depositedFromPettyCash,
                       totalWithdrawals: transferToPettyCash + tipsPaidAmount,
@@ -1120,6 +1254,9 @@ export const ClosingModal: React.FC<Props> = ({
                       tipYahairaWorked,
                       tipYahairaAmount: actualYahairaTip,
                       tipTeamPool,
+                      tipIsRounded,
+                      tipDistributedTotal,
+                      tipRoundingDiff,
                       transferToPettyCash,
                       depositedFromPettyCash,
                       totalWithdrawals: transferToPettyCash + tipsPaidAmount,
@@ -1203,6 +1340,9 @@ export const ClosingModal: React.FC<Props> = ({
                       tipYahairaWorked,
                       tipYahairaAmount: actualYahairaTip,
                       tipTeamPool,
+                      tipIsRounded,
+                      tipDistributedTotal,
+                      tipRoundingDiff,
                       actualCashNIO,
                       expectedCashNIO,
                       differenceNIO,

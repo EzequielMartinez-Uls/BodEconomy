@@ -689,7 +689,7 @@ export function printThermalClosingTicket(shift: CashShift): void {
           <span class="info-value font-mono">C$ ${(shift.tipTeamPool ?? Math.max(0, (shift.totalTipCollected || 0) - (shift.tipYahairaAmount ?? 100))).toFixed(2)}</span>
         </div>
         <div class="info-box">
-          <span class="info-label">Cuota por Persona</span>
+          <span class="info-label">Cuota por Persona ${shift.tipIsRounded ? '(Redondeada)' : ''}</span>
           <span class="info-value font-mono">C$ ${(shift.individualTip || 0).toFixed(2)}</span>
         </div>
         ` : `
@@ -698,8 +698,8 @@ export function printThermalClosingTicket(shift: CashShift): void {
           <span class="info-value">${shift.staffCount || 1} colaboradores</span>
         </div>
         <div class="info-box">
-          <span class="info-label">Cuota por Persona</span>
-          <span class="info-value">C$ ${(shift.individualTip || 0).toFixed(2)}</span>
+          <span class="info-label">Cuota por Persona ${shift.tipIsRounded ? '(Redondeada)' : ''}</span>
+          <span class="info-value font-mono">C$ ${(shift.individualTip || 0).toFixed(2)}</span>
         </div>
         <div class="info-box" style="border: 2px solid #000000;">
           <span class="info-label">Entrega en Efectivo</span>
