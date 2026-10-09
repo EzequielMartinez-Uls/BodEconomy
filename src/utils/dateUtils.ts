@@ -39,7 +39,8 @@ export function formatDateToFriendly(dateStr: string): string {
 }
 
 /**
- * Retorna la fecha y hora local en formato ISO sin desfase UTC: YYYY-MM-DDTHH:mm:ss
+ * Retorna la fecha y hora local en formato ISO con offset de zona horaria: YYYY-MM-DDTHH:mm:ss-06:00
+ * Esto previene que Supabase/PostgreSQL (timestamptz) asuma UTC por omisión y reste 6 horas dos veces.
  */
 export function getLocalDateTimeStr(d: Date = new Date()): string {
   const year = d.getFullYear();
@@ -48,7 +49,11 @@ export function getLocalDateTimeStr(d: Date = new Date()): string {
   const hours = String(d.getHours()).padStart(2, '0');
   const minutes = String(d.getMinutes()).padStart(2, '0');
   const seconds = String(d.getSeconds()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+  const offsetMin = -d.getTimezoneOffset();
+  const sign = offsetMin >= 0 ? '+' : '-';
+  const pad = (n: number) => String(Math.abs(Math.floor(n))).padStart(2, '0');
+  const offsetStr = `${sign}${pad(offsetMin / 60)}:${pad(offsetMin % 60)}`;
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${offsetStr}`;
 }
 
 /**
