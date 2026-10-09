@@ -42,11 +42,11 @@ export const DailySpreadsheetView: React.FC<Props> = ({
   });
 
   const cashExpensesTotal = todayExpenses
-    .filter((tx) => tx.method === 'CASH')
+    .filter((tx) => tx.method === 'CASH' || !tx.method)
     .reduce((sum, tx) => sum + tx.amount, 0);
 
   const transferExpensesTotal = todayExpenses
-    .filter((tx) => tx.method === 'TRANSFER')
+    .filter((tx) => tx.method === 'TRANSFER' || tx.method === 'CARD')
     .reduce((sum, tx) => sum + tx.amount, 0);
 
   // Valores de ventas e ingresos del turno visible

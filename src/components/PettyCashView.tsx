@@ -1061,7 +1061,7 @@ export const PettyCashView: React.FC<Props> = ({
                       const fondoInicial = selectedShift?.initialBalance || 0;
                       const totalInflows = selectedDateInflows;
                       const expensesCash = selectedDateCashExpenses;
-                      const expensesTransf = selectedDateTransferExpenses;
+                      const expensesTransf = selectedDateTransferExpenses + selectedDateCardExpenses;
                       const expensesTotal = selectedDateExpenses;
                       const saldoRemanente = selectedShift?.actualCashCounted ?? expectedSelectedBalance;
 
@@ -1375,7 +1375,7 @@ export const PettyCashView: React.FC<Props> = ({
                     const fondoInicial = selectedShift?.initialBalance || 0;
                     const totalInflows = selectedDateInflows;
                     const expensesCash = selectedDateCashExpenses;
-                    const expensesTransf = selectedDateTransferExpenses;
+                    const expensesTransf = selectedDateTransferExpenses + selectedDateCardExpenses;
                     const expensesTotal = selectedDateExpenses;
                     const saldoRemanente = selectedShift?.actualCashCounted ?? expectedSelectedBalance;
 
@@ -1649,7 +1649,7 @@ export const PettyCashView: React.FC<Props> = ({
                         Totales:
                       </td>
                       <td className="py-2.5 px-3 border-r border-slate-200 text-right font-mono text-xs text-slate-900 font-bold">
-                        C$ {selectedDateTransferExpenses.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                        C$ {(selectedDateTransferExpenses + selectedDateCardExpenses).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </td>
                       <td className="py-2.5 px-3 border-r border-slate-200 text-right font-mono text-xs text-emerald-800 font-bold">
                         C$ {(selectedInitialBalance + selectedDateInflows).toLocaleString('es-NI', { minimumFractionDigits: 2 })}

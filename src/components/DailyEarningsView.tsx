@@ -277,7 +277,7 @@ export const DailyEarningsView: React.FC<Props> = ({
       }
 
       const item = map.get(txDate)!;
-      if (tx.method === 'TRANSFER') {
+      if (tx.method === 'TRANSFER' || tx.method === 'CARD') {
         item.transfersPaid += tx.amount || 0;
       } else {
         item.pettyCashExpenses += tx.amount || 0;
