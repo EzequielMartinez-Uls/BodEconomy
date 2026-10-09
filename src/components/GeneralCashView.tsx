@@ -76,6 +76,8 @@ export const GeneralCashView: React.FC<Props> = ({
     salesPedidosYa: '',
     salesCashSystem: '',
     totalTipCollected: '',
+    tipPaid: true,
+    actualCashNIO: '',
     closingNotes: '',
   });
 
@@ -250,6 +252,8 @@ export const GeneralCashView: React.FC<Props> = ({
       salesPedidosYa: shiftToEdit.salesPedidosYa ? String(shiftToEdit.salesPedidosYa) : '',
       salesCashSystem: shiftToEdit.salesCashSystem ? String(shiftToEdit.salesCashSystem) : '',
       totalTipCollected: shiftToEdit.totalTipCollected ? String(shiftToEdit.totalTipCollected) : '',
+      tipPaid: shiftToEdit.tipPaid !== undefined ? shiftToEdit.tipPaid : true,
+      actualCashNIO: String(shiftToEdit.actualCashNIO || shiftToEdit.totalClosingNIO || shiftToEdit.totalClosingEquivNIO || ''),
       closingNotes: shiftToEdit.closingNotes || '',
     });
     setEditingShift(shiftToEdit);
@@ -270,12 +274,17 @@ export const GeneralCashView: React.FC<Props> = ({
     const totalTipCollected = parseFloat(editForm.totalTipCollected) || 0;
     const staffCount = editingShift.staffCount || 10;
     const individualTip = staffCount > 0 ? parseFloat((totalTipCollected / staffCount).toFixed(2)) : 0;
-    const tipsPaidAmount = editingShift.tipPaid ? totalTipCollected : 0;
+    const tipPaid = editForm.tipPaid;
+    const tipsPaidAmount = tipPaid ? totalTipCollected : 0;
 
     const openingFloat = editingShift.totalOpeningNIO || editingShift.totalOpeningEquivNIO || 0;
     const expectedCashNIO = parseFloat((openingFloat + salesCashSystem - tipsPaidAmount).toFixed(2));
-    const actualCashNIO = editingShift.totalClosingNIO || editingShift.actualCashNIO || editingShift.totalClosingEquivNIO || 0;
-    const differenceNIO = parseFloat((actualCashNIO - expectedCashNIO).toFixed(2));
+    const actualCashNIO = editForm.actualCashNIO !== ''
+      ? (parseFloat(editForm.actualCashNIO) || 0)
+      : (editingShift.actualCashNIO || editingShift.totalClosingNIO || editingShift.totalClosingEquivNIO || 0);
+
+    const netCashAfterTipsNIO = parseFloat(Math.max(0, actualCashNIO - tipsPaidAmount).toFixed(2));
+    const differenceNIO = parseFloat((netCashAfterTipsNIO - expectedCashNIO).toFixed(2));
 
     let auditStatus: 'SQUARED' | 'SURPLUS' | 'SHORTAGE' = 'SQUARED';
     if (Math.abs(differenceNIO) < 1.0) {
@@ -303,7 +312,13 @@ export const GeneralCashView: React.FC<Props> = ({
       salesCashSystem,
       totalGrossSales,
       totalTipCollected,
+      staffCount,
       individualTip,
+      tipPaid,
+      actualCashNIO,
+      netCashAfterTipsNIO,
+      totalClosingNIO: actualCashNIO,
+      totalClosingEquivNIO: netCashAfterTipsNIO,
       expectedCashNIO,
       differenceNIO,
       auditStatus,
@@ -1062,16 +1077,43 @@ export const GeneralCashView: React.FC<Props> = ({
                 </div>
               </div>
 
-              {/* Propinas */}
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Propinas Recaudadas (C$)</label>
+              {/* Propinas y Arqueo Físico */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Efectivo Físico Contado (C$)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Total en billetes"
+                    value={editForm.actualCashNIO}
+                    onChange={(e) => setEditForm({ ...editForm, actualCashNIO: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono font-bold text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Propinas Recaudadas (C$)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editForm.totalTipCollected}
+                    onChange={(e) => setEditForm({ ...editForm, totalTipCollected: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono font-bold text-slate-900"
+                  />
+                </div>
+              </div>
+
+              {/* Checkbox Propina Entregada */}
+              <div className="flex items-center gap-2 p-2.5 bg-amber-50/70 border border-amber-200 rounded-xl">
                 <input
-                  type="number"
-                  step="0.01"
-                  value={editForm.totalTipCollected}
-                  onChange={(e) => setEditForm({ ...editForm, totalTipCollected: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono font-bold text-slate-900"
+                  type="checkbox"
+                  id="editTipPaid"
+                  checked={editForm.tipPaid}
+                  onChange={(e) => setEditForm({ ...editForm, tipPaid: e.target.checked })}
+                  className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
                 />
+                <label htmlFor="editTipPaid" className="text-xs font-bold text-amber-950 cursor-pointer">
+                  Propinas entregadas de gaveta (restar del arqueo para cuadrar caja)
+                </label>
               </div>
 
               {/* Notas */}
