@@ -53,7 +53,7 @@ export const Navbar: React.FC<Props> = ({
                   Control ERP
                 </span>
               </div>
-              <div className="text-xs text-slate-400">Restaurante & Asador • Cajas y Menaje</div>
+              <div className="text-xs text-slate-400">Restaurante & Bar • Cajas y Menaje</div>
             </div>
           </div>
 

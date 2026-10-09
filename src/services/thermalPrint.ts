@@ -1,5 +1,6 @@
 import { AppState, CashShift, PettyCashShift, PettyCashTransaction, TablewareItem, TablewareLoss } from '../types';
 import { addDaysToDateStr, extractLocalDateStr, getLocalTodayStr } from '../utils/dateUtils';
+import logoImg from '../assets/logo.png';
 
 function openPrintWindow(title: string, bodyContent: string): void {
   const printWindow = window.open('', '_blank', 'width=1020,height=920,menubar=no,toolbar=no,location=no,status=no');
@@ -790,7 +791,7 @@ export function printThermalDailyExpensesTicket(
     <div class="header-container">
       <div>
         <h1 class="brand-title">RESTAURANTE EL BODEGÓN</h1>
-        <div class="brand-sub">Asador Criollo & Bar • Compras y Gastos Operativos</div>
+        <div class="brand-sub">Restaurante & Bar • Compras y Gastos Operativos</div>
       </div>
       <div class="doc-header-right">
         <span class="doc-badge">DOCUMENTO OFICIAL A4</span>
@@ -900,76 +901,290 @@ export function printThermalDailyExpensesTicket(
 }
 
 // ============================================================================
-// 4. VALE INDIVIDUAL DE COMPRA / GASTO DE CAJA CHICA (FORMATO HOJA A4)
+// 4. VALE / RECIBO DE COMPRA DE CAJA CHICA (FORMATO BODEGÓN)
 // ============================================================================
 export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void {
-  const content = `
-    <div class="header-container">
-      <div>
-        <h1 class="brand-title">RESTAURANTE EL BODEGÓN</h1>
-        <div class="brand-sub">Asador Criollo & Bar • Compras y Gastos Operativos</div>
-      </div>
-      <div class="doc-header-right">
-        <span class="doc-badge">COMPROBANTE OFICIAL</span>
-        <h2 class="doc-title">Vale de Caja Chica</h2>
-        <div class="doc-meta">Folio Único: #${tx.id.slice(-6).toUpperCase()}</div>
-      </div>
-    </div>
+  try {
+    const txDate = new Date(tx.date);
+    const fechaHoraExacta = txDate.toLocaleDateString('es-NI', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }) + ' — ' + txDate.toLocaleTimeString('es-NI', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+    const fechaHoraExactaCap = fechaHoraExacta.charAt(0).toUpperCase() + fechaHoraExacta.slice(1);
 
-    <div class="total-card" style="margin: 20px 0;">
-      <div>
-        <div class="total-label">Monto del Comprobante</div>
-        <div class="total-sub">Valor pagado y registrado en Caja Chica</div>
-      </div>
-      <div class="total-amount" style="font-size: 26px; color: #000000;">
-        C$ ${tx.amount.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-      </div>
-    </div>
+    const folioStr = tx.receiptNumber ? `#${tx.receiptNumber}` : `#${tx.id.slice(-6).toUpperCase()}`;
 
-    <div class="grid-2">
-      <div class="info-box">
-        <span class="info-label">Fecha y Hora</span>
-        <span class="info-value">${new Date(tx.date).toLocaleDateString()} — ${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-      </div>
-      <div class="info-box">
-        <span class="info-label">Rubro / Categoría</span>
-        <span class="info-value">${tx.category}</span>
-      </div>
-      <div class="info-box">
-        <span class="info-label">Concepto</span>
-        <span class="info-value">${tx.vendor}</span>
-      </div>
-      <div class="info-box">
-        <span class="info-label">Factura / Recibo</span>
-        <span class="info-value">${tx.receiptNumber ? `#${tx.receiptNumber}` : 'Sin factura física (Compra directa)'}</span>
-      </div>
-    </div>
+    const receiptHtml = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Recibo de Compra — Restaurante El Bodegón</title>
+        <style>
+          @page {
+            size: letter portrait;
+            margin: 12mm 15mm 12mm 15mm;
+          }
+          * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            color: #000000;
+            background: #f8fafc;
+            margin: 0;
+            padding: 56px 16px 20px;
+            display: flex;
+            justify-content: center;
+          }
+          .print-toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 48px;
+            background: #0f172a;
+            color: #ffffff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          }
+          .voucher-box {
+            width: 100%;
+            max-width: 680px;
+            background: #ffffff;
+            border: 2px solid #000000;
+            padding: 24px 28px;
+            margin: 0 auto;
+          }
+          .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #000000;
+            padding-bottom: 14px;
+            margin-bottom: 18px;
+          }
+          .brand-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+          }
+          .logo-img {
+            width: 58px;
+            height: 58px;
+            object-fit: contain;
+          }
+          .brand-title {
+            font-size: 21px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+            line-height: 1.1;
+          }
+          .brand-subtitle {
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+            color: #222222;
+          }
+          .voucher-meta {
+            text-align: right;
+            font-size: 11px;
+            font-family: monospace;
+          }
+          .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+          }
+          .data-table td {
+            border: 1px solid #000000;
+            padding: 9px 12px;
+            font-size: 12px;
+          }
+          .data-label {
+            width: 25%;
+            font-weight: 900;
+            text-transform: uppercase;
+            background-color: #f8fafc;
+            color: #000000;
+            font-size: 11.5px;
+            letter-spacing: 0.3px;
+          }
+          .data-val {
+            font-size: 13px;
+            color: #000000;
+          }
+          .monto-box {
+            border: 2px solid #000000;
+            background-color: #ffffff;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+          }
+          .monto-label {
+            font-size: 13px;
+            font-weight: 900;
+            text-transform: uppercase;
+          }
+          .monto-value {
+            font-size: 26px;
+            font-weight: 900;
+            font-family: "Courier New", Courier, monospace;
+            color: #000000;
+          }
+          .signatures-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 40px;
+            margin-top: 35px;
+            margin-bottom: 12px;
+          }
+          .sig-box {
+            flex: 1;
+            border-top: 1.5px solid #000000;
+            padding-top: 8px;
+            text-align: center;
+          }
+          .sig-title {
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+          }
+          .sig-name {
+            font-size: 11px;
+            margin-top: 4px;
+            color: #222222;
+          }
+          .footer-text {
+            border-top: 1px dashed #666666;
+            padding-top: 8px;
+            margin-top: 14px;
+            text-align: center;
+            font-size: 9.5px;
+            color: #555555;
+          }
+          @media print {
+            .no-print { display: none !important; }
+            body { padding: 0 !important; background: #ffffff !important; }
+            .voucher-box { border: 2px solid #000000; max-width: 100%; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="print-toolbar no-print">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="background: #000; color: #fff; padding: 3px 8px; border-radius: 4px; font-weight: 900; font-size: 11px;">BODEGÓN</span>
+            <span style="font-weight: bold; font-size: 13px; color: #fff;">Recibo de Compra — Restaurante El Bodegón</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button onclick="window.print()" style="background: #059669; color: #fff; border: none; padding: 6px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">🖨️ Mandar a Imprimir</button>
+            <button onclick="window.close()" style="background: #475569; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">✕ Cerrar</button>
+          </div>
+        </div>
 
-    ${tx.notes ? `
-      <div class="info-box" style="margin-bottom: 20px;">
-        <span class="info-label">Detalle / Justificación del Gasto</span>
-        <div style="font-size: 11px; color: #000000; padding-top: 2px;">${tx.notes}</div>
-      </div>
-    ` : ''}
+        <div class="voucher-box">
+          <div class="header-row">
+            <div class="brand-left">
+              <img src="${logoImg}" alt="Logo" class="logo-img" onerror="this.src='/logo.png'; this.onerror=function(){this.style.display='none';}" />
+              <div>
+                <div class="brand-title">RESTAURANTE EL BODEGÓN</div>
+                <div class="brand-subtitle">RECIBO DE COMPRA RESTAURANTE EL BODEGÓN</div>
+              </div>
+            </div>
+            <div class="voucher-meta">
+              <div>COMPROBANTE <strong>${folioStr}</strong></div>
+              <div style="margin-top: 3px; font-size: 9.5px;">Caja Chica Operativa</div>
+            </div>
+          </div>
 
-    <div style="margin-top: 40px; margin-bottom: 25px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
-      <div style="border-top: 1px solid #000000; padding-top: 8px; text-align: center;">
-        <div style="font-size: 11px; font-weight: 700; color: #000000;">Entregado Por (Caja Chica)</div>
-        <div style="font-size: 10px; color: #000000; margin-top: 2px;">${tx.registeredBy}</div>
-      </div>
-      <div style="border-top: 1px solid #000000; padding-top: 8px; text-align: center;">
-        <div style="font-size: 11px; font-weight: 700; color: #000000;">Recibido Conforme</div>
-        <div style="font-size: 10px; color: #000000; margin-top: 2px;">Firma y Cédula</div>
-      </div>
-    </div>
+          <table class="data-table">
+            <tbody>
+              <tr>
+                <td class="data-label">FECHA Y HORA EXACTA:</td>
+                <td class="data-val font-mono" style="font-weight: bold;">${fechaHoraExactaCap}</td>
+              </tr>
+              <tr>
+                <td class="data-label">NOMBRE:</td>
+                <td class="data-val" style="font-weight: 800; text-transform: uppercase; font-size: 14px;">${tx.vendor || 'Proveedor General'}</td>
+              </tr>
+              <tr>
+                <td class="data-label">CONCEPTO:</td>
+                <td class="data-val" style="line-height: 1.4;">
+                  <strong>${tx.notes || tx.vendor || tx.category}</strong>
+                  ${tx.category && tx.category !== tx.notes ? `<div style="font-size: 10.5px; color: #555; margin-top: 3px;">Categoría: ${tx.category} • Método: ${tx.method === 'CASH' ? 'Efectivo' : tx.method === 'TRANSFER' ? 'Transferencia' : 'Tarjeta'}</div>` : ''}
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-    <div class="footer-note">
-      <span>BodegónControl ERP • Comprobante individual de caja chica • Registrado por: ${tx.registeredBy}</span>
-      <span>Generado el ${new Date().toLocaleString()}</span>
-    </div>
-  `;
+          <div class="monto-box">
+            <div>
+              <div class="monto-label">MONTO TOTAL DE LA COMPRA</div>
+              <div style="font-size: 10px; color: #555; text-transform: uppercase;">Valor entregado y pagado en Caja Chica</div>
+            </div>
+            <div class="monto-value">
+              C$ ${tx.amount.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+          </div>
 
-  openPrintWindow(`Vale A4 #${tx.id.slice(-6)}`, content);
+          <div class="signatures-row">
+            <div class="sig-box">
+              <div style="height: 38px;"></div>
+              <div class="sig-title">ENTREGADO POR</div>
+              <div class="sig-name">Nombre: <strong>${tx.registeredBy || 'Caja Chica'}</strong></div>
+              <div style="font-size: 9.5px; color: #666; margin-top: 2px;">Firma de Caja</div>
+            </div>
+            <div class="sig-box">
+              <div style="height: 38px;"></div>
+              <div class="sig-title">RECIBIDO POR</div>
+              <div class="sig-name">Nombre: <strong>${tx.vendor || 'Beneficiario'}</strong></div>
+              <div style="font-size: 9.5px; color: #666; margin-top: 2px;">Firma y Cédula</div>
+            </div>
+          </div>
+
+          <div class="footer-text">
+            Restaurante El Bodegón • Documento Oficial de Respaldo Contable de Compra
+          </div>
+        </div>
+
+        <script>
+          setTimeout(function() {
+            window.focus();
+            window.print();
+          }, 350);
+        </script>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank', 'width=850,height=800,menubar=no,toolbar=no,location=no,status=no');
+    if (printWindow) {
+      printWindow.document.write(receiptHtml);
+      printWindow.document.close();
+    } else {
+      window.print();
+    }
+  } catch (err: any) {
+    alert('Error imprimiendo recibo de compra: ' + err.message);
+  }
 }
 
 // ============================================================================
@@ -987,7 +1202,7 @@ export function printThermalTablewareReport(
     <div class="header-container">
       <div>
         <h1 class="brand-title">RESTAURANTE EL BODEGÓN</h1>
-        <div class="brand-sub">Asador Criollo & Bar • Auditoría de Menaje</div>
+        <div class="brand-sub">Restaurante & Bar • Control y Auditoría de Menaje</div>
       </div>
       <div class="doc-header-right">
         <span class="doc-badge">AUDITORÍA FÍSICA A4</span>
@@ -1114,7 +1329,7 @@ export function printThermalPettyCashClosingAct(
     <div class="header-container">
       <div>
         <h1 class="brand-title">RESTAURANTE EL BODEGÓN</h1>
-        <div class="brand-sub">Asador Criollo & Bar • Compras y Gastos Operativos</div>
+        <div class="brand-sub">Restaurante & Bar • Liquidación de Caja Chica</div>
       </div>
       <div class="doc-header-right">
         <span class="doc-badge">DOCUMENTO OFICIAL A4</span>

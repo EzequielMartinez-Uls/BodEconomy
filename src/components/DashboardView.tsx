@@ -299,7 +299,7 @@ export const DashboardView: React.FC<Props> = ({
                 Menaje & Alertas de Reposición
               </h3>
               <span className="text-xs text-slate-400">
-                Control de cristalería para barra y asador
+                Control de cristalería para barra y cocina
               </span>
             </div>
             <button
