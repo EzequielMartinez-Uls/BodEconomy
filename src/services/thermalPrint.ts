@@ -1520,19 +1520,19 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
           margin-bottom: 8px;
         }
         .brand {
-          font-size: 15px;
+          font-size: 17px;
           font-weight: 900;
           letter-spacing: -0.5px;
           text-transform: uppercase;
         }
         .doc-title {
-          font-size: 11.5px;
+          font-size: 12.5px;
           font-weight: 800;
           letter-spacing: 0.3px;
           margin-top: 1px;
         }
         .doc-subtitle {
-          font-size: 8.5px;
+          font-size: 9.5px;
           color: #000000;
         }
         .meta-table {
@@ -1543,39 +1543,39 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
         }
         .meta-table td {
           border: 1px solid #000000;
-          padding: 3px 6px;
-          font-size: 8.5px;
+          padding: 4.5px 7px;
+          font-size: 10px;
           background-color: #ffffff;
         }
         .section-title {
-          font-size: 9.5px;
+          font-size: 11px;
           font-weight: 900;
           text-transform: uppercase;
           letter-spacing: 0.4px;
           border-bottom: 2px solid #000000;
-          padding-bottom: 2px;
-          margin: 7px 0 4px 0;
+          padding-bottom: 2.5px;
+          margin: 8px 0 4px 0;
         }
         table {
           width: 100%;
           border-collapse: collapse;
           margin-bottom: 6px;
-          font-size: 8.5px;
+          font-size: 9.5px;
         }
         th {
           border: 1px solid #000000;
           border-bottom: 2px solid #000000;
           background-color: #ffffff;
           color: #000000;
-          padding: 3px 5px;
+          padding: 4px 6px;
           font-weight: 900;
-          font-size: 8.5px;
+          font-size: 9.5px;
           text-align: left;
         }
         td {
           border: 1px solid #000000;
-          padding: 2.5px 5px;
-          font-size: 8.5px;
+          padding: 3.5px 6px;
+          font-size: 9.5px;
           background-color: #ffffff;
           color: #000000;
         }
@@ -1596,16 +1596,15 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
         }
         .signatures {
           display: flex;
-          justify-content: space-between;
-          margin-top: 8px;
-          gap: 30px;
+          justify-content: center;
+          margin-top: 10px;
         }
         .sig-box {
-          flex: 1;
+          width: 340px;
           border-top: 1px solid #000000;
           padding-top: 4px;
           text-align: center;
-          font-size: 8.5px;
+          font-size: 9.5px;
         }
         @media print {
           .no-print {
@@ -1981,31 +1980,15 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
           </div>
           <div class="signatures">
             <div class="sig-box">
-              <div style="height: 20px;"></div>
+              <div style="height: 28px;"></div>
               <div>
-                <strong>CAJERO(A) / ENTREGA TURNO</strong><br>
-                <span style="font-size: 7.5px;">Nombre: ${responsableCaja}</span><br>
-                <span style="font-size: 7.5px;">Firma: ________________________</span>
-              </div>
-            </div>
-            <div class="sig-box">
-              <div style="height: 20px;"></div>
-              <div>
-                <strong>ADMINISTRADOR(A) / AUDITOR</strong><br>
-                <span style="font-size: 7.5px;">Revisado Conforme</span><br>
-                <span style="font-size: 7.5px;">Firma: ________________________</span>
-              </div>
-            </div>
-            <div class="sig-box">
-              <div style="height: 20px;"></div>
-              <div>
-                <strong>GERENCIA GENERAL</strong><br>
-                <span style="font-size: 7.5px;">Visto Bueno y Aprobación</span><br>
-                <span style="font-size: 7.5px;">Firma y Sello: _________________</span>
+                <strong style="font-size: 10.5px;">CAJERO(A) EN TURNO / RESPONSABLE DE CIERRE</strong><br>
+                <span style="font-size: 9.5px;">Nombre: ${responsableCaja}</span><br>
+                <span style="font-size: 9.5px;">Firma de Conformidad: ____________________________________</span>
               </div>
             </div>
           </div>
-          <div style="font-size: 7.5px; color: #666; text-align: center; margin-top: 4px;">
+          <div style="font-size: 8px; color: #444; text-align: center; margin-top: 6px;">
             El Bodegón Restaurante & Bar • Documento Oficial B/N • ${modo === 'TODO' ? 'Página 1 de 2' : 'Página 1 de 1'}
           </div>
         </div>
@@ -2078,23 +2061,15 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
           </div>
           <div class="signatures">
             <div class="sig-box">
-              <div style="height: 20px;"></div>
+              <div style="height: 28px;"></div>
               <div>
-                <strong>RESPONSABLE DE CAJA CHICA</strong><br>
-                <span style="font-size: 7.5px;">Elaborado por: ${responsableCajaChica}</span><br>
-                <span style="font-size: 7.5px;">Firma de Conformidad: ___________________</span>
-              </div>
-            </div>
-            <div class="sig-box">
-              <div style="height: 20px;"></div>
-              <div>
-                <strong>GERENCIA / AUDITORÍA CONTABLE</strong><br>
-                <span style="font-size: 7.5px;">Revisado y Aprobado</span><br>
-                <span style="font-size: 7.5px;">Firma y Sello: ________________________</span>
+                <strong style="font-size: 10.5px;">RESPONSABLE DE CAJA CHICA / CAJERO(A) EN TURNO</strong><br>
+                <span style="font-size: 9.5px;">Nombre: ${responsableCajaChica}</span><br>
+                <span style="font-size: 9.5px;">Firma de Conformidad: ____________________________________</span>
               </div>
             </div>
           </div>
-          <div style="font-size: 7.5px; color: #666; text-align: center; margin-top: 4px;">
+          <div style="font-size: 8px; color: #444; text-align: center; margin-top: 6px;">
             El Bodegón Restaurante & Bar • Documento Oficial B/N • ${modo === 'TODO' ? 'Página 2 de 2' : 'Página 1 de 1'}
           </div>
         </div>
@@ -2334,7 +2309,7 @@ export function printOfficialOpeningActBN(
       <style>
         @page {
           size: letter portrait;
-          margin: 8mm 12mm 8mm 12mm;
+          margin: 10mm 12mm 10mm 12mm;
         }
         * {
           box-sizing: border-box;
@@ -2347,8 +2322,8 @@ export function printOfficialOpeningActBN(
           background: #ffffff;
           margin: 0;
           padding: 0;
-          font-size: 9.5px;
-          line-height: 1.25;
+          font-size: 11px;
+          line-height: 1.35;
         }
         .print-toolbar {
           position: fixed;
@@ -2367,11 +2342,11 @@ export function printOfficialOpeningActBN(
         }
         .sheet {
           width: 100%;
-          min-height: 97vh;
+          min-height: 96vh;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          padding-top: 10px;
+          padding: 6px 0;
           page-break-after: always;
           break-after: page;
         }
@@ -2381,63 +2356,64 @@ export function printOfficialOpeningActBN(
         }
         .header-box {
           border-bottom: 2px solid #000000;
-          padding-bottom: 6px;
-          margin-bottom: 8px;
+          padding-bottom: 8px;
+          margin-bottom: 10px;
         }
         .brand {
-          font-size: 15px;
+          font-size: 18px;
           font-weight: 900;
           letter-spacing: -0.5px;
           text-transform: uppercase;
         }
         .doc-title {
-          font-size: 11.5px;
-          font-weight: 800;
+          font-size: 13.5px;
+          font-weight: 900;
           letter-spacing: 0.3px;
-          margin-top: 1px;
+          margin-top: 2px;
         }
         .doc-subtitle {
-          font-size: 8.5px;
+          font-size: 10px;
           color: #333333;
         }
         .meta-table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 8px;
-          border: 1px solid #000000;
+          margin-bottom: 10px;
+          border: 1.5px solid #000000;
         }
         .meta-table td {
           border: 1px solid #000000;
-          padding: 3.5px 6px;
-          font-size: 8.5px;
+          padding: 6px 9px;
+          font-size: 10.5px;
         }
         .section-title {
-          font-size: 9.5px;
+          font-size: 12px;
           font-weight: 900;
           text-transform: uppercase;
           letter-spacing: 0.4px;
-          border-bottom: 1px solid #000000;
-          padding-bottom: 2px;
-          margin: 7px 0 4px 0;
+          border-bottom: 2px solid #000000;
+          padding-bottom: 3px;
+          margin: 12px 0 6px 0;
         }
         table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 6px;
-          font-size: 8.5px;
+          margin-bottom: 8px;
+          font-size: 10.5px;
         }
         th {
           border: 1px solid #000000;
-          background-color: #ffffff;
-          padding: 3px 5px;
+          border-bottom: 2px solid #000000;
+          background-color: #f8fafc;
+          padding: 5px 7px;
           font-weight: 900;
-          font-size: 8.5px;
+          font-size: 10.5px;
           text-align: left;
         }
         td {
           border: 1px solid #000000;
-          padding: 2.5px 5px;
-          font-size: 8.5px;
+          padding: 5px 7px;
+          font-size: 10.5px;
           background-color: #ffffff;
         }
         .text-right { text-align: right; }
@@ -2452,21 +2428,20 @@ export function printOfficialOpeningActBN(
         }
         .signatures {
           display: flex;
-          justify-content: space-between;
-          margin-top: 10px;
-          gap: 30px;
+          justify-content: center;
+          margin-top: 14px;
         }
         .sig-box {
-          flex: 1;
-          border-top: 1px solid #000000;
-          padding-top: 4px;
+          width: 380px;
+          border-top: 1.5px solid #000000;
+          padding-top: 6px;
           text-align: center;
-          font-size: 8.5px;
+          font-size: 10.5px;
         }
         @media print {
           .no-print { display: none !important; }
           body { padding: 0 !important; }
-          .sheet { padding-top: 0 !important; min-height: 98vh !important; }
+          .sheet { padding: 0 !important; min-height: 96vh !important; }
         }
       </style>
     `;
@@ -2482,9 +2457,9 @@ export function printOfficialOpeningActBN(
                 <div class="doc-title">ACTA OFICIAL DE APERTURA Y ENTREGA DE FONDO DE CAJA</div>
                 <div class="doc-subtitle">ARQUEO INICIAL FÍSICO, RECEPCIÓN CONFORME Y ESTADO OPERATIVO</div>
               </div>
-              <div style="text-align: right; font-size: 8.5px; font-family: monospace;">
+              <div style="text-align: right; font-size: 10px; font-family: monospace;">
                 <div>DOC. OFICIAL N° <strong>AP-${date.replace(/-/g, '')}</strong></div>
-                <div>HORA APERTURA: ${horaApertura}</div>
+                <div>HORA APERTURA: <strong>${horaApertura}</strong></div>
               </div>
             </div>
           </div>
@@ -2497,17 +2472,20 @@ export function printOfficialOpeningActBN(
               <td style="width: 25%;"><strong>TASA DE CAMBIO:</strong><br>C$ ${shift.exchangeRate.toFixed(2)} por US$ 1.00</td>
             </tr>
             <tr>
-              <td><strong>FONDO FÍSICO CÓRDOBAS:</strong><br>C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-              <td><strong>FONDO FÍSICO DÓLARES:</strong><br>US$ ${shift.totalOpeningUSD.toFixed(2)} (C$ ${(shift.totalOpeningUSD * shift.exchangeRate).toLocaleString('es-NI', { minimumFractionDigits: 2 })})</td>
-              <td colspan="2" style="border: 1.5px solid #000;"><strong>TOTAL FONDO DE APERTURA EN GAVETA:</strong><br><strong style="font-size: 11px;">C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
+              <td><strong>FONDO FÍSICO CÓRDOBAS:</strong><br><span class="font-mono font-bold" style="font-size: 12px;">C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span></td>
+              <td><strong>FONDO FÍSICO DÓLARES:</strong><br><span class="font-mono font-bold" style="font-size: 12px;">US$ ${shift.totalOpeningUSD.toFixed(2)}</span> (C$ ${(shift.totalOpeningUSD * shift.exchangeRate).toLocaleString('es-NI', { minimumFractionDigits: 2 })})</td>
+              <td colspan="2" style="border: 2px solid #000; background-color: #f8fafc;">
+                <strong>TOTAL FONDO DE APERTURA EN GAVETA:</strong><br>
+                <strong class="font-mono" style="font-size: 14px;">C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
+              </td>
             </tr>
           </table>
 
           <!-- TABLA DENOMINACIONES 2 COLUMNAS -->
           <div class="section-title">1. DESGLOSE FÍSICO DE DENOMINACIONES RECIBIDAS EN GAVETA</div>
-          <div style="display: flex; gap: 8px;">
+          <div style="display: flex; gap: 12px;">
             <!-- Córdobas -->
-            <div style="flex: 1;">
+            <div style="flex: 1.1;">
               <table>
                 <thead>
                   <tr>
@@ -2525,22 +2503,22 @@ export function printOfficialOpeningActBN(
                       (r) => `
                     <tr>
                       <td>Billete/Moneda C$ ${r.l}</td>
-                      <td class="text-center font-mono">${r.q}</td>
-                      <td class="text-right font-mono">C$ ${(r.q * r.v).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                      <td class="text-center font-mono font-bold">${r.q}</td>
+                      <td class="text-right font-mono font-bold">C$ ${(r.q * r.v).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                     </tr>
                   `
                     )
                     .join('')}
                   <tr class="highlight-row">
                     <td colspan="2"><strong>SUBTOTAL CÓRDOBAS (NIO):</strong></td>
-                    <td class="text-right font-mono font-bold">C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                    <td class="text-right font-mono font-bold" style="font-size: 12px;">C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
             <!-- Dólares -->
-            <div style="flex: 1;">
+            <div style="flex: 0.9;">
               <table>
                 <thead>
                   <tr>
@@ -2558,15 +2536,15 @@ export function printOfficialOpeningActBN(
                       (r) => `
                     <tr>
                       <td>Billete US$ ${r.l}</td>
-                      <td class="text-center font-mono">${r.q}</td>
-                      <td class="text-right font-mono">$ ${(r.q * r.v).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                      <td class="text-center font-mono font-bold">${r.q}</td>
+                      <td class="text-right font-mono font-bold">$ ${(r.q * r.v).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                     </tr>
                   `
                     )
                     .join('')}
                   <tr class="highlight-row">
-                    <td colspan="2"><strong>SUBTOTAL DÓLARES (USD):</strong></td>
-                    <td class="text-right font-mono font-bold">$ ${shift.totalOpeningUSD.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                    <td colspan="2"><strong>SUBTOTAL DÓLARES:</strong></td>
+                    <td class="text-right font-mono font-bold" style="font-size: 12px;">$ ${shift.totalOpeningUSD.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   <tr>
                     <td colspan="2">Equivalente en Córdobas:</td>
@@ -2576,15 +2554,15 @@ export function printOfficialOpeningActBN(
               </table>
 
               <!-- TOTAL CONSOLIDADO -->
-              <div style="border: 2px solid #000; padding: 6px; text-align: center; margin-top: 6px; background-color: #fff;">
+              <div style="border: 2px solid #000; padding: 10px; text-align: center; margin-top: 10px; background-color: #fff;">
                 ${(shift.openingTransferToPettyCash && shift.openingTransferToPettyCash > 0) ? `
-                <div style="font-size: 8px; color: #333; text-transform: uppercase;">CONTEO FÍSICO EN GAVETA: C$ ${(shift.openingCashCountedNIO || (shift.totalOpeningEquivNIO + shift.openingTransferToPettyCash)).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
-                <div style="font-size: 8px; color: #000; font-weight: bold; text-transform: uppercase;">(-) TRASLADO A CAJA CHICA: - C$ ${shift.openingTransferToPettyCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
-                <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; margin-top: 3px; border-top: 1px solid #000; padding-top: 2px;">(=) FONDO NETO OPERATIVO EN CAJA GENERAL:</div>
+                <div style="font-size: 9.5px; color: #333; text-transform: uppercase;">CONTEO FÍSICO EN GAVETA: C$ ${(shift.openingCashCountedNIO || (shift.totalOpeningEquivNIO + shift.openingTransferToPettyCash)).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
+                <div style="font-size: 10px; color: #b91c1c; font-weight: bold; text-transform: uppercase; margin-top: 2px;">(-) TRASLADO A CAJA CHICA: - C$ ${shift.openingTransferToPettyCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
+                <div style="font-size: 10.5px; font-weight: bold; text-transform: uppercase; margin-top: 5px; border-top: 1.5px solid #000; padding-top: 4px;">(=) FONDO NETO EN CAJA GENERAL:</div>
                 ` : `
-                <div style="font-size: 8px; font-weight: bold; text-transform: uppercase;">FONDO INICIAL CONSOLIDADO EN GAVETA:</div>
+                <div style="font-size: 10px; font-weight: bold; text-transform: uppercase;">FONDO INICIAL EN GAVETA:</div>
                 `}
-                <div style="font-size: 14px; font-weight: 900; font-family: monospace; margin-top: 2px;">
+                <div style="font-size: 18px; font-weight: 900; font-family: monospace; margin-top: 4px;">
                   C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                 </div>
               </div>
@@ -2593,7 +2571,7 @@ export function printOfficialOpeningActBN(
 
           <!-- NOTAS -->
           <div class="section-title">2. OBSERVACIONES DE APERTURA</div>
-          <div style="border: 1px solid #000; padding: 6px 8px; font-size: 9px; min-height: 28px;">
+          <div style="border: 1.5px solid #000; padding: 8px 10px; font-size: 10.5px; min-height: 38px; background-color: #fff;">
             ${shift.openingNotes || 'Fondo entregado conforme sin anomalías. Operación comercial iniciada con éxito.'}
           </div>
         </div>
@@ -2601,26 +2579,18 @@ export function printOfficialOpeningActBN(
         <div>
           <div class="signatures">
             <div class="sig-box">
-              <div style="height: 18px;"></div>
+              <div style="height: 32px;"></div>
               <div>
-                <strong>ADMINISTRADOR(A) / ENTREGA FONDO</strong><br>
-                <span style="font-size: 7.5px;">Nombre: ${adminName || shift.openedBy}</span><br>
-                <span style="font-size: 7.5px;">Firma: ________________________</span>
-              </div>
-            </div>
-            <div class="sig-box">
-              <div style="height: 18px;"></div>
-              <div>
-                <strong>CAJERO(A) EN TURNO / RECIBE CONFORME</strong><br>
-                <span style="font-size: 7.5px;">Nombre: ${shift.openedBy}</span><br>
-                <span style="font-size: 7.5px;">Firma: ________________________</span>
+                <strong>CAJERO(A) EN TURNO / RECIBE Y DECLARA CONFORME</strong><br>
+                <span style="font-size: 9.5px;">Nombre: ${shift.openedBy}</span><br>
+                <span style="font-size: 9.5px;">Firma: ____________________________________</span>
               </div>
             </div>
           </div>
 
           <!-- PIE DE HOJA 1 -->
-          <div style="margin-top: 10px; padding-top: 6px; border-top: 1px solid #ddd;">
-            <div style="font-size: 8px; color: #666; text-align: center;">
+          <div style="margin-top: 12px; padding-top: 6px; border-top: 1px solid #000;">
+            <div style="font-size: 9px; color: #444; text-align: center;">
               El Bodegón Restaurante & Bar • Documento Oficial de Apertura • Página 1 de 2
             </div>
           </div>
@@ -2783,9 +2753,9 @@ export function printOfficialOpeningActBN(
                 <td><strong>(-) Total Gastos y Egresos Operativos del Día</strong> (Compras Efectivo + Transferencias + Propinas)</td>
                 <td class="text-right font-mono font-bold">- C$ ${totalGastos.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
-              <tr class="highlight-row" style="font-size: 10.5px;">
+              <tr class="highlight-row" style="font-size: 12px;">
                 <td><strong>(=) GANANCIA NETA DEL DÍA (UTILIDAD LÍQUIDA REAL DE LA JORNADA)</strong></td>
-                <td class="text-right font-mono font-bold" style="font-size: 11.5px;">
+                <td class="text-right font-mono font-bold" style="font-size: 14px;">
                   C$ ${gananciaNeta.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                 </td>
               </tr>
@@ -2800,34 +2770,18 @@ export function printOfficialOpeningActBN(
         <div>
           <div class="signatures">
             <div class="sig-box">
-              <div style="height: 18px;"></div>
+              <div style="height: 32px;"></div>
               <div>
-                <strong>CAJERO(A) / RESPONSABLE APERTURA</strong><br>
-                <span style="font-size: 7.5px;">Nombre: ${shift.openedBy}</span><br>
-                <span style="font-size: 7.5px;">Firma: ________________________</span>
-              </div>
-            </div>
-            <div class="sig-box">
-              <div style="height: 18px;"></div>
-              <div>
-                <strong>ADMINISTRADOR(A) / AUDITOR</strong><br>
-                <span style="font-size: 7.5px;">Revisado Conforme</span><br>
-                <span style="font-size: 7.5px;">Firma: ________________________</span>
-              </div>
-            </div>
-            <div class="sig-box">
-              <div style="height: 18px;"></div>
-              <div>
-                <strong>GERENCIA GENERAL</strong><br>
-                <span style="font-size: 7.5px;">Visto Bueno y Aprobación</span><br>
-                <span style="font-size: 7.5px;">Firma y Sello: _________________</span>
+                <strong>CAJERO(A) EN TURNO / DECLARA CONFORME</strong><br>
+                <span style="font-size: 9.5px;">Nombre: ${shift.openedBy}</span><br>
+                <span style="font-size: 9.5px;">Firma: ____________________________________</span>
               </div>
             </div>
           </div>
 
           <!-- PIE DE HOJA 2 -->
-          <div style="margin-top: 10px; padding-top: 6px; border-top: 1px solid #ddd;">
-            <div style="font-size: 8px; color: #666; text-align: center;">
+          <div style="margin-top: 12px; padding-top: 6px; border-top: 1px solid #000;">
+            <div style="font-size: 9px; color: #444; text-align: center;">
               El Bodegón Restaurante & Bar • Documento Oficial de Ganancias • Página 2 de 2
             </div>
           </div>
