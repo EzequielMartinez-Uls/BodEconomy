@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { AppState, CashShift, PettyCashShift, PettyCashTransaction, TablewareItem, TablewareLoss, isOpeningPettyCashTx, VendorItem } from './types';
 import { loadState, saveState, INITIAL_STATE } from './services/storage';
 import { Sidebar } from './components/Sidebar';
@@ -97,19 +97,14 @@ export function App() {
     return state.shiftHistory[0] || null;
   }, [state.shiftHistory]);
 
-  // Sincronización en tiempo real con Supabase (Nube Interconectada PC + Móvil)
-  useEffect(() => {
-    // 1. Al iniciar, chequear catálogos oficiales de proveedores y categorías desde Supabase
-    fetchCloudCatalogs().then(({ vendors, categories }) => {
-      setState((prev) => ({
-        ...prev,
-        vendorsList: vendors,
-        expenseCategories: categories,
-      }));
-    }).catch(console.warn);
+  const isSyncingRef = useRef(false);
 
-    // 2. Al iniciar, chequear estado completo de la nube y sincronizar con otras PCs y la web
-    fetchFullCloudState().then(({ activeShift, activePettyShift, shiftHistory: cloudHistory, pettyCashShiftHistory: cloudPettyHistory, gastos }) => {
+  // Sincronización completa con Supabase (descarga estado oficial y fusiona sin perder datos locales offline)
+  const syncFromCloud = useCallback(async (isSilent = true) => {
+    if (isSyncingRef.current) return;
+    isSyncingRef.current = true;
+    try {
+      const { activeShift, activePettyShift, shiftHistory: cloudHistory, pettyCashShiftHistory: cloudPettyHistory, gastos } = await fetchFullCloudState();
       setState((prev) => {
         const today = getLocalTodayStr();
 
@@ -284,9 +279,39 @@ export function App() {
           pettyCashBalance: recalculatedPettyBalance,
         };
       });
-    });
+    } catch (err) {
+      if (!isSilent) console.warn('Error sincronizando con la nube:', err);
+    } finally {
+      isSyncingRef.current = false;
+    }
+  }, []);
 
-    // 2. Escuchar cambios de Supabase Realtime
+  // Sincronización en tiempo real con Supabase (Nube Interconectada PC + Móvil)
+  useEffect(() => {
+    // 1. Al iniciar, chequear catálogos oficiales de proveedores y categorías desde Supabase
+    fetchCloudCatalogs().then(({ vendors, categories }) => {
+      setState((prev) => ({
+        ...prev,
+        vendorsList: vendors,
+        expenseCategories: categories,
+      }));
+    }).catch(console.warn);
+
+    // 2. Primera sincronización completa inmediata
+    syncFromCloud(false);
+
+    // 3. Polling silencioso en segundo plano cada 10 segundos para garantizar datos al día
+    const syncInterval = setInterval(() => {
+      syncFromCloud(true);
+    }, 10000);
+
+    // 4. Sincronización inmediata al reenfocar la ventana o recuperar conexión
+    const handleFocus = () => syncFromCloud(true);
+    const handleOnline = () => syncFromCloud(true);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('online', handleOnline);
+
+    // 5. Escuchar cambios de Supabase Realtime para recepción instantánea
     const channel = supabase
       .channel('bodegon-control-desktop-realtime')
       .on(
@@ -536,6 +561,9 @@ export function App() {
       .subscribe();
 
     return () => {
+      clearInterval(syncInterval);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('online', handleOnline);
       supabase.removeChannel(channel);
     };
   }, []);
@@ -1005,6 +1033,8 @@ export function App() {
       });
       return prev;
     });
+    // Forzar descarga de los datos más recientes de la nube
+    await syncFromCloud(false);
   };
 
   const handleDeletePettyCashTransaction = (txId: string) => {

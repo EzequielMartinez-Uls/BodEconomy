@@ -407,6 +407,7 @@ export const TopBar: React.FC<Props> = ({
     <CloudSyncModal
       isOpen={cloudModalOpen}
       onClose={() => setCloudModalOpen(false)}
+      onForceRefresh={onForceSyncClick}
     />
 
     <PrintOfficialActModal
