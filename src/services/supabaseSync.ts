@@ -307,14 +307,17 @@ export async function syncTransactionToCloud(tx: PettyCashTransaction): Promise<
         ? `${cleanVendor} - ${cleanNotes}`
         : cleanVendor;
     const isOpeningTransfer =
-      tx.inflowSource === 'TRASLADO_CAJA_GENERAL' ||
       tx.id?.startsWith('pct-transfer-open-') ||
       isOpeningPettyCashTx(tx);
-    const observaciones = isExpense
-      ? (tx.receiptNumber ? `Doc: ${tx.receiptNumber}` : null)
+
+    const clientIdTag = tx.id ? `[CLIENT_ID:${tx.id}]` : '';
+    let baseObs = isExpense
+      ? (tx.receiptNumber ? `Doc: ${tx.receiptNumber}` : '')
       : isOpeningTransfer
         ? (tx.receiptNumber ? `[OPENING_TRANSFER:TRUE] [TIPO:FONDEO] Doc: ${tx.receiptNumber}` : '[OPENING_TRANSFER:TRUE] [TIPO:FONDEO] Traspaso desde Caja General')
         : (tx.receiptNumber ? `[TIPO:FONDEO] Doc: ${tx.receiptNumber}` : '[TIPO:FONDEO] Depósito a caja chica');
+
+    const observaciones = clientIdTag ? (baseObs ? `${baseObs} ${clientIdTag}` : clientIdTag) : (baseObs || null);
 
     let cloudJornadaId: number | null = null;
     // 1. Extraer fecha comercial desde shiftId prioritariamente (ej: pc-shift-2026-10-02) para respetar el turno abierto
@@ -350,20 +353,44 @@ export async function syncTransactionToCloud(tx: PettyCashTransaction): Promise<
       }
     }
 
-    // 2. Blindaje Anti-Duplicados (Idempotencia): Verificar si ya existe en Supabase antes de insertar
+    // 2. Blindaje Anti-Duplicados (Idempotencia Fuerte):
+    // Paso A: Verificar por CLIENT_ID único si ya fue insertado en Supabase
+    if (tx.id) {
+      const { data: existingByClientId } = await supabase
+        .from('compras_gastos')
+        .select('id')
+        .ilike('observaciones', `%[CLIENT_ID:${tx.id}]%`)
+        .limit(1);
+      if (existingByClientId && existingByClientId.length > 0) {
+        console.log(`ℹ️ Transacción ya existía en la nube por CLIENT_ID (${existingByClientId[0].id}). Se vincula sin duplicar.`);
+        return existingByClientId[0].id;
+      }
+    }
+
+    // Paso B: Verificar si ya existe en Supabase una idéntica reciente (monto, forma de pago y proveedor en los últimos 3 min)
     if (cloudJornadaId) {
       const { data: existingDup } = await supabase
         .from('compras_gastos')
-        .select('id')
+        .select('id, concepto, proveedor, created_at')
         .eq('jornada_id', cloudJornadaId)
         .eq('monto', tx.amount)
         .eq('metodo_pago', metodoPago)
-        .eq('proveedor', tx.vendor || cleanVendor)
         .order('id', { ascending: false })
-        .limit(1);
+        .limit(5);
+
       if (existingDup && existingDup.length > 0) {
-        console.log(`ℹ️ Transacción ya existía en la nube (ID #${existingDup[0].id}). Se vincula sin duplicar.`);
-        return existingDup[0].id;
+        const targetVendorLower = (tx.vendor || cleanVendor).trim().toLowerCase();
+        const match = existingDup.find((ed) => {
+          const prov = (ed.proveedor || '').trim().toLowerCase();
+          const conc = (ed.concepto || '').trim().toLowerCase();
+          const isSameParty = prov === targetVendorLower || conc.includes(targetVendorLower) || prov.includes(targetVendorLower);
+          const timeDiff = Math.abs(Date.now() - new Date(ed.created_at).getTime());
+          return isSameParty && timeDiff < 180000; // 3 minutos
+        });
+        if (match) {
+          console.log(`ℹ️ Transacción idéntica reciente detectada en la nube (#${match.id}). Se vincula sin duplicar.`);
+          return match.id;
+        }
       }
     }
 

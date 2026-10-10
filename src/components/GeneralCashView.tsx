@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { AppState, CashShift, DenominationsNIO, DenominationsUSD, PettyCashTransaction } from '../types';
 import {
   printThermalClosingTicket,
@@ -99,6 +99,7 @@ export const GeneralCashView: React.FC<Props> = ({
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [transferAmount, setTransferAmount] = useState<number>(0);
   const [transferNotes, setTransferNotes] = useState('');
+  const transferSubmittingRef = useRef(false);
   const [selectedShiftForActa, setSelectedShiftForActa] = useState<CashShift | null>(null);
 
   const handlePrintActaForShift = (modo: 'TODO' | 'GENERAL' | 'CHICA' | 'APERTURA' | 'GANANCIAS_AYER') => {
@@ -209,38 +210,46 @@ export const GeneralCashView: React.FC<Props> = ({
 
   const handleConfirmTransferToPetty = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentShift || transferAmount <= 0) return;
+    if (transferSubmittingRef.current || !currentShift || transferAmount <= 0) return;
 
-    const newTransferTotal = parseFloat(((currentShift.transferToPettyCash || 0) + transferAmount).toFixed(2));
-    const updatedShift: CashShift = {
-      ...currentShift,
-      transferToPettyCash: newTransferTotal,
-    };
-
-    if (onUpdateShift) {
-      onUpdateShift(updatedShift);
-    }
-
-    if (onAddPettyCashTransaction) {
-      const tx: PettyCashTransaction = {
-        id: `pct-transfer-gen-${Date.now()}`,
-        shiftId: `pc-shift-${currentShift.date}`,
-        date: new Date().toISOString(),
-        type: 'INFLOW',
-        inflowSource: 'TRASLADO_CAJA_GENERAL',
-        amount: transferAmount,
-        method: 'CASH',
-        vendor: 'Traspaso desde Caja General',
-        category: 'OTROS',
-        registeredBy: state.activeAdminName,
-        notes: transferNotes.trim() || 'Fondeo de efectivo desde gaveta general de ventas',
+    transferSubmittingRef.current = true;
+    try {
+      const newTransferTotal = parseFloat(((currentShift.transferToPettyCash || 0) + transferAmount).toFixed(2));
+      const updatedShift: CashShift = {
+        ...currentShift,
+        transferToPettyCash: newTransferTotal,
       };
-      onAddPettyCashTransaction(tx);
-    }
 
-    setTransferModalOpen(false);
-    setTransferAmount(0);
-    setTransferNotes('');
+      if (onUpdateShift) {
+        onUpdateShift(updatedShift);
+      }
+
+      if (onAddPettyCashTransaction) {
+        const tx: PettyCashTransaction = {
+          id: `pct-transfer-gen-${Date.now()}`,
+          shiftId: `pc-shift-${currentShift.date}`,
+          date: new Date().toISOString(),
+          type: 'INFLOW',
+          inflowSource: 'TRASLADO_CAJA_GENERAL',
+          amount: transferAmount,
+          method: 'CASH',
+          vendor: 'Traspaso desde Caja General',
+          category: 'OTROS',
+          registeredBy: state.activeAdminName,
+          notes: transferNotes.trim() || 'Fondeo de efectivo desde gaveta general de ventas',
+        };
+        onAddPettyCashTransaction(tx);
+      }
+
+      setTransferModalOpen(false);
+      setTransferAmount(0);
+      setTransferNotes('');
+      setTimeout(() => {
+        transferSubmittingRef.current = false;
+      }, 400);
+    } catch {
+      transferSubmittingRef.current = false;
+    }
   };
 
   // Filtrado del historial

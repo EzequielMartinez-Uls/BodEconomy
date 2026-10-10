@@ -157,10 +157,13 @@ export function App() {
               continue;
             }
 
+            const clientIdMatch = (g.observaciones || '').match(/\[CLIENT_ID:(pct-[\w-]+)\]/);
+            const targetClientId = clientIdMatch ? clientIdMatch[1] : null;
+
             const cloudTx: PettyCashTransaction = {
               id: isOpeningTransfer ? `pct-transfer-open-${localDate}` : `pct-cloud-${g.id}`,
               shiftId: `pc-shift-${localDate}`,
-              date: g.created_at || g.fecha_hora || `${localDate}T12:00:00`,
+              date: g.fecha_hora || g.created_at || `${localDate}T12:00:00`,
               type: isFondeo ? 'INFLOW' : 'EXPENSE',
               inflowSource: isOpeningTransfer ? 'FONDO_INICIAL' : undefined,
               amount: Number(g.monto) || 0,
@@ -170,17 +173,30 @@ export function App() {
               registeredBy: g.registrado_por || 'Eddy',
               notes: g.concepto || g.observaciones || '',
               cloudId: g.id,
+              syncStatus: 'SYNCED',
             };
 
             const existingIdx = updatedTxs.findIndex((t) => {
+              // 1. Coincidencia por CLIENT_ID único
+              if (targetClientId && (t.id === targetClientId || t.id.includes(targetClientId))) return true;
+              // 2. Coincidencia por id o cloudId
               if (t.id === cloudTx.id || t.cloudId === g.id) return true;
               if (isOpeningTransfer && (t.inflowSource === 'TRASLADO_CAJA_GENERAL' || t.id.startsWith('pct-transfer-open-'))) {
                 const sameDate = extractLocalDateStr(t.date) === localDate || t.shiftId === `pc-shift-${localDate}`;
                 if (sameDate) return true;
               }
+              // 3. Coincidencia tolerante
+              const sameDate = extractLocalDateStr(t.date) === localDate || t.shiftId === `pc-shift-${localDate}`;
               const sameAmount = Math.abs(t.amount - cloudTx.amount) < 0.01;
-              const sameVendor = t.vendor.trim().toLowerCase() === cloudTx.vendor.trim().toLowerCase();
-              if (sameAmount && sameVendor && !t.cloudId) return true;
+              const sameType = t.type === cloudTx.type;
+              if (sameDate && sameAmount && sameType && !t.cloudId) {
+                const v1 = (t.vendor || '').trim().toLowerCase();
+                const v2 = (cloudTx.vendor || '').trim().toLowerCase();
+                const c2 = (g.concepto || '').trim().toLowerCase();
+                if (v1 === v2 || v1.includes(v2) || v2.includes(v1) || c2.includes(v1)) {
+                  return true;
+                }
+              }
               return false;
             });
 
@@ -189,6 +205,8 @@ export function App() {
                 ...updatedTxs[existingIdx],
                 id: isOpeningTransfer ? `pct-transfer-open-${localDate}` : `pct-cloud-${g.id}`,
                 cloudId: g.id,
+                syncStatus: 'SYNCED',
+                syncError: undefined,
                 shiftId: cloudTx.shiftId,
                 date: cloudTx.date,
                 type: cloudTx.type,
@@ -211,6 +229,22 @@ export function App() {
           }
           return true;
         });
+
+        // Escudo Desduplicador Final: asegurar unicidad estricta por cloudId e id en updatedTxs
+        const dedupedTxs: PettyCashTransaction[] = [];
+        const seenSyncCloudIds = new Set<number>();
+        const seenSyncIds = new Set<string>();
+
+        for (const tx of updatedTxs) {
+          if (tx.cloudId) {
+            if (seenSyncCloudIds.has(tx.cloudId)) continue;
+            seenSyncCloudIds.add(tx.cloudId);
+          }
+          if (tx.id && seenSyncIds.has(tx.id)) continue;
+          if (tx.id) seenSyncIds.add(tx.id);
+          dedupedTxs.push(tx);
+        }
+        updatedTxs = dedupedTxs;
 
         // Si la base de datos en la nube está completamente limpia para comenzar producción real,
         // purgar todo el estado local y reiniciar a cero absoluto.
@@ -320,10 +354,13 @@ export function App() {
         (payload: any) => {
           const g = payload.new;
           const localDate = extractLocalDateStr(g.fecha_hora);
+          const clientIdMatch = (g.observaciones || '').match(/\[CLIENT_ID:(pct-[\w-]+)\]/);
+          const targetClientId = clientIdMatch ? clientIdMatch[1] : null;
+
           const newTx: PettyCashTransaction = {
             id: `pct-cloud-${g.id}`,
             shiftId: `pc-shift-${localDate}`,
-            date: g.created_at || g.fecha_hora || new Date().toISOString(),
+            date: g.fecha_hora || g.created_at || new Date().toISOString(),
             type: isFondeoTransaction(g) ? 'INFLOW' : 'EXPENSE',
             amount: Number(g.monto) || 0,
             method: g.metodo_pago === 'TRANSFERENCIA' ? 'TRANSFER' : g.metodo_pago === 'TARJETA' ? 'CARD' : 'CASH',
@@ -332,15 +369,27 @@ export function App() {
             registeredBy: g.registrado_por || 'Celular Jefe',
             notes: g.concepto || g.observaciones || '',
             cloudId: g.id,
+            syncStatus: 'SYNCED',
           };
 
           setState((prev) => {
             const existingIndex = prev.pettyCashTransactions.findIndex((t) => {
+              // 1. Coincidencia directa por CLIENT_ID único
+              if (targetClientId && (t.id === targetClientId || t.id.includes(targetClientId))) return true;
+              // 2. Coincidencia por cloudId oficial o id ya generado
               if (t.id === newTx.id || t.id === `pct-cloud-${g.id}` || t.cloudId === g.id) return true;
-              const sameDate = extractLocalDateStr(t.date) === extractLocalDateStr(newTx.date);
+              // 3. Coincidencia tolerante: misma fecha comercial, mismo monto y mismo tipo
+              const sameDate = extractLocalDateStr(t.date) === localDate || t.shiftId === `pc-shift-${localDate}`;
               const sameAmount = Math.abs(t.amount - newTx.amount) < 0.01;
-              const sameVendor = t.vendor.trim().toLowerCase() === newTx.vendor.trim().toLowerCase();
-              if (sameDate && sameAmount && sameVendor && !t.cloudId) return true;
+              const sameType = t.type === newTx.type;
+              if (sameDate && sameAmount && sameType && !t.cloudId) {
+                const v1 = (t.vendor || '').trim().toLowerCase();
+                const v2 = (newTx.vendor || '').trim().toLowerCase();
+                const c2 = (g.concepto || '').trim().toLowerCase();
+                if (v1 === v2 || v1.includes(v2) || v2.includes(v1) || c2.includes(v1)) {
+                  return true;
+                }
+              }
               return false;
             });
 
@@ -352,6 +401,8 @@ export function App() {
                 ...existing,
                 id: `pct-cloud-${g.id}`,
                 cloudId: g.id,
+                syncStatus: 'SYNCED',
+                syncError: undefined,
                 shiftId: newTx.shiftId,
                 date: newTx.date,
                 type: newTx.type,
@@ -988,14 +1039,23 @@ export function App() {
     try {
       const cloudId = await syncTransactionToCloud(txWithStatus);
       if (cloudId) {
-        setState((prev) => ({
-          ...prev,
-          pettyCashTransactions: prev.pettyCashTransactions.map((t) =>
-            t.id === txWithStatus.id
-              ? { ...t, id: `pct-cloud-${cloudId}`, cloudId, syncStatus: 'SYNCED', syncError: undefined }
-              : t
-          ),
-        }));
+        setState((prev) => {
+          const hasCloudItem = prev.pettyCashTransactions.some((t) => t.cloudId === cloudId || t.id === `pct-cloud-${cloudId}`);
+          let updatedList: PettyCashTransaction[];
+          if (hasCloudItem) {
+            updatedList = prev.pettyCashTransactions.filter((t) => t.id !== txWithStatus.id);
+          } else {
+            updatedList = prev.pettyCashTransactions.map((t) =>
+              t.id === txWithStatus.id
+                ? { ...t, id: `pct-cloud-${cloudId}`, cloudId, syncStatus: 'SYNCED', syncError: undefined }
+                : t
+            );
+          }
+          return {
+            ...prev,
+            pettyCashTransactions: updatedList,
+          };
+        });
       } else {
         setState((prev) => ({
           ...prev,

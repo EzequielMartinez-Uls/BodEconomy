@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { AppState, ExpenseCategory, PaymentMethod, PettyCashShift, PettyCashTransaction, isOpeningPettyCashTx } from '../types';
 import {
   printThermalDailyExpensesTicket,
@@ -218,6 +218,7 @@ export const PettyCashView: React.FC<Props> = ({
   // Estados para Eliminación y Prevención de Duplicados
   const [txToDelete, setTxToDelete] = useState<PettyCashTransaction | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const isSubmittingRef = useRef<boolean>(false);
 
   // Estados para Edición de Transacción
   const [editingTx, setEditingTx] = useState<PettyCashTransaction | null>(null);
@@ -230,7 +231,7 @@ export const PettyCashView: React.FC<Props> = ({
   const [editReceiptNumber, setEditReceiptNumber] = useState('');
 
   const selectedDateTransactions = useMemo(() => {
-    return state.pettyCashTransactions.filter((tx) => {
+    const rawTxs = state.pettyCashTransactions.filter((tx) => {
       if (isOpeningPettyCashTx(tx)) {
         return false;
       }
@@ -245,6 +246,36 @@ export const PettyCashView: React.FC<Props> = ({
       }
       if (!tx.date) return false;
       return extractLocalDateStr(tx.date) === selectedDate;
+    });
+
+    // Escudo Desduplicador Automático en memoria (Nivel Pantalla):
+    // 1. Conservar solo una copia por cloudId oficial de Supabase
+    const deduped: PettyCashTransaction[] = [];
+    const seenCloudIds = new Set<number>();
+    const seenLocalIds = new Set<string>();
+
+    for (const tx of rawTxs) {
+      if (tx.cloudId) {
+        if (seenCloudIds.has(tx.cloudId)) continue;
+        seenCloudIds.add(tx.cloudId);
+      }
+      if (tx.id && seenLocalIds.has(tx.id)) continue;
+      if (tx.id) seenLocalIds.add(tx.id);
+      deduped.push(tx);
+    }
+
+    // 2. Si un registro local sin cloudId tiene su gemelo ya confirmado de la nube, descartar el local
+    return deduped.filter((tx) => {
+      if (tx.cloudId) return true;
+      const hasCloudTwin = deduped.some((other) => {
+        if (!other.cloudId) return false;
+        if (other.type !== tx.type) return false;
+        if (Math.abs(other.amount - tx.amount) >= 0.01) return false;
+        const v1 = (tx.vendor || '').trim().toLowerCase();
+        const v2 = (other.vendor || '').trim().toLowerCase();
+        return v1 === v2 || v1.includes(v2) || v2.includes(v1);
+      });
+      return !hasCloudTwin;
     });
   }, [state.pettyCashTransactions, selectedShift, selectedDate]);
 
@@ -449,7 +480,8 @@ export const PettyCashView: React.FC<Props> = ({
 
   const handleSubmitTransaction = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    // Candado Síncrono Inmediato (Nivel Interfaz): rebotar cualquier segundo clic o enter en microsegundos
+    if (isSubmittingRef.current || isSubmitting) return;
 
     if (amount <= 0) {
       alert('Por favor ingresa un monto mayor a C$ 0.00');
@@ -461,6 +493,7 @@ export const PettyCashView: React.FC<Props> = ({
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
       const finalVendor =
@@ -486,7 +519,11 @@ export const PettyCashView: React.FC<Props> = ({
         const confirmDup = window.confirm(
           `⚠️ ADVERTENCIA DE DUPLICADO:\n\nYa existe un movimiento de C$ ${amount.toFixed(2)} registrado para "${finalVendor}" en la jornada del ${assignedShiftDate}.\n\n¿Estás seguro de que deseas registrar este monto OTRA VEZ, o se trata de una duplicación accidental?`
         );
-        if (!confirmDup) return;
+        if (!confirmDup) {
+          isSubmittingRef.current = false;
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       // Asegurar fecha y hora estricta perteneciente al día asignado
@@ -517,7 +554,13 @@ export const PettyCashView: React.FC<Props> = ({
       }
 
       setModalType(null);
-    } finally {
+      // Liberar el candado tras cerrar el modal
+      setTimeout(() => {
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
+      }, 400);
+    } catch (err) {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
