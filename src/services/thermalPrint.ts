@@ -2379,12 +2379,12 @@ export function computeYesterdayEarningsSummary(
     yesterdayShift.totalCards || (cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise);
   const salesPedidosYa = yesterdayShift.salesPedidosYa || 0;
   const salesCashLoyverse = yesterdayShift.salesCashSystem || 0;
-  const loyversePaidOut = yesterdayShift.transferToPettyCash || 0;
-  const efectivoRealGenerado = Math.max(0, salesCashLoyverse + loyversePaidOut);
+  const loyversePaidOut = 0;
+  const efectivoRealGenerado = salesCashLoyverse;
   const otherIncome = yesterdayShift.otherIncome || 0;
   const totalGenerado =
     yesterdayShift.totalGrossSales ||
-    totalCards + salesPedidosYa + efectivoRealGenerado + otherIncome;
+    totalCards + salesPedidosYa + salesCashLoyverse + otherIncome;
 
   // 3. Gastos de Caja Chica de la fecha de ayer
   const dayPettyTxs = (state.pettyCashTransactions || []).filter(
@@ -2402,11 +2402,8 @@ export function computeYesterdayEarningsSummary(
     yesterdayShift.tipPaid !== false ? tipAmountAyer : 0;
   const totalGastos = gastosEfectivo + gastosTransferencia + propinasEntregadas;
 
-  // 4. Ganancia Neta
-  const gananciaNeta =
-    yesterdayShift.dailyNetProfit !== undefined
-      ? yesterdayShift.dailyNetProfit
-      : totalGenerado - totalGastos;
+  // 4. Ganancia Neta (Siempre matemáticamente consistente: Ingresos - Gastos)
+  const gananciaNeta = parseFloat((totalGenerado - totalGastos).toFixed(2));
   const margenPorcentaje =
     totalGenerado > 0 ? (gananciaNeta / totalGenerado) * 100 : 0;
 
@@ -2508,20 +2505,18 @@ export function printOfficialOpeningActBN(
     const totalCards = rawSummary?.totalCards ?? (shift.loyverseValidation?.totalCards || (cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise));
     const salesPedidosYa = rawSummary?.salesPedidosYa ?? shift.loyverseValidation?.salesPedidosYa ?? 0;
     const salesCashLoyverse = rawSummary?.salesCashLoyverse ?? shift.loyverseValidation?.salesCashLoyverse ?? 0;
-    const loyversePaidOut = rawSummary?.loyversePaidOut ?? 0;
-    const efectivoRealGenerado = rawSummary?.efectivoRealGenerado ?? Math.max(0, salesCashLoyverse + loyversePaidOut);
+    const loyversePaidOut = 0;
+    const efectivoRealGenerado = salesCashLoyverse;
     const otherIncome = rawSummary?.otherIncome ?? 0;
-    const totalGenerado = rawSummary?.totalGenerado ?? (totalCards + salesPedidosYa + efectivoRealGenerado + otherIncome);
+    const totalGenerado = rawSummary?.totalGenerado ?? (totalCards + salesPedidosYa + salesCashLoyverse + otherIncome);
 
     const gastosEfectivo = rawSummary?.gastosEfectivo ?? 0;
     const gastosTransferencia = rawSummary?.gastosTransferencia ?? 0;
     const propinasEntregadas = rawSummary?.propinasEntregadas ?? 0;
     const totalGastos = gastosEfectivo + gastosTransferencia + propinasEntregadas;
 
-    const gananciaNeta = rawSummary?.gananciaNeta !== undefined && rawSummary.gananciaNeta !== 0
-      ? rawSummary.gananciaNeta
-      : (totalGenerado - totalGastos);
-    const margenPorcentaje = rawSummary?.margenPorcentaje ?? (totalGenerado > 0 ? (gananciaNeta / totalGenerado) * 100 : 0);
+    const gananciaNeta = parseFloat((totalGenerado - totalGastos).toFixed(2));
+    const margenPorcentaje = totalGenerado > 0 ? (gananciaNeta / totalGenerado) * 100 : 0;
 
     const printStyles = `
       <style>
@@ -2887,7 +2882,7 @@ export function printOfficialOpeningActBN(
               <td style="width: 25%;"><strong>TOTAL GASTOS DEL DÍA:</strong><br><strong style="color: #b91c1c;">- C$ ${totalGastos.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
             </tr>
             <tr>
-              <td><strong>EFECTIVO REAL (C/ SALIDAS):</strong><br>C$ ${efectivoRealGenerado.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+              <td><strong>VENTAS EN EFECTIVO (LOYVERSE):</strong><br>C$ ${salesCashLoyverse.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               <td><strong>TOTAL TARJETAS DATAFAST:</strong><br>C$ ${totalCards.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               <td><strong>DELIVERY PEDIDOSYA:</strong><br>C$ ${salesPedidosYa.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               <td style="border: 1.5px solid #000; background-color: #f8fafc;"><strong>GANANCIA NETA LÍQUIDA:</strong><br><strong style="font-size: 11px;">C$ ${gananciaNeta.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong> (${margenPorcentaje.toFixed(1)}%)</td>
@@ -2944,17 +2939,7 @@ export function printOfficialOpeningActBN(
                 <td class="text-right font-mono">C$ ${salesCashLoyverse.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                 <td class="text-right font-mono">${(totalGenerado > 0 ? (salesCashLoyverse / totalGenerado) * 100 : 0).toFixed(1)}%</td>
               </tr>
-              <tr>
-                <td><strong>(+) Pagos y Salidas (Loyverse)</strong></td>
-                <td>Salidas operativas registradas en el punto de venta</td>
-                <td class="text-right font-mono font-bold">+ C$ ${loyversePaidOut.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-                <td class="text-right font-mono">—</td>
-              </tr>
-              <tr style="font-weight: bold; background-color: #f5f5f5;">
-                <td colspan="2" style="text-align: right; padding-right: 8px;">(=) EFECTIVO REAL GENERADO (VENTAS + PAGOS/SALIDAS):</td>
-                <td class="text-right font-mono font-bold">C$ ${efectivoRealGenerado.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-                <td class="text-right font-mono font-bold">${(totalGenerado > 0 ? (efectivoRealGenerado / totalGenerado) * 100 : 0).toFixed(1)}%</td>
-              </tr>
+
               ${(otherIncome && otherIncome > 0) ? `
               <tr>
                 <td><strong>Otros Ingresos</strong></td>
@@ -3009,7 +2994,7 @@ export function printOfficialOpeningActBN(
           <table>
             <tbody>
               <tr>
-                <td style="width: 70%;"><strong>(+) Total Generado por Todo</strong> (Tarjetas Datafast + PedidosYa + Efectivo Real con Pagos/Salidas)</td>
+                <td style="width: 70%;"><strong>(+) Total Generado por Todo</strong> (Tarjetas Datafast + PedidosYa + Efectivo Loyverse + Otros)</td>
                 <td style="width: 30%;" class="text-right font-mono font-bold">C$ ${totalGenerado.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
               <tr>
