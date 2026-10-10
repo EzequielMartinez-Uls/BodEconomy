@@ -2362,9 +2362,11 @@ export function computeYesterdayEarningsSummary(
 
   // 1. Buscar turno de la fecha anterior en shiftHistory o el último cerrado
   const history = state.shiftHistory || [];
+  const shiftsForYesterday = history.filter((s) => s.date === yesterdayDate);
   const yesterdayShift =
-    history.find((s) => s.date === yesterdayDate) ||
-    history.filter((s) => s.status === 'CLOSED').sort((a, b) => b.date.localeCompare(a.date))[0];
+    shiftsForYesterday.find((s) => (s.totalGrossSales || 0) > 0) ||
+    shiftsForYesterday[0] ||
+    history.filter((s) => s.status === 'CLOSED').sort((a, b) => (b.totalGrossSales || 0) - (a.totalGrossSales || 0) || b.date.localeCompare(a.date))[0];
 
   if (!yesterdayShift) {
     return undefined;

@@ -1183,7 +1183,15 @@ export async function fetchFullCloudState(): Promise<{
           };
         }
       } else if (j.estado === 'CERRADA') {
-        shiftHistory.push(parseShiftFromJornada(j));
+        const parsedShift = parseShiftFromJornada(j);
+        const existingIdx = shiftHistory.findIndex((s) => s.date === j.fecha);
+        if (existingIdx >= 0) {
+          if ((parsedShift.totalGrossSales || 0) > (shiftHistory[existingIdx].totalGrossSales || 0)) {
+            shiftHistory[existingIdx] = parsedShift;
+          }
+        } else {
+          shiftHistory.push(parsedShift);
+        }
 
         if (hasPettyClosing) {
           const matchClose = obs.match(/\[PETTY_CLOSING:(\{.*?\})\]/);
@@ -1218,7 +1226,7 @@ export async function fetchFullCloudState(): Promise<{
               initBal = Number(p.initialBalance) || (prevDay + genTrans + bossCont);
             } catch {}
           }
-          pettyCashShiftHistory.push({
+          const parsedPetty: PettyCashShift = {
             id: `pc-shift-${j.fecha}`,
             date: j.fecha,
             status: 'CLOSED',
@@ -1235,7 +1243,13 @@ export async function fetchFullCloudState(): Promise<{
             difference: diff,
             auditStatus: auditStat,
             closingNotes: obs,
-          });
+          };
+          const existingPettyIdx = pettyCashShiftHistory.findIndex((ps) => ps.date === j.fecha);
+          if (existingPettyIdx >= 0) {
+            pettyCashShiftHistory[existingPettyIdx] = parsedPetty;
+          } else {
+            pettyCashShiftHistory.push(parsedPetty);
+          }
         }
       }
     }
