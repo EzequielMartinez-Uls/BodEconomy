@@ -2051,11 +2051,11 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
               <table>
                 <tbody>
                   <tr>
-                    <td>(+) Fondo Inicial de Apertura</td>
+                    <td>Fondo Inicial Apertura (Informativo)</td>
                     <td class="text-right font-mono">C$ ${openingEquiv.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   <tr>
-                    <td>(+) Ventas en Efectivo del Día</td>
+                    <td>Cobros en Efectivo (Loyverse)</td>
                     <td class="text-right font-mono">C$ ${salesCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   ${tipsDeductedFromDrawer > 0 ? `
@@ -2071,7 +2071,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                   </tr>
                   ` : ''}
                   <tr style="border-top: 1px solid #000; font-weight: bold; background-color: #f8fafc;">
-                    <td>(=) Efectivo Teórico Esperado</td>
+                    <td>(=) Efectivo Esperado (Loyverse)</td>
                     <td class="text-right font-mono">C$ ${expectedNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   <tr style="font-weight: bold;">

@@ -1032,7 +1032,7 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
   const auditMatch = obs.match(/\[CLOSING_AUDIT:(\{.*?\})\]/);
   let actualCashNIO = existingShift?.actualCashNIO || totalOpeningEquivNIO + salesCash - totalTipCollected;
   let netCashAfterTipsNIO = existingShift?.netCashAfterTipsNIO || (totalTipCollected > 0 ? Math.max(0, actualCashNIO - totalTipCollected) : actualCashNIO);
-  let expectedCashNIO = existingShift?.expectedCashNIO || totalOpeningEquivNIO + salesCash - totalTipCollected;
+  let expectedCashNIO = existingShift?.expectedCashNIO || Math.max(0, salesCash - totalTipCollected);
   let differenceNIO = existingShift?.differenceNIO || 0;
   let auditStatus: 'SQUARED' | 'SURPLUS' | 'SHORTAGE' = existingShift?.auditStatus || 'SQUARED';
   let dailyNetProfit = existingShift?.dailyNetProfit || totalGrossSales;

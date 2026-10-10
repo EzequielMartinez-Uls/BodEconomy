@@ -310,16 +310,20 @@ export const GeneralCashView: React.FC<Props> = ({
     const tipsPaidAmount = tipPaid ? tipDistributedTotal : 0;
 
     const openingFloat = editingShift.totalOpeningNIO || editingShift.totalOpeningEquivNIO || 0;
-    const expectedCashNIO = parseFloat((openingFloat + salesCashSystem - tipsPaidAmount).toFixed(2));
     const actualCashNIO = editForm.actualCashNIO !== ''
       ? (parseFloat(editForm.actualCashNIO) || 0)
       : (editingShift.actualCashNIO || editingShift.totalClosingNIO || editingShift.totalClosingEquivNIO || 0);
 
     const netCashAfterTipsNIO = parseFloat(Math.max(0, actualCashNIO - tipsPaidAmount).toFixed(2));
-    const differenceNIO = parseFloat((netCashAfterTipsNIO - expectedCashNIO).toFixed(2));
+    const isPendingArqueo = actualCashNIO === 0 && salesCashSystem === 0;
+
+    const expectedCashNIO = parseFloat(Math.max(0, salesCashSystem - tipsPaidAmount).toFixed(2));
+    const differenceNIO = isPendingArqueo 
+      ? 0 
+      : parseFloat((netCashAfterTipsNIO - expectedCashNIO).toFixed(2));
 
     let auditStatus: 'SQUARED' | 'SURPLUS' | 'SHORTAGE' = 'SQUARED';
-    if (Math.abs(differenceNIO) < 1.0) {
+    if (isPendingArqueo || Math.abs(differenceNIO) < 1.0) {
       auditStatus = 'SQUARED';
     } else if (differenceNIO > 0) {
       auditStatus = 'SURPLUS';

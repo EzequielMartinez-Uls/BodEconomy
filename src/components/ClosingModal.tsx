@@ -153,15 +153,23 @@ export const ClosingModal: React.FC<Props> = ({
   const totalClosingEquivNIO = netCashAfterTipsNIO; // Lo que realmente amanece en gaveta para la apertura
 
   // CÁLCULO REAL DE AUDITORÍA Y CUADRE DE CAJA (Idéntico a Loyverse POS)
-  // Fondo Inicial de Gaveta (en Córdobas) + Ventas Efectivo POS - Propinas entregadas de gaveta
+  // En El Bodegón, el fondo inicial de apertura se registra como dato meramente informativo / referencial.
+  // El cálculo del efectivo esperado lo rige Loyverse POS (Ventas en Efectivo según Loyverse menos propinas entregadas).
   const openingFloat = shift.totalOpeningNIO || shift.totalOpeningEquivNIO || 0;
+  
+  // Si no se han ingresado datos aún (sin conteo físico y sin ventas registradas), la caja está pendiente/cuadrada (0.00)
+  const isPendingArqueo = actualCashNIO === 0 && salesCashSystem === 0;
+
   const expectedCashNIO = parseFloat(
-    (openingFloat + salesCashSystem - tipsPaidAmount).toFixed(2)
+    Math.max(0, salesCashSystem - tipsPaidAmount).toFixed(2)
   );
-  const differenceNIO = parseFloat((netCashAfterTipsNIO - expectedCashNIO).toFixed(2));
+  
+  const differenceNIO = isPendingArqueo 
+    ? 0 
+    : parseFloat((netCashAfterTipsNIO - expectedCashNIO).toFixed(2));
 
   let auditStatus: 'SQUARED' | 'SURPLUS' | 'SHORTAGE' = 'SQUARED';
-  if (Math.abs(differenceNIO) < 1.0) {
+  if (isPendingArqueo || Math.abs(differenceNIO) < 1.0) {
     auditStatus = 'SQUARED';
   } else if (differenceNIO > 0) {
     auditStatus = 'SURPLUS';
@@ -998,7 +1006,9 @@ export const ClosingModal: React.FC<Props> = ({
                 }`}
               >
                 <div className="flex items-center justify-center gap-2">
-                  {auditStatus === 'SQUARED' ? (
+                  {isPendingArqueo ? (
+                    <Clock className="w-6 h-6 text-slate-500" />
+                  ) : auditStatus === 'SQUARED' ? (
                     <CheckCircle2 className="w-6 h-6 text-emerald-600" />
                   ) : auditStatus === 'SURPLUS' ? (
                     <CheckCircle2 className="w-6 h-6 text-blue-600" />
@@ -1006,7 +1016,9 @@ export const ClosingModal: React.FC<Props> = ({
                     <AlertTriangle className="w-6 h-6 text-rose-600" />
                   )}
                   <span className="text-xl font-bold">
-                    {auditStatus === 'SQUARED'
+                    {isPendingArqueo
+                      ? 'PENDIENTE DE ARQUEO'
+                      : auditStatus === 'SQUARED'
                       ? 'CAJA CUADRADA EXACTA'
                       : auditStatus === 'SURPLUS'
                       ? 'SOBRANTE EN GAVETA'
@@ -1015,9 +1027,10 @@ export const ClosingModal: React.FC<Props> = ({
                 </div>
 
                 <div className="text-xs font-medium">
-                  {auditStatus === 'SQUARED' && 'El efectivo físico coincide exactamente con las ventas y el fondo de apertura.'}
-                  {auditStatus === 'SURPLUS' && `Hay un sobrante de + C$ ${differenceNIO.toFixed(2)} sobre lo esperado.`}
-                  {auditStatus === 'SHORTAGE' && `Hay un faltante de - C$ ${Math.abs(differenceNIO).toFixed(2)} respecto al efectivo esperado.`}
+                  {isPendingArqueo && 'Aún no se ha realizado el conteo físico ni ingresado las ventas de Loyverse.'}
+                  {!isPendingArqueo && auditStatus === 'SQUARED' && 'El efectivo físico neto coincide exactamente con lo esperado de Loyverse.'}
+                  {!isPendingArqueo && auditStatus === 'SURPLUS' && `Hay un sobrante de + C$ ${differenceNIO.toFixed(2)} sobre lo esperado.`}
+                  {!isPendingArqueo && auditStatus === 'SHORTAGE' && `Hay un faltante de - C$ ${Math.abs(differenceNIO).toFixed(2)} respecto al efectivo esperado.`}
                 </div>
               </div>
 
@@ -1070,13 +1083,13 @@ export const ClosingModal: React.FC<Props> = ({
                   </h4>
 
                   <div className="space-y-1.5 text-xs">
-                    <div className="flex justify-between text-slate-600">
-                      <span>(+) Fondo Inicial de Apertura:</span>
-                      <strong className="font-mono text-slate-900">C$ {openingFloat.toFixed(2)}</strong>
+                    <div className="flex justify-between text-slate-500 bg-slate-50 p-1.5 rounded border border-slate-100">
+                      <span>ℹ Fondo Inicial de Apertura (Informativo):</span>
+                      <strong className="font-mono text-slate-700">C$ {openingFloat.toFixed(2)}</strong>
                     </div>
                     <div className="flex justify-between text-slate-600">
-                      <span>(+) Cobros en Efectivo (Loyverse):</span>
-                      <strong className="font-mono text-emerald-700">+ C$ {salesCashSystem.toFixed(2)}</strong>
+                      <span>Cobros en Efectivo (según Loyverse):</span>
+                      <strong className="font-mono text-emerald-700">C$ {salesCashSystem.toFixed(2)}</strong>
                     </div>
                     {depositedFromPettyCash > 0 && (
                       <div className="flex justify-between text-slate-600">
@@ -1091,7 +1104,7 @@ export const ClosingModal: React.FC<Props> = ({
                       </div>
                     )}
                     <div className="border-t border-slate-200 pt-2 flex justify-between font-bold text-slate-800">
-                      <span>(=) Efectivo Teórico que debe haber:</span>
+                      <span>(=) Efectivo Teórico Esperado (Loyverse):</span>
                       <strong className="font-mono text-slate-900">C$ {expectedCashNIO.toFixed(2)}</strong>
                     </div>
                     <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-1">
