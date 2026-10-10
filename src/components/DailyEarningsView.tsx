@@ -157,26 +157,31 @@ export const DailyEarningsView: React.FC<Props> = ({
           ? shift.totalGrossSales
           : cashSales + totalCards + pedidosYaSales + otherIncomeSales;
 
+      const isShiftVoid = Boolean(shift.isVoid || d === '2026-10-07' || shift.closingNotes?.includes('Día nulo'));
+      const voidReason = shift.voidReason || (isShiftVoid ? 'No se había dado capacitación previa al encargado' : undefined);
+
       map.set(d, {
         date: d,
         dayLabel: formatDayLabel(d),
-        status: shift.status,
-        cashSales,
-        cardsBAC,
-        cardsFicohsa,
-        cardsBanpro,
-        cardsLafise,
-        totalCards,
-        pedidosYaSales,
-        otherIncomeSales,
-        totalGrossSales,
+        status: isShiftVoid ? 'CLOSED' : shift.status,
+        cashSales: isShiftVoid ? 0 : cashSales,
+        cardsBAC: isShiftVoid ? 0 : cardsBAC,
+        cardsFicohsa: isShiftVoid ? 0 : cardsFicohsa,
+        cardsBanpro: isShiftVoid ? 0 : cardsBanpro,
+        cardsLafise: isShiftVoid ? 0 : cardsLafise,
+        totalCards: isShiftVoid ? 0 : totalCards,
+        pedidosYaSales: isShiftVoid ? 0 : pedidosYaSales,
+        otherIncomeSales: isShiftVoid ? 0 : otherIncomeSales,
+        totalGrossSales: isShiftVoid ? 0 : totalGrossSales,
         pettyCashExpenses: 0,
         transfersPaid: 0,
         totalExpenses: 0,
-        netEarnings: totalGrossSales,
-        tipsCollected: shift.totalTipCollected || 0,
+        netEarnings: 0,
+        tipsCollected: isShiftVoid ? 0 : (shift.totalTipCollected || 0),
         responsible: shift.closedBy || shift.openedBy || 'Administrador',
         sourceShiftId: shift.id,
+        isVoid: isShiftVoid,
+        voidReason,
       });
     });
 
@@ -277,6 +282,9 @@ export const DailyEarningsView: React.FC<Props> = ({
       }
 
       const item = map.get(txDate)!;
+      if (item.isVoid) {
+        return; // No computar gastos si la jornada fue anulada/declarada nula
+      }
       if (tx.method === 'TRANSFER' || tx.method === 'CARD') {
         item.transfersPaid += tx.amount || 0;
       } else {
@@ -287,6 +295,19 @@ export const DailyEarningsView: React.FC<Props> = ({
 
     // Calcular ganancia neta para cada día: si está cerrado, usar el valor auditado oficial de cierre (Excel); si está abierto, restar gastos y propinas
     map.forEach((item) => {
+      if (item.isVoid) {
+        item.netEarnings = 0;
+        item.totalExpenses = 0;
+        item.totalGrossSales = 0;
+        item.cashSales = 0;
+        item.totalCards = 0;
+        item.pedidosYaSales = 0;
+        item.otherIncomeSales = 0;
+        item.pettyCashExpenses = 0;
+        item.transfersPaid = 0;
+        item.tipsCollected = 0;
+        return;
+      }
       const shift = (state.shiftHistory || []).find((s) => s.date === item.date) ||
         (state.currentShift?.date === item.date ? state.currentShift : null);
       if (shift?.dailyNetProfit !== undefined && shift.dailyNetProfit !== null && shift.status === 'CLOSED') {
@@ -304,6 +325,8 @@ export const DailyEarningsView: React.FC<Props> = ({
   const activeDaySummary: DailyEarningsSummary = useMemo(() => {
     const found = dailySummaries.find((d) => d.date === selectedDate);
     if (found) return found;
+
+    const isDateVoid = selectedDate === '2026-10-07';
 
     return {
       date: selectedDate,
@@ -324,6 +347,8 @@ export const DailyEarningsView: React.FC<Props> = ({
       netEarnings: 0,
       tipsCollected: 0,
       responsible: state.activeAdminName,
+      isVoid: isDateVoid,
+      voidReason: isDateVoid ? 'No se había dado capacitación al encargado' : undefined,
     };
   }, [dailySummaries, selectedDate, state.currentShift, state.activeAdminName]);
 
@@ -602,10 +627,18 @@ export const DailyEarningsView: React.FC<Props> = ({
               onClick={() => {
                 if (onNavigateToTab) onNavigateToTab('generalCash');
               }}
-              className="px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20 text-slate-200 border border-white/20 text-[10px] cursor-pointer transition"
-              title="Haga clic para ir a Caja General"
+              className={`px-2 py-0.5 rounded-full ${
+                activeDaySummary.isVoid
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-400/40'
+                  : 'bg-white/10 hover:bg-white/20 text-slate-200 border-white/20'
+              } border text-[10px] cursor-pointer transition`}
+              title={activeDaySummary.isVoid ? 'Jornada declarada como nula / sin declarar' : 'Haga clic para ir a Caja General'}
             >
-              {activeDaySummary.status === 'OPEN' ? 'Turno En Curso' : 'Turno Cerrado'}
+              {activeDaySummary.isVoid
+                ? 'Día Nulo (Sin declarar)'
+                : activeDaySummary.status === 'OPEN'
+                ? 'Turno En Curso'
+                : 'Turno Cerrado'}
             </button>
           </div>
 
@@ -678,6 +711,24 @@ export const DailyEarningsView: React.FC<Props> = ({
           </div>
         </button>
       </div>
+
+      {/* Banner especial si el día está declarado como Nulo / Sin declarar */}
+      {activeDaySummary.isVoid && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+            <Info className="w-4 h-4" />
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold text-amber-300">
+              Jornada No Declarada (Día Nulo)
+            </h4>
+            <p className="text-xs text-amber-200/80 mt-0.5">
+              Motivo: <strong>{activeDaySummary.voidReason || 'No se había dado capacitación previa al encargado'}</strong>.
+              Este día no computa pérdidas, compras de insumos, descuadres ni altera la escala de ganancias de la empresa.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* 3. Cuadrícula de KPIs Separados por Tipo de Ingreso — Todos Clickables */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">

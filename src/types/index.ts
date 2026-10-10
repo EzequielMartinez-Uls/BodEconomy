@@ -151,6 +151,8 @@ export interface CashShift {
   differenceNIO?: number; // actual - expected
   auditStatus?: 'SQUARED' | 'SURPLUS' | 'SHORTAGE';
   closingNotes?: string;
+  isVoid?: boolean; // Jornada anulada o sin declarar (ej. falta de capacitación)
+  voidReason?: string;
 }
 
 export interface PettyCashTransaction {
@@ -316,6 +318,8 @@ export interface DailyEarningsSummary {
   tipsCollected: number;
   responsible: string;
   sourceShiftId?: string;
+  isVoid?: boolean;
+  voidReason?: string;
 }
 
 declare global {

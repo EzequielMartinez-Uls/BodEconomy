@@ -1102,10 +1102,14 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
     totalClosingNIO = actualCashNIO;
   }
 
+  const isVoid = obs.includes('[DIA_NULO:TRUE]') || obs.includes('[DIA_NULO:true]') || date === '2026-10-07';
+  const voidReasonMatch = obs.match(/\[MOTIVO_NULO:(.*?)\]/);
+  const voidReason = voidReasonMatch ? voidReasonMatch[1] : (isVoid ? 'No se había dado capacitación al encargado' : undefined);
+
   return {
     id: existingShift?.id || `shift-${date}-${j.id}`,
     date,
-    status: isClosed ? 'CLOSED' : 'OPEN',
+    status: (isClosed || isVoid) ? 'CLOSED' : 'OPEN',
     exchangeRate,
     openedBy: j.responsable || existingShift?.openedBy || 'Caja Principal',
     openedAt: j.created_at || existingShift?.openedAt || new Date().toISOString(),
@@ -1144,7 +1148,9 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
     expectedCashNIO,
     differenceNIO,
     auditStatus,
-    dailyNetProfit,
+    dailyNetProfit: isVoid ? 0 : dailyNetProfit,
+    isVoid,
+    voidReason,
   };
 }
 
