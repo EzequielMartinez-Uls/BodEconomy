@@ -490,9 +490,10 @@ export const PettyCashView: React.FC<Props> = ({
       }
 
       // Asegurar fecha y hora estricta perteneciente al día asignado
-      let txDate = getLocalDateTimeStr();
-      const timePart = txDate.includes('T') ? txDate.slice(10) : 'T12:00:00';
-      txDate = `${assignedShiftDate}${timePart}`;
+      let txDate = new Date().toISOString();
+      if (assignedShiftDate && assignedShiftDate !== todayStr) {
+        txDate = `${assignedShiftDate}T12:00:00`;
+      }
 
       const newTx: PettyCashTransaction = {
         id: `pct-${Date.now()}`,

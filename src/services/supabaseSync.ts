@@ -371,7 +371,7 @@ export async function syncTransactionToCloud(tx: PettyCashTransaction): Promise<
       .from('compras_gastos')
       .insert({
         jornada_id: cloudJornadaId,
-        fecha_hora: tx.date || getLocalDateTimeStr(),
+        fecha_hora: tx.date || new Date().toISOString(),
         concepto: concepto || (isExpense ? 'Gasto Caja Chica' : 'Depósito a caja chica'),
         categoria: cloudCategory,
         proveedor: tx.vendor || (isExpense ? 'Proveedor' : 'Gerencia / Caja General'),

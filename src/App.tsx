@@ -160,7 +160,7 @@ export function App() {
             const cloudTx: PettyCashTransaction = {
               id: isOpeningTransfer ? `pct-transfer-open-${localDate}` : `pct-cloud-${g.id}`,
               shiftId: `pc-shift-${localDate}`,
-              date: g.fecha_hora || `${localDate}T12:00:00`,
+              date: g.created_at || g.fecha_hora || `${localDate}T12:00:00`,
               type: isFondeo ? 'INFLOW' : 'EXPENSE',
               inflowSource: isOpeningTransfer ? 'FONDO_INICIAL' : undefined,
               amount: Number(g.monto) || 0,
@@ -323,7 +323,7 @@ export function App() {
           const newTx: PettyCashTransaction = {
             id: `pct-cloud-${g.id}`,
             shiftId: `pc-shift-${localDate}`,
-            date: g.fecha_hora || getLocalDateTimeStr(),
+            date: g.created_at || g.fecha_hora || new Date().toISOString(),
             type: isFondeoTransaction(g) ? 'INFLOW' : 'EXPENSE',
             amount: Number(g.monto) || 0,
             method: g.metodo_pago === 'TRANSFERENCIA' ? 'TRANSFER' : g.metodo_pago === 'TARJETA' ? 'CARD' : 'CASH',
