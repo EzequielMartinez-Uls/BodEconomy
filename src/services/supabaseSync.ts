@@ -1229,7 +1229,7 @@ export async function fetchFullCloudState(): Promise<{
           shiftHistory.push(parsedShift);
         }
 
-        if (hasPettyClosing) {
+        if (hasPettyClosing || (j.estado === 'CERRADA' && (Number(j.fondo_inicial) > 0 || obs.includes('[FONDOS_COMPOSITION:')))) {
           const matchClose = obs.match(/\[PETTY_CLOSING:(\{.*?\})\]/);
           let actualCounted = 0;
           let expBal = 0;

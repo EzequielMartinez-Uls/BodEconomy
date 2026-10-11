@@ -327,9 +327,10 @@ export const GeneralCashView: React.FC<Props> = ({
     const tipsPaidAmount = tipPaid ? tipDistributedTotal : 0;
 
     const openingFloat = editingShift.totalOpeningNIO || editingShift.totalOpeningEquivNIO || 0;
+    const totalClosingUSDInNIO = (editingShift.totalClosingUSD || 0) * (editingShift.exchangeRate || 36);
     const actualCashNIO = editForm.actualCashNIO !== ''
       ? (parseFloat(editForm.actualCashNIO) || 0)
-      : (editingShift.actualCashNIO || editingShift.totalClosingNIO || editingShift.totalClosingEquivNIO || 0);
+      : (editingShift.actualCashNIO || ((editingShift.totalClosingNIO || 0) + totalClosingUSDInNIO) || editingShift.totalClosingEquivNIO || 0);
 
     const netCashAfterTipsNIO = parseFloat(Math.max(0, actualCashNIO - tipsPaidAmount).toFixed(2));
     const isPendingArqueo = actualCashNIO === 0 && salesCashSystem === 0;

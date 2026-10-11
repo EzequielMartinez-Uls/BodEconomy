@@ -150,8 +150,36 @@ export const PettyCashView: React.FC<Props> = ({
     if (state.currentPettyCashShift && state.currentPettyCashShift.date === selectedDate) {
       return state.currentPettyCashShift;
     }
-    return state.pettyCashShiftHistory.find((s) => s.date === selectedDate) || null;
-  }, [state.currentPettyCashShift, state.pettyCashShiftHistory, selectedDate]);
+    const foundPetty = state.pettyCashShiftHistory.find((s) => s.date === selectedDate);
+    if (foundPetty) return foundPetty;
+
+    // Fallback de contingencia: si la jornada general de este día ya fue cerrada formalmente
+    const generalShift = state.shiftHistory.find((s) => s.date === selectedDate && s.status === 'CLOSED');
+    if (generalShift) {
+      const initBal = generalShift.openingTransferToPettyCash || 25900;
+      return {
+        id: `pc-shift-${selectedDate}`,
+        date: selectedDate,
+        status: 'CLOSED',
+        openedBy: generalShift.openedBy || 'Caja Principal',
+        openedAt: generalShift.openedAt || new Date().toISOString(),
+        closedBy: generalShift.closedBy || 'Admin',
+        closedAt: generalShift.closedAt || new Date().toISOString(),
+        previousDayRemaining: initBal,
+        generalCashTransfer: 0,
+        bossContribution: 0,
+        initialBalance: initBal,
+        totalExpenses: 0,
+        expectedBalance: 0,
+        actualCashCounted: 0,
+        difference: 0,
+        auditStatus: 'SQUARED',
+        closingNotes: 'Jornada cerrada sincronizada con caja general',
+      };
+    }
+
+    return null;
+  }, [state.currentPettyCashShift, state.pettyCashShiftHistory, state.shiftHistory, selectedDate]);
 
   const isSelectedShiftOpen = selectedShift !== null && selectedShift.status === 'OPEN';
   const isSelectedShiftClosed = selectedShift !== null && selectedShift.status === 'CLOSED';

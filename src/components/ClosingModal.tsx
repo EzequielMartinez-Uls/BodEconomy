@@ -109,10 +109,12 @@ export const ClosingModal: React.FC<Props> = ({
   // 4. Observaciones
   const [closingNotes, setClosingNotes] = useState<string>('');
 
-  // Cálculos reactivos de Efectivo en Gaveta (100% Córdobas en gaveta física)
+  // Cálculos reactivos de Efectivo en Gaveta (Córdobas + Dólares convertidos a Córdobas)
   const totalClosingNIO = calculateTotalNIO(closingNIO);
-  const totalClosingUSD = calculateTotalUSD(closingUSD); // Dólares informativos que se entregan a Snyder
-  const actualCashNIO = parseFloat(totalClosingNIO.toFixed(2)); // Total contado en gaveta
+  const totalClosingUSD = calculateTotalUSD(closingUSD);
+  const totalClosingUSDEquivNIO = parseFloat((totalClosingUSD * (shift.exchangeRate || 36)).toFixed(2));
+  // Total físico contado en gaveta (Córdobas + Dólares en equivalente NIO)
+  const actualCashNIO = parseFloat((totalClosingNIO + totalClosingUSDEquivNIO).toFixed(2));
 
   // Cálculos de Ventas
   const totalCards = cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise;

@@ -819,6 +819,30 @@ export function App() {
         closedPettyToSync = closedPetty;
         updatedPettyHistory = [closedPetty, ...prev.pettyCashShiftHistory];
         updatedPettyShift = null;
+      } else if (!updatedPettyHistory.some((s) => s.date === closedShift.date)) {
+        // Fallback: asegurar que Caja Chica quede registrada y sincronizada como cerrada para el día
+        const initialPetty = closedShift.openingTransferToPettyCash || 25900;
+        const closedPetty: PettyCashShift = {
+          id: `pc-shift-${closedShift.date}`,
+          date: closedShift.date,
+          status: 'CLOSED',
+          openedBy: closedShift.openedBy || prev.activeAdminName,
+          openedAt: closedShift.openedAt || new Date().toISOString(),
+          closedBy: closedShift.closedBy || prev.activeAdminName,
+          closedAt: closedShift.closedAt || new Date().toISOString(),
+          previousDayRemaining: initialPetty,
+          generalCashTransfer: 0,
+          bossContribution: 0,
+          initialBalance: initialPetty,
+          totalExpenses: 0,
+          expectedBalance: updatedPettyBalance,
+          actualCashCounted: updatedPettyBalance,
+          difference: 0,
+          auditStatus: 'SQUARED',
+          closingNotes: 'Cierre automático unificado con Caja General',
+        };
+        closedPettyToSync = closedPetty;
+        updatedPettyHistory = [closedPetty, ...prev.pettyCashShiftHistory];
       }
 
       return {
