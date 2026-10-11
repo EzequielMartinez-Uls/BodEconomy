@@ -234,6 +234,7 @@ export const PettyCashView: React.FC<Props> = ({
   const [expenseTargetDate, setExpenseTargetDate] = useState<string>(selectedDate);
   const [amount, setAmount] = useState<number>(0);
   const [vendor, setVendor] = useState('');
+  const [concept, setConcept] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('CARNES');
   const [method, setMethod] = useState<PaymentMethod>('CASH');
   const [receiptNumber, setReceiptNumber] = useState('');
@@ -462,6 +463,7 @@ export const PettyCashView: React.FC<Props> = ({
     setModalType('EXPENSE');
     setAmount(0);
     setVendor('');
+    setConcept('');
     setCategory('CARNES');
     setMethod('CASH');
     setReceiptNumber('');
@@ -516,20 +518,21 @@ export const PettyCashView: React.FC<Props> = ({
       return;
     }
 
-    if (modalType === 'EXPENSE' && !vendor.trim()) {
-      alert('Por favor indica el concepto de la compra o gasto.');
+    if (modalType === 'EXPENSE' && !concept.trim() && !vendor.trim()) {
+      alert('Por favor indica el concepto o detalle de la compra.');
       return;
     }
 
     isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
+      const finalConcept = concept.trim() || vendor.trim();
       const finalVendor =
         modalType === 'INFLOW'
           ? inflowSource === 'TRASLADO_CAJA_GENERAL'
             ? 'Deposito a caja chica'
             : 'Depositado en efectivo'
-          : vendor.trim();
+          : vendor.trim() || finalConcept;
 
       const assignedShiftDate = modalType === 'EXPENSE' ? (expenseTargetDate || selectedDate) : selectedDate;
       const assignedShiftId = `pc-shift-${assignedShiftDate}`;
@@ -541,7 +544,7 @@ export const PettyCashView: React.FC<Props> = ({
           t.type === (modalType || 'EXPENSE') &&
           Math.abs(t.amount - amount) < 0.01 &&
           (t.vendor.toLowerCase().trim() === finalVendor.toLowerCase().trim() ||
-            (notes.trim() && t.notes?.toLowerCase().trim() === notes.toLowerCase().trim()))
+            (finalConcept && t.notes?.toLowerCase().trim() === finalConcept.toLowerCase().trim()))
       );
       if (isDuplicate) {
         const confirmDup = window.confirm(
@@ -573,7 +576,7 @@ export const PettyCashView: React.FC<Props> = ({
         category: (modalType === 'INFLOW' ? 'OTROS' : category) as ExpenseCategory,
         receiptNumber: receiptNumber.trim() || undefined,
         registeredBy: state.activeAdminName,
-        notes: notes.trim() || undefined,
+        notes: modalType === 'INFLOW' ? (notes.trim() || undefined) : finalConcept,
       };
 
       onAddTransaction(newTx);
@@ -607,7 +610,7 @@ export const PettyCashView: React.FC<Props> = ({
     setEditCategory(tx.category || 'OTROS');
     setEditMethod(tx.method || 'CASH');
     setEditDate(tx.date ? tx.date.slice(0, 10) : selectedDate);
-    setEditNotes(tx.notes || '');
+    setEditNotes(tx.notes || tx.vendor || '');
     setEditReceiptNumber(tx.receiptNumber || '');
   };
 
@@ -619,7 +622,8 @@ export const PettyCashView: React.FC<Props> = ({
       alert('Por favor ingresa un monto válido mayor a 0.');
       return;
     }
-    const cleanVendor = editVendor.trim() || editingTx.vendor;
+    const cleanVendor = editVendor.trim() || editNotes.trim() || editingTx.vendor;
+    const cleanNotes = editNotes.trim() || cleanVendor;
     const timePart = editingTx.date && editingTx.date.includes('T') ? editingTx.date.split('T')[1] : '12:00:00';
     const updatedDate = editDate ? `${editDate}T${timePart}` : editingTx.date;
     const assignedShiftId = editDate ? `pc-shift-${editDate}` : editingTx.shiftId;
@@ -632,7 +636,7 @@ export const PettyCashView: React.FC<Props> = ({
       method: editMethod,
       date: updatedDate,
       shiftId: assignedShiftId,
-      notes: editNotes.trim(),
+      notes: cleanNotes,
       receiptNumber: editReceiptNumber.trim() || undefined,
     };
 
@@ -2430,16 +2434,18 @@ export const PettyCashView: React.FC<Props> = ({
                 </div>
               </div>
 
-              {/* Concepto / Detalle */}
+              {/* Proveedor / Comercio */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                  Concepto / Detalle de la Compra *
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Proveedor / Establecimiento (Opcional)
+                  </label>
+                  <span className="text-[10px] text-slate-400 font-medium">Ej: CARNIC, Palí, Mercado...</span>
+                </div>
                 <input
                   type="text"
-                  required
                   list="registered-vendors-list"
-                  placeholder="Ej: CARNIC, Hielo Olito, Supermercado..."
+                  placeholder="Nombre del proveedor o negocio (opcional)..."
                   value={vendor}
                   onChange={(e) => {
                     const val = e.target.value;
@@ -2458,6 +2464,21 @@ export const PettyCashView: React.FC<Props> = ({
                     <option key={v.id} value={v.name} />
                   ))}
                 </datalist>
+              </div>
+
+              {/* Concepto / Detalle de la Compra */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                  Concepto / Detalle de la Compra *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej: Compra de aguacates y chiltomos, 10 bolsas de hielo..."
+                  value={concept}
+                  onChange={(e) => setConcept(e.target.value)}
+                  className="w-full px-3 py-2 text-xs font-semibold rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-[#1c6856]"
+                />
               </div>
 
               {/* Forma de Pago */}
@@ -2880,14 +2901,13 @@ export const PettyCashView: React.FC<Props> = ({
             {/* Formulario de Edición */}
             <form onSubmit={handleSaveEditTx} className="p-5 space-y-3.5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {/* Concepto del Gasto */}
+                {/* Proveedor / Origen */}
                 <div className="md:col-span-2 space-y-1">
                   <label className="text-[11px] font-semibold uppercase text-slate-600 tracking-wider">
-                    {editingTx.type === 'EXPENSE' ? 'Concepto del Gasto *' : 'Descripción / Origen *'}
+                    {editingTx.type === 'EXPENSE' ? 'Proveedor / Establecimiento (Opcional)' : 'Origen / Depositado por'}
                   </label>
                   <input
                     type="text"
-                    required
                     list="registered-vendors-list"
                     value={editVendor}
                     onChange={(e) => {
@@ -2900,7 +2920,7 @@ export const PettyCashView: React.FC<Props> = ({
                         setEditCategory(matched.defaultCategory as ExpenseCategory);
                       }
                     }}
-                    placeholder="Ej: Lomo de res, 10 bolsas de hielo, Verduras..."
+                    placeholder="Ej: CARNIC, Palí, Mercado, Hielo Olito..."
                     className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#1c6856]"
                   />
                 </div>
@@ -3006,16 +3026,17 @@ export const PettyCashView: React.FC<Props> = ({
                   />
                 </div>
 
-                {/* Notas / Observaciones */}
+                {/* Concepto / Detalle de la Compra */}
                 <div className="md:col-span-2 space-y-1">
                   <label className="text-[11px] font-semibold uppercase text-slate-600 tracking-wider">
-                    Notas / Justificación
+                    {editingTx.type === 'EXPENSE' ? 'Concepto / Detalle de la Compra *' : 'Notas / Justificación'}
                   </label>
                   <textarea
                     rows={2}
+                    required={editingTx.type === 'EXPENSE'}
                     value={editNotes}
                     onChange={(e) => setEditNotes(e.target.value)}
-                    placeholder="Detalles adicionales sobre este movimiento..."
+                    placeholder={editingTx.type === 'EXPENSE' ? 'Ej: Compra de aguacates y chiltomos, 10 bolsas de hielo...' : 'Detalles adicionales sobre este movimiento...'}
                     className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#1c6856] resize-none"
                   />
                 </div>

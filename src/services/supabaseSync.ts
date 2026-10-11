@@ -302,10 +302,7 @@ export async function syncTransactionToCloud(tx: PettyCashTransaction): Promise<
     const cloudCategory = isExpense ? mapCategoryToCloud(tx.category) : 'FONDEO';
     const cleanNotes = tx.notes?.trim();
     const cleanVendor = tx.vendor?.trim() || (isExpense ? 'Proveedor' : 'Gerencia / Caja General');
-    const concepto =
-      cleanNotes && cleanNotes.toLowerCase() !== cleanVendor.toLowerCase()
-        ? `${cleanVendor} - ${cleanNotes}`
-        : cleanVendor;
+    const concepto = cleanNotes || cleanVendor;
     const isOpeningTransfer =
       tx.id?.startsWith('pct-transfer-open-') ||
       isOpeningPettyCashTx(tx);
@@ -460,10 +457,7 @@ export async function updateTransactionInCloud(tx: PettyCashTransaction): Promis
     const cloudCategory = isExpense ? mapCategoryToCloud(tx.category) : 'FONDEO';
     const cleanNotes = tx.notes?.trim();
     const cleanVendor = tx.vendor?.trim() || (isExpense ? 'Proveedor' : 'Gerencia / Caja General');
-    const concepto =
-      cleanNotes && cleanNotes.toLowerCase() !== cleanVendor.toLowerCase()
-        ? `${cleanVendor} - ${cleanNotes}`
-        : cleanVendor;
+    const concepto = cleanNotes || cleanVendor;
     const observaciones = isExpense
       ? (tx.receiptNumber ? `Doc: ${tx.receiptNumber}` : null)
       : (tx.receiptNumber ? `[TIPO:FONDEO] Doc: ${tx.receiptNumber}` : '[TIPO:FONDEO] Depósito a caja chica');
