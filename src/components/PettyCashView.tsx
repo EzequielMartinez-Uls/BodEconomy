@@ -97,7 +97,7 @@ export const PettyCashView: React.FC<Props> = ({
   onForceSyncClick,
   onOpenShiftClick,
 }) => {
-  const todayStr = useMemo(() => getLocalTodayStr(), []);
+  const todayStr = getLocalTodayStr();
 
   const activeCategories = useMemo(() => {
     return state.expenseCategories && state.expenseCategories.length > 0
@@ -555,9 +555,10 @@ export const PettyCashView: React.FC<Props> = ({
       }
 
       // Asegurar fecha y hora estricta perteneciente al día asignado
+      const actualToday = getLocalTodayStr();
       let txDate = new Date().toISOString();
-      if (assignedShiftDate && assignedShiftDate !== todayStr) {
-        txDate = `${assignedShiftDate}T12:00:00`;
+      if (assignedShiftDate && assignedShiftDate !== actualToday && assignedShiftDate !== selectedDate) {
+        txDate = `${assignedShiftDate}T12:00:00-06:00`;
       }
 
       const newTx: PettyCashTransaction = {
