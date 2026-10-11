@@ -57,7 +57,9 @@ export const DailySpreadsheetView: React.FC<Props> = ({
   const lafise = shiftToShow?.cardsLafise || 0;
   const totalCards = bac + ficohsa + banpro + lafise;
   const pedYa = shiftToShow?.salesPedidosYa || 0;
-  const totalGrossIncome = salesCash + totalCards + pedYa;
+  const bankTransf = shiftToShow?.salesBankTransfers || 0;
+  const otherInc = shiftToShow?.otherIncome || 0;
+  const totalGrossIncome = salesCash + totalCards + pedYa + bankTransf + otherInc;
 
   // Egresos del turno
   const tips = shiftToShow?.tipPaid ? (shiftToShow?.totalTipCollected || 0) : 0;
@@ -307,6 +309,28 @@ export const DailySpreadsheetView: React.FC<Props> = ({
                     C$ {pedYa.toFixed(2)}
                   </td>
                 </tr>
+                {bankTransf > 0 && (
+                  <tr>
+                    <td className="py-2.5 text-slate-700 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
+                      Transferencias Bancarias Recibidas
+                    </td>
+                    <td className="py-2.5 text-right font-mono text-slate-800 font-bold">
+                      C$ {bankTransf.toFixed(2)}
+                    </td>
+                  </tr>
+                )}
+                {otherInc > 0 && (
+                  <tr>
+                    <td className="py-2.5 text-slate-700 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-slate-500"></span>
+                      Otros Ingresos
+                    </td>
+                    <td className="py-2.5 text-right font-mono text-slate-800 font-bold">
+                      C$ {otherInc.toFixed(2)}
+                    </td>
+                  </tr>
+                )}
               </tbody>
               <tfoot className="border-t border-slate-200 font-extrabold text-slate-900 bg-slate-50/50">
                 <tr>

@@ -528,6 +528,12 @@ export function printThermalOpeningTicket(shift: CashShift): void {
             <span class="info-label">PedidosYa</span>
             <span class="info-value">C$ ${(loy.salesPedidosYa || 0).toFixed(2)}</span>
           </div>
+          ${(loy.salesBankTransfers && loy.salesBankTransfers > 0) ? `
+          <div class="info-box">
+            <span class="info-label">Transferencias</span>
+            <span class="info-value">C$ ${(loy.salesBankTransfers || 0).toFixed(2)}</span>
+          </div>
+          ` : ''}
           <div class="info-box" style="border: 2px solid #000000;">
             <span class="info-label">Gran Total Loyverse</span>
             <span class="info-value" style="font-size: 13px;">C$ ${(loy.totalLoyverseSales || 0).toFixed(2)}</span>
@@ -1531,6 +1537,7 @@ export interface OfficialActPrintData {
   cardsLafise: number;
   totalCards: number;
   salesPedidosYa: number;
+  salesBankTransfers?: number;
   totalGross: number;
   netProfit: number;
   marginPercent: number;
@@ -1562,6 +1569,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
       cardsLafise,
       totalCards,
       salesPedidosYa,
+      salesBankTransfers = 0,
       totalGross,
       netProfit,
       marginPercent,
@@ -1602,6 +1610,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
     const banproPct = totalGross > 0 ? ((cardsBanpro / totalGross) * 100).toFixed(1) : '0.0';
     const lafisePct = totalGross > 0 ? ((cardsLafise / totalGross) * 100).toFixed(1) : '0.0';
     const pedidosYaPct = totalGross > 0 ? ((salesPedidosYa / totalGross) * 100).toFixed(1) : '0.0';
+    const bankTransfersPct = totalGross > 0 ? ((salesBankTransfers / totalGross) * 100).toFixed(1) : '0.0';
 
     // Generar filas de movimientos detallados para Hoja 2 (Idéntico al cuadro en vivo)
     let runningSaldoCounter = fondoInicial;
@@ -1970,6 +1979,14 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                 <td class="text-right font-mono">C$ ${salesPedidosYa.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                 <td class="text-right font-mono">${pedidosYaPct}%</td>
               </tr>
+              ${salesBankTransfers > 0 ? `
+              <tr>
+                <td><strong>Transferencias Bancarias</strong></td>
+                <td>Ventas cobradas vía transferencia electrónica (Loyverse)</td>
+                <td class="text-right font-mono font-bold" style="color: #1e3a8a;">C$ ${salesBankTransfers.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono font-bold">${bankTransfersPct}%</td>
+              </tr>
+              ` : ''}
               <tr class="highlight-row">
                 <td colspan="2"><strong>TOTAL VENTAS BRUTAS FACTURADAS DEL DÍA</strong></td>
                 <td class="text-right font-mono" style="font-size: 10px;"><strong>C$ ${totalGross.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
@@ -2380,13 +2397,14 @@ export function computeYesterdayEarningsSummary(
   const totalCards =
     yesterdayShift.totalCards || (cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise);
   const salesPedidosYa = yesterdayShift.salesPedidosYa || 0;
+  const salesBankTransfers = yesterdayShift.salesBankTransfers || 0;
   const salesCashLoyverse = yesterdayShift.salesCashSystem || 0;
   const loyversePaidOut = 0;
   const efectivoRealGenerado = salesCashLoyverse;
   const otherIncome = yesterdayShift.otherIncome || 0;
   const totalGenerado =
     yesterdayShift.totalGrossSales ||
-    totalCards + salesPedidosYa + salesCashLoyverse + otherIncome;
+    totalCards + salesPedidosYa + salesBankTransfers + salesCashLoyverse + otherIncome;
 
   // 3. Gastos de Caja Chica de la fecha de ayer
   const dayPettyTxs = (state.pettyCashTransactions || []).filter(
@@ -2416,6 +2434,7 @@ export function computeYesterdayEarningsSummary(
     cardsLafise,
     totalCards,
     salesPedidosYa,
+    salesBankTransfers,
     salesCashLoyverse,
     loyversePaidOut,
     efectivoRealGenerado,
@@ -2506,11 +2525,12 @@ export function printOfficialOpeningActBN(
     const cardsLafise = rawSummary?.cardsLafise ?? shift.loyverseValidation?.cardsLafise ?? 0;
     const totalCards = rawSummary?.totalCards ?? (shift.loyverseValidation?.totalCards || (cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise));
     const salesPedidosYa = rawSummary?.salesPedidosYa ?? shift.loyverseValidation?.salesPedidosYa ?? 0;
+    const salesBankTransfers = rawSummary?.salesBankTransfers ?? shift.salesBankTransfers ?? 0;
     const salesCashLoyverse = rawSummary?.salesCashLoyverse ?? shift.loyverseValidation?.salesCashLoyverse ?? 0;
     const loyversePaidOut = 0;
     const efectivoRealGenerado = salesCashLoyverse;
     const otherIncome = rawSummary?.otherIncome ?? 0;
-    const totalGenerado = rawSummary?.totalGenerado ?? (totalCards + salesPedidosYa + salesCashLoyverse + otherIncome);
+    const totalGenerado = rawSummary?.totalGenerado ?? (totalCards + salesPedidosYa + salesBankTransfers + salesCashLoyverse + otherIncome);
 
     const gastosEfectivo = rawSummary?.gastosEfectivo ?? 0;
     const gastosTransferencia = rawSummary?.gastosTransferencia ?? 0;
@@ -2935,6 +2955,14 @@ export function printOfficialOpeningActBN(
                 <td class="text-right font-mono">C$ ${salesPedidosYa.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                 <td class="text-right font-mono">${(totalGenerado > 0 ? (salesPedidosYa / totalGenerado) * 100 : 0).toFixed(1)}%</td>
               </tr>
+              ${(salesBankTransfers && salesBankTransfers > 0) ? `
+              <tr>
+                <td><strong>Transferencias Bancarias</strong></td>
+                <td>Pagos directos de clientes a cuentas bancarias</td>
+                <td class="text-right font-mono">C$ ${salesBankTransfers.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono">${(totalGenerado > 0 ? (salesBankTransfers / totalGenerado) * 100 : 0).toFixed(1)}%</td>
+              </tr>
+              ` : ''}
               <tr>
                 <td><strong>Ventas en Efectivo de Sistema</strong></td>
                 <td>Recaudación de ventas en efectivo según Loyverse POS</td>

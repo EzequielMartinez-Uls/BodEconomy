@@ -608,8 +608,9 @@ export async function syncGeneralCashShiftToCloud(shift: CashShift): Promise<voi
       (shift.cardsBAC || 0) + (shift.cardsFicohsa || 0) + (shift.cardsBanpro || 0) + (shift.cardsLafise || 0)
     );
     const pedidosYa = shift.salesPedidosYa ?? shift.loyverseValidation?.salesPedidosYa ?? 0;
+    const bankTransfers = shift.salesBankTransfers || 0;
     const otherIncome = shift.otherIncome || 0;
-    const gross = shift.totalGrossSales ?? (cash + cards + pedidosYa + otherIncome);
+    const gross = shift.totalGrossSales ?? (cash + cards + pedidosYa + bankTransfers + otherIncome);
 
     const salesDataObj = {
       salesCash: cash,
@@ -619,6 +620,8 @@ export async function syncGeneralCashShiftToCloud(shift: CashShift): Promise<voi
       cardsLafise: shift.cardsLafise || 0,
       totalCards: cards,
       salesPedidosYa: pedidosYa,
+      salesBankTransfers: bankTransfers,
+      bankTransfersNotes: shift.bankTransfersNotes || '',
       otherIncome: otherIncome,
       otherIncomeNotes: shift.otherIncomeNotes || '',
       totalGrossSales: gross,

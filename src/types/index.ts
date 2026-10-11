@@ -111,9 +111,11 @@ export interface CashShift {
   cardsLafise?: number;
   totalCards?: number; // BAC + Ficohsa + Banpro + Lafise
   salesPedidosYa?: number;
+  salesBankTransfers?: number; // Ventas cobradas por Transferencia Bancaria según Loyverse POS
+  bankTransfersNotes?: string; // Banco / Comprobante / Referencia de transferencias recibidas
   otherIncome?: number; // Otros Ingresos
   otherIncomeNotes?: string; // Concepto / Detalle de otros ingresos
-  totalGrossSales?: number; // Efectivo + Tarjetas + PedidosYa + Otros Ingresos
+  totalGrossSales?: number; // Efectivo + Tarjetas + PedidosYa + Transferencias + Otros Ingresos
 
   // Propinas
   totalTipCollected?: number;
@@ -309,6 +311,7 @@ export interface DailyEarningsSummary {
   cardsLafise: number;
   totalCards: number;
   pedidosYaSales: number;
+  salesBankTransfers?: number;
   otherIncomeSales?: number;
   totalGrossSales: number;
   pettyCashExpenses: number;

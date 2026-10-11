@@ -44,6 +44,7 @@ interface Props {
       cardsBanpro: number;
       cardsLafise: number;
       salesPedidosYa: number;
+      salesBankTransfers?: number;
       tipsCollected?: number;
       notes?: string;
     }
@@ -88,6 +89,7 @@ export const DailyEarningsView: React.FC<Props> = ({
     cardsBanpro: '',
     cardsLafise: '',
     salesPedidosYa: '',
+    salesBankTransfers: '',
     tipsCollected: '',
     notes: '',
   });
@@ -150,12 +152,13 @@ export const DailyEarningsView: React.FC<Props> = ({
           ? shift.salesPedidosYa
           : shift.loyverseValidation?.salesPedidosYa || 0;
 
+      const salesBankTransfers = shift.salesBankTransfers || 0;
       const otherIncomeSales = shift.otherIncome || 0;
 
       const totalGrossSales =
         shift.totalGrossSales !== undefined && shift.totalGrossSales > 0
           ? shift.totalGrossSales
-          : cashSales + totalCards + pedidosYaSales + otherIncomeSales;
+          : cashSales + totalCards + pedidosYaSales + salesBankTransfers + otherIncomeSales;
 
       const isShiftVoid = Boolean(shift.isVoid || d === '2026-10-07' || shift.closingNotes?.includes('Día nulo'));
       const voidReason = shift.voidReason || (isShiftVoid ? 'No se había dado capacitación previa al encargado' : undefined);
@@ -171,6 +174,7 @@ export const DailyEarningsView: React.FC<Props> = ({
         cardsLafise: isShiftVoid ? 0 : cardsLafise,
         totalCards: isShiftVoid ? 0 : totalCards,
         pedidosYaSales: isShiftVoid ? 0 : pedidosYaSales,
+        salesBankTransfers: isShiftVoid ? 0 : salesBankTransfers,
         otherIncomeSales: isShiftVoid ? 0 : otherIncomeSales,
         totalGrossSales: isShiftVoid ? 0 : totalGrossSales,
         pettyCashExpenses: 0,
@@ -225,9 +229,10 @@ export const DailyEarningsView: React.FC<Props> = ({
           ? shift.salesPedidosYa
           : shift.loyverseValidation?.salesPedidosYa || 0;
 
+      const salesBankTransfers = shift.salesBankTransfers || 0;
       const otherIncomeSales = shift.otherIncome || 0;
 
-      const totalGrossSales = cashSales + totalCards + pedidosYaSales + otherIncomeSales;
+      const totalGrossSales = cashSales + totalCards + pedidosYaSales + salesBankTransfers + otherIncomeSales;
 
       map.set(d, {
         date: d,
@@ -240,6 +245,7 @@ export const DailyEarningsView: React.FC<Props> = ({
         cardsLafise,
         totalCards,
         pedidosYaSales,
+        salesBankTransfers,
         otherIncomeSales,
         totalGrossSales,
         pettyCashExpenses: 0,
@@ -361,6 +367,7 @@ export const DailyEarningsView: React.FC<Props> = ({
       cardsBanpro: dayToEdit.cardsBanpro > 0 ? String(dayToEdit.cardsBanpro) : '',
       cardsLafise: dayToEdit.cardsLafise > 0 ? String(dayToEdit.cardsLafise) : '',
       salesPedidosYa: dayToEdit.pedidosYaSales > 0 ? String(dayToEdit.pedidosYaSales) : '',
+      salesBankTransfers: (dayToEdit.salesBankTransfers || 0) > 0 ? String(dayToEdit.salesBankTransfers) : '',
       tipsCollected: dayToEdit.tipsCollected > 0 ? String(dayToEdit.tipsCollected) : '',
       notes: '',
     });
@@ -377,6 +384,7 @@ export const DailyEarningsView: React.FC<Props> = ({
         cardsBanpro: Number(editForm.cardsBanpro) || 0,
         cardsLafise: Number(editForm.cardsLafise) || 0,
         salesPedidosYa: Number(editForm.salesPedidosYa) || 0,
+        salesBankTransfers: Number(editForm.salesBankTransfers) || 0,
         tipsCollected: Number(editForm.tipsCollected) || 0,
         notes: editForm.notes,
       });
@@ -423,6 +431,11 @@ export const DailyEarningsView: React.FC<Props> = ({
   const pedidosYaPercent =
     activeDaySummary.totalGrossSales > 0
       ? (activeDaySummary.pedidosYaSales / activeDaySummary.totalGrossSales) * 100
+      : 0;
+
+  const bankTransfersPercent =
+    activeDaySummary.totalGrossSales > 0
+      ? ((activeDaySummary.salesBankTransfers || 0) / activeDaySummary.totalGrossSales) * 100
       : 0;
 
   // Manejador para imprimir el acta oficial en Blanco y Negro (1 o 2 Hojas)
@@ -731,7 +744,7 @@ export const DailyEarningsView: React.FC<Props> = ({
       )}
 
       {/* 3. Cuadrícula de KPIs Separados por Tipo de Ingreso — Todos Clickables */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
         {/* Apartado 1: Ganancia en Efectivo */}
         <div
           onClick={() => setActiveModal('CASH')}
@@ -828,7 +841,38 @@ export const DailyEarningsView: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Apartado 4: Total Ventas Brutas */}
+        {/* Apartado 4: Transferencias Bancarias */}
+        <div
+          onClick={() => handleOpenEditForm(activeDaySummary)}
+          className="bg-white rounded-xl border border-indigo-200 hover:border-indigo-300 p-4 shadow-2xs transition cursor-pointer"
+          title="Haga clic para ver o editar ventas por transferencias"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+              Transferencias Bancarias
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
+              <Building2 className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="text-xl font-bold font-mono text-indigo-900">
+            C$ {(activeDaySummary.salesBankTransfers || 0).toFixed(2)}
+          </div>
+          <div className="mt-1 flex items-center justify-between text-xs">
+            <span className="text-slate-400 text-[11px]">Participación:</span>
+            <span className="font-semibold text-indigo-800 font-mono text-[11px]">
+              {bankTransfersPercent.toFixed(1)}%
+            </span>
+          </div>
+          <div className="mt-2.5 pt-2 border-t border-slate-100 text-[11px] text-indigo-700 font-medium flex items-center justify-between">
+            <span className="flex items-center gap-1">
+              <span>Pagos directos banco</span>
+            </span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </div>
+        </div>
+
+        {/* Apartado 5: Total Ventas Brutas */}
         <div
           onClick={() => setActiveModal('GROSS')}
           className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 p-4 shadow-2xs transition cursor-pointer"
@@ -1681,6 +1725,12 @@ export const DailyEarningsView: React.FC<Props> = ({
                 <span className="text-slate-700 font-bold">Delivery / PedidosYa:</span>
                 <span className="font-mono font-bold">C$ {activeDaySummary.pedidosYaSales.toFixed(2)}</span>
               </div>
+              {(activeDaySummary.salesBankTransfers || 0) > 0 && (
+                <div className="flex justify-between py-2 border-b border-slate-100">
+                  <span className="text-slate-700 font-bold">Transferencias Bancarias:</span>
+                  <span className="font-mono font-bold text-indigo-700">C$ {(activeDaySummary.salesBankTransfers || 0).toFixed(2)}</span>
+                </div>
+              )}
               {(activeDaySummary.otherIncomeSales || 0) > 0 && (
                 <div className="flex justify-between py-2 border-b border-slate-100">
                   <span className="text-slate-700 font-bold">Otros Ingresos:</span>
@@ -1883,18 +1933,32 @@ export const DailyEarningsView: React.FC<Props> = ({
                 </div>
               </div>
 
-              {/* PedidosYa */}
-              <div className="pt-1">
-                <label className="font-bold text-slate-700 block mb-1">
-                  Delivery / PedidosYa (C$)
-                </label>
-                <input
-                  type="number"
-                  placeholder="0.00"
-                  value={editForm.salesPedidosYa}
-                  onChange={(e) => setEditForm({ ...editForm, salesPedidosYa: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 font-mono font-bold text-slate-900 focus:outline-none focus:border-[#1c6856]"
-                />
+              {/* PedidosYa y Transferencias */}
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="font-bold text-amber-700 block mb-1">
+                    Delivery / PedidosYa (C$)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    value={editForm.salesPedidosYa}
+                    onChange={(e) => setEditForm({ ...editForm, salesPedidosYa: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 font-mono font-bold text-slate-900 focus:outline-none focus:border-[#1c6856]"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-indigo-700 block mb-1">
+                    Transferencias Bancarias (C$)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    value={editForm.salesBankTransfers}
+                    onChange={(e) => setEditForm({ ...editForm, salesBankTransfers: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-indigo-200 font-mono font-bold text-indigo-900 focus:outline-none focus:border-indigo-600"
+                  />
+                </div>
               </div>
 
               {/* Propinas */}

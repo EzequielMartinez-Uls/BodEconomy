@@ -75,6 +75,7 @@ export const GeneralCashView: React.FC<Props> = ({
     cardsBanpro: '',
     cardsLafise: '',
     salesPedidosYa: '',
+    salesBankTransfers: '',
     salesCashSystem: '',
     totalTipCollected: '',
     tipPaid: true,
@@ -155,11 +156,14 @@ export const GeneralCashView: React.FC<Props> = ({
       shift.totalCards !== undefined ? shift.totalCards : cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise;
     const salesPedidosYa =
       shift.salesPedidosYa !== undefined ? shift.salesPedidosYa : shift.loyverseValidation?.salesPedidosYa || 0;
+    const salesBankTransfers =
+      shift.salesBankTransfers !== undefined ? shift.salesBankTransfers : 0;
+    const otherIncome = shift.otherIncome || 0;
 
     const totalGross =
       shift.totalGrossSales !== undefined && shift.totalGrossSales > 0
         ? shift.totalGrossSales
-        : salesCash + totalCards + salesPedidosYa;
+        : salesCash + totalCards + salesPedidosYa + salesBankTransfers + otherIncome;
 
     const expensesCash = dayTransactions
       .filter((t) => t.metodo === 'Efectivo')
@@ -192,6 +196,7 @@ export const GeneralCashView: React.FC<Props> = ({
       cardsLafise,
       totalCards,
       salesPedidosYa,
+      salesBankTransfers,
       totalGross,
       netProfit,
       marginPercent,
@@ -271,6 +276,7 @@ export const GeneralCashView: React.FC<Props> = ({
       cardsBanpro: shiftToEdit.cardsBanpro ? String(shiftToEdit.cardsBanpro) : '',
       cardsLafise: shiftToEdit.cardsLafise ? String(shiftToEdit.cardsLafise) : '',
       salesPedidosYa: shiftToEdit.salesPedidosYa ? String(shiftToEdit.salesPedidosYa) : '',
+      salesBankTransfers: shiftToEdit.salesBankTransfers ? String(shiftToEdit.salesBankTransfers) : '',
       salesCashSystem: shiftToEdit.salesCashSystem ? String(shiftToEdit.salesCashSystem) : '',
       totalTipCollected: shiftToEdit.totalTipCollected ? String(shiftToEdit.totalTipCollected) : '',
       tipPaid: shiftToEdit.tipPaid !== undefined ? shiftToEdit.tipPaid : true,
@@ -294,8 +300,10 @@ export const GeneralCashView: React.FC<Props> = ({
     const cardsLafise = parseFloat(editForm.cardsLafise) || 0;
     const totalCards = cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise;
     const salesPedidosYa = parseFloat(editForm.salesPedidosYa) || 0;
+    const salesBankTransfers = parseFloat(editForm.salesBankTransfers) || 0;
     const salesCashSystem = parseFloat(editForm.salesCashSystem) || 0;
-    const totalGrossSales = salesCashSystem + totalCards + salesPedidosYa;
+    const otherIncome = editingShift.otherIncome || 0;
+    const totalGrossSales = salesCashSystem + totalCards + salesPedidosYa + salesBankTransfers + otherIncome;
     const totalTipCollected = parseFloat(editForm.totalTipCollected) || 0;
     const staffCount = editingShift.staffCount || 10;
     const tipPaid = editForm.tipPaid;
@@ -354,6 +362,7 @@ export const GeneralCashView: React.FC<Props> = ({
       cardsLafise,
       totalCards,
       salesPedidosYa,
+      salesBankTransfers,
       salesCashSystem,
       totalGrossSales,
       totalTipCollected,
@@ -923,7 +932,7 @@ export const GeneralCashView: React.FC<Props> = ({
             </div>
 
             {/* Resumen numérico */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
               <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
                 <span className="text-slate-400 font-semibold block uppercase text-[10px]">Ventas Efectivo</span>
                 <span className="font-mono font-bold text-slate-900 text-sm">
@@ -940,6 +949,12 @@ export const GeneralCashView: React.FC<Props> = ({
                 <span className="text-slate-400 font-semibold block uppercase text-[10px]">Delivery PedidosYa</span>
                 <span className="font-mono font-bold text-slate-900 text-sm">
                   C$ {(selectedShiftDetails.salesPedidosYa || 0).toFixed(2)}
+                </span>
+              </div>
+              <div className="bg-indigo-50/60 p-3 rounded-xl border border-indigo-200/80">
+                <span className="text-indigo-800 font-semibold block uppercase text-[10px]">Transferencias</span>
+                <span className="font-mono font-bold text-indigo-700 text-sm">
+                  C$ {(selectedShiftDetails.salesBankTransfers || 0).toFixed(2)}
                 </span>
               </div>
               <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
@@ -1093,8 +1108,8 @@ export const GeneralCashView: React.FC<Props> = ({
                 </div>
               </div>
 
-              {/* Delivery y Efectivo */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Delivery, Transferencias y Efectivo */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Delivery PedidosYa (C$)</label>
                   <input
@@ -1106,7 +1121,17 @@ export const GeneralCashView: React.FC<Props> = ({
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Ventas Efectivo Sistema (C$)</label>
+                  <label className="block font-bold text-indigo-700 mb-1">Transferencias (C$)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editForm.salesBankTransfers}
+                    onChange={(e) => setEditForm({ ...editForm, salesBankTransfers: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-indigo-200 rounded-xl font-mono font-bold text-indigo-700"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Efectivo Sistema (C$)</label>
                   <input
                     type="number"
                     step="0.01"

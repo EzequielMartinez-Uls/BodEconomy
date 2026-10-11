@@ -1350,13 +1350,15 @@ export function App() {
       cardsBanpro: number;
       cardsLafise: number;
       salesPedidosYa: number;
+      salesBankTransfers?: number;
       tipsCollected?: number;
       notes?: string;
     }
   ) => {
     setState((prev) => {
       const totalCards = sales.cardsBAC + sales.cardsFicohsa + sales.cardsBanpro + sales.cardsLafise;
-      const totalGrossSales = sales.salesCash + totalCards + sales.salesPedidosYa;
+      const bankTransfers = sales.salesBankTransfers || 0;
+      const totalGrossSales = sales.salesCash + totalCards + sales.salesPedidosYa + bankTransfers;
 
       let updatedCurrent = prev.currentShift;
       if (updatedCurrent && updatedCurrent.date === date) {
@@ -1369,6 +1371,7 @@ export function App() {
           cardsLafise: sales.cardsLafise,
           totalCards,
           salesPedidosYa: sales.salesPedidosYa,
+          salesBankTransfers: bankTransfers,
           totalGrossSales,
           totalTipCollected: sales.tipsCollected || updatedCurrent.totalTipCollected || 0,
           loyverseValidation: {
@@ -1399,6 +1402,7 @@ export function App() {
             cardsLafise: sales.cardsLafise,
             totalCards,
             salesPedidosYa: sales.salesPedidosYa,
+            salesBankTransfers: bankTransfers,
             totalGrossSales,
             totalTipCollected: sales.tipsCollected !== undefined ? sales.tipsCollected : s.totalTipCollected,
             loyverseValidation: {
@@ -1442,6 +1446,7 @@ export function App() {
           cardsLafise: sales.cardsLafise,
           totalCards,
           salesPedidosYa: sales.salesPedidosYa,
+          salesBankTransfers: bankTransfers,
           totalGrossSales,
           totalTipCollected: sales.tipsCollected || 0,
           loyverseValidation: {
