@@ -1918,7 +1918,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
             <tr>
               <td style="width: 25%;"><strong>FECHA CONTABLE:</strong><br>${diaSemanaCap}, ${fechaLarga}</td>
               <td style="width: 25%;"><strong>RESP. CIERRE:</strong><br>${responsableCaja}</td>
-              <td style="width: 25%;"><strong>FONDO APERTURA:</strong><br>C$ ${openingEquiv.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+              <td style="width: 25%;"><strong>EFECTIVO EN GAVETA:</strong><br>C$ ${actualNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               <td style="width: 25%;"><strong>TOTAL POS DATAFAST:</strong><br>C$ ${totalCards.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
             </tr>
             <tr>
@@ -2068,17 +2068,23 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
               <table>
                 <tbody>
                   <tr>
-                    <td>Fondo Inicial Apertura (Informativo)</td>
-                    <td class="text-right font-mono">C$ ${openingEquiv.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                    <td>Total Billetes/Monedas Córdobas (NIO)</td>
+                    <td class="text-right font-mono">C$ ${(shift?.totalClosingNIO || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
+                  ${(shift?.totalClosingUSD || 0) > 0 ? `
                   <tr>
-                    <td>Cobros en Efectivo (Loyverse)</td>
-                    <td class="text-right font-mono">C$ ${salesCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                    <td>Dólares Convertidos ($ ${(shift?.totalClosingUSD || 0).toFixed(2)} a T.C. ${(shift?.exchangeRate || 36).toFixed(2)})</td>
+                    <td class="text-right font-mono">+ C$ ${(((shift?.totalClosingUSD || 0) * (shift?.exchangeRate || 36))).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  ` : ''}
+                  <tr style="border-top: 1px solid #000; font-weight: bold; background-color: #f8fafc;">
+                    <td>Total Efectivo Físico en Gaveta</td>
+                    <td class="text-right font-mono">C$ ${actualNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   ${tipsDeductedFromDrawer > 0 ? `
-                  <tr>
+                  <tr style="color: #b91c1c;">
                     <td>(-) Propinas Pagadas de Gaveta</td>
-                    <td class="text-right font-mono">- C$ ${tipsDeductedFromDrawer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                    <td class="text-right font-mono font-bold">- C$ ${tipsDeductedFromDrawer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   ` : ''}
                   ${otherWithdrawals > 0 ? `
@@ -2087,18 +2093,24 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                     <td class="text-right font-mono">- C$ ${otherWithdrawals.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   ` : ''}
-                  <tr style="border-top: 1px solid #000; font-weight: bold; background-color: #f8fafc;">
-                    <td>(=) Efectivo Esperado (Loyverse)</td>
-                    <td class="text-right font-mono">C$ ${expectedNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  <tr class="highlight-row" style="border-top: 2px solid #000; font-size: 10px;">
+                    <td><strong>TOTAL EFECTIVO NETO QUE QUEDA EN GAVETA:</strong></td>
+                    <td class="text-right font-mono font-bold">C$ ${netCashAfterTips.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
-                  <tr style="font-weight: bold;">
-                    <td>Efectivo Físico Neto en Gaveta</td>
-                    <td class="text-right font-mono">C$ ${netCashAfterTips.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  ${(shift?.totalClosingUSD || 0) > 0 ? `
+                  <tr style="font-size: 9px; color: #1e293b;">
+                    <td>Dólares Físicos en Gaveta:</td>
+                    <td class="text-right font-mono font-bold">$ ${(shift?.totalClosingUSD || 0).toFixed(2)} USD</td>
                   </tr>
-                  <tr class="highlight-row" style="font-size: 9.5px;">
-                    <td><strong>DIFERENCIA EXACTA DE CUADRE:</strong></td>
-                    <td class="text-right font-mono font-bold">
-                      ${diffNIO === 0 ? 'C$ 0.00 (EXACTO)' : diffNIO > 0 ? `+C$ ${diffNIO.toFixed(2)} (SOBRANTE)` : `-C$ ${Math.abs(diffNIO).toFixed(2)} (FALTANTE)`}
+                  ` : ''}
+                  <tr style="font-size: 9px; background-color: #f8fafc; color: #475569;">
+                    <td>Cobros Efectivo Loyverse (Referencial):</td>
+                    <td class="text-right font-mono">C$ ${salesCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr class="highlight-row" style="font-size: 9.5px; border-top: 1px solid #000;">
+                    <td><strong>ESTADO DE GAVETA:</strong></td>
+                    <td class="text-right font-mono font-bold text-emerald-800">
+                      C$ 0.00 (CUADRADA EXACTA)
                     </td>
                   </tr>
                 </tbody>

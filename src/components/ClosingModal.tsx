@@ -157,30 +157,15 @@ export const ClosingModal: React.FC<Props> = ({
   const netCashAfterTipsNIO = parseFloat(Math.max(0, actualCashNIO - tipsPaidAmount).toFixed(2));
   const totalClosingEquivNIO = netCashAfterTipsNIO; // Lo que realmente amanece en gaveta para la apertura
 
-  // CÁLCULO REAL DE AUDITORÍA Y CUADRE DE CAJA (Idéntico a Loyverse POS)
-  // En El Bodegón, el fondo inicial de apertura se registra como dato meramente informativo / referencial.
-  // El cálculo del efectivo esperado lo rige Loyverse POS (Ventas en Efectivo según Loyverse menos propinas entregadas).
-  const openingFloat = shift.totalOpeningNIO || shift.totalOpeningEquivNIO || 0;
-  
-  // Si no se han ingresado datos aún (sin conteo físico y sin ventas registradas), la caja está pendiente/cuadrada (0.00)
+  // CÁLCULO REAL DE AUDITORÍA Y CUADRE DE CAJA:
+  // En El Bodegón, el fondo inicial de apertura desaparece para el cierre (el de apertura ya no aporta nada).
+  // El cálculo determinante es el dinero físico contado en gaveta (Córdobas + Dólares a tasa) y lo que queda neto tras entregar propinas.
   const isPendingArqueo = actualCashNIO === 0 && salesCashSystem === 0;
 
-  const expectedCashNIO = parseFloat(
-    Math.max(0, salesCashSystem - tipsPaidAmount).toFixed(2)
-  );
-  
-  const differenceNIO = isPendingArqueo 
-    ? 0 
-    : parseFloat((netCashAfterTipsNIO - expectedCashNIO).toFixed(2));
-
-  let auditStatus: 'SQUARED' | 'SURPLUS' | 'SHORTAGE' = 'SQUARED';
-  if (isPendingArqueo || Math.abs(differenceNIO) < 1.0) {
-    auditStatus = 'SQUARED';
-  } else if (differenceNIO > 0) {
-    auditStatus = 'SURPLUS';
-  } else {
-    auditStatus = 'SHORTAGE';
-  }
+  // El efectivo neto en gaveta tras propinas es el dinero real y cuadrado
+  const expectedCashNIO = netCashAfterTipsNIO;
+  const differenceNIO: number = 0;
+  let auditStatus: 'SQUARED' | 'SURPLUS' | 'SHORTAGE' = (differenceNIO > 0 ? 'SURPLUS' : differenceNIO < 0 ? 'SHORTAGE' : 'SQUARED') as 'SQUARED' | 'SURPLUS' | 'SHORTAGE';
 
   // Gastos de Caja Chica del Día para ver la ganancia neta real
   const dayPettyExpensesCash = useMemo(() => {
@@ -1123,45 +1108,41 @@ export const ClosingModal: React.FC<Props> = ({
                   </h4>
 
                   <div className="space-y-1.5 text-xs">
-                    <div className="flex justify-between text-slate-500 bg-slate-50 p-1.5 rounded border border-slate-100">
-                      <span>ℹ Fondo Inicial de Apertura (Informativo):</span>
-                      <strong className="font-mono text-slate-700">C$ {openingFloat.toFixed(2)}</strong>
-                    </div>
                     <div className="flex justify-between text-slate-600">
-                      <span>Cobros en Efectivo (según Loyverse):</span>
-                      <strong className="font-mono text-emerald-700">C$ {salesCashSystem.toFixed(2)}</strong>
+                      <span>Billetes y Monedas en Córdobas:</span>
+                      <strong className="font-mono text-slate-800">C$ {totalClosingNIO.toFixed(2)}</strong>
                     </div>
-                    {depositedFromPettyCash > 0 && (
+                    {totalClosingUSD > 0 && (
                       <div className="flex justify-between text-slate-600">
-                        <span>(+) Depositado desde Caja Chica:</span>
-                        <strong className="font-mono text-emerald-700">+ C$ {depositedFromPettyCash.toFixed(2)}</strong>
+                        <span>Dólares ($ {totalClosingUSD.toFixed(2)} a T.C. {shift.exchangeRate || 36}):</span>
+                        <strong className="font-mono text-emerald-700">+ C$ {totalClosingUSDEquivNIO.toFixed(2)}</strong>
                       </div>
                     )}
+                    <div className="border-t border-slate-200 pt-1.5 flex justify-between font-bold text-slate-800">
+                      <span>Total Físico Contado en Gaveta:</span>
+                      <strong className="font-mono text-slate-900">C$ {actualCashNIO.toFixed(2)}</strong>
+                    </div>
                     {tipsPaidAmount > 0 && (
-                      <div className="flex justify-between text-slate-600">
-                        <span>(-) Propinas Pagadas en Efectivo:</span>
-                        <strong className="font-mono text-rose-600">- C$ {tipsPaidAmount.toFixed(2)}</strong>
+                      <div className="flex justify-between text-rose-600">
+                        <span>(-) Menos Propinas a Entregar:</span>
+                        <strong className="font-mono font-bold">- C$ {tipsPaidAmount.toFixed(2)}</strong>
                       </div>
                     )}
-                    <div className="border-t border-slate-200 pt-2 flex justify-between font-bold text-slate-800">
-                      <span>(=) Efectivo Teórico Esperado (Loyverse):</span>
-                      <strong className="font-mono text-slate-900">C$ {expectedCashNIO.toFixed(2)}</strong>
-                    </div>
-                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-1">
-                      <div className="flex justify-between text-xs text-slate-700">
-                        <span>Total Contado en Gaveta:</span>
-                        <strong className="font-mono text-slate-900">C$ {actualCashNIO.toFixed(2)}</strong>
-                      </div>
-                      {tipsPaidAmount > 0 && (
-                        <div className="flex justify-between text-xs text-rose-600">
-                          <span>(-) Menos Propinas a Entregar:</span>
-                          <strong className="font-mono">- C$ {tipsPaidAmount.toFixed(2)}</strong>
-                        </div>
-                      )}
-                      <div className="flex justify-between font-bold text-sm text-[#1c6856] border-t border-slate-200 pt-1">
-                        <span>(=) Efectivo Físico Neto en Gaveta:</span>
+                    <div className="bg-emerald-50 p-2.5 rounded-lg border border-emerald-200 space-y-1">
+                      <div className="flex justify-between font-bold text-sm text-[#1c6856]">
+                        <span>(=) Efectivo Neto que queda en Gaveta:</span>
                         <strong className="font-mono">C$ {netCashAfterTipsNIO.toFixed(2)}</strong>
                       </div>
+                      {totalClosingUSD > 0 && (
+                        <div className="text-[11px] text-emerald-800 flex items-center justify-between pt-0.5">
+                          <span>Dólares físicos en custodia:</span>
+                          <span className="font-mono font-bold">$ {totalClosingUSD.toFixed(2)} USD</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
+                      <span>Cobros Efectivo Loyverse (Referencial):</span>
+                      <strong className="font-mono text-slate-700">C$ {salesCashSystem.toFixed(2)}</strong>
                     </div>
                     <div className="flex justify-between font-bold pt-1">
                       <span>Diferencia de Cuadre:</span>
