@@ -69,6 +69,7 @@ export interface CashShift {
     cardsLafise: number;
     totalCards: number;
     salesPedidosYa: number;
+    salesBankTransfers?: number;
     totalLoyverseSales: number;
     notes?: string;
   };
@@ -81,6 +82,7 @@ export interface CashShift {
     cardsLafise: number;
     totalCards: number;
     salesPedidosYa: number;
+    salesBankTransfers?: number;
     salesCashLoyverse: number;
     loyversePaidOut: number; // Pagos y Salidas Loyverse
     efectivoRealGenerado: number; // Ventas Efectivo + Pagos y Salidas
