@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { CashShift, PettyCashShift, PettyCashTransaction, ExpenseCategory, isOpeningPettyCashTx, VendorItem } from '../types';
-import { getLocalTodayStr, getLocalDateTimeStr } from '../utils/dateUtils';
+import { getLocalTodayStr, getLocalDateTimeStr, extractLocalDateStr } from '../utils/dateUtils';
 import { DEFAULT_DENOMINATIONS_NIO, DEFAULT_DENOMINATIONS_USD, DEFAULT_VENDORS, DEFAULT_EXPENSE_CATEGORIES } from './storage';
 
 const SUPABASE_URL = 'https://kwkyvdoacselhbrnvney.supabase.co';
@@ -325,7 +325,9 @@ export async function syncTransactionToCloud(tx: PettyCashTransaction): Promise<
     if (tx.shiftId && tx.shiftId.startsWith('pc-shift-')) {
       commercialDate = tx.shiftId.replace('pc-shift-', '');
     } else if (tx.date) {
-      commercialDate = tx.date.slice(0, 10);
+      commercialDate = extractLocalDateStr(tx.date);
+    } else {
+      commercialDate = getLocalTodayStr();
     }
 
     if (commercialDate) {
@@ -350,6 +352,19 @@ export async function syncTransactionToCloud(tx: PettyCashTransaction): Promise<
         .limit(1);
       if (openJornada && openJornada.length > 0) {
         cloudJornadaId = openJornada[0].id;
+      }
+    }
+
+    // Blindaje de seguridad: Si no hay jornada abierta, vincular a la jornada más reciente existente
+    if (!cloudJornadaId) {
+      const { data: latestJornada } = await supabase
+        .from('jornadas_diarias')
+        .select('id')
+        .neq('turno', 'CONFIG')
+        .order('id', { ascending: false })
+        .limit(1);
+      if (latestJornada && latestJornada.length > 0) {
+        cloudJornadaId = latestJornada[0].id;
       }
     }
 
@@ -853,13 +868,15 @@ export async function syncFullDayClosureToCloud({
       updatePayload.total_gastos_efectivo = pettyShift.totalExpenses;
     }
 
+    let closingJornadaId: number | null = null;
     if (existing && existing.length > 0) {
+      closingJornadaId = existing[0].id;
       await supabase
         .from('jornadas_diarias')
         .update(updatePayload)
         .eq('id', existing[0].id);
     } else {
-      await supabase.from('jornadas_diarias').insert({
+      const { data: insData } = await supabase.from('jornadas_diarias').insert({
         fecha: generalShift.date,
         turno: 'COMPLETO',
         estado: 'CERRADA',
@@ -868,10 +885,83 @@ export async function syncFullDayClosureToCloud({
         responsable: generalShift.closedBy || 'Admin',
         observaciones: finalObs,
         fecha_cierre: generalShift.closedAt || new Date().toISOString(),
-      });
+      }).select('id').single();
+      if (insData) closingJornadaId = insData.id;
+    }
+
+    if (closingJornadaId) {
+      // Blindaje: auto-vincular cualquier gasto del día que pudiera haber quedado huérfano
+      autoHealOrphanedCloudTransactions(generalShift.date, closingJornadaId).catch(() => {});
     }
   } catch (err) {
     console.warn('⚠️ Error sincronizando cierre unificado del día:', err);
+  }
+}
+
+/**
+ * Auto-sanación automática en la nube:
+ * Escanea y vincula inmediatamente cualquier compra/gasto huérfana (jornada_id null)
+ * a su jornada correspondiente según su fecha comercial.
+ */
+export async function autoHealOrphanedCloudTransactions(
+  targetDate?: string,
+  targetJornadaId?: number
+): Promise<number> {
+  try {
+    let healedCount = 0;
+    if (targetDate && targetJornadaId) {
+      const { data } = await supabase
+        .from('compras_gastos')
+        .update({ jornada_id: targetJornadaId })
+        .is('jornada_id', null)
+        .gte('fecha_hora', `${targetDate}T00:00:00-06:00`)
+        .lte('fecha_hora', `${targetDate}T23:59:59-06:00`)
+        .select('id');
+      if (data && data.length > 0) {
+        console.log(`🛡️ Auto-sanación: ${data.length} compras huérfanas vinculadas a jornada #${targetJornadaId} (${targetDate})`);
+        healedCount += data.length;
+      }
+      return healedCount;
+    }
+
+    // Escaneo global de compras huérfanas sin jornada_id
+    const { data: orphans } = await supabase
+      .from('compras_gastos')
+      .select('id, fecha_hora, created_at')
+      .is('jornada_id', null)
+      .limit(100);
+
+    if (orphans && orphans.length > 0) {
+      const { data: jornadas } = await supabase
+        .from('jornadas_diarias')
+        .select('id, fecha')
+        .neq('turno', 'CONFIG')
+        .order('id', { ascending: false });
+
+      if (jornadas && jornadas.length > 0) {
+        const jMap = new Map<string, number>();
+        jornadas.forEach((j) => {
+          if (!jMap.has(j.fecha)) jMap.set(j.fecha, j.id);
+        });
+
+        for (const orphan of orphans) {
+          const dt = orphan.fecha_hora || orphan.created_at;
+          const localD = dt ? extractLocalDateStr(dt) : null;
+          if (localD && jMap.has(localD)) {
+            const jId = jMap.get(localD)!;
+            await supabase.from('compras_gastos').update({ jornada_id: jId }).eq('id', orphan.id);
+            healedCount++;
+          }
+        }
+      }
+      if (healedCount > 0) {
+        console.log(`🛡️ Auto-sanación global: ${healedCount} compras huérfanas recuperadas y vinculadas a sus jornadas.`);
+      }
+    }
+    return healedCount;
+  } catch (err) {
+    console.warn('⚠️ Auto-sanación de compras huérfanas omitida:', err);
+    return 0;
   }
 }
 
@@ -1168,6 +1258,9 @@ export async function fetchFullCloudState(): Promise<{
   gastos: any[];
 }> {
   try {
+    // Auto-sanar en segundo plano compras huérfanas en la nube para garantizar integridad del visualizador
+    autoHealOrphanedCloudTransactions().catch(() => {});
+
     const today = getLocalTodayStr();
     const [{ data: jData }, { data: gData }] = await Promise.all([
       supabase.from('jornadas_diarias').select('*').neq('turno', 'CONFIG').order('fecha', { ascending: false }).limit(45),
