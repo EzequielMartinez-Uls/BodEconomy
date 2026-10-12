@@ -110,60 +110,12 @@ export const DEFAULT_VENDORS: VendorItem[] = [
 import { PayrollEmployee } from '../types/payroll';
 
 export const DEFAULT_PAYROLL_EMPLOYEES: PayrollEmployee[] = [
+  // --- 5 Colaboradores Asegurados en Planilla Especial (INSS) - C$ 5,675.04 c/u ---
   {
     id: 'emp-1',
-    name: 'Uriel de Jesús Zamora Salgado',
-    role: 'Jefe de Cocina',
-    baseSalaryBiweekly: 6000,
-    isInsuredINSS: true,
-    nss: '32911303',
-    hireDate: '2025-11-01',
-    reportedSalaryINSS: 5675.04,
-    isActive: true,
-  },
-  {
-    id: 'emp-2',
-    name: 'Eddy Bernardo Martínez Blanco',
-    role: 'Administración',
-    baseSalaryBiweekly: 6000,
-    isInsuredINSS: false,
-    isActive: true,
-  },
-  {
-    id: 'emp-3',
-    name: 'Martha Patricia Meléndez',
-    role: 'Asistente de Cocina',
-    baseSalaryBiweekly: 4500,
-    isInsuredINSS: true,
-    nss: '46236436',
-    hireDate: '2025-11-01',
-    reportedSalaryINSS: 5675.04,
-    isActive: true,
-  },
-  {
-    id: 'emp-4',
-    name: 'Eliezer Ideaquez Ordoñez',
-    role: 'Mesero',
-    baseSalaryBiweekly: 4500,
-    isInsuredINSS: false,
-    isActive: true,
-  },
-  {
-    id: 'emp-5',
-    name: 'Marlon Joseph Narváez Camacho',
-    role: 'Atención al Cliente',
-    baseSalaryBiweekly: 4500,
-    isInsuredINSS: true,
-    nss: '29694792',
-    hireDate: '2025-11-01',
-    reportedSalaryINSS: 5675.04,
-    isActive: true,
-  },
-  {
-    id: 'emp-6',
     name: 'Julissa Lucero Ramírez Hernández',
     role: 'Asistente de Cocina',
-    baseSalaryBiweekly: 4500,
+    baseSalaryBiweekly: 5675.04,
     isInsuredINSS: true,
     nss: '19915977',
     hireDate: '2025-11-01',
@@ -171,62 +123,129 @@ export const DEFAULT_PAYROLL_EMPLOYEES: PayrollEmployee[] = [
     isActive: true,
   },
   {
-    id: 'emp-7',
+    id: 'emp-2',
+    name: 'Martha Patricia Meléndez',
+    role: 'Asistente de Cocina',
+    baseSalaryBiweekly: 5675.04,
+    isInsuredINSS: true,
+    nss: '46236436',
+    hireDate: '2025-11-01',
+    reportedSalaryINSS: 5675.04,
+    isActive: true,
+  },
+  {
+    id: 'emp-3',
+    name: 'Marlon Joseph Narváez Camacho',
+    role: 'Atención al Cliente',
+    baseSalaryBiweekly: 5675.04,
+    isInsuredINSS: true,
+    nss: '29694792',
+    hireDate: '2025-11-01',
+    reportedSalaryINSS: 5675.04,
+    isActive: true,
+  },
+  {
+    id: 'emp-4',
+    name: 'Uriel de Jesús Zamora Salgado',
+    role: 'Jefe de Cocina',
+    baseSalaryBiweekly: 5675.04,
+    isInsuredINSS: true,
+    nss: '32911303',
+    hireDate: '2025-11-01',
+    reportedSalaryINSS: 5675.04,
+    isActive: true,
+  },
+  {
+    id: 'emp-5',
     name: 'Estefani de los Ángeles Padilla Urey',
     role: 'Atención al Cliente',
-    baseSalaryBiweekly: 4500,
+    baseSalaryBiweekly: 5675.04,
     isInsuredINSS: true,
     nss: '35137463',
     hireDate: '2025-11-01',
     reportedSalaryINSS: 5675.04,
     isActive: true,
   },
+  // --- 9 Colaboradores de Planilla Operativa Quincenal (Total C$ 51,025.00) ---
+  {
+    id: 'emp-6',
+    name: 'Nelly Delgado Escoto',
+    role: 'Cocinera',
+    baseSalaryBiweekly: 6250.00,
+    isInsuredINSS: false,
+    hireDate: '2026-09-01',
+    isActive: true,
+  },
+  {
+    id: 'emp-7',
+    name: 'Zenon López',
+    role: 'Cocinero',
+    baseSalaryBiweekly: 6250.00,
+    isInsuredINSS: false,
+    hireDate: '2026-09-01',
+    isActive: true,
+  },
   {
     id: 'emp-8',
-    name: 'David Quintero Téllez',
-    role: 'Cocinero',
-    baseSalaryBiweekly: 5000,
+    name: 'Eddy Bernardo Martínez Blanco',
+    role: 'Admon',
+    baseSalaryBiweekly: 6000.00,
     isInsuredINSS: false,
+    hireDate: '2024-05-15',
     isActive: true,
   },
   {
     id: 'emp-9',
-    name: 'Nelly Delgado',
-    role: 'Cocinera',
-    baseSalaryBiweekly: 5000,
+    name: 'Yhaira de Jesús Rivas',
+    role: 'Limpieza',
+    baseSalaryBiweekly: 4500.00,
     isInsuredINSS: false,
+    hireDate: '2025-05-25',
     isActive: true,
   },
   {
     id: 'emp-10',
-    name: 'Heiling Pérez',
-    role: 'Asistente de Cocina',
-    baseSalaryBiweekly: 4500,
+    name: 'Oscar Adolfo Vásquez Omeany',
+    role: 'Barra',
+    baseSalaryBiweekly: 5675.00,
     isInsuredINSS: false,
+    hireDate: '2026-02-16',
     isActive: true,
   },
   {
     id: 'emp-11',
-    name: 'Yhaira Rivas',
-    role: 'Limpieza',
-    baseSalaryBiweekly: 4000,
+    name: 'Xiomara Castillo',
+    role: 'Admon',
+    baseSalaryBiweekly: 6500.00,
     isInsuredINSS: false,
+    hireDate: '2026-07-15',
     isActive: true,
   },
   {
     id: 'emp-12',
-    name: 'Lea Calvo',
-    role: 'Lavandería',
-    baseSalaryBiweekly: 4000,
+    name: 'Carlos Eduardo García',
+    role: 'Atención al Cliente',
+    baseSalaryBiweekly: 5675.00,
     isInsuredINSS: false,
+    hireDate: '2026-09-15',
     isActive: true,
   },
   {
     id: 'emp-13',
-    name: 'Oscar Vásquez Omeany',
-    role: 'Bartender',
-    baseSalaryBiweekly: 4500,
+    name: 'Yunieth Verónica Carmona Sánchez',
+    role: 'Asistente de Cocina',
+    baseSalaryBiweekly: 5675.00,
     isInsuredINSS: false,
+    hireDate: '2026-04-17',
+    isActive: true,
+  },
+  {
+    id: 'emp-14',
+    name: 'Melvin Ojeda',
+    role: 'Lavandería',
+    baseSalaryBiweekly: 4500.00,
+    isInsuredINSS: false,
+    hireDate: '2026-09-01',
     isActive: true,
   },
 ];
@@ -290,16 +309,32 @@ export function loadState(): AppState {
 
     // Mapeo para actualizar nombres antiguos a los oficiales completos
     const normalizeStr = (s: string) =>
-      s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+      (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 
-    // Saneamiento de Nómina y Planillas (Respetando eliminaciones y ediciones del usuario):
+    // Saneamiento de Nómina y Planillas (Excluyendo ex-colaboradores dados de baja):
     const isExcluded = (name: string) => {
       const n = normalizeStr(name);
-      return n.includes('maverick') || n.includes('sandor');
+      return (
+        n.includes('maverick') ||
+        n.includes('sandor') ||
+        n.includes('eliezer') ||
+        n.includes('david quintero') ||
+        n.includes('heiling') ||
+        n.includes('lea calvo')
+      );
     };
 
-    if (!Array.isArray(parsed.payrollEmployees)) {
+    // Si la lista local aún tenía los datos antiguos de prueba (ej. Eliezer, David Quintero, Heiling, Lea o faltaban Zenon/Xiomara/Melvin),
+    // actualizar al padrón oficial real de 14 colaboradores con sus salarios reales
+    const hasLegacyEmployees =
+      !Array.isArray(parsed.payrollEmployees) ||
+      parsed.payrollEmployees.some((e: PayrollEmployee) => isExcluded(e.name)) ||
+      !parsed.payrollEmployees.some((e: PayrollEmployee) => normalizeStr(e.name).includes('zenon')) ||
+      !parsed.payrollEmployees.some((e: PayrollEmployee) => normalizeStr(e.name).includes('melvin'));
+
+    if (hasLegacyEmployees) {
       loaded.payrollEmployees = [...DEFAULT_PAYROLL_EMPLOYEES];
+      loaded.payrollHistory = [];
     } else {
       loaded.payrollEmployees = parsed.payrollEmployees.filter((e: PayrollEmployee) => !isExcluded(e.name));
     }
@@ -308,7 +343,7 @@ export function loadState(): AppState {
       loaded.payrollIncidents = [];
     }
 
-    // Respetar el historial de planillas guardado por el usuario
+    // Respetar el historial de planillas guardado por el usuario (limpiando ex-colaboradores)
     if (!loaded.payrollHistory) {
       loaded.payrollHistory = [];
     } else {

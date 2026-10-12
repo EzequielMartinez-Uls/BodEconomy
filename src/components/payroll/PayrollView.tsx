@@ -48,6 +48,7 @@ interface Props {
   onUpdateState: (updater: (prev: AppState) => AppState) => void;
   subTab?: 'quincenal' | 'especial' | 'incidencias';
   onSubTabChange?: (tab: 'quincenal' | 'especial' | 'incidencias') => void;
+  onUnsavedChangesChange?: (hasUnsaved: boolean) => void;
 }
 
 export const PayrollView: React.FC<Props> = ({
@@ -55,11 +56,39 @@ export const PayrollView: React.FC<Props> = ({
   onUpdateState,
   subTab: externalSubTab,
   onSubTabChange: externalOnSubTabChange,
+  onUnsavedChangesChange,
 }) => {
+  // Estado de cambios pendientes de confirmar en la nube
+  const [hasUnconfirmedChanges, setHasUnconfirmedChanges] = useState(false);
+
+  const updateUnconfirmedFlag = (dirty: boolean) => {
+    setHasUnconfirmedChanges(dirty);
+    onUnsavedChangesChange?.(dirty);
+  };
+
+  // Advertencia al cerrar o recargar la ventana si hay cambios sin confirmar
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnconfirmedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnconfirmedChanges]);
+
   // Pestaña activa (si no viene por prop, usar estado interno)
   const [internalSubTab, setInternalSubTab] = useState<'quincenal' | 'especial' | 'incidencias'>('quincenal');
   const activeSubTab = externalSubTab || internalSubTab;
   const setActiveSubTab = (tab: 'quincenal' | 'especial' | 'incidencias') => {
+    if (tab === activeSubTab) return;
+    if (hasUnconfirmedChanges) {
+      const proceed = window.confirm(
+        '⚠️ Tienes cambios en la planilla que aún no has confirmado en la nube.\n\n¿Deseas cambiar de pestaña de todos modos?\n(Tus cambios se conservan en borrador local, pero recuerda presionar "Confirmar Cambios" para subirlos a la nube).'
+      );
+      if (!proceed) return;
+    }
     setInternalSubTab(tab);
     externalOnSubTabChange?.(tab);
   };
@@ -126,15 +155,52 @@ export const PayrollView: React.FC<Props> = ({
   // Construir filas operativas y especiales a partir del historial o de los empleados actuales
   const [rows, setRows] = useState<BiweeklyPayrollRow[]>([]);
   const [specialRows, setSpecialRows] = useState<SpecialPayrollRow[]>([]);
+  const loadedPeriodRef = React.useRef<string>('');
 
-  // Inicializar o recargar filas cuando cambia el período o la lista de empleados
+  // Auto-guardar borrador en el estado local de la app en cada edición para evitar pérdida al desmontar pestañas
+  const persistDraftLocally = (nextRows: BiweeklyPayrollRow[], nextSpecialRows: SpecialPayrollRow[]) => {
+    updateUnconfirmedFlag(true);
+    onUpdateState((prev) => {
+      const record: BiweeklyPayrollRecord = {
+        id: currentPeriodId,
+        year,
+        month,
+        period,
+        status: 'DRAFT',
+        rows: nextRows,
+        specialRows: nextSpecialRows,
+        authorizedBy: prev.activeAdminName || 'Admon Bodegón',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      const nextHist = [record, ...(prev.payrollHistory || []).filter((h) => h.id !== currentPeriodId)];
+      return {
+        ...prev,
+        payrollHistory: nextHist,
+      };
+    });
+  };
+
+  // Inicializar o recargar filas cuando cambia el período (sin sobrescribir ediciones en curso)
   useEffect(() => {
+    if (hasUnconfirmedChanges && loadedPeriodRef.current === currentPeriodId) {
+      return;
+    }
+    loadedPeriodRef.current = currentPeriodId;
+
     const existing = (state.payrollHistory || []).find((h) => h.id === currentPeriodId);
 
     if (existing && existing.rows && existing.rows.length > 0) {
       const isExcluded = (n: string) => {
-        const s = (n || '').toLowerCase();
-        return s.includes('maverick') || s.includes('sandor');
+        const s = (n || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return (
+          s.includes('maverick') ||
+          s.includes('sandor') ||
+          s.includes('eliezer') ||
+          s.includes('david quintero') ||
+          s.includes('heiling') ||
+          s.includes('lea calvo')
+        );
       };
 
       setRows(existing.rows.filter((row) => !isExcluded(row.name)));
@@ -226,20 +292,18 @@ export const PayrollView: React.FC<Props> = ({
 
   // Manejar cambio en una fila de la sábana quincenal
   const handleRowChange = (index: number, updatedRow: BiweeklyPayrollRow) => {
-    setRows((prev) => {
-      const next = [...prev];
-      next[index] = updatedRow;
-      return next;
-    });
+    const next = [...rows];
+    next[index] = updatedRow;
+    setRows(next);
+    persistDraftLocally(next, specialRows);
   };
 
   // Manejar cambio en una fila de la planilla especial INSS
   const handleSpecialRowChange = (index: number, updatedRow: SpecialPayrollRow) => {
-    setSpecialRows((prev) => {
-      const next = [...prev];
-      next[index] = updatedRow;
-      return next;
-    });
+    const next = [...specialRows];
+    next[index] = updatedRow;
+    setSpecialRows(next);
+    persistDraftLocally(rows, next);
   };
 
   // Agregar y eliminar colaboradores en la sábana quincenal
@@ -260,7 +324,9 @@ export const PayrollView: React.FC<Props> = ({
       breakageNotes: '',
       totalPaid: 0,
     };
-    setRows((prev) => [...prev, newRow]);
+    const next = [...rows, newRow];
+    setRows(next);
+    persistDraftLocally(next, specialRows);
   };
 
   const handleDeleteRow = (index: number) => {
@@ -322,7 +388,9 @@ export const PayrollView: React.FC<Props> = ({
       totalCostBodegon: 0,
       netPayAsegurado: 0,
     };
-    setSpecialRows((prev) => [...prev, newRow]);
+    const next = [...specialRows, newRow];
+    setSpecialRows(next);
+    persistDraftLocally(rows, next);
   };
 
   const handleDeleteSpecialRow = (index: number) => {
@@ -405,6 +473,7 @@ export const PayrollView: React.FC<Props> = ({
       payrollHistory: nextHist,
     }));
 
+    updateUnconfirmedFlag(false);
     setSaveNotice('Confirmando y sincronizando cambios en Supabase Cloud...');
     const ok = await syncCatalogsToCloud(state.vendorsList, state.expenseCategories, updatedEmployees, nextHist);
     if (ok) {
@@ -465,6 +534,7 @@ export const PayrollView: React.FC<Props> = ({
 
       setRows(duplicatedRows);
       setSpecialRows(duplicatedSpecial);
+      persistDraftLocally(duplicatedRows, duplicatedSpecial);
       setSaveNotice('¡Nómina duplicada exitosamente de la quincena anterior!');
       setTimeout(() => setSaveNotice(null), 3500);
     } else {
@@ -490,6 +560,7 @@ export const PayrollView: React.FC<Props> = ({
           totalPaid: emp.baseSalaryBiweekly || 0,
         }));
         setRows(initialRows);
+        persistDraftLocally(initialRows, specialRows);
         setSaveNotice('¡Planilla inicializada con el personal activo!');
         setTimeout(() => setSaveNotice(null), 3500);
       }
@@ -542,34 +613,35 @@ export const PayrollView: React.FC<Props> = ({
         setRows(updatedRows);
 
         // Actualizar planilla especial INSS en caso de horas extras o feriados para asegurados
-        setSpecialRows((prevSpecial) =>
-          prevSpecial.map((sr) => {
-            const matchRow = updatedRows.find((r) => matchEmployeeName(r.name, sr.name));
-            if (!matchRow) return sr;
+        const updatedSpecialRows = specialRows.map((sr) => {
+          const matchRow = updatedRows.find((r) => matchEmployeeName(r.name, sr.name));
+          if (!matchRow) return sr;
 
-            const extraAmt = (matchRow.overtimeAmount || 0) + (matchRow.holidaysAmount || 0);
-            const sal = sr.reportedSalary;
-            const inssLab = parseFloat(((sal + extraAmt) * 0.07).toFixed(2));
-            const inssPat = parseFloat(((sal + extraAmt) * 0.215).toFixed(2));
-            const inatec = parseFloat(((sal + extraAmt) * 0.02).toFixed(2));
-            const cotiz = parseFloat((inssLab + inssPat + inatec).toFixed(2));
-            const aguinaldo = parseFloat(((sal + extraAmt) / 12).toFixed(2));
-            const cost = parseFloat(((sal + extraAmt) + aguinaldo + inssPat + inatec).toFixed(2));
-            const net = parseFloat(((sal + extraAmt) - inssLab).toFixed(2));
+          const extraAmt = (matchRow.overtimeAmount || 0) + (matchRow.holidaysAmount || 0);
+          const sal = sr.reportedSalary;
+          const inssLab = parseFloat(((sal + extraAmt) * 0.07).toFixed(2));
+          const inssPat = parseFloat(((sal + extraAmt) * 0.215).toFixed(2));
+          const inatec = parseFloat(((sal + extraAmt) * 0.02).toFixed(2));
+          const cotiz = parseFloat((inssLab + inssPat + inatec).toFixed(2));
+          const aguinaldo = parseFloat(((sal + extraAmt) / 12).toFixed(2));
+          const cost = parseFloat(((sal + extraAmt) + aguinaldo + inssPat + inatec).toFixed(2));
+          const net = parseFloat(((sal + extraAmt) - inssLab).toFixed(2));
 
-            return {
-              ...sr,
-              extraHolidayAmount: extraAmt,
-              aguinaldoProvision: aguinaldo,
-              inssLaboral: inssLab,
-              inssPatronal: inssPat,
-              inatecPatronal: inatec,
-              totalCotizacion: cotiz,
-              totalCostBodegon: cost,
-              netPayAsegurado: net,
-            };
-          })
-        );
+          return {
+            ...sr,
+            extraHolidayAmount: extraAmt,
+            aguinaldoProvision: aguinaldo,
+            inssLaboral: inssLab,
+            inssPatronal: inssPat,
+            inatecPatronal: inatec,
+            totalCotizacion: cotiz,
+            totalCostBodegon: cost,
+            netPayAsegurado: net,
+          };
+        });
+
+        setSpecialRows(updatedSpecialRows);
+        persistDraftLocally(updatedRows, updatedSpecialRows);
 
         setSyncNotice(`✅ ${result.message}`);
       } else {
@@ -724,6 +796,7 @@ export const PayrollView: React.FC<Props> = ({
       payrollHistory: nextHist,
     }));
 
+    updateUnconfirmedFlag(false);
     setSaveNotice('Sincronizando padrón de colaboradores en Supabase Cloud...');
     const ok = await syncCatalogsToCloud(state.vendorsList, state.expenseCategories, newEmployees, nextHist);
     if (ok) {
@@ -738,6 +811,17 @@ export const PayrollView: React.FC<Props> = ({
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
   ];
+
+  const confirmPeriodChange = (): boolean => {
+    if (!hasUnconfirmedChanges) return true;
+    const proceed = window.confirm(
+      '⚠️ Tienes cambios en la planilla de este período que aún no has confirmado en la nube.\n\n¿Seguro que deseas cambiar de período sin presionar "Confirmar Cambios"?'
+    );
+    if (proceed) {
+      updateUnconfirmedFlag(false);
+    }
+    return proceed;
+  };
 
   return (
     <div className="space-y-3 max-w-[1440px] mx-auto pb-12 select-none">
@@ -792,7 +876,10 @@ export const PayrollView: React.FC<Props> = ({
           {/* Mes */}
           <select
             value={month}
-            onChange={(e) => setMonth(parseInt(e.target.value, 10))}
+            onChange={(e) => {
+              const nextM = parseInt(e.target.value, 10);
+              if (confirmPeriodChange()) setMonth(nextM);
+            }}
             className="text-xs font-bold border border-slate-300 px-2 py-1.5 bg-white text-slate-800 outline-none cursor-pointer"
           >
             {monthsList.map((m, idx) => (
@@ -805,7 +892,10 @@ export const PayrollView: React.FC<Props> = ({
           {/* Quincena */}
           <select
             value={period}
-            onChange={(e) => setPeriod(e.target.value as PayrollPeriod)}
+            onChange={(e) => {
+              const nextP = e.target.value as PayrollPeriod;
+              if (confirmPeriodChange()) setPeriod(nextP);
+            }}
             className="text-xs font-bold border border-slate-300 px-2 py-1.5 bg-white text-slate-800 outline-none cursor-pointer"
           >
             <option value="FIRST_HALF">1ra Quincena (01 al 14)</option>
@@ -815,7 +905,10 @@ export const PayrollView: React.FC<Props> = ({
           {/* Año */}
           <select
             value={year}
-            onChange={(e) => setYear(parseInt(e.target.value, 10))}
+            onChange={(e) => {
+              const nextY = parseInt(e.target.value, 10);
+              if (confirmPeriodChange()) setYear(nextY);
+            }}
             className="text-xs font-bold border border-slate-300 px-2 py-1.5 bg-white text-slate-800 outline-none cursor-pointer"
           >
             <option value={2026}>2026</option>
@@ -882,11 +975,15 @@ export const PayrollView: React.FC<Props> = ({
           {/* Confirmar Cambios */}
           <button
             onClick={handleSavePayroll}
-            className="px-3.5 py-1.5 border border-[#165345] bg-[#1c6856] hover:bg-[#165345] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider shadow-xs"
+            className={`px-3.5 py-1.5 border text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider shadow-xs ${
+              hasUnconfirmedChanges
+                ? 'border-amber-600 bg-amber-500 hover:bg-amber-600 text-slate-950 ring-2 ring-amber-300 animate-pulse'
+                : 'border-[#165345] bg-[#1c6856] hover:bg-[#165345] text-white'
+            }`}
             title="Confirmar y guardar todos los cambios de esta planilla y del personal en el sistema y en la nube"
           >
             <Check className="w-3.5 h-3.5" />
-            <span>Confirmar Cambios</span>
+            <span>{hasUnconfirmedChanges ? 'Confirmar Cambios ●' : 'Confirmar Cambios'}</span>
           </button>
 
           {/* Menú de Impresión Hoja Carta */}
@@ -952,6 +1049,23 @@ export const PayrollView: React.FC<Props> = ({
       </div>
 
       {/* Avisos de Notificación Rectangulares */}
+      {hasUnconfirmedChanges && (
+        <div className="p-2.5 border-2 border-amber-400 bg-amber-50 text-amber-950 text-xs font-bold flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span>⚠️</span>
+            <span>
+              Tienes modificaciones en borrador. Presiona <strong>"Confirmar Cambios"</strong> para sincronizarlas oficialmente con el padrón de personal y la nube.
+            </span>
+          </div>
+          <button
+            onClick={handleSavePayroll}
+            className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black uppercase text-[10px] border border-amber-700 cursor-pointer"
+          >
+            Confirmar Ahora
+          </button>
+        </div>
+      )}
+
       {syncNotice && (
         <div className="p-2.5 border border-blue-400 bg-blue-50 text-blue-950 text-xs font-semibold flex items-center justify-between">
           <span>{syncNotice}</span>

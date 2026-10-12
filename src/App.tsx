@@ -40,6 +40,29 @@ export function App() {
   const [state, setState] = useState<AppState>(loadState);
   const [activeTab, setActiveTab] = useState<'generalCash' | 'pettyCash' | 'tableware' | 'dailyEarnings' | 'payroll'>('generalCash');
   const [payrollSubTab, setPayrollSubTab] = useState<'quincenal' | 'especial' | 'incidencias'>('quincenal');
+  const [payrollHasUnsavedChanges, setPayrollHasUnsavedChanges] = useState(false);
+
+  const handleGuardedTabChange = (nextTab: 'generalCash' | 'pettyCash' | 'tableware' | 'dailyEarnings' | 'payroll') => {
+    if (nextTab === activeTab) return;
+    if (activeTab === 'payroll' && payrollHasUnsavedChanges) {
+      const proceed = window.confirm(
+        '⚠️ Tienes cambios sin confirmar en la Planilla.\n\n¿Seguro que deseas salir de esta pestaña sin haber presionado "Confirmar Cambios"?\n(Presiona "Cancelar" para quedarte y confirmar tus cambios en la nube).'
+      );
+      if (!proceed) return;
+      setPayrollHasUnsavedChanges(false);
+    }
+    setActiveTab(nextTab);
+  };
+
+  const handleGuardedPayrollSubTabChange = (nextSubTab: 'quincenal' | 'especial' | 'incidencias') => {
+    if (activeTab === 'payroll' && nextSubTab !== payrollSubTab && payrollHasUnsavedChanges) {
+      const proceed = window.confirm(
+        '⚠️ Tienes cambios en la planilla que aún no has confirmado en la nube.\n\n¿Deseas cambiar de pestaña de todos modos?\n(Tus cambios se conservan en borrador local, pero recuerda presionar "Confirmar Cambios" para subirlos a la nube).'
+      );
+      if (!proceed) return;
+    }
+    setPayrollSubTab(nextSubTab);
+  };
 
 
   // Modals
@@ -1511,9 +1534,9 @@ export function App() {
       <Sidebar
         state={state}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleGuardedTabChange}
         payrollSubTab={payrollSubTab}
-        onPayrollSubTabChange={setPayrollSubTab}
+        onPayrollSubTabChange={handleGuardedPayrollSubTabChange}
         onOpenSettingsClick={() => setSettingsModalOpen(true)}
         onChangeExchangeRateClick={() => setExchangeRateModalOpen(true)}
         onSelectAdminClick={() => setAdminSelectModalOpen(true)}
@@ -1570,7 +1593,7 @@ export function App() {
               <DailyEarningsView
                 state={state}
                 onUpdateShiftSales={handleUpdateShiftSales}
-                onNavigateToTab={setActiveTab}
+                onNavigateToTab={handleGuardedTabChange}
               />
             )}
 
@@ -1580,6 +1603,7 @@ export function App() {
                 onUpdateState={setState}
                 subTab={payrollSubTab}
                 onSubTabChange={setPayrollSubTab}
+                onUnsavedChangesChange={setPayrollHasUnsavedChanges}
               />
             )}
           </div>

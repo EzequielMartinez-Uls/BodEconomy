@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { CashShift, PettyCashShift, PettyCashTransaction, ExpenseCategory, isOpeningPettyCashTx, VendorItem } from '../types';
 import { getLocalTodayStr, getLocalDateTimeStr, extractLocalDateStr } from '../utils/dateUtils';
-import { DEFAULT_DENOMINATIONS_NIO, DEFAULT_DENOMINATIONS_USD, DEFAULT_VENDORS, DEFAULT_EXPENSE_CATEGORIES } from './storage';
+import { DEFAULT_DENOMINATIONS_NIO, DEFAULT_DENOMINATIONS_USD, DEFAULT_VENDORS, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_PAYROLL_EMPLOYEES } from './storage';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -1484,6 +1484,35 @@ export async function fetchCloudCatalogs(): Promise<{
     );
     finalCategoriesSet.delete('FONDEO'); // 'FONDEO' es tipo de movimiento, no categoría de gasto operativo
     const finalCategories = Array.from(finalCategoriesSet);
+
+    const normalizeStr = (s: string) =>
+      (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+    const isLegacyExcluded = (name: string) => {
+      const n = normalizeStr(name);
+      return (
+        n.includes('maverick') ||
+        n.includes('sandor') ||
+        n.includes('eliezer') ||
+        n.includes('david quintero') ||
+        n.includes('heiling') ||
+        n.includes('lea calvo')
+      );
+    };
+
+    const hasLegacyCloudPayroll =
+      !Array.isArray(cloudPayrollEmployees) ||
+      cloudPayrollEmployees.length === 0 ||
+      cloudPayrollEmployees.some((e) => isLegacyExcluded(e.name)) ||
+      !cloudPayrollEmployees.some((e) => normalizeStr(e.name).includes('zenon')) ||
+      !cloudPayrollEmployees.some((e) => normalizeStr(e.name).includes('melvin'));
+
+    if (hasLegacyCloudPayroll) {
+      cloudPayrollEmployees = [...DEFAULT_PAYROLL_EMPLOYEES];
+      cloudPayrollHistory = [];
+      // Persistir inmediatamente en Supabase el padrón oficial actualizado
+      syncCatalogsToCloud(finalVendors, finalCategories, cloudPayrollEmployees, cloudPayrollHistory).catch(console.warn);
+    }
 
     return {
       vendors: finalVendors,

@@ -16,10 +16,14 @@ export const PayrollEmployeesModal: React.FC<Props> = ({
   onSaveEmployees,
 }) => {
   const [list, setList] = useState<PayrollEmployee[]>(employees);
+  const [isDirty, setIsDirty] = useState(false);
 
   React.useEffect(() => {
-    setList(employees);
-  }, [employees, isOpen]);
+    if (isOpen) {
+      setList(employees);
+      setIsDirty(false);
+    }
+  }, [isOpen]);
 
   // Nuevo empleado form
   const [newName, setNewName] = useState('');
@@ -30,13 +34,26 @@ export const PayrollEmployeesModal: React.FC<Props> = ({
 
   if (!isOpen) return null;
 
+  const handleAttemptClose = () => {
+    if (isDirty || newName.trim() || newSalary.trim()) {
+      const proceed = window.confirm(
+        '⚠️ Tienes cambios sin guardar en el Padrón de Personal.\n\n¿Seguro que deseas salir sin presionar "Confirmar Cambios"?'
+      );
+      if (!proceed) return;
+    }
+    setIsDirty(false);
+    onClose();
+  };
+
   const handleFieldChange = (id: string, field: keyof PayrollEmployee, value: any) => {
+    setIsDirty(true);
     setList((prev) =>
       prev.map((e) => (e.id === id ? { ...e, [field]: value } : e))
     );
   };
 
   const handleToggleInsured = (id: string) => {
+    setIsDirty(true);
     setList((prev) =>
       prev.map((e) => {
         if (e.id === id) {
@@ -54,6 +71,7 @@ export const PayrollEmployeesModal: React.FC<Props> = ({
   };
 
   const handleSalaryChange = (id: string, salaryStr: string) => {
+    setIsDirty(true);
     const val = parseFloat(salaryStr) || 0;
     setList((prev) =>
       prev.map((e) => (e.id === id ? { ...e, baseSalaryBiweekly: val } : e))
@@ -61,6 +79,7 @@ export const PayrollEmployeesModal: React.FC<Props> = ({
   };
 
   const handleReportedSalaryChange = (id: string, salaryStr: string) => {
+    setIsDirty(true);
     const val = parseFloat(salaryStr) || 0;
     setList((prev) =>
       prev.map((e) => (e.id === id ? { ...e, reportedSalaryINSS: val } : e))
@@ -68,6 +87,7 @@ export const PayrollEmployeesModal: React.FC<Props> = ({
   };
 
   const handleNSSChange = (id: string, nssStr: string) => {
+    setIsDirty(true);
     setList((prev) =>
       prev.map((e) => (e.id === id ? { ...e, nss: nssStr } : e))
     );
@@ -91,6 +111,7 @@ export const PayrollEmployeesModal: React.FC<Props> = ({
       hireDate: newIsInsured ? new Date().toISOString().slice(0, 10) : undefined,
       isActive: true,
     };
+    setIsDirty(true);
     setList((prev) => [...prev, newEmp]);
     setNewName('');
     setNewRole('');
@@ -102,11 +123,13 @@ export const PayrollEmployeesModal: React.FC<Props> = ({
   const handleDelete = (id: string) => {
     const emp = list.find((e) => e.id === id);
     if (confirm(`¿Desea eliminar permanentemente a "${emp?.name || 'este colaborador'}" del padrón y de la nómina?`)) {
+      setIsDirty(true);
       setList((prev) => prev.filter((e) => e.id !== id));
     }
   };
 
   const handleSaveAndClose = () => {
+    setIsDirty(false);
     onSaveEmployees(list);
     onClose();
   };
@@ -130,7 +153,7 @@ export const PayrollEmployeesModal: React.FC<Props> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleAttemptClose}
             className="text-slate-400 hover:text-slate-700 p-1 border border-transparent hover:border-slate-300 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -359,7 +382,7 @@ export const PayrollEmployeesModal: React.FC<Props> = ({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleAttemptClose}
               className="px-3 py-1.5 border border-slate-300 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer uppercase tracking-wider"
             >
               Cancelar
@@ -367,10 +390,14 @@ export const PayrollEmployeesModal: React.FC<Props> = ({
             <button
               type="button"
               onClick={handleSaveAndClose}
-              className="px-4 py-1.5 border border-[#165345] bg-[#1c6856] hover:bg-[#165345] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider shadow-xs"
+              className={`px-4 py-1.5 border text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider shadow-xs ${
+                isDirty
+                  ? 'border-amber-600 bg-amber-500 hover:bg-amber-600 text-slate-950 ring-2 ring-amber-300'
+                  : 'border-[#165345] bg-[#1c6856] hover:bg-[#165345] text-white'
+              }`}
             >
               <Check className="w-3.5 h-3.5" />
-              <span>Confirmar Cambios</span>
+              <span>{isDirty ? 'Confirmar Cambios ●' : 'Confirmar Cambios'}</span>
             </button>
           </div>
         </div>
