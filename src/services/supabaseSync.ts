@@ -3,8 +3,12 @@ import { CashShift, PettyCashShift, PettyCashTransaction, ExpenseCategory, isOpe
 import { getLocalTodayStr, getLocalDateTimeStr, extractLocalDateStr } from '../utils/dateUtils';
 import { DEFAULT_DENOMINATIONS_NIO, DEFAULT_DENOMINATIONS_USD, DEFAULT_VENDORS, DEFAULT_EXPENSE_CATEGORIES } from './storage';
 
-const SUPABASE_URL = 'https://kwkyvdoacselhbrnvney.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3a3l2ZG9hY3NlbGhicm52bmV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyMjkzMDUsImV4cCI6MjEwMzgwNTMwNX0.rKU17TVTQkSqY0_Te-osW8EJhSBoYITEn9_Xug4dTAI';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.warn('⚠️ Supabase credentials (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY) are not set in .env.local');
+}
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
