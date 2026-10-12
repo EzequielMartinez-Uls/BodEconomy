@@ -31,7 +31,7 @@ async function getRelease() {
     const req = https.request(
       {
         hostname: 'api.github.com',
-        path: `/repos/EzequielMartinez-Uls/BodEconomy/releases`,
+        path: `/repos/EzequielMartinez-Uls/BodEconomy/releases/tags/${tag}`,
         method: 'GET',
         headers: {
           'User-Agent': 'NodeJS',
@@ -43,14 +43,43 @@ async function getRelease() {
         res.on('data', (d) => (body += d));
         res.on('end', () => {
           try {
-            const list = JSON.parse(body);
-            // Prioritize published release, fallback to draft
-            const found = list.find((r) => r.tag_name === tag && !r.draft) || list.find((r) => r.tag_name === tag);
-            if (found && found.id) {
-              resolve(found);
-            } else {
-              reject(new Error(`Release con tag ${tag} no encontrada en la lista: ${body}`));
+            const parsed = JSON.parse(body);
+            if (res.statusCode === 200 && parsed && parsed.id) {
+              return resolve(parsed);
             }
+            // Fallback to /releases list if still draft
+            const reqList = https.request(
+              {
+                hostname: 'api.github.com',
+                path: `/repos/EzequielMartinez-Uls/BodEconomy/releases?per_page=100`,
+                method: 'GET',
+                headers: {
+                  'User-Agent': 'NodeJS',
+                  Authorization: `token ${token}`,
+                },
+              },
+              (resList) => {
+                let listBody = '';
+                resList.on('data', (d) => (listBody += d));
+                resList.on('end', () => {
+                  try {
+                    const list = JSON.parse(listBody);
+                    const found =
+                      list.find((r) => r.tag_name === tag && !r.draft) ||
+                      list.find((r) => r.tag_name === tag);
+                    if (found && found.id) {
+                      resolve(found);
+                    } else {
+                      reject(new Error(`Release con tag ${tag} no encontrada`));
+                    }
+                  } catch (e2) {
+                    reject(e2);
+                  }
+                });
+              }
+            );
+            reqList.on('error', reject);
+            reqList.end();
           } catch (e) {
             reject(e);
           }
