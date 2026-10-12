@@ -123,7 +123,7 @@ ipcMain.handle('updater:check', async () => {
 });
 
 ipcMain.handle('updater:install', () => {
-  // isSilent: true (no muestra ventanas ni preguntas de instalación)
-  // isForceRunAfter: true (vuelve a abrir la aplicación automáticamente)
-  autoUpdater.quitAndInstall(true, true);
+  // isSilent: false (permite que Windows muestre el cuadro de confirmación UAC para permisos de administrador en Program Files)
+  // isForceRunAfter: true (vuelve a abrir la aplicación automáticamente tras terminar)
+  autoUpdater.quitAndInstall(false, true);
 });
