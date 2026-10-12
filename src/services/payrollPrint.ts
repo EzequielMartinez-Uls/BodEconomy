@@ -6,7 +6,7 @@ function getPeriodLabel(period: PayrollPeriod, month: number, year: number): str
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
   ];
   const mName = months[month - 1] || `Mes ${month}`;
-  const pName = period === 'FIRST_HALF' ? 'PRIMERA QUINCENA' : 'SEGUNDA QUINCENA';
+  const pName = period === 'FIRST_HALF' ? 'PRIMERA QUINCENA (01 AL 14)' : 'SEGUNDA QUINCENA (15 AL FIN)';
   return `${pName} DE ${mName.toUpperCase()} DEL AÑO ${year}`;
 }
 

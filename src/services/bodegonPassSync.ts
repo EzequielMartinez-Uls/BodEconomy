@@ -208,9 +208,14 @@ export async function syncFromBodegonPass(
     const totalHeRecords = Object.keys(overtimeByEmployee).length;
     const totalFerRecords = Object.keys(holidaysByEmployee).length;
 
+    const formatD = (dStr: string) => {
+      const parts = dStr.split('-');
+      return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dStr;
+    };
+
     return {
       success: true,
-      message: `¡Sincronización exitosa con Bodegón Pass! (${connectedEmployeesCount} colaboradores en línea, ${totalHeRecords} con horas extras, ${totalFerRecords} con feriados laborados en la quincena).`,
+      message: `¡Sincronización exitosa con Bodegón Pass! (Corte: ${formatD(startDate)} al ${formatD(endDate)} • ${connectedEmployeesCount} colaboradores en línea, ${totalHeRecords} con horas extras, ${totalFerRecords} con feriados laborados).`,
       overtimeByEmployee,
       holidaysByEmployee,
       connectedEmployeesCount,

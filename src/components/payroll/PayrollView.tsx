@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppState } from '../../types';
 import {
   PayrollPeriod,
@@ -95,22 +95,32 @@ export const PayrollView: React.FC<Props> = ({
   // ID del período actual
   const currentPeriodId = `${year}-${String(month).padStart(2, '0')}-${period}`;
 
-  // Rango de fechas del período (YYYY-MM-DD)
-  const { startDate, endDate } = useMemo(() => {
-    const yStr = String(year);
-    const mStr = String(month).padStart(2, '0');
-    if (period === 'FIRST_HALF') {
+  // Función auxiliar para calcular el rango oficial por defecto (1ra: 01 al 14 | 2da: 15 al Fin)
+  const computeDefaultRange = (y: number, m: number, p: PayrollPeriod) => {
+    const yStr = String(y);
+    const mStr = String(m).padStart(2, '0');
+    if (p === 'FIRST_HALF') {
       return {
-        startDate: `${yStr}-${mStr}-01`,
-        endDate: `${yStr}-${mStr}-15`,
+        start: `${yStr}-${mStr}-01`,
+        end: `${yStr}-${mStr}-14`,
       };
     } else {
-      const lastDay = new Date(year, month, 0).getDate();
+      const lastDay = new Date(y, m, 0).getDate();
       return {
-        startDate: `${yStr}-${mStr}-16`,
-        endDate: `${yStr}-${mStr}-${String(lastDay).padStart(2, '0')}`,
+        start: `${yStr}-${mStr}-15`,
+        end: `${yStr}-${mStr}-${String(lastDay).padStart(2, '0')}`,
       };
     }
+  };
+
+  // Rango de fechas del período (YYYY-MM-DD) editable por el usuario
+  const [startDate, setStartDate] = useState<string>(() => computeDefaultRange(year, month, period).start);
+  const [endDate, setEndDate] = useState<string>(() => computeDefaultRange(year, month, period).end);
+
+  useEffect(() => {
+    const def = computeDefaultRange(year, month, period);
+    setStartDate(def.start);
+    setEndDate(def.end);
   }, [year, month, period]);
 
   // Construir filas operativas y especiales a partir del historial o de los empleados actuales
@@ -798,8 +808,8 @@ export const PayrollView: React.FC<Props> = ({
             onChange={(e) => setPeriod(e.target.value as PayrollPeriod)}
             className="text-xs font-bold border border-slate-300 px-2 py-1.5 bg-white text-slate-800 outline-none cursor-pointer"
           >
-            <option value="FIRST_HALF">1ra Quincena (01 al 15)</option>
-            <option value="SECOND_HALF">2da Quincena (16 al Fin)</option>
+            <option value="FIRST_HALF">1ra Quincena (01 al 14)</option>
+            <option value="SECOND_HALF">2da Quincena (15 al Fin)</option>
           </select>
 
           {/* Año */}
@@ -811,6 +821,27 @@ export const PayrollView: React.FC<Props> = ({
             <option value={2026}>2026</option>
             <option value={2025}>2025</option>
           </select>
+
+          {/* Rango de Corte (Bodegón Pass & Incidencias) */}
+          <div
+            className="flex items-center gap-1 border border-emerald-300 bg-emerald-50/70 px-2 py-1"
+            title="Rango exacto de fechas que se consulta en Bodegón Pass (horas extras y feriados) y en Incidencias"
+          >
+            <span className="text-[10px] font-black uppercase text-[#1c6856] tracking-wider">Corte:</span>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="text-[11px] font-mono font-bold text-slate-800 bg-white border border-slate-300 px-1.5 py-0.5 outline-none cursor-pointer"
+            />
+            <span className="text-[10px] font-bold text-slate-500">al</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="text-[11px] font-mono font-bold text-slate-800 bg-white border border-slate-300 px-1.5 py-0.5 outline-none cursor-pointer"
+            />
+          </div>
         </div>
 
         {/* Botones de Acción: Rectangulares Formales */}
@@ -831,7 +862,7 @@ export const PayrollView: React.FC<Props> = ({
               onClick={handleSyncBodegonPass}
               disabled={syncing}
               className="px-2.5 py-1.5 bg-emerald-50 text-[#1c6856] hover:bg-emerald-100 border border-emerald-300 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
-              title="Conectar con Bodegón Pass para importar horas extras y feriados"
+              title={`Conectar con Bodegón Pass para importar horas extras y feriados del corte (${startDate} al ${endDate})`}
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
               <span>{syncing ? 'Sincronizando...' : 'Bodegón Pass'}</span>
@@ -948,7 +979,7 @@ export const PayrollView: React.FC<Props> = ({
           onPrintRowReceipt={(row) =>
             printThermalIndividualPayrollReceipt(
               row,
-              period === 'FIRST_HALF' ? '1ra Quincena (01 al 15)' : '2da Quincena (16 al Fin)',
+              period === 'FIRST_HALF' ? '1ra Quincena (01 al 14)' : '2da Quincena (15 al Fin)',
               monthsList[month - 1],
               year,
               state.activeAdminName || 'Admon Bodegón'
