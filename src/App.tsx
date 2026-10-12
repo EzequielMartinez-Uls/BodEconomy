@@ -28,6 +28,7 @@ import {
   syncFullDayClosureToCloud,
   fetchFullCloudState,
   fetchCloudCatalogs,
+  syncCatalogsToCloud,
   parseShiftFromJornada,
   mapCloudCategoryToLocal,
   isFondeoTransaction,
@@ -345,14 +346,17 @@ export function App() {
 
   // Sincronización en tiempo real con Supabase (Nube Interconectada PC + Móvil)
   useEffect(() => {
-    // 1. Al iniciar, chequear catálogos oficiales de proveedores, categorías y nómina desde Supabase
-    fetchCloudCatalogs().then(({ vendors, categories, payrollEmployees, payrollHistory }) => {
+    // 1. Al iniciar, chequear catálogos oficiales de proveedores, categorías, nómina, incidencias y vajilla desde Supabase
+    fetchCloudCatalogs().then(({ vendors, categories, payrollEmployees, payrollHistory, payrollIncidents, tablewareItems, tablewareLosses }) => {
       setState((prev) => ({
         ...prev,
         vendorsList: vendors,
         expenseCategories: categories,
         payrollEmployees: Array.isArray(payrollEmployees) ? payrollEmployees : prev.payrollEmployees,
         payrollHistory: Array.isArray(payrollHistory) ? payrollHistory : prev.payrollHistory,
+        payrollIncidents: Array.isArray(payrollIncidents) ? payrollIncidents : prev.payrollIncidents,
+        tablewareItems: Array.isArray(tablewareItems) ? tablewareItems : prev.tablewareItems,
+        tablewareLosses: Array.isArray(tablewareLosses) ? tablewareLosses : prev.tablewareLosses,
       }));
     }).catch(console.warn);
 
@@ -1311,54 +1315,143 @@ export function App() {
   };
 
   const handleUpdateTablewareStock = (itemId: string, newStock: number) => {
-    setState((prev) => ({
-      ...prev,
-      tablewareItems: prev.tablewareItems.map((it) =>
+    setState((prev) => {
+      const nextItems = prev.tablewareItems.map((it) =>
         it.id === itemId
           ? { ...it, currentStock: newStock, lastAuditDate: new Date().toISOString().split('T')[0] }
           : it
-      ),
-      auditLogs: [
-        {
-          id: `log-${Date.now()}`,
-          timestamp: new Date().toISOString(),
-          user: prev.activeAdminName,
-          action: 'AJUSTE_STOCK_MENAJE',
-          details: `Item ${itemId} ajustado a ${newStock} uds`,
-        },
-        ...prev.auditLogs,
-      ],
-    }));
+      );
+      syncCatalogsToCloud(
+        prev.vendorsList,
+        prev.expenseCategories,
+        prev.payrollEmployees,
+        prev.payrollHistory,
+        prev.payrollIncidents,
+        nextItems,
+        prev.tablewareLosses
+      ).catch(console.warn);
+      return {
+        ...prev,
+        tablewareItems: nextItems,
+        auditLogs: [
+          {
+            id: `log-${Date.now()}`,
+            timestamp: new Date().toISOString(),
+            user: prev.activeAdminName,
+            action: 'AJUSTE_STOCK_MENAJE',
+            details: `Item ${itemId} ajustado a ${newStock} uds`,
+          },
+          ...prev.auditLogs,
+        ],
+      };
+    });
   };
 
-  const handleAddTablewareLoss = (loss: TablewareLoss) => {
-    setState((prev) => ({
-      ...prev,
-      tablewareLosses: [loss, ...prev.tablewareLosses],
-      tablewareItems: prev.tablewareItems.map((it) =>
+  const handleAddTablewareLoss = (loss: TablewareLoss, responsibleEmpId?: string) => {
+    setState((prev) => {
+      const nextLosses = [loss, ...prev.tablewareLosses];
+      const nextItems = prev.tablewareItems.map((it) =>
         it.id === loss.itemId
           ? { ...it, currentStock: Math.max(0, it.currentStock - loss.quantity) }
           : it
-      ),
-      auditLogs: [
-        {
-          id: `log-${Date.now()}`,
-          timestamp: new Date().toISOString(),
-          user: loss.registeredBy,
-          action: 'ROTURA_MENAJE',
-          details: `${loss.itemName}: -${loss.quantity} uds (${loss.reason})`,
-        },
-        ...prev.auditLogs,
-      ],
-    }));
+      );
+
+      let nextIncidents = prev.payrollIncidents || [];
+      let nextHistory = prev.payrollHistory || [];
+
+      if (responsibleEmpId) {
+        const emp = (prev.payrollEmployees || []).find((e) => e.id === responsibleEmpId);
+        if (emp) {
+          const lossDateStr = extractLocalDateStr(loss.date) || getLocalTodayStr();
+          const newInc = {
+            id: `inc-${Date.now()}`,
+            employeeId: emp.id,
+            employeeName: emp.name,
+            date: lossDateStr,
+            type: 'VAJILLA_PERDIDA' as const,
+            concept: `${loss.quantity}x ${loss.itemName} (${loss.reason.replace('_', ' ')})`,
+            amount: loss.totalCostNIO,
+            createdAt: new Date().toISOString(),
+          };
+          nextIncidents = [newInc, ...nextIncidents];
+
+          // Actualizar también el borrador activo de la quincena si existe
+          nextHistory = nextHistory.map((hist) => ({
+            ...hist,
+            rows: (hist.rows || []).map((r) => {
+              if (r.employeeId !== emp.id && r.name.toLowerCase() !== emp.name.toLowerCase()) return r;
+              const nextBrk = parseFloat(((r.breakageDeduction || 0) + loss.totalCostNIO).toFixed(2));
+              const nextNotes = r.breakageNotes
+                ? `${r.breakageNotes}, ${newInc.concept}: C$${newInc.amount}`
+                : `${newInc.concept}: C$${newInc.amount}`;
+              const earnings =
+                (r.baseSalary || 0) +
+                (r.overtimeAmount || 0) +
+                (r.holidaysAmount || 0) +
+                (r.bonuses || 0);
+              const deductions =
+                (r.loanDeduction || 0) +
+                (r.restaurantServiceDeduction || 0) +
+                nextBrk;
+              return {
+                ...r,
+                breakageDeduction: nextBrk,
+                breakageNotes: nextNotes,
+                totalPaid: parseFloat((earnings - deductions).toFixed(2)),
+              };
+            }),
+          }));
+        }
+      }
+
+      syncCatalogsToCloud(
+        prev.vendorsList,
+        prev.expenseCategories,
+        prev.payrollEmployees,
+        nextHistory,
+        nextIncidents,
+        nextItems,
+        nextLosses
+      ).catch(console.warn);
+
+      return {
+        ...prev,
+        tablewareLosses: nextLosses,
+        tablewareItems: nextItems,
+        payrollIncidents: nextIncidents,
+        payrollHistory: nextHistory,
+        auditLogs: [
+          {
+            id: `log-${Date.now()}`,
+            timestamp: new Date().toISOString(),
+            user: loss.registeredBy,
+            action: 'ROTURA_MENAJE',
+            details: `${loss.itemName}: -${loss.quantity} uds (${loss.reason})`,
+          },
+          ...prev.auditLogs,
+        ],
+      };
+    });
     playSound([300, 250]); // Tono de advertencia
   };
 
   const handleAddTablewareItem = (item: TablewareItem) => {
-    setState((prev) => ({
-      ...prev,
-      tablewareItems: [...prev.tablewareItems, item],
-    }));
+    setState((prev) => {
+      const nextItems = [...prev.tablewareItems, item];
+      syncCatalogsToCloud(
+        prev.vendorsList,
+        prev.expenseCategories,
+        prev.payrollEmployees,
+        prev.payrollHistory,
+        prev.payrollIncidents,
+        nextItems,
+        prev.tablewareLosses
+      ).catch(console.warn);
+      return {
+        ...prev,
+        tablewareItems: nextItems,
+      };
+    });
   };
 
   const handleUpdateExchangeRate = (rate: number) => {

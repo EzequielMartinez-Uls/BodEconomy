@@ -21,7 +21,7 @@ import {
 interface Props {
   state: AppState;
   onUpdateStock: (itemId: string, newStock: number) => void;
-  onAddLoss: (loss: TablewareLoss) => void;
+  onAddLoss: (loss: TablewareLoss, responsibleEmpId?: string) => void;
   onAddItem: (item: TablewareItem) => void;
 }
 
@@ -41,6 +41,7 @@ export const TablewareView: React.FC<Props> = ({
   const [lossQuantity, setLossQuantity] = useState(1);
   const [lossReason, setLossReason] = useState<TablewareLoss['reason']>('ROTURA_SALON');
   const [lossNotes, setLossNotes] = useState('');
+  const [responsibleEmpId, setResponsibleEmpId] = useState<string>('');
 
   // Form New Item State
   const [newName, setNewName] = useState('');
@@ -67,10 +68,12 @@ export const TablewareView: React.FC<Props> = ({
 
   const handleRegisterLoss = (e: React.FormEvent) => {
     e.preventDefault();
-    const item = state.tablewareItems.find((i) => i.id === selectedItemId);
+    const item = state.tablewareItems.find((i) => i.id === selectedItemId) || state.tablewareItems[0];
     if (!item || lossQuantity <= 0) return;
 
     const totalCost = lossQuantity * item.unitCostNIO;
+    const emp = (state.payrollEmployees || []).find((em) => em.id === responsibleEmpId);
+    const empNotePrefix = emp ? `[Cobrado en Planilla a: ${emp.name}] ` : '';
 
     const newLoss: TablewareLoss = {
       id: `loss-${Date.now()}`,
@@ -81,13 +84,14 @@ export const TablewareView: React.FC<Props> = ({
       reason: lossReason,
       registeredBy: state.activeAdminName,
       totalCostNIO: totalCost,
-      notes: lossNotes.trim() || undefined,
+      notes: (empNotePrefix + lossNotes.trim()).trim() || undefined,
     };
 
-    onAddLoss(newLoss);
+    onAddLoss(newLoss, responsibleEmpId || undefined);
     setLossModalOpen(false);
     setLossQuantity(1);
     setLossNotes('');
+    setResponsibleEmpId('');
   };
 
   const handleAddNewItem = (e: React.FormEvent) => {
@@ -455,6 +459,29 @@ export const TablewareView: React.FC<Props> = ({
                   <option value="EXTRAVIADO">Extraviado / Pérdida en basura</option>
                   <option value="DESGASTE">Desgaste natural</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">
+                  ¿Descontar en Planilla a algún Colaborador? (Opcional)
+                </label>
+                <select
+                  value={responsibleEmpId}
+                  onChange={(e) => setResponsibleEmpId(e.target.value)}
+                  className="w-full bg-amber-50/60 border border-amber-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856] font-bold"
+                >
+                  <option value="">-- No descontar (Asumido por el local) --</option>
+                  {(state.payrollEmployees || []).map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      Descontar a: {emp.name} ({emp.role})
+                    </option>
+                  ))}
+                </select>
+                {responsibleEmpId && (
+                  <p className="text-[10px] text-amber-800 font-semibold mt-1">
+                    Se creará automáticamente el cargo en Incidencias & Planilla Quincenal para este colaborador.
+                  </p>
+                )}
               </div>
 
               <div>

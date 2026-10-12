@@ -363,9 +363,17 @@ export function loadState(): AppState {
       loaded.bodegonPassUrl = 'https://asistenciabodegon-api.onrender.com';
     }
 
-    // Limpiar inventario residual de menaje si existía en versiones anteriores
-    loaded.tablewareItems = [];
-    loaded.tablewareLosses = [];
+    // Respetar el inventario de vajilla y menaje registrado por el usuario (filtrando solo ítems demo iniciales antiguos)
+    if (!Array.isArray(loaded.tablewareItems)) {
+      loaded.tablewareItems = [];
+    } else {
+      loaded.tablewareItems = loaded.tablewareItems.filter((it) => !/^tw-[1-8]$/.test(it.id));
+    }
+    if (!Array.isArray(loaded.tablewareLosses)) {
+      loaded.tablewareLosses = [];
+    } else {
+      loaded.tablewareLosses = loaded.tablewareLosses.filter((l) => !/^loss-[1-4]$/.test(l.id));
+    }
 
     // Si no está definido el turno de caja chica, mantenerlo en null
     if (loaded.currentPettyCashShift === undefined) {

@@ -219,22 +219,28 @@ export const PayrollView: React.FC<Props> = ({
       const newRows: BiweeklyPayrollRow[] = activeEmps.map((emp) => {
         // Filtrar incidencias de este empleado en la quincena seleccionada
         const empIncidents = (state.payrollIncidents || []).filter(
-          (inc) => inc.employeeId === emp.id && inc.date >= startDate && inc.date <= endDate
+          (inc) =>
+            (inc.employeeId === emp.id || matchEmployeeName(inc.employeeName, emp.name)) &&
+            inc.date >= startDate &&
+            inc.date <= endDate
         );
+
+        const loanDeduction = empIncidents
+          .filter((i) => i.type === 'PRESTAMO_ADELANTO')
+          .reduce((sum, i) => sum + (i.amount || 0), 0);
 
         const restDeduction = empIncidents
           .filter((i) => i.type === 'SERVICIO_RESTAURANTE')
           .reduce((sum, i) => sum + (i.amount || 0), 0);
 
-        const breakageDeduction = empIncidents
-          .filter((i) => i.type === 'VAJILLA_PERDIDA' || i.type === 'OTRO')
-          .reduce((sum, i) => sum + (i.amount || 0), 0);
+        const breakageIncidents = empIncidents.filter((i) => i.type === 'VAJILLA_PERDIDA' || i.type === 'OTRO');
+        const breakageDeduction = breakageIncidents.reduce((sum, i) => sum + (i.amount || 0), 0);
 
-        const notes = empIncidents.map((i) => `${i.concept}: C$${i.amount}`).join(', ');
+        const notes = breakageIncidents.map((i) => `${i.concept}: C$${i.amount}`).join(', ');
 
         const base = emp.baseSalaryBiweekly || 0;
         const totalEarnings = base;
-        const totalDeductions = restDeduction + breakageDeduction;
+        const totalDeductions = loanDeduction + restDeduction + breakageDeduction;
 
         return {
           employeeId: emp.id,
@@ -246,7 +252,7 @@ export const PayrollView: React.FC<Props> = ({
           holidaysCount: 0,
           holidaysAmount: 0,
           bonuses: 0,
-          loanDeduction: 0,
+          loanDeduction: loanDeduction,
           restaurantServiceDeduction: restDeduction,
           breakageDeduction: breakageDeduction,
           breakageNotes: notes,
@@ -676,24 +682,114 @@ export const PayrollView: React.FC<Props> = ({
     exportPayrollToExcel(period, month, year, rows, specialRows, state.activeAdminName || 'Admon Bodegón');
   };
 
-  // Manejo de Incidencias de la bitácora
+  // Recalcular deducciones de las filas operativas según las incidencias registradas en el corte activo
+  const syncIncidentsIntoRowsAndCloud = (nextIncidents: PayrollIncident[], affectedEmpIds: string[], affectedEmpNames: string[]) => {
+    const nextRows = rows.map((row) => {
+      const isAffected =
+        affectedEmpIds.includes(row.employeeId) ||
+        affectedEmpNames.some((n) => matchEmployeeName(row.name, n));
+
+      if (!isAffected) return row;
+
+      const empIncidents = nextIncidents.filter(
+        (inc) =>
+          (inc.employeeId === row.employeeId || matchEmployeeName(inc.employeeName, row.name)) &&
+          inc.date >= startDate &&
+          inc.date <= endDate
+      );
+
+      const loanIncs = empIncidents.filter((i) => i.type === 'PRESTAMO_ADELANTO');
+      const restIncs = empIncidents.filter((i) => i.type === 'SERVICIO_RESTAURANTE');
+      const brkIncs = empIncidents.filter((i) => i.type === 'VAJILLA_PERDIDA' || i.type === 'OTRO');
+
+      const nextLoan = parseFloat(loanIncs.reduce((s, i) => s + (i.amount || 0), 0).toFixed(2));
+      const nextRest = parseFloat(restIncs.reduce((s, i) => s + (i.amount || 0), 0).toFixed(2));
+      const nextBrk = parseFloat(brkIncs.reduce((s, i) => s + (i.amount || 0), 0).toFixed(2));
+      const nextNotes = brkIncs.map((i) => `${i.concept}: C$${i.amount}`).join(', ');
+
+      const earnings =
+        (row.baseSalary || 0) +
+        (row.overtimeAmount || 0) +
+        (row.holidaysAmount || 0) +
+        (row.bonuses || 0);
+      const deductions = nextLoan + nextRest + nextBrk;
+
+      return {
+        ...row,
+        loanDeduction: nextLoan,
+        restaurantServiceDeduction: nextRest,
+        breakageDeduction: nextBrk,
+        breakageNotes: nextNotes,
+        totalPaid: parseFloat((earnings - deductions).toFixed(2)),
+      };
+    });
+
+    setRows(nextRows);
+
+    const record: BiweeklyPayrollRecord = {
+      id: currentPeriodId,
+      year,
+      month,
+      period,
+      status: 'DRAFT',
+      rows: nextRows,
+      specialRows,
+      authorizedBy: state.activeAdminName || 'Admon Bodegón',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    const nextHist = [record, ...(state.payrollHistory || []).filter((h) => h.id !== currentPeriodId)];
+
+    onUpdateState((prev) => ({
+      ...prev,
+      payrollIncidents: nextIncidents,
+      payrollHistory: nextHist,
+    }));
+
+    syncCatalogsToCloud(
+      state.vendorsList,
+      state.expenseCategories,
+      state.payrollEmployees,
+      nextHist,
+      nextIncidents,
+      state.tablewareItems,
+      state.tablewareLosses
+    ).catch(console.warn);
+  };
+
+  // Manejo de Incidencias de la bitácora (sincroniza en vivo con Sábana Quincenal y Supabase Cloud)
   const handleAddIncident = (newInc: Omit<PayrollIncident, 'id' | 'createdAt'>) => {
     const inc: PayrollIncident = {
       ...newInc,
       id: `inc-${Date.now()}`,
       createdAt: new Date().toISOString(),
     };
-    onUpdateState((prev) => ({
-      ...prev,
-      payrollIncidents: [inc, ...(prev.payrollIncidents || [])],
-    }));
+    const nextIncidents = [inc, ...(state.payrollIncidents || [])];
+    syncIncidentsIntoRowsAndCloud(nextIncidents, [inc.employeeId], [inc.employeeName]);
+    setSaveNotice(`Incidencia "${inc.concept}" (C$ ${inc.amount.toFixed(2)}) aplicada a ${inc.employeeName} en la planilla y guardada en la nube.`);
+    setTimeout(() => setSaveNotice(null), 3500);
+  };
+
+  const handleUpdateIncident = (updatedInc: PayrollIncident) => {
+    const oldInc = (state.payrollIncidents || []).find((i) => i.id === updatedInc.id);
+    const nextIncidents = (state.payrollIncidents || []).map((i) => (i.id === updatedInc.id ? updatedInc : i));
+    const empIds = [updatedInc.employeeId, ...(oldInc ? [oldInc.employeeId] : [])];
+    const empNames = [updatedInc.employeeName, ...(oldInc ? [oldInc.employeeName] : [])];
+    syncIncidentsIntoRowsAndCloud(nextIncidents, empIds, empNames);
+    setSaveNotice(`Incidencia actualizada y recalculada en la planilla.`);
+    setTimeout(() => setSaveNotice(null), 3500);
   };
 
   const handleDeleteIncident = (id: string) => {
-    onUpdateState((prev) => ({
-      ...prev,
-      payrollIncidents: (prev.payrollIncidents || []).filter((i) => i.id !== id),
-    }));
+    const target = (state.payrollIncidents || []).find((i) => i.id === id);
+    const nextIncidents = (state.payrollIncidents || []).filter((i) => i.id !== id);
+    syncIncidentsIntoRowsAndCloud(
+      nextIncidents,
+      target ? [target.employeeId] : [],
+      target ? [target.employeeName] : []
+    );
+    setSaveNotice(`Incidencia eliminada y descontada de la planilla.`);
+    setTimeout(() => setSaveNotice(null), 3500);
   };
 
   // Guardar lista de empleados modificada desde el modal y sincronizar con la sábana actual y Supabase Cloud
@@ -1116,7 +1212,10 @@ export const PayrollView: React.FC<Props> = ({
         <PayrollIncidentsView
           employees={state.payrollEmployees || []}
           incidents={state.payrollIncidents || []}
+          startDate={startDate}
+          endDate={endDate}
           onAddIncident={handleAddIncident}
+          onUpdateIncident={handleUpdateIncident}
           onDeleteIncident={handleDeleteIncident}
         />
       )}

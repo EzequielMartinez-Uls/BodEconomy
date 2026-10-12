@@ -1443,6 +1443,9 @@ export async function fetchCloudCatalogs(): Promise<{
   categories: string[];
   payrollEmployees?: import('../types/payroll').PayrollEmployee[];
   payrollHistory?: import('../types/payroll').BiweeklyPayrollRecord[];
+  payrollIncidents?: import('../types/payroll').PayrollIncident[];
+  tablewareItems?: import('../types').TablewareItem[];
+  tablewareLosses?: import('../types').TablewareLoss[];
 }> {
   try {
     // 1. Obtener registro de configuración del catálogo en Supabase
@@ -1456,6 +1459,9 @@ export async function fetchCloudCatalogs(): Promise<{
     let cloudCategories: string[] = [];
     let cloudPayrollEmployees: import('../types/payroll').PayrollEmployee[] | undefined = undefined;
     let cloudPayrollHistory: import('../types/payroll').BiweeklyPayrollRecord[] | undefined = undefined;
+    let cloudPayrollIncidents: import('../types/payroll').PayrollIncident[] | undefined = undefined;
+    let cloudTablewareItems: import('../types').TablewareItem[] | undefined = undefined;
+    let cloudTablewareLosses: import('../types').TablewareLoss[] | undefined = undefined;
 
     if (configRows && configRows.length > 0) {
       const obs = configRows[0].observaciones || '';
@@ -1470,6 +1476,9 @@ export async function fetchCloudCatalogs(): Promise<{
           if (Array.isArray(parsed.categories)) cloudCategories = parsed.categories;
           if (Array.isArray(parsed.payrollEmployees)) cloudPayrollEmployees = parsed.payrollEmployees;
           if (Array.isArray(parsed.payrollHistory)) cloudPayrollHistory = parsed.payrollHistory;
+          if (Array.isArray(parsed.payrollIncidents)) cloudPayrollIncidents = parsed.payrollIncidents;
+          if (Array.isArray(parsed.tablewareItems)) cloudTablewareItems = parsed.tablewareItems;
+          if (Array.isArray(parsed.tablewareLosses)) cloudTablewareLosses = parsed.tablewareLosses;
         } catch (e) {
           console.warn('Error parsing SYSTEM_CATALOGS json:', e);
         }
@@ -1511,7 +1520,7 @@ export async function fetchCloudCatalogs(): Promise<{
       cloudPayrollEmployees = [...DEFAULT_PAYROLL_EMPLOYEES];
       cloudPayrollHistory = [];
       // Persistir inmediatamente en Supabase el padrón oficial actualizado
-      syncCatalogsToCloud(finalVendors, finalCategories, cloudPayrollEmployees, cloudPayrollHistory).catch(console.warn);
+      syncCatalogsToCloud(finalVendors, finalCategories, cloudPayrollEmployees, cloudPayrollHistory, cloudPayrollIncidents).catch(console.warn);
     }
 
     return {
@@ -1519,6 +1528,9 @@ export async function fetchCloudCatalogs(): Promise<{
       categories: finalCategories,
       payrollEmployees: cloudPayrollEmployees,
       payrollHistory: cloudPayrollHistory,
+      payrollIncidents: cloudPayrollIncidents,
+      tablewareItems: cloudTablewareItems,
+      tablewareLosses: cloudTablewareLosses,
     };
   } catch (err) {
     console.warn('⚠️ Error al consultar catálogos en la nube (usando locales):', err);
@@ -1530,13 +1542,16 @@ export async function fetchCloudCatalogs(): Promise<{
 }
 
 /**
- * Guarda y actualiza el catálogo oficial de Proveedores, Categorías y Nómina en Supabase
+ * Guarda y actualiza el catálogo oficial de Proveedores, Categorías, Nómina, Incidencias y Vajilla en Supabase
  */
 export async function syncCatalogsToCloud(
   vendors?: VendorItem[],
   categories?: string[],
   payrollEmployees?: import('../types/payroll').PayrollEmployee[],
-  payrollHistory?: import('../types/payroll').BiweeklyPayrollRecord[]
+  payrollHistory?: import('../types/payroll').BiweeklyPayrollRecord[],
+  payrollIncidents?: import('../types/payroll').PayrollIncident[],
+  tablewareItems?: import('../types').TablewareItem[],
+  tablewareLosses?: import('../types').TablewareLoss[]
 ): Promise<boolean> {
   try {
     const { data: existing } = await supabase
@@ -1566,6 +1581,9 @@ export async function syncCatalogsToCloud(
       categories: categories && categories.length > 0 ? categories : (prevParsed.categories || DEFAULT_EXPENSE_CATEGORIES),
       payrollEmployees: payrollEmployees !== undefined ? payrollEmployees : prevParsed.payrollEmployees,
       payrollHistory: payrollHistory !== undefined ? payrollHistory : prevParsed.payrollHistory,
+      payrollIncidents: payrollIncidents !== undefined ? payrollIncidents : prevParsed.payrollIncidents,
+      tablewareItems: tablewareItems !== undefined ? tablewareItems : prevParsed.tablewareItems,
+      tablewareLosses: tablewareLosses !== undefined ? tablewareLosses : prevParsed.tablewareLosses,
     };
 
     const obsString = `[SYSTEM_CATALOGS:${JSON.stringify(payload)}]`;
@@ -1598,7 +1616,7 @@ export async function syncCatalogsToCloud(
       if (error) throw error;
     }
 
-    console.log(`✅ Catálogo de ${payload.vendors.length} proveedores, ${payload.categories.length} categorías y nómina guardado en Supabase.`);
+    console.log(`✅ Catálogo de ${payload.vendors.length} proveedores, ${payload.categories.length} categorías, nómina e incidencias guardado en Supabase.`);
     return true;
   } catch (err) {
     console.warn('⚠️ Error al guardar catálogo en Supabase:', err);

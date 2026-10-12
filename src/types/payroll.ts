@@ -16,7 +16,7 @@ export interface PayrollEmployee {
   reportedSalaryINSS?: number; // Salario base quincenal reportado al INSS (C$)
 }
 
-export type IncidentType = 'VAJILLA_PERDIDA' | 'SERVICIO_RESTAURANTE' | 'OTRO';
+export type IncidentType = 'VAJILLA_PERDIDA' | 'SERVICIO_RESTAURANTE' | 'PRESTAMO_ADELANTO' | 'OTRO';
 
 export interface PayrollIncident {
   id: string;
