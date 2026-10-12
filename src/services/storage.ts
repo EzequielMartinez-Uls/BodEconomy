@@ -166,20 +166,11 @@ export const DEFAULT_PAYROLL_EMPLOYEES: PayrollEmployee[] = [
     reportedSalaryINSS: 5675.04,
     isActive: true,
   },
-  // --- 9 Colaboradores de Planilla Operativa Quincenal (Total C$ 51,025.00) ---
+  // --- Colaboradores de Planilla Operativa Quincenal ---
   {
     id: 'emp-6',
     name: 'Nelly Delgado Escoto',
     role: 'Cocinera',
-    baseSalaryBiweekly: 6250.00,
-    isInsuredINSS: false,
-    hireDate: '2026-09-01',
-    isActive: true,
-  },
-  {
-    id: 'emp-7',
-    name: 'Zenon López',
-    role: 'Cocinero',
     baseSalaryBiweekly: 6250.00,
     isInsuredINSS: false,
     hireDate: '2026-09-01',
@@ -222,30 +213,12 @@ export const DEFAULT_PAYROLL_EMPLOYEES: PayrollEmployee[] = [
     isActive: true,
   },
   {
-    id: 'emp-12',
-    name: 'Carlos Eduardo García',
-    role: 'Atención al Cliente',
-    baseSalaryBiweekly: 5675.00,
-    isInsuredINSS: false,
-    hireDate: '2026-09-15',
-    isActive: true,
-  },
-  {
     id: 'emp-13',
     name: 'Yunieth Verónica Carmona Sánchez',
     role: 'Asistente de Cocina',
     baseSalaryBiweekly: 5675.00,
     isInsuredINSS: false,
     hireDate: '2026-04-17',
-    isActive: true,
-  },
-  {
-    id: 'emp-14',
-    name: 'Melvin Ojeda',
-    role: 'Lavandería',
-    baseSalaryBiweekly: 4500.00,
-    isInsuredINSS: false,
-    hireDate: '2026-09-01',
     isActive: true,
   },
 ];
@@ -281,6 +254,39 @@ export const INITIAL_STATE: AppState = {
   bodegonPassUrl: 'https://asistenciabodegon-api.onrender.com',
 };
 
+const DELETED_PAYROLL_NAMES_KEY = 'bodegon_deleted_payroll_names_v1';
+
+export function getDeletedPayrollNames(): string[] {
+  try {
+    const raw = localStorage.getItem(DELETED_PAYROLL_NAMES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addDeletedPayrollName(name: string): void {
+  try {
+    const norm = (name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    if (!norm) return;
+    const current = getDeletedPayrollNames();
+    if (!current.includes(norm)) {
+      localStorage.setItem(DELETED_PAYROLL_NAMES_KEY, JSON.stringify([...current, norm]));
+    }
+  } catch {}
+}
+
+export function removeDeletedPayrollName(name: string): void {
+  try {
+    const norm = (name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    if (!norm) return;
+    const current = getDeletedPayrollNames().filter((n) => n !== norm);
+    localStorage.setItem(DELETED_PAYROLL_NAMES_KEY, JSON.stringify(current));
+  } catch {}
+}
+
 export function loadState(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -311,30 +317,28 @@ export function loadState(): AppState {
     const normalizeStr = (s: string) =>
       (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 
-    // Saneamiento de Nómina y Planillas (Excluyendo ex-colaboradores dados de baja):
+    const userDeletedNames = getDeletedPayrollNames();
+
+    // Saneamiento de Nómina y Planillas (Excluyendo ex-colaboradores dados de baja y eliminados por el usuario):
     const isExcluded = (name: string) => {
       const n = normalizeStr(name);
+      if (!n) return false;
+      if (userDeletedNames.includes(n)) return true;
       return (
         n.includes('maverick') ||
         n.includes('sandor') ||
         n.includes('eliezer') ||
         n.includes('david quintero') ||
         n.includes('heiling') ||
-        n.includes('lea calvo')
+        n.includes('lea calvo') ||
+        n.includes('melvin ojeda') ||
+        n.includes('zenon lopez') ||
+        n.includes('carlos eduardo garcia')
       );
     };
 
-    // Si la lista local aún tenía los datos antiguos de prueba (ej. Eliezer, David Quintero, Heiling, Lea o faltaban Zenon/Xiomara/Melvin),
-    // actualizar al padrón oficial real de 14 colaboradores con sus salarios reales
-    const hasLegacyEmployees =
-      !Array.isArray(parsed.payrollEmployees) ||
-      parsed.payrollEmployees.some((e: PayrollEmployee) => isExcluded(e.name)) ||
-      !parsed.payrollEmployees.some((e: PayrollEmployee) => normalizeStr(e.name).includes('zenon')) ||
-      !parsed.payrollEmployees.some((e: PayrollEmployee) => normalizeStr(e.name).includes('melvin'));
-
-    if (hasLegacyEmployees) {
+    if (!Array.isArray(parsed.payrollEmployees)) {
       loaded.payrollEmployees = [...DEFAULT_PAYROLL_EMPLOYEES];
-      loaded.payrollHistory = [];
     } else {
       loaded.payrollEmployees = parsed.payrollEmployees.filter((e: PayrollEmployee) => !isExcluded(e.name));
     }
@@ -343,7 +347,7 @@ export function loadState(): AppState {
       loaded.payrollIncidents = [];
     }
 
-    // Respetar el historial de planillas guardado por el usuario (limpiando ex-colaboradores)
+    // Respetar el historial de planillas guardado por el usuario (limpiando ex-colaboradores y eliminados)
     if (!loaded.payrollHistory) {
       loaded.payrollHistory = [];
     } else {

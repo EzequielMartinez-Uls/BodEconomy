@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { CashShift, PettyCashShift, PettyCashTransaction, ExpenseCategory, isOpeningPettyCashTx, VendorItem } from '../types';
 import { getLocalTodayStr, getLocalDateTimeStr, extractLocalDateStr } from '../utils/dateUtils';
-import { DEFAULT_DENOMINATIONS_NIO, DEFAULT_DENOMINATIONS_USD, DEFAULT_VENDORS, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_PAYROLL_EMPLOYEES } from './storage';
+import { DEFAULT_DENOMINATIONS_NIO, DEFAULT_DENOMINATIONS_USD, DEFAULT_VENDORS, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_PAYROLL_EMPLOYEES, getDeletedPayrollNames, addDeletedPayrollName } from './storage';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -1479,6 +1479,9 @@ export async function fetchCloudCatalogs(): Promise<{
           if (Array.isArray(parsed.payrollIncidents)) cloudPayrollIncidents = parsed.payrollIncidents;
           if (Array.isArray(parsed.tablewareItems)) cloudTablewareItems = parsed.tablewareItems;
           if (Array.isArray(parsed.tablewareLosses)) cloudTablewareLosses = parsed.tablewareLosses;
+          if (Array.isArray(parsed.deletedPayrollNames)) {
+            parsed.deletedPayrollNames.forEach((n: string) => addDeletedPayrollName(n));
+          }
         } catch (e) {
           console.warn('Error parsing SYSTEM_CATALOGS json:', e);
         }
@@ -1497,29 +1500,43 @@ export async function fetchCloudCatalogs(): Promise<{
     const normalizeStr = (s: string) =>
       (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 
+    const deletedSet = new Set(getDeletedPayrollNames());
+
     const isLegacyExcluded = (name: string) => {
       const n = normalizeStr(name);
+      if (deletedSet.has(n)) return true;
       return (
         n.includes('maverick') ||
         n.includes('sandor') ||
         n.includes('eliezer') ||
         n.includes('david quintero') ||
         n.includes('heiling') ||
-        n.includes('lea calvo')
+        n.includes('lea calvo') ||
+        n.includes('melvin ojeda') ||
+        n.includes('zenon lopez') ||
+        n.includes('carlos eduardo garcia')
       );
     };
 
-    const hasLegacyCloudPayroll =
-      !Array.isArray(cloudPayrollEmployees) ||
-      cloudPayrollEmployees.length === 0 ||
-      cloudPayrollEmployees.some((e) => isLegacyExcluded(e.name)) ||
-      !cloudPayrollEmployees.some((e) => normalizeStr(e.name).includes('zenon')) ||
-      !cloudPayrollEmployees.some((e) => normalizeStr(e.name).includes('melvin'));
+    const hadExcludedInCloud =
+      Array.isArray(cloudPayrollEmployees) && cloudPayrollEmployees.some((e) => isLegacyExcluded(e.name));
 
-    if (hasLegacyCloudPayroll) {
-      cloudPayrollEmployees = [...DEFAULT_PAYROLL_EMPLOYEES];
-      cloudPayrollHistory = [];
-      // Persistir inmediatamente en Supabase el padrón oficial actualizado
+    if (!Array.isArray(cloudPayrollEmployees) || cloudPayrollEmployees.length === 0) {
+      cloudPayrollEmployees = DEFAULT_PAYROLL_EMPLOYEES.filter((e) => !isLegacyExcluded(e.name));
+    } else {
+      cloudPayrollEmployees = cloudPayrollEmployees.filter((e) => !isLegacyExcluded(e.name));
+    }
+
+    if (Array.isArray(cloudPayrollHistory)) {
+      cloudPayrollHistory = cloudPayrollHistory.map((h) => ({
+        ...h,
+        rows: Array.isArray(h.rows) ? h.rows.filter((r) => !isLegacyExcluded(r.name)) : [],
+        specialRows: Array.isArray(h.specialRows) ? h.specialRows.filter((sr) => !isLegacyExcluded(sr.name)) : [],
+      }));
+    }
+
+    if (hadExcludedInCloud) {
+      // Persistir inmediatamente en Supabase el padrón depurado sin ex-colaboradores
       syncCatalogsToCloud(finalVendors, finalCategories, cloudPayrollEmployees, cloudPayrollHistory, cloudPayrollIncidents).catch(console.warn);
     }
 
@@ -1541,10 +1558,13 @@ export async function fetchCloudCatalogs(): Promise<{
   }
 }
 
+let catalogSyncQueue: Promise<boolean> = Promise.resolve(true);
+
 /**
  * Guarda y actualiza el catálogo oficial de Proveedores, Categorías, Nómina, Incidencias y Vajilla en Supabase
+ * Serializado en cola secuencial para evitar condiciones de carrera al borrar o editar varios elementos seguidos.
  */
-export async function syncCatalogsToCloud(
+export function syncCatalogsToCloud(
   vendors?: VendorItem[],
   categories?: string[],
   payrollEmployees?: import('../types/payroll').PayrollEmployee[],
@@ -1553,75 +1573,88 @@ export async function syncCatalogsToCloud(
   tablewareItems?: import('../types').TablewareItem[],
   tablewareLosses?: import('../types').TablewareLoss[]
 ): Promise<boolean> {
-  try {
-    const { data: existing } = await supabase
-      .from('jornadas_diarias')
-      .select('id, observaciones')
-      .eq('responsable', 'SYSTEM_CATALOGS')
-      .limit(1);
+  const nextOp = catalogSyncQueue.catch(() => true).then(async () => {
+    try {
+      const { data: existing } = await supabase
+        .from('jornadas_diarias')
+        .select('id, observaciones')
+        .eq('responsable', 'SYSTEM_CATALOGS')
+        .limit(1);
 
-    let prevParsed: any = {};
-    if (existing && existing.length > 0) {
-      const obs = existing[0].observaciones || '';
-      const tag = '[SYSTEM_CATALOGS:';
-      const start = obs.indexOf(tag);
-      if (start !== -1) {
-        const lastBracket = obs.lastIndexOf(']');
-        try {
-          prevParsed = JSON.parse(obs.substring(start + tag.length, lastBracket));
-        } catch (e) {}
+      let prevParsed: any = {};
+      if (existing && existing.length > 0) {
+        const obs = existing[0].observaciones || '';
+        const tag = '[SYSTEM_CATALOGS:';
+        const start = obs.indexOf(tag);
+        if (start !== -1) {
+          const lastBracket = obs.lastIndexOf(']');
+          try {
+            prevParsed = JSON.parse(obs.substring(start + tag.length, lastBracket));
+          } catch (e) {}
+        }
       }
+
+      const mergedDeletedNames = Array.from(
+        new Set([
+          ...(Array.isArray(prevParsed.deletedPayrollNames) ? prevParsed.deletedPayrollNames : []),
+          ...getDeletedPayrollNames(),
+        ])
+      );
+
+      const payload = {
+        ...prevParsed,
+        version: 2,
+        updatedAt: new Date().toISOString(),
+        vendors: vendors && vendors.length > 0 ? vendors : (prevParsed.vendors || DEFAULT_VENDORS),
+        categories: categories && categories.length > 0 ? categories : (prevParsed.categories || DEFAULT_EXPENSE_CATEGORIES),
+        payrollEmployees: payrollEmployees !== undefined ? payrollEmployees : prevParsed.payrollEmployees,
+        payrollHistory: payrollHistory !== undefined ? payrollHistory : prevParsed.payrollHistory,
+        payrollIncidents: payrollIncidents !== undefined ? payrollIncidents : prevParsed.payrollIncidents,
+        tablewareItems: tablewareItems !== undefined ? tablewareItems : prevParsed.tablewareItems,
+        tablewareLosses: tablewareLosses !== undefined ? tablewareLosses : prevParsed.tablewareLosses,
+        deletedPayrollNames: mergedDeletedNames,
+      };
+
+      const obsString = `[SYSTEM_CATALOGS:${JSON.stringify(payload)}]`;
+
+      if (existing && existing.length > 0) {
+        const { error } = await supabase
+          .from('jornadas_diarias')
+          .update({
+            observaciones: obsString,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existing[0].id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('jornadas_diarias')
+          .insert({
+            fecha: '1999-01-01',
+            turno: 'CONFIG',
+            estado: 'CERRADA',
+            fondo_inicial: 0,
+            total_gastos_efectivo: 0,
+            total_gastos_transferencia: 0,
+            responsable: 'SYSTEM_CATALOGS',
+            observaciones: obsString,
+            fecha_cierre: '1999-01-01T00:00:00Z',
+          });
+
+        if (error) throw error;
+      }
+
+      console.log(`✅ Catálogo de ${payload.vendors.length} proveedores, ${payload.categories.length} categorías, nómina e incidencias guardado en Supabase.`);
+      return true;
+    } catch (err) {
+      console.warn('⚠️ Error al guardar catálogo en Supabase:', err);
+      return false;
     }
+  });
 
-    const payload = {
-      ...prevParsed,
-      version: 2,
-      updatedAt: new Date().toISOString(),
-      vendors: vendors && vendors.length > 0 ? vendors : (prevParsed.vendors || DEFAULT_VENDORS),
-      categories: categories && categories.length > 0 ? categories : (prevParsed.categories || DEFAULT_EXPENSE_CATEGORIES),
-      payrollEmployees: payrollEmployees !== undefined ? payrollEmployees : prevParsed.payrollEmployees,
-      payrollHistory: payrollHistory !== undefined ? payrollHistory : prevParsed.payrollHistory,
-      payrollIncidents: payrollIncidents !== undefined ? payrollIncidents : prevParsed.payrollIncidents,
-      tablewareItems: tablewareItems !== undefined ? tablewareItems : prevParsed.tablewareItems,
-      tablewareLosses: tablewareLosses !== undefined ? tablewareLosses : prevParsed.tablewareLosses,
-    };
-
-    const obsString = `[SYSTEM_CATALOGS:${JSON.stringify(payload)}]`;
-
-    if (existing && existing.length > 0) {
-      const { error } = await supabase
-        .from('jornadas_diarias')
-        .update({
-          observaciones: obsString,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existing[0].id);
-
-      if (error) throw error;
-    } else {
-      const { error } = await supabase
-        .from('jornadas_diarias')
-        .insert({
-          fecha: '1999-01-01',
-          turno: 'CONFIG',
-          estado: 'CERRADA',
-          fondo_inicial: 0,
-          total_gastos_efectivo: 0,
-          total_gastos_transferencia: 0,
-          responsable: 'SYSTEM_CATALOGS',
-          observaciones: obsString,
-          fecha_cierre: '1999-01-01T00:00:00Z',
-        });
-
-      if (error) throw error;
-    }
-
-    console.log(`✅ Catálogo de ${payload.vendors.length} proveedores, ${payload.categories.length} categorías, nómina e incidencias guardado en Supabase.`);
-    return true;
-  } catch (err) {
-    console.warn('⚠️ Error al guardar catálogo en Supabase:', err);
-    return false;
-  }
+  catalogSyncQueue = nextOp;
+  return nextOp;
 }
 
 export interface ExpenseAnalyticsData {

@@ -26,6 +26,7 @@ import {
   DEFAULT_BODEGON_PASS_URL,
 } from '../../services/bodegonPassSync';
 import { syncCatalogsToCloud } from '../../services/supabaseSync';
+import { getDeletedPayrollNames, addDeletedPayrollName, removeDeletedPayrollName } from '../../services/storage';
 import {
   Calendar,
   RefreshCw,
@@ -190,25 +191,30 @@ export const PayrollView: React.FC<Props> = ({
 
     const existing = (state.payrollHistory || []).find((h) => h.id === currentPeriodId);
 
-    if (existing && existing.rows && existing.rows.length > 0) {
-      const isExcluded = (n: string) => {
-        const s = (n || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        return (
-          s.includes('maverick') ||
-          s.includes('sandor') ||
-          s.includes('eliezer') ||
-          s.includes('david quintero') ||
-          s.includes('heiling') ||
-          s.includes('lea calvo')
-        );
-      };
+    const deletedSet = new Set(getDeletedPayrollNames());
+    const isExcluded = (n: string) => {
+      const s = (n || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+      if (deletedSet.has(s)) return true;
+      return (
+        s.includes('maverick') ||
+        s.includes('sandor') ||
+        s.includes('eliezer') ||
+        s.includes('david quintero') ||
+        s.includes('heiling') ||
+        s.includes('lea calvo') ||
+        s.includes('melvin ojeda') ||
+        s.includes('zenon lopez') ||
+        s.includes('carlos eduardo garcia')
+      );
+    };
 
+    if (existing && existing.rows && existing.rows.length > 0) {
       setRows(existing.rows.filter((row) => !isExcluded(row.name)));
       setSpecialRows((existing.specialRows || []).filter((s) => !isExcluded(s.name)));
     } else {
       // Generar filas nuevas calculando incidencias de la bitácora en ese rango
       // Deduplicar empleados activos garantizando exactamente 1 por persona
-      const rawActiveEmps = (state.payrollEmployees || []).filter((e) => e.isActive);
+      const rawActiveEmps = (state.payrollEmployees || []).filter((e) => e.isActive && !isExcluded(e.name));
       const activeEmps: PayrollEmployee[] = [];
       for (const e of rawActiveEmps) {
         if (!activeEmps.some((a) => matchEmployeeName(a.name, e.name))) {
@@ -339,6 +345,9 @@ export const PayrollView: React.FC<Props> = ({
     const targetRow = rows[index];
     const empName = targetRow?.name || 'este colaborador';
     if (window.confirm(`¿Seguro que deseas eliminar a "${empName}" de la planilla y del padrón de personal?`)) {
+      if (targetRow?.name) {
+        addDeletedPayrollName(targetRow.name);
+      }
       const nextRows = rows.filter((_, i) => i !== index);
       const nextSpecial = specialRows.filter(
         (sr) => sr.employeeId !== targetRow.employeeId && !matchEmployeeName(sr.name, targetRow.name)
@@ -346,31 +355,33 @@ export const PayrollView: React.FC<Props> = ({
       setRows(nextRows);
       setSpecialRows(nextSpecial);
 
-      onUpdateState((prev) => {
-        const nextEmps = (prev.payrollEmployees || []).filter(
+      const nextEmps = (state.payrollEmployees || []).filter(
+        (e) => e.id !== targetRow.employeeId && !matchEmployeeName(e.name, targetRow.name)
+      );
+      const record: BiweeklyPayrollRecord = {
+        id: currentPeriodId,
+        year,
+        month,
+        period,
+        status: 'DRAFT',
+        rows: nextRows,
+        specialRows: nextSpecial,
+        authorizedBy: state.activeAdminName || 'Admon Bodegón',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      const nextHist = [record, ...(state.payrollHistory || []).filter((h) => h.id !== currentPeriodId)];
+
+      onUpdateState((prev) => ({
+        ...prev,
+        payrollEmployees: (prev.payrollEmployees || []).filter(
           (e) => e.id !== targetRow.employeeId && !matchEmployeeName(e.name, targetRow.name)
-        );
-        const record: BiweeklyPayrollRecord = {
-          id: currentPeriodId,
-          year,
-          month,
-          period,
-          status: 'DRAFT',
-          rows: nextRows,
-          specialRows: nextSpecial,
-          authorizedBy: prev.activeAdminName || 'Admon Bodegón',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        const nextHist = [record, ...(prev.payrollHistory || []).filter((h) => h.id !== currentPeriodId)];
-        syncCatalogsToCloud(prev.vendorsList, prev.expenseCategories, nextEmps, nextHist).catch(console.warn);
-        return {
-          ...prev,
-          payrollEmployees: nextEmps,
-          payrollHistory: nextHist,
-        };
-      });
-      setSaveNotice(`Colaborador "${empName}" eliminado y sincronizado en la nube.`);
+        ),
+        payrollHistory: [record, ...(prev.payrollHistory || []).filter((h) => h.id !== currentPeriodId)],
+      }));
+
+      syncCatalogsToCloud(state.vendorsList, state.expenseCategories, nextEmps, nextHist).catch(console.warn);
+      setSaveNotice(`Colaborador "${empName}" eliminado permanentemente y sincronizado en la nube.`);
       setTimeout(() => setSaveNotice(null), 3500);
     }
   };
@@ -452,6 +463,7 @@ export const PayrollView: React.FC<Props> = ({
 
     // Sincronizar también el padrón de empleados con las filas actuales (nombres, cargos, salarios base, INSS)
     const updatedEmployees: PayrollEmployee[] = rows.map((r) => {
+      removeDeletedPayrollName(r.name);
       const existingEmp = (state.payrollEmployees || []).find(
         (e) => e.id === r.employeeId || matchEmployeeName(e.name, r.name)
       );
@@ -469,6 +481,16 @@ export const PayrollView: React.FC<Props> = ({
         reportedSalaryINSS: matchingSpecial?.reportedSalary || existingEmp?.reportedSalaryINSS,
         isActive: true,
       };
+    });
+
+    // Cualquier empleado previo que no esté en las filas actuales queda marcado como eliminado
+    (state.payrollEmployees || []).forEach((oldEmp) => {
+      const stillPresent = updatedEmployees.some(
+        (u) => u.id === oldEmp.id || matchEmployeeName(u.name, oldEmp.name)
+      );
+      if (!stillPresent) {
+        addDeletedPayrollName(oldEmp.name);
+      }
     });
 
     const nextHist = [record, ...(state.payrollHistory || []).filter((h) => h.id !== currentPeriodId)];
@@ -795,6 +817,18 @@ export const PayrollView: React.FC<Props> = ({
   // Guardar lista de empleados modificada desde el modal y sincronizar con la sábana actual y Supabase Cloud
   const handleSaveEmployees = async (newEmployees: PayrollEmployee[]) => {
     const activeEmps = newEmployees.filter((e) => e.isActive !== false);
+
+    // Registrar en lista de excluidos cualquier empleado eliminado o inactivado
+    activeEmps.forEach((emp) => removeDeletedPayrollName(emp.name));
+    newEmployees.filter((e) => e.isActive === false).forEach((emp) => addDeletedPayrollName(emp.name));
+    (state.payrollEmployees || []).forEach((oldEmp) => {
+      const stillActive = activeEmps.some(
+        (a) => a.id === oldEmp.id || matchEmployeeName(a.name, oldEmp.name)
+      );
+      if (!stillActive) {
+        addDeletedPayrollName(oldEmp.name);
+      }
+    });
 
     // Sincronizar las filas de la quincena actual con el nuevo padrón de empleados
     const nextRows: BiweeklyPayrollRow[] = activeEmps.map((emp) => {
