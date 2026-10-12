@@ -322,12 +322,14 @@ export function App() {
 
   // Sincronización en tiempo real con Supabase (Nube Interconectada PC + Móvil)
   useEffect(() => {
-    // 1. Al iniciar, chequear catálogos oficiales de proveedores y categorías desde Supabase
-    fetchCloudCatalogs().then(({ vendors, categories }) => {
+    // 1. Al iniciar, chequear catálogos oficiales de proveedores, categorías y nómina desde Supabase
+    fetchCloudCatalogs().then(({ vendors, categories, payrollEmployees, payrollHistory }) => {
       setState((prev) => ({
         ...prev,
         vendorsList: vendors,
         expenseCategories: categories,
+        payrollEmployees: Array.isArray(payrollEmployees) ? payrollEmployees : prev.payrollEmployees,
+        payrollHistory: Array.isArray(payrollHistory) ? payrollHistory : prev.payrollHistory,
       }));
     }).catch(console.warn);
 
@@ -679,8 +681,37 @@ export function App() {
       ? pettyOpeningData.generalCashTransfer
       : (newShift.openingTransferToPettyCash || newShift.transferToPettyCash || 0);
 
-    let transferTxToSync: PettyCashTransaction | null = null;
-    let newPettyShiftToSync: PettyCashShift | null = null;
+    const newPettyShiftToSync: PettyCashShift | null = pettyOpeningData
+      ? {
+          id: `pc-shift-${newShift.date}`,
+          date: newShift.date,
+          status: 'OPEN',
+          openedBy: newShift.openedBy,
+          openedAt: newShift.openedAt,
+          previousDayRemaining: pettyOpeningData.previousDayRemaining,
+          generalCashTransfer: transferAmount,
+          bossContribution: pettyOpeningData.bossContribution || 0,
+          initialBalance: pettyOpeningData.initialBalance,
+          openingNotes: `Apertura unificada del día ${newShift.date}`,
+        }
+      : null;
+
+    const transferTxToSync: PettyCashTransaction | null =
+      transferAmount > 0
+        ? {
+            id: `pct-transfer-open-${Date.now()}`,
+            shiftId: `pc-shift-${newShift.date}`,
+            date: newShift.openedAt,
+            type: 'INFLOW',
+            inflowSource: 'TRASLADO_CAJA_GENERAL',
+            amount: transferAmount,
+            method: 'CASH',
+            vendor: 'Traslado desde Caja General',
+            category: 'OTROS',
+            registeredBy: newShift.openedBy,
+            notes: `Traspaso inicial deducido al abrir Caja General (C$ ${transferAmount.toFixed(2)})`,
+          }
+        : null;
 
     setState((prev) => {
       let updatedHistory = prev.shiftHistory;
@@ -697,21 +728,8 @@ export function App() {
       let updatedPettyShift = prev.currentPettyCashShift;
 
       // Si se abre también Caja Chica a través del wizard unificado
-      if (pettyOpeningData) {
-        const createdPettyShift: PettyCashShift = {
-          id: `pc-shift-${newShift.date}`,
-          date: newShift.date,
-          status: 'OPEN',
-          openedBy: newShift.openedBy,
-          openedAt: newShift.openedAt,
-          previousDayRemaining: pettyOpeningData.previousDayRemaining,
-          generalCashTransfer: transferAmount,
-          bossContribution: pettyOpeningData.bossContribution || 0,
-          initialBalance: pettyOpeningData.initialBalance,
-          openingNotes: `Apertura unificada del día ${newShift.date}`,
-        };
-        newPettyShiftToSync = createdPettyShift;
-        updatedPettyShift = createdPettyShift;
+      if (newPettyShiftToSync && pettyOpeningData) {
+        updatedPettyShift = newPettyShiftToSync;
         updatedPettyBalance = pettyOpeningData.initialBalance;
 
         // Limpiar residuos de fondeos iniciales previos
@@ -720,22 +738,8 @@ export function App() {
         );
       }
 
-      if (transferAmount > 0) {
-        const transferTx: PettyCashTransaction = {
-          id: `pct-transfer-open-${Date.now()}`,
-          shiftId: `pc-shift-${newShift.date}`,
-          date: newShift.openedAt,
-          type: 'INFLOW',
-          inflowSource: 'TRASLADO_CAJA_GENERAL',
-          amount: transferAmount,
-          method: 'CASH',
-          vendor: 'Traslado desde Caja General',
-          category: 'OTROS',
-          registeredBy: newShift.openedBy,
-          notes: `Traspaso inicial deducido al abrir Caja General (C$ ${transferAmount.toFixed(2)})`,
-        };
-        transferTxToSync = transferTx;
-        updatedPettyTxs = [transferTx, ...updatedPettyTxs];
+      if (transferTxToSync && transferAmount > 0) {
+        updatedPettyTxs = [transferTxToSync, ...updatedPettyTxs];
 
         if (!pettyOpeningData) {
           updatedPettyBalance += transferAmount;

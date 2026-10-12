@@ -5,7 +5,7 @@ import logoImg from '../assets/logo.png';
 function openPrintWindow(title: string, bodyContent: string): void {
   const printWindow = window.open('', '_blank', 'width=1020,height=920,menubar=no,toolbar=no,location=no,status=no');
   if (!printWindow) {
-    alert('Por favor permite ventanas emergentes en tu navegador para visualizar e imprimir el reporte A4.');
+    alert('Por favor permite ventanas emergentes en tu navegador para visualizar e imprimir el reporte Tamaño Carta.');
     return;
   }
 
@@ -18,24 +18,27 @@ function openPrintWindow(title: string, bodyContent: string): void {
         <title>${title} — Restaurante El Bodegón</title>
         <style>
           @page {
-            size: A4 portrait;
-            margin: 12mm 14mm 12mm 14mm;
+            size: letter portrait;
+            margin: 10mm 12mm 10mm 12mm;
           }
           * {
             box-sizing: border-box;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            -webkit-font-smoothing: none !important;
+            text-rendering: geometricPrecision !important;
           }
           body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            color: #0f172a;
-            background: #f1f5f9;
+            font-family: Arial, "Helvetica Neue", Helvetica, "Segoe UI", sans-serif;
+            color: #000000 !important;
+            background: #ffffff;
             margin: 0;
             padding: 68px 16px 40px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            font-size: 11.5px;
+            font-size: 12px;
+            font-weight: 700;
             line-height: 1.4;
           }
 
@@ -46,14 +49,14 @@ function openPrintWindow(title: string, bodyContent: string): void {
             left: 0;
             right: 0;
             height: 52px;
-            background: #0f172a;
+            background: #000000;
             color: #ffffff;
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 0 24px;
             z-index: 9999;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border-bottom: 2px solid #000000;
           }
           .toolbar-left {
             display: flex;
@@ -61,18 +64,18 @@ function openPrintWindow(title: string, bodyContent: string): void {
             gap: 10px;
           }
           .toolbar-badge {
-            background: #d97706;
-            color: #ffffff;
-            font-size: 10px;
+            background: #ffffff;
+            color: #000000;
+            font-size: 10.5px;
             font-weight: 900;
-            padding: 2px 8px;
-            border-radius: 6px;
+            padding: 3px 8px;
+            border-radius: 4px;
             letter-spacing: 0.5px;
           }
           .toolbar-title {
             font-size: 13px;
-            font-weight: 700;
-            color: #f8fafc;
+            font-weight: 800;
+            color: #ffffff;
           }
           .toolbar-right {
             display: flex;
@@ -80,47 +83,37 @@ function openPrintWindow(title: string, bodyContent: string): void {
             gap: 10px;
           }
           .btn-print {
-            background: #059669;
-            color: #ffffff;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 8px;
+            background: #ffffff;
+            color: #000000;
+            border: 2px solid #ffffff;
+            padding: 7px 18px;
+            border-radius: 6px;
             font-size: 12px;
-            font-weight: 800;
+            font-weight: 900;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.35);
-            transition: background 0.15s ease;
             display: flex;
             align-items: center;
             gap: 6px;
           }
-          .btn-print:hover {
-            background: #047857;
-          }
           .btn-close {
-            background: #334155;
-            color: #e2e8f0;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.15s ease;
-          }
-          .btn-close:hover {
-            background: #475569;
+            background: transparent;
             color: #ffffff;
+            border: 1.5px solid #ffffff;
+            padding: 7px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
           }
 
-          /* Hoja física A4 */
+          /* Hoja física Tamaño Carta */
           .a4-sheet {
-            background: #ffffff;
-            width: 210mm;
-            min-height: 297mm;
-            padding: 16mm 18mm;
-            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
-            border-radius: 3px;
+            background: #ffffff !important;
+            color: #000000 !important;
+            width: 215.9mm;
+            min-height: 279.4mm;
+            padding: 12mm 14mm;
+            border: 2px solid #000000;
             position: relative;
             margin-bottom: 24px;
           }
@@ -148,9 +141,9 @@ function openPrintWindow(title: string, bodyContent: string): void {
             }
           }
 
-          /* Componentes de Documento - Blanco y Negro Puro para Máxima Nitidez Láser */
+          /* Componentes de Documento - 100% Blanco y Negro Puro para Nitidez Extrema */
           .header-container {
-            border-bottom: 2px solid #000000;
+            border-bottom: 2.5px solid #000000;
             padding-bottom: 8px;
             margin-bottom: 12px;
             display: flex;
@@ -158,19 +151,19 @@ function openPrintWindow(title: string, bodyContent: string): void {
             align-items: flex-end;
           }
           .brand-title {
-            font-size: 18px;
+            font-size: 19px;
             font-weight: 900;
-            letter-spacing: -0.5px;
-            color: #000000;
+            letter-spacing: -0.3px;
+            color: #000000 !important;
             margin: 0;
             line-height: 1.1;
           }
           .brand-sub {
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 800;
-            color: #000000;
+            color: #000000 !important;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
+            letter-spacing: 0.6px;
             margin-top: 3px;
           }
           .doc-header-right {
@@ -178,27 +171,27 @@ function openPrintWindow(title: string, bodyContent: string): void {
           }
           .doc-badge {
             display: inline-block;
-            background: #000000;
-            color: #ffffff;
-            font-size: 9px;
+            background: #ffffff !important;
+            color: #000000 !important;
+            border: 2px solid #000000;
+            font-size: 10px;
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 0.6px;
-            padding: 2px 7px;
-            border-radius: 3px;
+            padding: 2px 8px;
             margin-bottom: 4px;
           }
           .doc-title {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 900;
             text-transform: uppercase;
-            color: #000000;
+            color: #000000 !important;
             margin: 0;
-            letter-spacing: -0.2px;
           }
           .doc-meta {
-            font-size: 10px;
-            color: #000000;
+            font-size: 10.5px;
+            font-weight: 800;
+            color: #000000 !important;
             margin-top: 2px;
           }
 
@@ -222,34 +215,35 @@ function openPrintWindow(title: string, bodyContent: string): void {
           }
 
           .info-box {
-            background: #ffffff;
-            border: 1px solid #000000;
-            border-radius: 4px;
-            padding: 6px 10px;
+            background: #ffffff !important;
+            border: 1.5px solid #000000;
+            padding: 7px 10px;
           }
           .info-label {
-            font-size: 9px;
-            font-weight: 800;
+            font-size: 10px;
+            font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #000000;
+            letter-spacing: 0.4px;
+            color: #000000 !important;
             display: block;
             margin-bottom: 2px;
           }
           .info-value {
-            font-size: 12.5px;
+            font-size: 13px;
             font-weight: 900;
-            color: #000000;
-            font-family: monospace;
+            color: #000000 !important;
+            font-family: "Courier New", Courier, monospace;
           }
 
           .section-title {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 0.4px;
-            margin: 0 0 5px 0;
-            color: #000000;
+            margin: 0 0 6px 0;
+            padding-bottom: 3px;
+            border-bottom: 2px solid #000000;
+            color: #000000 !important;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -259,39 +253,41 @@ function openPrintWindow(title: string, bodyContent: string): void {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 12px;
-            font-size: 10px;
+            font-size: 11px;
+            border: 2px solid #000000;
           }
           th {
-            background: #ffffff;
-            color: #000000;
+            background: #ffffff !important;
+            color: #000000 !important;
             font-weight: 900;
             text-transform: uppercase;
-            font-size: 9px;
+            font-size: 10px;
             letter-spacing: 0.4px;
-            border: 1px solid #000000;
-            border-bottom: 2px solid #000000;
-            padding: 4px 6px;
+            border: 1.5px solid #000000;
+            border-bottom: 2.5px solid #000000;
+            padding: 5px 7px;
             text-align: left;
           }
           td {
-            border: 1px solid #000000;
-            padding: 4px 6px;
+            border: 1.5px solid #000000;
+            padding: 5px 7px;
             vertical-align: middle;
-            color: #000000;
-            background: #ffffff;
+            color: #000000 !important;
+            background: #ffffff !important;
+            font-weight: 700;
+            font-size: 11px;
           }
           tr:nth-child(even) td {
-            background: #ffffff;
+            background: #ffffff !important;
           }
           .text-right { text-align: right; }
           .text-center { text-align: center; }
-          .font-mono { font-family: monospace; }
-          .bold { font-weight: bold; }
+          .font-mono { font-family: "Courier New", Courier, monospace; font-weight: 800; }
+          .bold { font-weight: 900 !important; }
 
           .total-card {
-            background: #ffffff;
-            border: 2px solid #000000;
-            border-radius: 4px;
+            background: #ffffff !important;
+            border: 2.5px solid #000000;
             padding: 10px 14px;
             display: flex;
             justify-content: space-between;
@@ -299,39 +295,39 @@ function openPrintWindow(title: string, bodyContent: string): void {
             margin-bottom: 12px;
           }
           .total-label {
-            font-size: 11.5px;
+            font-size: 12.5px;
             font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #000000;
+            letter-spacing: 0.4px;
+            color: #000000 !important;
           }
           .total-sub {
-            font-size: 9.5px;
-            color: #000000;
-            margin-top: 1px;
+            font-size: 10.5px;
+            font-weight: 800;
+            color: #000000 !important;
+            margin-top: 2px;
           }
           .total-amount {
-            font-size: 20px;
+            font-size: 21px;
             font-weight: 900;
-            color: #000000;
-            font-family: monospace;
-            letter-spacing: -0.5px;
+            color: #000000 !important;
+            font-family: "Courier New", Courier, monospace;
           }
 
           .banner-box {
-            background: #ffffff;
-            border: 1px solid #000000;
-            border-radius: 4px;
+            background: #ffffff !important;
+            border: 2px solid #000000;
             padding: 10px 14px;
             margin-bottom: 12px;
           }
 
           .footer-note {
             margin-top: 20px;
-            border-top: 1px solid #000000;
+            border-top: 2px solid #000000;
             padding-top: 6px;
-            font-size: 9px;
-            color: #000000;
+            font-size: 10.5px;
+            font-weight: 800;
+            color: #000000 !important;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -339,29 +335,28 @@ function openPrintWindow(title: string, bodyContent: string): void {
 
           .badge {
             display: inline-block;
-            padding: 1px 5px;
-            border-radius: 2px;
-            font-size: 9px;
-            font-weight: bold;
-            border: 1px solid #000000;
-            background: #ffffff;
-            color: #000000;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: 900;
+            border: 1.5px solid #000000;
+            background: #ffffff !important;
+            color: #000000 !important;
           }
-          .badge-success { background: #ffffff; color: #000000; border: 1px solid #000000; }
-          .badge-danger { background: #ffffff; color: #000000; border: 1px solid #000000; }
-          .badge-neutral { background: #ffffff; color: #000000; border: 1px solid #000000; }
+          .badge-success { background: #ffffff !important; color: #000000 !important; border: 1.5px solid #000000; }
+          .badge-danger { background: #ffffff !important; color: #000000 !important; border: 1.5px solid #000000; }
+          .badge-neutral { background: #ffffff !important; color: #000000 !important; border: 1.5px solid #000000; }
         </style>
       </head>
       <body>
         <!-- Barra de acciones en pantalla -->
         <div class="print-toolbar no-print">
           <div class="toolbar-left">
-            <span class="toolbar-badge">HOJA A4</span>
+            <span class="toolbar-badge">TAMAÑO CARTA B/N</span>
             <span class="toolbar-title">${title}</span>
           </div>
           <div class="toolbar-right">
-            <button onclick="window.print()" class="btn-print" title="Mandar directamente a imprimir en hoja de block A4">
-              🖨️ Mandar a Imprimir (A4)
+            <button onclick="window.print()" class="btn-print" title="Mandar directamente a imprimir en Hoja Tamaño Carta">
+              🖨️ Mandar a Imprimir (Tamaño Carta)
             </button>
             <button onclick="window.close()" class="btn-close">
               ✕ Cerrar
@@ -369,7 +364,7 @@ function openPrintWindow(title: string, bodyContent: string): void {
           </div>
         </div>
 
-        <!-- Contenedor Hoja A4 -->
+        <!-- Contenedor Hoja Tamaño Carta -->
         <div class="a4-sheet">
           ${bodyContent}
         </div>
@@ -380,7 +375,6 @@ function openPrintWindow(title: string, bodyContent: string): void {
   printWindow.document.write(html);
   printWindow.document.close();
 
-  // Auto-invocar el diálogo de impresión con un breve retardo para renderizado limpio
   setTimeout(() => {
     printWindow.focus();
     printWindow.print();
@@ -388,7 +382,7 @@ function openPrintWindow(title: string, bodyContent: string): void {
 }
 
 // ============================================================================
-// 1. ACTA DE APERTURA DE CAJA GENERAL (FORMATO HOJA A4)
+// 1. ACTA DE APERTURA DE CAJA GENERAL (FORMATO HOJA TAMAÑO CARTA B/N)
 // ============================================================================
 export function printThermalOpeningTicket(shift: CashShift): void {
   const nio = shift.openingNIO;
@@ -402,7 +396,7 @@ export function printThermalOpeningTicket(shift: CashShift): void {
         <div class="brand-sub">Asador Criollo & Bar • Control de Operaciones</div>
       </div>
       <div class="doc-header-right">
-        <span class="doc-badge">DOCUMENTO OFICIAL A4</span>
+        <span class="doc-badge">DOCUMENTO OFICIAL CARTA</span>
         <h2 class="doc-title">Acta de Apertura de Caja General</h2>
         <div class="doc-meta">Auditoría Física de Gaveta & Conciliación</div>
       </div>
@@ -454,9 +448,9 @@ export function printThermalOpeningTicket(shift: CashShift): void {
             <tr><td>Monedas C$ 5, 1, 0.50</td><td class="text-center font-mono">—</td><td class="text-right font-mono">C$ ${(((nio[5] || 0) * 5) + ((nio[1] || 0) * 1) + ((nio[0.5] || 0) * 0.5)).toFixed(2)}</td></tr>
           </tbody>
           <tfoot>
-            <tr style="background: #ffffff; font-weight: bold; border-top: 2px solid #000000;">
+            <tr style="background: #ffffff; font-weight: 900; border-top: 2.5px solid #000000;">
               <td colspan="2">TOTAL EFECTIVO C$</td>
-              <td class="text-right font-mono" style="font-size: 12px;">C$ ${shift.totalOpeningNIO.toFixed(2)}</td>
+              <td class="text-right font-mono" style="font-size: 12.5px;">C$ ${shift.totalOpeningNIO.toFixed(2)}</td>
             </tr>
           </tfoot>
         </table>
@@ -484,9 +478,9 @@ export function printThermalOpeningTicket(shift: CashShift): void {
             <tr><td>(Conversión a C$)</td><td class="text-center font-mono">x ${shift.exchangeRate.toFixed(2)}</td><td class="text-right font-mono">C$ ${(shift.totalOpeningUSD * shift.exchangeRate).toFixed(2)}</td></tr>
           </tbody>
           <tfoot>
-            <tr style="background: #ffffff; font-weight: bold; border-top: 2px solid #000000;">
+            <tr style="background: #ffffff; font-weight: 900; border-top: 2.5px solid #000000;">
               <td colspan="2">TOTAL EFECTIVO USD</td>
-              <td class="text-right font-mono" style="font-size: 12px;">$ ${shift.totalOpeningUSD.toFixed(2)}</td>
+              <td class="text-right font-mono" style="font-size: 12.5px;">$ ${shift.totalOpeningUSD.toFixed(2)}</td>
             </tr>
           </tfoot>
         </table>
@@ -534,12 +528,12 @@ export function printThermalOpeningTicket(shift: CashShift): void {
             <span class="info-value">C$ ${(loy.salesBankTransfers || 0).toFixed(2)}</span>
           </div>
           ` : ''}
-          <div class="info-box" style="border: 2px solid #000000;">
+          <div class="info-box" style="border: 2.5px solid #000000;">
             <span class="info-label">Gran Total Loyverse</span>
-            <span class="info-value" style="font-size: 13px;">C$ ${(loy.totalLoyverseSales || 0).toFixed(2)}</span>
+            <span class="info-value" style="font-size: 13.5px;">C$ ${(loy.totalLoyverseSales || 0).toFixed(2)}</span>
           </div>
         </div>
-        <div style="font-size: 9.5px; color: #000000;">
+        <div style="font-size: 10.5px; font-weight: 800; color: #000000;">
           <strong>Desglose Vouchers Tarjetas:</strong> BAC: C$ ${(loy.cardsBAC || 0).toFixed(2)} • Ficohsa: C$ ${(loy.cardsFicohsa || 0).toFixed(2)} • Banpro: C$ ${(loy.cardsBanpro || 0).toFixed(2)} • Lafise: C$ ${(loy.cardsLafise || 0).toFixed(2)}
           ${loy.notes ? `<div style="margin-top: 4px;"><strong>Notas Loyverse:</strong> ${loy.notes}</div>` : ''}
         </div>
@@ -549,21 +543,21 @@ export function printThermalOpeningTicket(shift: CashShift): void {
     ${shift.openingNotes ? `
       <div class="info-box" style="margin-bottom: 16px;">
         <span class="info-label">Observaciones de Apertura</span>
-        <div style="font-size: 11px; color: #334155;">"${shift.openingNotes}"</div>
+        <div style="font-size: 11.5px; font-weight: 800; color: #000000;">"${shift.openingNotes}"</div>
       </div>
     ` : ''}
 
     <div class="footer-note">
-      <span>BodegónControl ERP • Documento oficial de apertura A4 • Responsable: ${shift.openedBy}</span>
+      <span>BodegónControl ERP • Documento Oficial de Apertura (Tamaño Carta) • Responsable: ${shift.openedBy}</span>
       <span>Impreso el ${new Date().toLocaleString()}</span>
     </div>
   `;
 
-  openPrintWindow(`Acta de Apertura A4 - ${shift.date}`, content);
+  openPrintWindow(`Acta de Apertura Carta - ${shift.date}`, content);
 }
 
 // ============================================================================
-// 2. ACTA DE CIERRE DE CAJA GENERAL (FORMATO HOJA A4)
+// 2. ACTA DE CIERRE DE CAJA GENERAL (FORMATO HOJA TAMAÑO CARTA B/N)
 // ============================================================================
 export function printThermalClosingTicket(shift: CashShift): void {
   const nio = shift.closingNIO || shift.openingNIO;
@@ -576,7 +570,7 @@ export function printThermalClosingTicket(shift: CashShift): void {
         <div class="brand-sub">Asador Criollo & Bar • Control de Operaciones</div>
       </div>
       <div class="doc-header-right">
-        <span class="doc-badge">DOCUMENTO OFICIAL A4</span>
+        <span class="doc-badge">DOCUMENTO OFICIAL CARTA</span>
         <h2 class="doc-title">Acta de Cierre de Caja General</h2>
         <div class="doc-meta">Jornada Comercial • Arqueo y Liquidación Nocturna</div>
       </div>
@@ -628,18 +622,18 @@ export function printThermalClosingTicket(shift: CashShift): void {
             <tr><td>Monedas C$ 5, 1, 0.50</td><td class="text-center font-mono">—</td><td class="text-right font-mono">C$ ${(((nio[5] || 0) * 5) + ((nio[1] || 0) * 1) + ((nio[0.5] || 0) * 0.5)).toFixed(2)}</td></tr>
           </tbody>
           <tfoot>
-            <tr style="background: #ffffff; font-weight: bold; border-top: 2px solid #000000;">
+            <tr style="background: #ffffff; font-weight: 900; border-top: 2.5px solid #000000;">
               <td colspan="2">TOTAL CONTADO EN BILLETES C$</td>
-              <td class="text-right font-mono" style="font-size: 11px;">C$ ${(shift.totalClosingNIO || 0).toFixed(2)}</td>
+              <td class="text-right font-mono" style="font-size: 12px;">C$ ${(shift.totalClosingNIO || 0).toFixed(2)}</td>
             </tr>
             ${(shift.tipPaid && shift.totalTipCollected && shift.totalTipCollected > 0) ? `
-            <tr style="color: #b91c1c; font-weight: bold;">
+            <tr style="color: #000000; font-weight: 900;">
               <td colspan="2">(-) Menos Propinas a Entregar</td>
               <td class="text-right font-mono">- C$ ${shift.totalTipCollected.toFixed(2)}</td>
             </tr>
-            <tr style="background: #ffffff; font-weight: 900; border-top: 1px solid #000000;">
+            <tr style="background: #ffffff; font-weight: 900; border-top: 2px solid #000000;">
               <td colspan="2">(=) TOTAL EFECTIVO NETO RESTANTE C$</td>
-              <td class="text-right font-mono" style="font-size: 12px;">C$ ${(shift.netCashAfterTipsNIO ?? ((shift.totalClosingNIO || 0) - shift.totalTipCollected)).toFixed(2)}</td>
+              <td class="text-right font-mono" style="font-size: 12.5px;">C$ ${(shift.netCashAfterTipsNIO ?? ((shift.totalClosingNIO || 0) - shift.totalTipCollected)).toFixed(2)}</td>
             </tr>
             ` : ''}
           </tfoot>
@@ -668,9 +662,9 @@ export function printThermalClosingTicket(shift: CashShift): void {
             <tr><td>(Conversión a C$)</td><td class="text-center font-mono">x ${shift.exchangeRate.toFixed(2)}</td><td class="text-right font-mono">C$ ${((shift.totalClosingUSD || 0) * shift.exchangeRate).toFixed(2)}</td></tr>
           </tbody>
           <tfoot>
-            <tr style="background: #ffffff; font-weight: bold; border-top: 2px solid #000000;">
+            <tr style="background: #ffffff; font-weight: 900; border-top: 2.5px solid #000000;">
               <td colspan="2">TOTAL EFECTIVO USD</td>
-              <td class="text-right font-mono" style="font-size: 12px;">$ ${(shift.totalClosingUSD || 0).toFixed(2)}</td>
+              <td class="text-right font-mono" style="font-size: 12.5px;">$ ${(shift.totalClosingUSD || 0).toFixed(2)}</td>
             </tr>
           </tfoot>
         </table>
@@ -688,7 +682,7 @@ export function printThermalClosingTicket(shift: CashShift): void {
           <span class="info-value">C$ ${(shift.totalTipCollected || 0).toFixed(2)}</span>
         </div>
         ${shift.tipYahairaWorked ? `
-        <div class="info-box" style="border: 1.5px solid #000000;">
+        <div class="info-box" style="border: 2px solid #000000;">
           <span class="info-label">Yahaira Rivas (Fijo)</span>
           <span class="info-value font-mono">C$ ${(shift.tipYahairaAmount ?? 100).toFixed(2)}</span>
         </div>
@@ -709,22 +703,22 @@ export function printThermalClosingTicket(shift: CashShift): void {
           <span class="info-label">Cuota por Persona ${shift.tipIsRounded ? '(Redondeada)' : ''}</span>
           <span class="info-value font-mono">C$ ${(shift.individualTip || 0).toFixed(2)}</span>
         </div>
-        <div class="info-box" style="border: 2px solid #000000;">
+        <div class="info-box" style="border: 2.5px solid #000000;">
           <span class="info-label">Entrega en Efectivo</span>
-          <span class="info-value" style="font-size: 12px;">
+          <span class="info-value" style="font-size: 12.5px;">
             ${shift.tipPaid ? 'PAGADA EN EFECTIVO' : 'PENDIENTE / APARTADA'}
           </span>
         </div>
         `}
       </div>
       ${shift.tipYahairaWorked ? `
-        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 9px; margin-top: 5px; border-top: 1px dashed #000; padding-top: 3px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10.5px; font-weight: 800; margin-top: 6px; border-top: 1.5px solid #000000; padding-top: 4px;">
           <span><strong>Acuerdo Laboral:</strong> Yahaira Rivas C$ ${(shift.tipYahairaAmount ?? 100).toFixed(2)} + ${shift.staffCount || 1} compañeros de C$ ${(shift.individualTip || 0).toFixed(2)}</span>
-          <span style="font-weight: bold;">${shift.tipPaid ? '✓ PAGADA DE GAVETA' : 'PENDIENTE'}</span>
+          <span style="font-weight: 900;">${shift.tipPaid ? '✓ PAGADA DE GAVETA' : 'PENDIENTE'}</span>
         </div>
       ` : ''}
       ${shift.tipNotes ? `
-        <div style="font-size: 9.5px; color: #000000; margin-top: 6px;">
+        <div style="font-size: 10.5px; font-weight: 800; color: #000000; margin-top: 6px;">
           <strong>Colaboradores / Detalle:</strong> ${shift.tipNotes}
         </div>
       ` : ''}
@@ -749,21 +743,21 @@ export function printThermalClosingTicket(shift: CashShift): void {
     ${shift.closingNotes ? `
       <div class="info-box" style="margin-bottom: 16px;">
         <span class="info-label">Observaciones de Cierre</span>
-        <div style="font-size: 11px; color: #334155;">"${shift.closingNotes}"</div>
+        <div style="font-size: 11.5px; font-weight: 800; color: #000000;">"${shift.closingNotes}"</div>
       </div>
     ` : ''}
 
     <div class="footer-note">
-      <span>BodegónControl ERP • Acta oficial de cierre A4 • Responsable: ${shift.closedBy || shift.openedBy}</span>
+      <span>BodegónControl ERP • Acta Oficial de Cierre (Tamaño Carta) • Responsable: ${shift.closedBy || shift.openedBy}</span>
       <span>Impreso el ${new Date().toLocaleString()}</span>
     </div>
   `;
 
-  openPrintWindow(`Acta de Cierre A4 - ${shift.date}`, content);
+  openPrintWindow(`Acta de Cierre Carta - ${shift.date}`, content);
 }
 
 // ============================================================================
-// 3. REPORTE DE COMPRAS Y GASTOS DE CAJA CHICA (FORMATO HOJA A4)
+// 3. REPORTE DE COMPRAS Y GASTOS DE CAJA CHICA (FORMATO HOJA TAMAÑO CARTA B/N)
 // ============================================================================
 export function printThermalDailyExpensesTicket(
   dateStr: string,
@@ -789,7 +783,6 @@ export function printThermalDailyExpensesTicket(
   const grandTotalExpenses = totalCashExpenses + totalTransferExpenses + totalCardExpenses;
   const totalInflows = inflows.reduce((acc, t) => acc + t.amount, 0);
 
-  // Ordenar cronológicamente para reconstruir el saldo en gaveta paso a paso
   const sorted = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const initialBaseBal = Math.max(0, currentBalance - totalInflows + totalCashExpenses);
 
@@ -800,7 +793,7 @@ export function printThermalDailyExpensesTicket(
         <div class="brand-sub">Restaurante & Bar • Compras y Gastos Operativos</div>
       </div>
       <div class="doc-header-right">
-        <span class="doc-badge">DOCUMENTO OFICIAL A4</span>
+        <span class="doc-badge">DOCUMENTO OFICIAL CARTA</span>
         <h2 class="doc-title">Reporte Diario de Caja Chica</h2>
         <div class="doc-meta">Control, Fondeos y Comprobación de Egresos</div>
       </div>
@@ -817,14 +810,14 @@ export function printThermalDailyExpensesTicket(
         <span class="info-value">${adminName}</span>
       </div>
       ${totalInflows > 0 ? `
-      <div class="info-box" style="background: #f0fdf4; border-color: #86efac;">
+      <div class="info-box">
         <span class="info-label">(+) Fondeos / Ingresos</span>
-        <span class="info-value" style="color: #047857;">+C$ ${totalInflows.toFixed(2)}</span>
+        <span class="info-value">+C$ ${totalInflows.toFixed(2)}</span>
       </div>
       ` : ''}
       <div class="info-box">
         <span class="info-label">(-) Compras / Egresos</span>
-        <span class="info-value" style="color: #b91c1c;">-C$ ${grandTotalExpenses.toFixed(2)}</span>
+        <span class="info-value">-C$ ${grandTotalExpenses.toFixed(2)}</span>
       </div>
     </div>
 
@@ -836,14 +829,14 @@ export function printThermalDailyExpensesTicket(
       <thead>
         <tr>
           <th style="width: 35px;">#</th>
-          <th style="width: 60px;">Hora</th>
+          <th style="width: 65px;">Hora</th>
           <th style="width: 130px;">Rubro / Categoría</th>
           <th>Concepto</th>
           <th style="width: 90px;">Comprobante</th>
-          <th style="width: 70px;">Medio</th>
-          <th style="width: 85px;" class="text-right">Entradas (+)</th>
-          <th style="width: 85px;" class="text-right">Salidas (-)</th>
-          <th style="width: 90px;" class="text-right">Saldo Gaveta</th>
+          <th style="width: 75px;">Medio</th>
+          <th style="width: 90px;" class="text-right">Entradas (+)</th>
+          <th style="width: 90px;" class="text-right">Salidas (-)</th>
+          <th style="width: 95px;" class="text-right">Saldo Gaveta</th>
         </tr>
       </thead>
       <tbody>
@@ -860,12 +853,12 @@ export function printThermalDailyExpensesTicket(
             }
             return `
               <tr>
-                <td class="font-mono text-center">${idx + 1}</td>
+                <td class="font-mono text-center bold">${idx + 1}</td>
                 <td class="font-mono text-center">${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                 <td><span class="badge">${tx.category}</span></td>
                 <td>
                   <span class="bold">${tx.vendor}</span>
-                  ${tx.notes ? `<div style="font-size: 9px; color: #000000;">${tx.notes}</div>` : ''}
+                  ${tx.notes ? `<div style="font-size: 10px; font-weight: 700; color: #000000;">${tx.notes}</div>` : ''}
                 </td>
                 <td class="font-mono text-center">${tx.receiptNumber ? `#${tx.receiptNumber}` : 'Sin Recibo'}</td>
                 <td class="text-center">${isCash ? 'Efectivo' : tx.method === 'CARD' ? 'Tarjeta' : 'Transf.'}</td>
@@ -878,11 +871,11 @@ export function printThermalDailyExpensesTicket(
         })()}
       </tbody>
       <tfoot>
-        <tr style="background: #ffffff; font-weight: bold; border-top: 2px solid #000000; border-bottom: 2px solid #000000;">
-          <td colspan="6" style="font-size: 11px; text-align: right;">TOTALES ACUMULADOS:</td>
+        <tr style="background: #ffffff; font-weight: 900; border-top: 2.5px solid #000000; border-bottom: 2.5px solid #000000;">
+          <td colspan="6" style="font-size: 11.5px; text-align: right;">TOTALES ACUMULADOS:</td>
           <td class="text-right font-mono" style="font-size: 11.5px;">+C$ ${totalInflows.toFixed(2)}</td>
           <td class="text-right font-mono" style="font-size: 11.5px;">-C$ ${grandTotalExpenses.toFixed(2)}</td>
-          <td class="text-right font-mono bold" style="font-size: 12px;">C$ ${currentBalance.toFixed(2)}</td>
+          <td class="text-right font-mono bold" style="font-size: 12.5px;">C$ ${currentBalance.toFixed(2)}</td>
         </tr>
       </tfoot>
     </table>
@@ -898,16 +891,16 @@ export function printThermalDailyExpensesTicket(
     </div>
 
     <div class="footer-note">
-      <span>BodegónControl ERP • Reporte Oficial A4 de Caja Chica • Responsable: ${adminName}</span>
+      <span>BodegónControl ERP • Reporte Oficial de Caja Chica (Tamaño Carta) • Responsable: ${adminName}</span>
       <span>Impreso el ${new Date().toLocaleString()}</span>
     </div>
   `;
 
-  openPrintWindow(`Reporte Caja Chica A4 - ${dateStr}`, content);
+  openPrintWindow(`Reporte Caja Chica Carta - ${dateStr}`, content);
 }
 
 // ============================================================================
-// 4. VALE / RECIBO DE COMPRA DE CAJA CHICA (FORMATO BODEGÓN)
+// 4. VALE / RECIBO DE COMPRA DE CAJA CHICA (FORMATO TAMAÑO CARTA B/N PURO)
 // ============================================================================
 export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void {
   try {
@@ -932,7 +925,7 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Recibo de Compra — Restaurante El Bodegón</title>
+        <title>Recibo de Compra (Carta) — Restaurante El Bodegón</title>
         <style>
           @page {
             size: letter portrait;
@@ -940,17 +933,22 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
           }
           * {
             box-sizing: border-box;
+            color: #000000 !important;
+            -webkit-font-smoothing: none !important;
+            -moz-osx-font-smoothing: grayscale !important;
+            text-rendering: geometricPrecision !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
           body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             color: #000000;
-            background: #f8fafc;
+            background: #ffffff;
             margin: 0;
             padding: 56px 16px 20px;
             display: flex;
             justify-content: center;
+            font-weight: 700;
           }
           .print-toolbar {
             position: fixed;
@@ -958,20 +956,23 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
             left: 0;
             right: 0;
             height: 48px;
-            background: #0f172a;
-            color: #ffffff;
+            background: #000000 !important;
+            color: #ffffff !important;
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 0 20px;
             z-index: 9999;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border-bottom: 2px solid #000000;
+          }
+          .print-toolbar * {
+            color: #ffffff !important;
           }
           .voucher-box {
             width: 100%;
-            max-width: 680px;
-            background: #ffffff;
-            border: 2px solid #000000;
+            max-width: 720px;
+            background: #ffffff !important;
+            border: 2.5px solid #000000;
             padding: 24px 28px;
             margin: 0 auto;
           }
@@ -979,7 +980,7 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 2px solid #000000;
+            border-bottom: 2.5px solid #000000;
             padding-bottom: 14px;
             margin-bottom: 18px;
           }
@@ -994,59 +995,64 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
             object-fit: contain;
           }
           .brand-title {
-            font-size: 21px;
+            font-size: 22px;
             font-weight: 900;
-            letter-spacing: -0.5px;
+            letter-spacing: -0.3px;
             text-transform: uppercase;
             line-height: 1.1;
           }
           .brand-subtitle {
-            font-size: 13px;
-            font-weight: 800;
+            font-size: 13.5px;
+            font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-top: 4px;
-            color: #222222;
+            color: #000000;
           }
           .voucher-meta {
             text-align: right;
-            font-size: 11px;
-            font-family: monospace;
+            font-size: 12px;
+            font-family: "Courier New", Courier, monospace;
+            font-weight: 900;
           }
           .data-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
+            border: 2px solid #000000;
           }
           .data-table td {
-            border: 1px solid #000000;
-            padding: 9px 12px;
-            font-size: 12px;
+            border: 1.5px solid #000000;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            background-color: #ffffff !important;
           }
           .data-label {
-            width: 25%;
-            font-weight: 900;
+            width: 28%;
+            font-weight: 900 !important;
             text-transform: uppercase;
-            background-color: #f8fafc;
+            background-color: #ffffff !important;
             color: #000000;
-            font-size: 11.5px;
+            font-size: 12px;
             letter-spacing: 0.3px;
           }
           .data-val {
-            font-size: 13px;
+            font-size: 13.5px;
+            font-weight: 800;
             color: #000000;
           }
           .monto-box {
-            border: 2px solid #000000;
-            background-color: #ffffff;
-            padding: 12px 16px;
+            border: 2.5px solid #000000;
+            background-color: #ffffff !important;
+            padding: 14px 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 24px;
           }
           .monto-label {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 900;
             text-transform: uppercase;
           }
@@ -1060,49 +1066,51 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
             display: flex;
             justify-content: space-between;
             gap: 40px;
-            margin-top: 35px;
+            margin-top: 38px;
             margin-bottom: 12px;
           }
           .sig-box {
             flex: 1;
-            border-top: 1.5px solid #000000;
+            border-top: 2px solid #000000;
             padding-top: 8px;
             text-align: center;
           }
           .sig-title {
-            font-size: 12px;
+            font-size: 12.5px;
             font-weight: 900;
             text-transform: uppercase;
           }
           .sig-name {
-            font-size: 11px;
+            font-size: 11.5px;
+            font-weight: 800;
             margin-top: 4px;
-            color: #222222;
+            color: #000000;
           }
           .footer-text {
-            border-top: 1px dashed #666666;
+            border-top: 2px solid #000000;
             padding-top: 8px;
             margin-top: 14px;
             text-align: center;
-            font-size: 9.5px;
-            color: #555555;
+            font-size: 10.5px;
+            font-weight: 800;
+            color: #000000;
           }
           @media print {
             .no-print { display: none !important; }
             body { padding: 0 !important; background: #ffffff !important; }
-            .voucher-box { border: 2px solid #000000; max-width: 100%; }
+            .voucher-box { border: 2.5px solid #000000; max-width: 100%; }
           }
         </style>
       </head>
       <body>
         <div class="print-toolbar no-print">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="background: #000; color: #fff; padding: 3px 8px; border-radius: 4px; font-weight: 900; font-size: 11px;">BODEGÓN</span>
-            <span style="font-weight: bold; font-size: 13px; color: #fff;">Recibo de Compra — Restaurante El Bodegón</span>
+            <span style="background: #ffffff; color: #000000 !important; padding: 3px 8px; border-radius: 4px; font-weight: 900; font-size: 11px;">CARTA B/N PURO</span>
+            <span style="font-weight: 900; font-size: 13px;">Recibo de Compra (Tamaño Carta) — Restaurante El Bodegón</span>
           </div>
           <div style="display: flex; gap: 8px;">
-            <button onclick="window.print()" style="background: #059669; color: #fff; border: none; padding: 6px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">🖨️ Mandar a Imprimir</button>
-            <button onclick="window.close()" style="background: #475569; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">✕ Cerrar</button>
+            <button onclick="window.print()" style="background: #ffffff; color: #000000 !important; border: 2px solid #ffffff; padding: 6px 16px; border-radius: 6px; font-weight: 900; cursor: pointer;">🖨️ Mandar a Imprimir</button>
+            <button onclick="window.close()" style="background: transparent; color: #ffffff !important; border: 1.5px solid #ffffff; padding: 6px 12px; border-radius: 6px; font-weight: 900; cursor: pointer;">✕ Cerrar</button>
           </div>
         </div>
 
@@ -1112,12 +1120,12 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
               <img src="${logoImg}" alt="Logo" class="logo-img" onerror="this.src='/logo.png'; this.onerror=function(){this.style.display='none';}" />
               <div>
                 <div class="brand-title">RESTAURANTE EL BODEGÓN</div>
-                <div class="brand-subtitle">RECIBO DE COMPRA RESTAURANTE EL BODEGÓN</div>
+                <div class="brand-subtitle">VALE / RECIBO DE COMPRA — TAMAÑO CARTA (B/N)</div>
               </div>
             </div>
             <div class="voucher-meta">
               <div>COMPROBANTE <strong>${folioStr}</strong></div>
-              <div style="margin-top: 3px; font-size: 9.5px;">Caja Chica Operativa</div>
+              <div style="margin-top: 3px; font-size: 10.5px; font-weight: 800;">Caja Chica Operativa</div>
             </div>
           </div>
 
@@ -1125,17 +1133,17 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
             <tbody>
               <tr>
                 <td class="data-label">FECHA Y HORA EXACTA:</td>
-                <td class="data-val font-mono" style="font-weight: bold;">${fechaHoraExactaCap}</td>
+                <td class="data-val font-mono" style="font-weight: 900;">${fechaHoraExactaCap}</td>
               </tr>
               <tr>
-                <td class="data-label">NOMBRE:</td>
-                <td class="data-val" style="font-weight: 800; text-transform: uppercase; font-size: 14px;">${tx.vendor || 'Proveedor General'}</td>
+                <td class="data-label">PROVEEDOR / BENEFICIARIO:</td>
+                <td class="data-val" style="font-weight: 900; text-transform: uppercase; font-size: 14.5px;">${tx.vendor || 'Proveedor General'}</td>
               </tr>
               <tr>
-                <td class="data-label">CONCEPTO:</td>
+                <td class="data-label">CONCEPTO DETALLADO:</td>
                 <td class="data-val" style="line-height: 1.4;">
-                  <strong>${tx.notes || tx.vendor || tx.category}</strong>
-                  ${tx.category && tx.category !== tx.notes ? `<div style="font-size: 10.5px; color: #555; margin-top: 3px;">Categoría: ${tx.category} • Método: ${tx.method === 'CASH' ? 'Efectivo' : tx.method === 'TRANSFER' ? 'Transferencia' : 'Tarjeta'}</div>` : ''}
+                  <strong style="font-weight: 900;">${tx.notes || tx.vendor || tx.category}</strong>
+                  ${tx.category && tx.category !== tx.notes ? `<div style="font-size: 11.5px; font-weight: 800; color: #000000; margin-top: 4px;">Categoría: ${tx.category} • Método: ${tx.method === 'CASH' ? 'Efectivo' : tx.method === 'TRANSFER' ? 'Transferencia' : 'Tarjeta'}</div>` : ''}
                 </td>
               </tr>
             </tbody>
@@ -1144,7 +1152,7 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
           <div class="monto-box">
             <div>
               <div class="monto-label">MONTO TOTAL DE LA COMPRA</div>
-              <div style="font-size: 10px; color: #555; text-transform: uppercase;">Valor entregado y pagado en Caja Chica</div>
+              <div style="font-size: 11px; font-weight: 800; color: #000000; text-transform: uppercase; margin-top: 2px;">Valor entregado y pagado en Caja Chica</div>
             </div>
             <div class="monto-value">
               C$ ${tx.amount.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -1156,18 +1164,18 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
               <div style="height: 38px;"></div>
               <div class="sig-title">ENTREGADO POR</div>
               <div class="sig-name">Nombre: <strong>${tx.registeredBy || 'Caja Chica'}</strong></div>
-              <div style="font-size: 9.5px; color: #666; margin-top: 2px;">Firma de Caja</div>
+              <div style="font-size: 10.5px; font-weight: 800; color: #000000; margin-top: 2px;">Firma de Caja</div>
             </div>
             <div class="sig-box">
               <div style="height: 38px;"></div>
               <div class="sig-title">RECIBIDO POR</div>
               <div class="sig-name">Nombre: <strong>${tx.vendor || 'Beneficiario'}</strong></div>
-              <div style="font-size: 9.5px; color: #666; margin-top: 2px;">Firma y Cédula</div>
+              <div style="font-size: 10.5px; font-weight: 800; color: #000000; margin-top: 2px;">Firma y Cédula</div>
             </div>
           </div>
 
           <div class="footer-text">
-            Restaurante El Bodegón • Documento Oficial de Respaldo Contable de Compra
+            Restaurante El Bodegón • Documento Oficial de Respaldo Contable de Compra (Hoja Tamaño Carta B/N)
           </div>
         </div>
 
@@ -1194,7 +1202,7 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
 }
 
 // ============================================================================
-// 5. INFORME DE CONTROL DE MENAJE Y ROTURAS (FORMATO HOJA A4)
+// 5. INFORME DE CONTROL DE MENAJE Y ROTURAS (FORMATO HOJA CARTA B/N PURO)
 // ============================================================================
 export function printThermalTablewareReport(
   items: TablewareItem[],
@@ -1211,7 +1219,7 @@ export function printThermalTablewareReport(
         <div class="brand-sub">Restaurante & Bar • Control y Auditoría de Menaje</div>
       </div>
       <div class="doc-header-right">
-        <span class="doc-badge">AUDITORÍA FÍSICA A4</span>
+        <span class="doc-badge">AUDITORÍA FÍSICA CARTA (B/N)</span>
         <h2 class="doc-title">Control de Cristalería y Roturas</h2>
         <div class="doc-meta">Informe Periódico de Inventario</div>
       </div>
@@ -1277,7 +1285,7 @@ export function printThermalTablewareReport(
         </tr>
       </thead>
       <tbody>
-        ${losses.length === 0 ? '<tr><td colspan="6" class="text-center" style="padding: 12px; color: #000000;">No hay roturas reportadas en el período.</td></tr>' : ''}
+        ${losses.length === 0 ? '<tr><td colspan="6" class="text-center" style="padding: 12px; color: #000000; font-weight: 800;">No hay roturas reportadas en el período.</td></tr>' : ''}
         ${losses.map((l) => `
           <tr>
             <td class="font-mono">${new Date(l.date).toLocaleDateString()}</td>
@@ -1290,7 +1298,7 @@ export function printThermalTablewareReport(
         `).join('')}
       </tbody>
       <tfoot>
-        <tr style="background: #ffffff; font-weight: bold; border-top: 2px solid #000000; border-bottom: 2px solid #000000;">
+        <tr style="background: #ffffff; font-weight: 900; border-top: 2.5px solid #000000; border-bottom: 2.5px solid #000000;">
           <td colspan="5">TOTAL PÉRDIDA POR ROTURAS</td>
           <td class="text-right font-mono" style="font-size: 13px;">C$ ${totalLossCost.toFixed(2)}</td>
         </tr>
@@ -1298,16 +1306,16 @@ export function printThermalTablewareReport(
     </table>
 
     <div class="footer-note">
-      <span>BodegónControl ERP • Reporte de control de menaje A4 • Auditoría: ${adminName}</span>
+      <span>BodegónControl ERP • Reporte de control de menaje (Tamaño Carta) • Auditoría: ${adminName}</span>
       <span>Impreso el ${new Date().toLocaleString()}</span>
     </div>
   `;
 
-  openPrintWindow('Reporte de Menaje A4', content);
+  openPrintWindow('Reporte de Menaje Carta', content);
 }
 
 // ============================================================================
-// 6. ACTA DE CIERRE DIARIO DE CAJA CHICA (FORMATO HOJA A4)
+// 6. ACTA DE CIERRE DIARIO DE CAJA CHICA (FORMATO HOJA CARTA B/N PURO)
 // ============================================================================
 export function printThermalPettyCashClosingAct(
   shift: PettyCashShift,
@@ -1338,9 +1346,9 @@ export function printThermalPettyCashClosingAct(
         <div class="brand-sub">Restaurante & Bar • Liquidación de Caja Chica</div>
       </div>
       <div class="doc-header-right">
-        <span class="doc-badge">DOCUMENTO OFICIAL A4</span>
+        <span class="doc-badge">DOCUMENTO OFICIAL CARTA (B/N)</span>
         <h2 class="doc-title">Acta de Cierre de Caja Chica</h2>
-        <div class="doc-meta">Liquidación de Jornada Diaria (Monocromático B/N)</div>
+        <div class="doc-meta">Liquidación de Jornada Diaria (100% Negro Puro)</div>
       </div>
     </div>
 
@@ -1358,9 +1366,9 @@ export function printThermalPettyCashClosingAct(
         <span class="info-label">Cierre por</span>
         <span class="info-value">${closedByAdmin || shift.closedBy || 'N/A'} (${shift.closedAt ? new Date(shift.closedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Hora Cierre'})</span>
       </div>
-      <div class="info-box" style="border: 2px solid #000000;">
+      <div class="info-box" style="border: 2.5px solid #000000;">
         <span class="info-label">Diagnóstico de Cuadre</span>
-        <span class="info-value" style="font-size: 12px;">
+        <span class="info-value" style="font-size: 12.5px;">
           ${isSquared ? '✓ CUADRADO EXACTO' : isShortage ? `▼ FALTANTE (-C$ ${Math.abs(shift.difference || 0).toFixed(2)})` : `▲ SOBRANTE (+C$ ${(shift.difference || 0).toFixed(2)})`}
         </span>
       </div>
@@ -1375,17 +1383,17 @@ export function printThermalPettyCashClosingAct(
         <div class="info-box">
           <span class="info-label">1. Fondo Día Anterior</span>
           <div class="info-value">C$ ${shift.previousDayRemaining.toFixed(2)}</div>
-          <span style="font-size: 9px; color: #000000;">Sobrante contado de ayer</span>
+          <span style="font-size: 10px; font-weight: 800; color: #000000;">Sobrante contado de ayer</span>
         </div>
         <div class="info-box">
           <span class="info-label">2. Traslado de General (Pagos/Salidas)</span>
           <div class="info-value">+C$ ${shift.generalCashTransfer.toFixed(2)}</div>
-          <span style="font-size: 9px; color: #000000;">Traspaso desde Caja General</span>
+          <span style="font-size: 10px; font-weight: 800; color: #000000;">Traspaso desde Caja General</span>
         </div>
         <div class="info-box">
           <span class="info-label">3. Aporte Extra de Apertura</span>
           <div class="info-value">+C$ ${shift.bossContribution.toFixed(2)}</div>
-          <span style="font-size: 9px; color: #000000;">Aporte directo de Gerencia</span>
+          <span style="font-size: 10px; font-weight: 800; color: #000000;">Aporte directo de Gerencia</span>
         </div>
       </div>
 
@@ -1397,16 +1405,16 @@ export function printThermalPettyCashClosingAct(
         <div class="info-box">
           <span class="info-label">(+) Fondeos Extras Hoy</span>
           <div class="info-value">+C$ ${totalInflows.toFixed(2)}</div>
-          <span style="font-size: 8.5px; color: #000000;">Ingresos extras a gaveta</span>
+          <span style="font-size: 10px; font-weight: 800; color: #000000;">Ingresos extras a gaveta</span>
         </div>
         <div class="info-box">
           <span class="info-label">(-) Egresos Efectivo</span>
           <div class="info-value">-C$ ${cashExpenses.toFixed(2)}</div>
-          <span style="font-size: 8.5px; color: #000000;">Salidas físicas gaveta</span>
+          <span style="font-size: 10px; font-weight: 800; color: #000000;">Salidas físicas gaveta</span>
         </div>
-        <div class="info-box" style="border: 2px solid #000000;">
+        <div class="info-box" style="border: 2.5px solid #000000;">
           <span class="info-label">Saldo Teórico Gaveta</span>
-          <div class="info-value" style="font-size: 13px;">C$ ${expectedBalance.toFixed(2)}</div>
+          <div class="info-value" style="font-size: 13.5px;">C$ ${expectedBalance.toFixed(2)}</div>
         </div>
       </div>
     </div>
@@ -1421,18 +1429,18 @@ export function printThermalPettyCashClosingAct(
           <span class="info-label">Saldo Teórico Calculado</span>
           <div class="info-value">C$ ${expectedBalance.toFixed(2)}</div>
         </div>
-        <div class="info-box" style="border: 2px solid #000000;">
+        <div class="info-box" style="border: 2.5px solid #000000;">
           <span class="info-label">Efectivo Físico Contado</span>
           <div class="info-value" style="font-size: 14px;">C$ ${(shift.actualCashCounted || 0).toFixed(2)}</div>
         </div>
-        <div class="info-box" style="border: 2px solid #000000;">
+        <div class="info-box" style="border: 2.5px solid #000000;">
           <span class="info-label">Diferencia de Cuadre</span>
-          <div class="info-value" style="font-size: 13px;">
+          <div class="info-value" style="font-size: 13.5px;">
             ${isSquared ? 'C$ 0.00 (EXACTO)' : `C$ ${(shift.difference || 0).toFixed(2)} ${isShortage ? '(FALTANTE)' : '(SOBRANTE)'}`}
           </div>
         </div>
       </div>
-      <div style="font-size: 9.5px; color: #000000; border-top: 1px solid #000000; padding-top: 4px; margin-top: 4px;">
+      <div style="font-size: 10.5px; font-weight: 800; color: #000000; border-top: 1.5px solid #000000; padding-top: 4px; margin-top: 4px;">
         <strong>Nota de Custodia:</strong> El efectivo físico contado de <strong>C$ ${(shift.actualCashCounted || 0).toFixed(2)}</strong> queda resguardado en caja para ser corroborado en la apertura de la siguiente jornada.
       </div>
     </div>
@@ -1454,7 +1462,7 @@ export function printThermalPettyCashClosingAct(
         </tr>
       </thead>
       <tbody>
-        ${transactions.length === 0 ? '<tr><td colspan="7" class="text-center" style="padding: 12px; color: #000000; font-style: italic;">No hubo movimientos en esta jornada.</td></tr>' : ''}
+        ${transactions.length === 0 ? '<tr><td colspan="7" class="text-center" style="padding: 12px; color: #000000; font-weight: 800;">No hubo movimientos en esta jornada.</td></tr>' : ''}
         ${(() => {
           let runningSaldoAct = shift.initialBalance;
           const sorted = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -1469,7 +1477,7 @@ export function printThermalPettyCashClosingAct(
             return `
               <tr>
                 <td class="font-mono text-center">${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                <td><strong>${tx.vendor}</strong> ${tx.notes ? `<div style="font-size: 8.5px; font-weight: normal; color: #000000;">${tx.notes}</div>` : ''}</td>
+                <td><strong>${tx.vendor}</strong> ${tx.notes ? `<div style="font-size: 9.5px; font-weight: 700; color: #000000;">${tx.notes}</div>` : ''}</td>
                 <td><span class="badge">${tx.category}</span></td>
                 <td class="text-center">${isCash ? 'Efectivo' : tx.method === 'CARD' ? 'Tarjeta' : 'Transf.'}</td>
                 <td class="text-right font-mono ${isIn ? 'bold' : ''}">${isIn ? `+C$ ${tx.amount.toFixed(2)}` : '—'}</td>
@@ -1481,11 +1489,11 @@ export function printThermalPettyCashClosingAct(
         })()}
       </tbody>
       <tfoot>
-        <tr style="font-weight: bold; border-top: 2px solid #000000;">
+        <tr style="font-weight: 900; border-top: 2.5px solid #000000; border-bottom: 2.5px solid #000000;">
           <td colspan="4" style="text-align: right;">TOTALES ACUMULADOS:</td>
           <td class="text-right font-mono">+C$ ${totalInflows.toFixed(2)}</td>
           <td class="text-right font-mono">-C$ ${totalExpenses.toFixed(2)}</td>
-          <td class="text-right font-mono bold" style="font-size: 11px;">C$ ${expectedBalance.toFixed(2)}</td>
+          <td class="text-right font-mono bold" style="font-size: 12px;">C$ ${expectedBalance.toFixed(2)}</td>
         </tr>
       </tfoot>
     </table>
@@ -1493,21 +1501,21 @@ export function printThermalPettyCashClosingAct(
     ${shift.closingNotes ? `
       <div class="info-box" style="margin-bottom: 14px;">
         <span class="info-label">Observaciones de Cierre</span>
-        <div style="font-size: 10px; color: #000000;">"${shift.closingNotes}"</div>
+        <div style="font-size: 11px; font-weight: 800; color: #000000;">"${shift.closingNotes}"</div>
       </div>
     ` : ''}
 
     <div class="footer-note">
-      <span>BodegónControl ERP • Acta formal de cierre diario de caja chica A4 • Responsable: ${closedByAdmin || shift.closedBy || shift.openedBy}</span>
+      <span>BodegónControl ERP • Acta formal de cierre diario de caja chica (Tamaño Carta) • Responsable: ${closedByAdmin || shift.closedBy || shift.openedBy}</span>
       <span>Impreso el ${new Date().toLocaleString()}</span>
     </div>
   `;
 
-  openPrintWindow(`Acta de Cierre Caja Chica - ${shift.date}`, content);
+  openPrintWindow(`Acta de Cierre Caja Chica Carta - ${shift.date}`, content);
 }
 
 // ============================================================================
-// 7. ACTA OFICIAL EN BLANCO Y NEGRO (B/N) EN 2 HOJAS PARA ARCHIVO Y FIRMAS
+// 7. ACTA OFICIAL EN BLANCO Y NEGRO (B/N) EN 2 HOJAS CARTA PARA ARCHIVO Y FIRMAS
 // ============================================================================
 export interface OfficialActTransaction {
   id?: string;
@@ -1571,8 +1579,6 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
       salesPedidosYa,
       salesBankTransfers = 0,
       totalGross,
-      netProfit,
-      marginPercent,
       responsableCaja,
       observacionesGeneral,
       fondoInicial,
@@ -1581,7 +1587,6 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
       expensesTransf,
       expensesTotal,
       saldoRemanente,
-      pendientesTransf = 0,
       responsableCajaChica = responsableCaja,
       transactions,
     } = data;
@@ -1619,7 +1624,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
 
     const rowsGastosHtml =
       transactions.length === 0
-        ? `<tr><td colspan="9" style="text-align: center; padding: 12px; font-style: italic;">No se registraron movimientos en Caja Chica para este día.</td></tr>`
+        ? `<tr><td colspan="9" style="text-align: center; padding: 12px; font-weight: 800;">No se registraron movimientos en Caja Chica para este día.</td></tr>`
         : transactions
             .map((g, idx) => {
               const raw = String(g.metodo || '').toUpperCase().trim();
@@ -1675,12 +1680,12 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
 
               return `
               <tr>
-                <td style="text-align: center; font-family: monospace;">${idx + 1}</td>
-                <td style="text-align: center; font-family: monospace;">${g.hora || '—'}</td>
-                <td><strong>${g.concepto}</strong></td>
-                <td>${g.categoria || '—'}</td>
-                <td style="text-align: center;">${metodoLabel}</td>
-                <td style="text-align: center; font-size: 8px;">${estadoLabel}</td>
+                <td style="text-align: center; font-family: 'Courier New', Courier, monospace; font-weight: 800;">${idx + 1}</td>
+                <td style="text-align: center; font-family: 'Courier New', Courier, monospace; font-weight: 800;">${g.hora || '—'}</td>
+                <td><strong style="font-weight: 900;">${g.concepto}</strong></td>
+                <td style="font-weight: 800;">${g.categoria || '—'}</td>
+                <td style="text-align: center; font-weight: 800;">${metodoLabel}</td>
+                <td style="text-align: center; font-size: 9.5px; font-weight: 800;">${estadoLabel}</td>
                 <td class="text-right font-mono ${inflowVal > 0 ? 'font-bold' : ''}">${entradaText}</td>
                 <td class="text-right font-mono ${outflowVal > 0 ? 'font-bold' : ''}">${salidaText}</td>
                 <td class="text-right font-mono font-bold">C$ ${Number(rowSaldo).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
@@ -1693,20 +1698,25 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
       <style>
         @page {
           size: letter portrait;
-          margin: 8mm 12mm 8mm 12mm;
+          margin: 8mm 10mm 8mm 10mm;
         }
         * {
           box-sizing: border-box;
+          color: #000000 !important;
+          -webkit-font-smoothing: none !important;
+          -moz-osx-font-smoothing: grayscale !important;
+          text-rendering: geometricPrecision !important;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
         body {
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+          font-family: Arial, Helvetica, sans-serif;
           color: #000000;
           background: #ffffff;
           margin: 0;
           padding: 0;
-          font-size: 9.5px;
+          font-size: 10.5px;
+          font-weight: 700;
           line-height: 1.25;
         }
         .print-toolbar {
@@ -1715,14 +1725,17 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
           left: 0;
           right: 0;
           height: 48px;
-          background: #0f172a;
-          color: #ffffff;
+          background: #000000 !important;
+          color: #ffffff !important;
           display: flex;
           justify-content: space-between;
           align-items: center;
           padding: 0 20px;
           z-index: 9999;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          border-bottom: 2px solid #000000;
+        }
+        .print-toolbar * {
+          color: #ffffff !important;
         }
         .sheet {
           width: 100%;
@@ -1739,44 +1752,46 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
           break-after: auto;
         }
         .header-box {
-          border-bottom: 2px solid #000000;
+          border-bottom: 2.5px solid #000000;
           padding-bottom: 6px;
           margin-bottom: 8px;
         }
         .brand {
-          font-size: 17px;
+          font-size: 18px;
           font-weight: 900;
-          letter-spacing: -0.5px;
+          letter-spacing: -0.3px;
           text-transform: uppercase;
         }
         .doc-title {
-          font-size: 12.5px;
-          font-weight: 800;
+          font-size: 13px;
+          font-weight: 900;
           letter-spacing: 0.3px;
           margin-top: 1px;
         }
         .doc-subtitle {
-          font-size: 9.5px;
+          font-size: 10.5px;
+          font-weight: 800;
           color: #000000;
         }
         .meta-table {
           width: 100%;
           border-collapse: collapse;
           margin-bottom: 8px;
-          border: 1px solid #000000;
+          border: 2px solid #000000;
         }
         .meta-table td {
-          border: 1px solid #000000;
-          padding: 4.5px 7px;
-          font-size: 10px;
-          background-color: #ffffff;
+          border: 1.5px solid #000000;
+          padding: 5px 7px;
+          font-size: 10.5px;
+          font-weight: 700;
+          background-color: #ffffff !important;
         }
         .section-title {
-          font-size: 11px;
+          font-size: 11.5px;
           font-weight: 900;
           text-transform: uppercase;
           letter-spacing: 0.4px;
-          border-bottom: 2px solid #000000;
+          border-bottom: 2.5px solid #000000;
           padding-bottom: 2.5px;
           margin: 8px 0 4px 0;
         }
@@ -1784,39 +1799,41 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
           width: 100%;
           border-collapse: collapse;
           margin-bottom: 6px;
-          font-size: 9.5px;
+          font-size: 10.5px;
+          border: 2px solid #000000;
         }
         th {
-          border: 1px solid #000000;
-          border-bottom: 2px solid #000000;
-          background-color: #ffffff;
+          border: 1.5px solid #000000;
+          border-bottom: 2.5px solid #000000;
+          background-color: #ffffff !important;
           color: #000000;
-          padding: 4px 6px;
+          padding: 4.5px 6px;
           font-weight: 900;
-          font-size: 9.5px;
+          font-size: 10px;
           text-align: left;
         }
         td {
-          border: 1px solid #000000;
-          padding: 3.5px 6px;
-          font-size: 9.5px;
-          background-color: #ffffff;
+          border: 1.5px solid #000000;
+          padding: 4px 6px;
+          font-size: 10.5px;
+          font-weight: 700;
+          background-color: #ffffff !important;
           color: #000000;
         }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
-        .font-mono { font-family: "Courier New", Courier, monospace; }
-        .font-bold { font-weight: bold; }
+        .font-mono { font-family: "Courier New", Courier, monospace; font-weight: 800; }
+        .font-bold { font-weight: 900 !important; }
         .highlight-row {
-          background-color: #ffffff;
-          font-weight: bold;
-          border-top: 2px solid #000000;
-          border-bottom: 2px solid #000000;
+          background-color: #ffffff !important;
+          font-weight: 900 !important;
+          border-top: 2.5px solid #000000;
+          border-bottom: 2.5px solid #000000;
         }
         .highlight-row td {
-          border-top: 2px solid #000000;
-          border-bottom: 2px solid #000000;
-          font-weight: bold;
+          border-top: 2.5px solid #000000;
+          border-bottom: 2.5px solid #000000;
+          font-weight: 900 !important;
         }
         .signatures {
           display: flex;
@@ -1824,11 +1841,12 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
           margin-top: 10px;
         }
         .sig-box {
-          width: 340px;
-          border-top: 1px solid #000000;
+          width: 360px;
+          border-top: 2px solid #000000;
           padding-top: 4px;
           text-align: center;
-          font-size: 9.5px;
+          font-size: 10.5px;
+          font-weight: 800;
         }
         @media print {
           .no-print {
@@ -1836,6 +1854,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
           }
           body {
             padding: 0 !important;
+            background: #ffffff !important;
           }
           .sheet {
             padding-top: 0 !important;
@@ -1846,7 +1865,6 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
 
 
     const shift = data.shift;
-    const openingEquiv = shift?.totalOpeningEquivNIO || 0;
     const closingEquiv = shift?.totalClosingEquivNIO || shift?.actualCashNIO || 0;
     const expectedNIO = shift?.expectedCashNIO || 0;
     const actualNIO = shift?.actualCashNIO || closingEquiv;
@@ -1904,10 +1922,10 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
                 <div class="brand">EL BODEGÓN RESTAURANTE & BAR</div>
-                <div class="doc-title">ACTA OFICIAL DE CIERRE Y CONCILIACIÓN DE CAJA</div>
+                <div class="doc-title">ACTA OFICIAL DE CIERRE Y CONCILIACIÓN DE CAJA (TAMAÑO CARTA B/N)</div>
                 <div class="doc-subtitle">ARQUEO FÍSICO, CONCILIACIÓN MULTIBANCO, DEDUCCIONES & AUDITORÍA</div>
               </div>
-              <div style="text-align: right; font-size: 8.5px; font-family: monospace;">
+              <div style="text-align: right; font-size: 10px; font-family: 'Courier New', Courier, monospace; font-weight: 900;">
                 <div>DOC. OFICIAL N° <strong>CG-${date.replace(/-/g, '')}</strong></div>
                 <div>EMISIÓN: ${horaEmision}</div>
               </div>
@@ -1925,7 +1943,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
               <td><strong>VENTAS EN EFECTIVO:</strong><br>C$ ${salesCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               <td><strong>VENTAS BRUTAS TOTALES:</strong><br><strong>C$ ${totalGross.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
               <td><strong>EFECTIVO NETO GAVETA:</strong><br><strong>C$ ${netCashAfterTips.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
-              <td><strong>RESULTADO ARQUEO:</strong><br><strong style="font-size: 9.5px;">${auditStatus === 'SQUARED' || diffNIO === 0 ? '✓ CUADRADO EXACTO' : diffNIO > 0 ? `▲ SOBRANTE (+C$ ${diffNIO.toFixed(2)})` : `▼ FALTANTE (-C$ ${Math.abs(diffNIO).toFixed(2)})`}</strong></td>
+              <td><strong>RESULTADO ARQUEO:</strong><br><strong style="font-size: 10.5px;">${auditStatus === 'SQUARED' || diffNIO === 0 ? '✓ CUADRADO EXACTO' : diffNIO > 0 ? `▲ SOBRANTE (+C$ ${diffNIO.toFixed(2)})` : `▼ FALTANTE (-C$ ${Math.abs(diffNIO).toFixed(2)})`}</strong></td>
             </tr>
           </table>
 
@@ -1983,13 +2001,13 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
               <tr>
                 <td><strong>Transferencias Bancarias</strong></td>
                 <td>Ventas cobradas vía transferencia electrónica (Loyverse)</td>
-                <td class="text-right font-mono font-bold" style="color: #1e3a8a;">C$ ${salesBankTransfers.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono font-bold">C$ ${salesBankTransfers.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                 <td class="text-right font-mono font-bold">${bankTransfersPct}%</td>
               </tr>
               ` : ''}
               <tr class="highlight-row">
                 <td colspan="2"><strong>TOTAL VENTAS BRUTAS FACTURADAS DEL DÍA</strong></td>
-                <td class="text-right font-mono" style="font-size: 10px;"><strong>C$ ${totalGross.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
+                <td class="text-right font-mono" style="font-size: 11px;"><strong>C$ ${totalGross.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
                 <td class="text-right font-mono"><strong>100.0%</strong></td>
               </tr>
             </tbody>
@@ -2020,7 +2038,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                   `
                     )
                     .join('')}
-                  <tr style="font-weight: bold;">
+                  <tr style="font-weight: 900;">
                     <td colspan="2">Subtotal Córdobas (NIO):</td>
                     <td class="text-right font-mono">C$ ${(shift?.totalClosingNIO || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
@@ -2035,27 +2053,27 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                   `
                     )
                     .join('')}
-                  <tr style="font-weight: bold;">
+                  <tr style="font-weight: 900;">
                     <td colspan="2">Subtotal Dólares (USD):</td>
                     <td class="text-right font-mono">$ ${(shift?.totalClosingUSD || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
-                  <tr style="border-top: 1px solid #000000;">
+                  <tr style="border-top: 2px solid #000000;">
                     <td colspan="2">Total Billetes/Monedas Contados:</td>
                     <td class="text-right font-mono font-bold">C$ ${actualNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   ${tipsDeductedFromDrawer > 0 ? `
-                  <tr style="color: #b91c1c; font-weight: bold;">
+                  <tr style="font-weight: 900;">
                     <td colspan="2">(-) Menos Propinas Entregadas:</td>
                     <td class="text-right font-mono font-bold">- C$ ${tipsDeductedFromDrawer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
-                  <tr class="highlight-row" style="border-top: 2px solid #000000;">
+                  <tr class="highlight-row">
                     <td colspan="2"><strong>TOTAL EFECTIVO NETO EN GAVETA:</strong></td>
-                    <td class="text-right font-mono font-bold" style="font-size: 10px;">C$ ${netCashAfterTips.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                    <td class="text-right font-mono font-bold" style="font-size: 11px;">C$ ${netCashAfterTips.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   ` : `
                   <tr class="highlight-row">
                     <td colspan="2"><strong>TOTAL FÍSICO GAVETA (C$)</strong></td>
-                    <td class="text-right font-mono font-bold" style="font-size: 9.5px;">C$ ${actualNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                    <td class="text-right font-mono font-bold" style="font-size: 10.5px;">C$ ${actualNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   `}
                 </tbody>
@@ -2077,12 +2095,12 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                     <td class="text-right font-mono">+ C$ ${(((shift?.totalClosingUSD || 0) * (shift?.exchangeRate || 36))).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   ` : ''}
-                  <tr style="border-top: 1px solid #000; font-weight: bold; background-color: #f8fafc;">
+                  <tr style="border-top: 2px solid #000000; font-weight: 900;">
                     <td>Total Efectivo Físico en Gaveta</td>
                     <td class="text-right font-mono">C$ ${actualNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   ${tipsDeductedFromDrawer > 0 ? `
-                  <tr style="color: #b91c1c;">
+                  <tr>
                     <td>(-) Propinas Pagadas de Gaveta</td>
                     <td class="text-right font-mono font-bold">- C$ ${tipsDeductedFromDrawer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
@@ -2093,23 +2111,23 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                     <td class="text-right font-mono">- C$ ${otherWithdrawals.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   ` : ''}
-                  <tr class="highlight-row" style="border-top: 2px solid #000; font-size: 10px;">
+                  <tr class="highlight-row" style="font-size: 11px;">
                     <td><strong>TOTAL EFECTIVO NETO QUE QUEDA EN GAVETA:</strong></td>
                     <td class="text-right font-mono font-bold">C$ ${netCashAfterTips.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   ${(shift?.totalClosingUSD || 0) > 0 ? `
-                  <tr style="font-size: 9px; color: #1e293b;">
+                  <tr style="font-size: 10px;">
                     <td>Dólares Físicos en Gaveta:</td>
                     <td class="text-right font-mono font-bold">$ ${(shift?.totalClosingUSD || 0).toFixed(2)} USD</td>
                   </tr>
                   ` : ''}
-                  <tr style="font-size: 9px; background-color: #f8fafc; color: #475569;">
+                  <tr style="font-size: 10px;">
                     <td>Cobros Efectivo Loyverse (Referencial):</td>
                     <td class="text-right font-mono">C$ ${salesCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
-                  <tr class="highlight-row" style="font-size: 9.5px; border-top: 1px solid #000;">
+                  <tr class="highlight-row" style="font-size: 10.5px;">
                     <td><strong>ESTADO DE GAVETA:</strong></td>
-                    <td class="text-right font-mono font-bold text-emerald-800">
+                    <td class="text-right font-mono font-bold">
                       C$ 0.00 (CUADRADA EXACTA)
                     </td>
                   </tr>
@@ -2136,7 +2154,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                     <td colspan="2">Retiro Socios / Snyder: C$ ${reserveSnyder.toFixed(2)}</td>
                   </tr>
                   ` : ''}
-                  <tr style="font-weight: bold; border-top: 1px solid #000; background-color: #f8fafc;">
+                  <tr style="font-weight: 900; border-top: 2px solid #000000;">
                     <td>TOTAL RETIROS Y RESERVAS:</td>
                     <td class="text-right font-mono">C$ ${totalWithdrawals.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
@@ -2191,7 +2209,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                 <td class="text-right font-mono">- C$ ${tipsDeductedFromDrawer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
               ` : ''}
-              <tr class="highlight-row" style="font-size: 10px;">
+              <tr class="highlight-row" style="font-size: 11px;">
                 <td><strong>(=) TOTAL NETO / UTILIDAD OPERATIVA LÍQUIDA DE LA JORNADA</strong></td>
                 <td class="text-right font-mono font-bold">
                   C$ ${(totalGross - expensesCash - tipsDeductedFromDrawer).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
@@ -2207,27 +2225,27 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
           </table>
 
           <div class="section-title" style="margin-top: 4px;">7. OBSERVACIONES / AUDITORÍA CONTABLE</div>
-          <div style="border: 1px solid #000; padding: 3px 6px; font-size: 8px; min-height: 22px; background-color: #fff;">
+          <div style="border: 1.5px solid #000000; padding: 4px 8px; font-size: 9.5px; font-weight: 800; min-height: 22px; background-color: #ffffff;">
             ${observacionesGeneral || shift?.closingNotes || 'Turno cerrado y conciliado conforme a los registros oficiales del sistema Bodegón Control.'}
           </div>
         </div>
 
         <div>
-          <div style="font-size: 7.5px; color: #444; margin-bottom: 4px; text-align: center;">
+          <div style="font-size: 9px; font-weight: 800; color: #000000; margin-bottom: 4px; text-align: center;">
             El presente documento constituye fe pública del cierre financiero del turno. Cualquier discrepancia debe reportarse a Gerencia de inmediato.
           </div>
           <div class="signatures">
             <div class="sig-box">
               <div style="height: 28px;"></div>
               <div>
-                <strong style="font-size: 10.5px;">CAJERO(A) EN TURNO / RESPONSABLE DE CIERRE</strong><br>
-                <span style="font-size: 9.5px;">Nombre: ${responsableCaja}</span><br>
-                <span style="font-size: 9.5px;">Firma de Conformidad: ____________________________________</span>
+                <strong style="font-size: 11px;">CAJERO(A) EN TURNO / RESPONSABLE DE CIERRE</strong><br>
+                <span style="font-size: 10px;">Nombre: ${responsableCaja}</span><br>
+                <span style="font-size: 10px;">Firma de Conformidad: ____________________________________</span>
               </div>
             </div>
           </div>
-          <div style="font-size: 8px; color: #444; text-align: center; margin-top: 6px;">
-            El Bodegón Restaurante & Bar • Documento Oficial B/N • ${modo === 'TODO' ? 'Página 1 de 2' : 'Página 1 de 1'}
+          <div style="font-size: 9.5px; font-weight: 800; color: #000000; text-align: center; margin-top: 6px;">
+            El Bodegón Restaurante & Bar • Documento Oficial Tamaño Carta B/N • ${modo === 'TODO' ? 'Página 1 de 2' : 'Página 1 de 1'}
           </div>
         </div>
       </div>
@@ -2241,10 +2259,10 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
                 <div class="brand">EL BODEGÓN RESTAURANTE & BAR</div>
-                <div class="doc-title">REPORTE DETALLADO DE COMPRAS, GASTOS & CAJA CHICA</div>
+                <div class="doc-title">REPORTE DETALLADO DE COMPRAS, GASTOS & CAJA CHICA (TAMAÑO CARTA B/N)</div>
                 <div class="doc-subtitle">CONTROL DIARIO DE GASTOS Y COMPROBANTES DE EGRESOS</div>
               </div>
-              <div style="text-align: right; font-size: 8.5px; font-family: monospace;">
+              <div style="text-align: right; font-size: 10px; font-family: 'Courier New', Courier, monospace; font-weight: 900;">
                 <div>DOC. OFICIAL N° <strong>CC-${date.replace(/-/g, '')}</strong></div>
                 <div>EMISIÓN: ${horaEmision}</div>
               </div>
@@ -2262,7 +2280,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
               <td><strong>FONDO INICIAL ASIGNADO:</strong><br>C$ ${fondoInicial.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               <td><strong>DEPÓSITOS / FONDEOS EXTRAS:</strong><br>C$ ${(totalInflows || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               <td><strong>TRANSFERENCIAS BANCARIAS:</strong><br>C$ ${expensesTransf.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-              <td><strong>SALDO RESTANTE EN GAVETA:</strong><br><strong style="font-size: 10px;">C$ ${saldoRemanente.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
+              <td><strong>SALDO RESTANTE EN GAVETA:</strong><br><strong style="font-size: 11px;">C$ ${saldoRemanente.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
             </tr>
           </table>
 
@@ -2284,31 +2302,31 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
             <tbody>
               ${rowsGastosHtml}
               <tr class="highlight-row">
-                <td colspan="6" style="text-align: right; font-weight: bold;">TOTALES DEL DÍA:</td>
-                <td class="text-right font-mono font-bold" style="font-size: 9.5px;">+C$ ${(totalInflows || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-                <td class="text-right font-mono font-bold" style="font-size: 9.5px;">-C$ ${expensesTotal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-                <td class="text-right font-mono font-bold" style="font-size: 9.5px;">C$ ${saldoRemanente.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td colspan="6" style="text-align: right; font-weight: 900;">TOTALES DEL DÍA:</td>
+                <td class="text-right font-mono font-bold" style="font-size: 10.5px;">+C$ ${(totalInflows || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono font-bold" style="font-size: 10.5px;">-C$ ${expensesTotal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td class="text-right font-mono font-bold" style="font-size: 10.5px;">C$ ${saldoRemanente.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
             </tbody>
           </table>
         </div>
 
         <div>
-          <div style="font-size: 7.5px; color: #000; margin-bottom: 4px; text-align: center;">
+          <div style="font-size: 9px; font-weight: 800; color: #000000; margin-bottom: 4px; text-align: center;">
             Certifico que cada una de las compras detalladas cuenta con factura, ticket o voucher bancario físico resguardado en archivo.
           </div>
           <div class="signatures">
             <div class="sig-box">
               <div style="height: 28px;"></div>
               <div>
-                <strong style="font-size: 10.5px;">RESPONSABLE DE CAJA CHICA / CAJERO(A) EN TURNO</strong><br>
-                <span style="font-size: 9.5px;">Nombre: ${responsableCajaChica}</span><br>
-                <span style="font-size: 9.5px;">Firma de Conformidad: ____________________________________</span>
+                <strong style="font-size: 11px;">RESPONSABLE DE CAJA CHICA / CAJERO(A) EN TURNO</strong><br>
+                <span style="font-size: 10px;">Nombre: ${responsableCajaChica}</span><br>
+                <span style="font-size: 10px;">Firma de Conformidad: ____________________________________</span>
               </div>
             </div>
           </div>
-          <div style="font-size: 8px; color: #444; text-align: center; margin-top: 6px;">
-            El Bodegón Restaurante & Bar • Documento Oficial B/N • ${modo === 'TODO' ? 'Página 2 de 2' : 'Página 1 de 1'}
+          <div style="font-size: 9.5px; font-weight: 800; color: #000000; text-align: center; margin-top: 6px;">
+            El Bodegón Restaurante & Bar • Documento Oficial Tamaño Carta B/N • ${modo === 'TODO' ? 'Página 2 de 2' : 'Página 1 de 1'}
           </div>
         </div>
       </div>
@@ -2325,10 +2343,10 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
 
     const title =
       modo === 'TODO'
-        ? `Acta Completa B/N - ${date}`
+        ? `Acta Completa Carta B/N - ${date}`
         : modo === 'GENERAL'
-        ? `Acta Caja General B/N - ${date}`
-        : `Acta Caja Chica B/N - ${date}`;
+        ? `Acta Caja General Carta B/N - ${date}`
+        : `Acta Caja Chica Carta B/N - ${date}`;
 
     const fullHtml = `
       <!DOCTYPE html>
@@ -2342,12 +2360,12 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
       <body>
         <div class="print-toolbar no-print">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="background: #000; color: #fff; padding: 3px 8px; border-radius: 4px; font-weight: 900; font-size: 11px;">B/N OFICIAL</span>
-            <span style="font-weight: bold; font-size: 13px; color: #fff;">${title}</span>
+            <span style="background: #ffffff; color: #000000 !important; padding: 3px 8px; border-radius: 4px; font-weight: 900; font-size: 11px;">CARTA B/N PURO</span>
+            <span style="font-weight: 900; font-size: 13px;">${title}</span>
           </div>
           <div style="display: flex; gap: 8px;">
-            <button onclick="window.print()" style="background: #059669; color: #fff; border: none; padding: 6px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">🖨️ Mandar a Imprimir</button>
-            <button onclick="window.close()" style="background: #475569; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">✕ Cerrar</button>
+            <button onclick="window.print()" style="background: #ffffff; color: #000000 !important; border: 2px solid #ffffff; padding: 6px 16px; border-radius: 6px; font-weight: 900; cursor: pointer;">🖨️ Mandar a Imprimir</button>
+            <button onclick="window.close()" style="background: transparent; color: #ffffff !important; border: 1.5px solid #ffffff; padding: 6px 12px; border-radius: 6px; font-weight: 900; cursor: pointer;">✕ Cerrar</button>
           </div>
         </div>
 
@@ -2462,7 +2480,7 @@ export function computeYesterdayEarningsSummary(
 }
 
 // ============================================================================
-// ACTA OFICIAL DE APERTURA Y ENTREGA DE FONDO DE CAJA (A4 / B&N - 2 HOJAS)
+// ACTA OFICIAL DE APERTURA Y ENTREGA DE FONDO DE CAJA (TAMAÑO CARTA B/N - 2 HOJAS)
 // Hoja 1: Fondo de Gaveta y Parámetros de Apertura
 // Hoja 2 (Hoja Final): Liquidación y Estado de Ganancias de la Jornada Anterior
 // ============================================================================
@@ -2539,8 +2557,6 @@ export function printOfficialOpeningActBN(
     const salesPedidosYa = rawSummary?.salesPedidosYa ?? shift.loyverseValidation?.salesPedidosYa ?? 0;
     const salesBankTransfers = rawSummary?.salesBankTransfers ?? shift.salesBankTransfers ?? 0;
     const salesCashLoyverse = rawSummary?.salesCashLoyverse ?? shift.loyverseValidation?.salesCashLoyverse ?? 0;
-    const loyversePaidOut = 0;
-    const efectivoRealGenerado = salesCashLoyverse;
     const otherIncome = rawSummary?.otherIncome ?? 0;
     const totalGenerado = rawSummary?.totalGenerado ?? (totalCards + salesPedidosYa + salesBankTransfers + salesCashLoyverse + otherIncome);
 
@@ -2560,16 +2576,21 @@ export function printOfficialOpeningActBN(
         }
         * {
           box-sizing: border-box;
+          color: #000000 !important;
+          -webkit-font-smoothing: none !important;
+          -moz-osx-font-smoothing: grayscale !important;
+          text-rendering: geometricPrecision !important;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
         body {
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+          font-family: Arial, Helvetica, sans-serif;
           color: #000000;
           background: #ffffff;
           margin: 0;
           padding: 0;
           font-size: 11px;
+          font-weight: 700;
           line-height: 1.35;
         }
         .print-toolbar {
@@ -2578,14 +2599,17 @@ export function printOfficialOpeningActBN(
           left: 0;
           right: 0;
           height: 48px;
-          background: #0f172a;
-          color: #ffffff;
+          background: #000000 !important;
+          color: #ffffff !important;
           display: flex;
           justify-content: space-between;
           align-items: center;
           padding: 0 20px;
           z-index: 9999;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          border-bottom: 2px solid #000000;
+        }
+        .print-toolbar * {
+          color: #ffffff !important;
         }
         .sheet {
           width: 100%;
@@ -2602,14 +2626,14 @@ export function printOfficialOpeningActBN(
           break-after: auto;
         }
         .header-box {
-          border-bottom: 2px solid #000000;
+          border-bottom: 2.5px solid #000000;
           padding-bottom: 8px;
           margin-bottom: 10px;
         }
         .brand {
           font-size: 18px;
           font-weight: 900;
-          letter-spacing: -0.5px;
+          letter-spacing: -0.3px;
           text-transform: uppercase;
         }
         .doc-title {
@@ -2619,26 +2643,29 @@ export function printOfficialOpeningActBN(
           margin-top: 2px;
         }
         .doc-subtitle {
-          font-size: 10px;
-          color: #333333;
+          font-size: 10.5px;
+          font-weight: 800;
+          color: #000000;
         }
         .meta-table {
           width: 100%;
           border-collapse: collapse;
           margin-bottom: 10px;
-          border: 1.5px solid #000000;
+          border: 2px solid #000000;
         }
         .meta-table td {
-          border: 1px solid #000000;
+          border: 1.5px solid #000000;
           padding: 6px 9px;
-          font-size: 10.5px;
+          font-size: 11px;
+          font-weight: 700;
+          background-color: #ffffff !important;
         }
         .section-title {
           font-size: 12px;
           font-weight: 900;
           text-transform: uppercase;
           letter-spacing: 0.4px;
-          border-bottom: 2px solid #000000;
+          border-bottom: 2.5px solid #000000;
           padding-bottom: 3px;
           margin: 12px 0 6px 0;
         }
@@ -2646,32 +2673,41 @@ export function printOfficialOpeningActBN(
           width: 100%;
           border-collapse: collapse;
           margin-bottom: 8px;
-          font-size: 10.5px;
+          font-size: 11px;
+          border: 2px solid #000000;
         }
         th {
-          border: 1px solid #000000;
-          border-bottom: 2px solid #000000;
-          background-color: #f8fafc;
-          padding: 5px 7px;
+          border: 1.5px solid #000000;
+          border-bottom: 2.5px solid #000000;
+          background-color: #ffffff !important;
+          color: #000000;
+          padding: 5.5px 7px;
           font-weight: 900;
           font-size: 10.5px;
           text-align: left;
         }
         td {
-          border: 1px solid #000000;
+          border: 1.5px solid #000000;
           padding: 5px 7px;
-          font-size: 10.5px;
-          background-color: #ffffff;
+          font-size: 11px;
+          font-weight: 700;
+          background-color: #ffffff !important;
+          color: #000000;
         }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
-        .font-mono { font-family: "Courier New", Courier, monospace; }
-        .font-bold { font-weight: bold; }
+        .font-mono { font-family: "Courier New", Courier, monospace; font-weight: 800; }
+        .font-bold { font-weight: 900 !important; }
         .highlight-row {
-          background-color: #ffffff;
-          font-weight: bold;
-          border-top: 2px solid #000000;
-          border-bottom: 2px solid #000000;
+          background-color: #ffffff !important;
+          font-weight: 900 !important;
+          border-top: 2.5px solid #000000;
+          border-bottom: 2.5px solid #000000;
+        }
+        .highlight-row td {
+          border-top: 2.5px solid #000000;
+          border-bottom: 2.5px solid #000000;
+          font-weight: 900 !important;
         }
         .signatures {
           display: flex;
@@ -2680,14 +2716,15 @@ export function printOfficialOpeningActBN(
         }
         .sig-box {
           width: 380px;
-          border-top: 1.5px solid #000000;
+          border-top: 2px solid #000000;
           padding-top: 6px;
           text-align: center;
-          font-size: 10.5px;
+          font-size: 11px;
+          font-weight: 800;
         }
         @media print {
           .no-print { display: none !important; }
-          body { padding: 0 !important; }
+          body { padding: 0 !important; background: #ffffff !important; }
           .sheet { padding: 0 !important; min-height: 96vh !important; }
         }
       </style>
@@ -2704,10 +2741,10 @@ export function printOfficialOpeningActBN(
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
                 <div class="brand">RESTAURANTE EL BODEGÓN</div>
-                <div class="doc-title">ACTA OFICIAL DE APERTURA Y ENTREGA DE FONDO DE CAJA</div>
+                <div class="doc-title">ACTA OFICIAL DE APERTURA Y ENTREGA DE FONDO DE CAJA (TAMAÑO CARTA B/N)</div>
                 <div class="doc-subtitle">ARQUEO INICIAL FÍSICO, RECEPCIÓN CONFORME Y ESTADO OPERATIVO</div>
               </div>
-              <div style="text-align: right; font-size: 10px; font-family: monospace;">
+              <div style="text-align: right; font-size: 10.5px; font-family: 'Courier New', Courier, monospace; font-weight: 900;">
                 <div>DOC. OFICIAL N° <strong>AP-${date.replace(/-/g, '')}</strong></div>
                 <div>HORA APERTURA: <strong>${horaApertura}</strong></div>
               </div>
@@ -2723,18 +2760,18 @@ export function printOfficialOpeningActBN(
             </tr>
             <tr>
               ${openingTransferToPetty > 0 ? `
-              <td><strong>TOTAL EFECTIVO CONTADO:</strong><br><span class="font-mono font-bold" style="font-size: 12px;">C$ ${initialCashCounted.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span></td>
-              <td><strong>TRASLADO A CAJA CHICA:</strong><br><span class="font-mono font-bold" style="font-size: 12px; color: #b91c1c;">- C$ ${openingTransferToPetty.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span></td>
-              <td colspan="2" style="border: 2px solid #000; background-color: #f8fafc;">
+              <td><strong>TOTAL EFECTIVO CONTADO:</strong><br><span class="font-mono font-bold" style="font-size: 12.5px;">C$ ${initialCashCounted.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span></td>
+              <td><strong>TRASLADO A CAJA CHICA:</strong><br><span class="font-mono font-bold" style="font-size: 12.5px;">- C$ ${openingTransferToPetty.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span></td>
+              <td colspan="2" style="border: 2.5px solid #000000; background-color: #ffffff;">
                 <strong>FONDO NETO EN GAVETA (VUELTO OPERATIVO):</strong><br>
-                <strong class="font-mono" style="font-size: 14px;">C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
+                <strong class="font-mono" style="font-size: 14.5px;">C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
               </td>
               ` : `
-              <td><strong>FONDO FÍSICO CÓRDOBAS:</strong><br><span class="font-mono font-bold" style="font-size: 12px;">C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span></td>
-              <td><strong>FONDO FÍSICO DÓLARES:</strong><br><span class="font-mono font-bold" style="font-size: 12px;">US$ ${shift.totalOpeningUSD.toFixed(2)}</span> (C$ ${(shift.totalOpeningUSD * shift.exchangeRate).toLocaleString('es-NI', { minimumFractionDigits: 2 })})</td>
-              <td colspan="2" style="border: 2px solid #000; background-color: #f8fafc;">
+              <td><strong>FONDO FÍSICO CÓRDOBAS:</strong><br><span class="font-mono font-bold" style="font-size: 12.5px;">C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</span></td>
+              <td><strong>FONDO FÍSICO DÓLARES:</strong><br><span class="font-mono font-bold" style="font-size: 12.5px;">US$ ${shift.totalOpeningUSD.toFixed(2)}</span> (C$ ${(shift.totalOpeningUSD * shift.exchangeRate).toLocaleString('es-NI', { minimumFractionDigits: 2 })})</td>
+              <td colspan="2" style="border: 2.5px solid #000000; background-color: #ffffff;">
                 <strong>TOTAL FONDO DE APERTURA EN GAVETA:</strong><br>
-                <strong class="font-mono" style="font-size: 14px;">C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
+                <strong class="font-mono" style="font-size: 14.5px;">C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
               </td>
               `}
             </tr>
@@ -2769,26 +2806,26 @@ export function printOfficialOpeningActBN(
                     )
                     .join('') : `
                     <tr>
-                      <td colspan="2" style="padding: 16px 8px; font-style: italic; color: #444;">
+                      <td colspan="2" style="padding: 16px 8px; font-weight: 800; color: #000000;">
                         Fondo de apertura recibido en efectivo para gaveta operativa
                       </td>
-                      <td class="text-right font-mono font-bold" style="padding: 16px 8px; font-size: 11px;">
+                      <td class="text-right font-mono font-bold" style="padding: 16px 8px; font-size: 11.5px;">
                         C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
                   `}
                   ${openingTransferToPetty > 0 ? `
-                  <tr style="border-top: 1px solid #000; font-size: 9.5px;">
+                  <tr style="border-top: 2px solid #000000; font-size: 10.5px;">
                     <td colspan="2">Efectivo Físico Inicial Contado:</td>
                     <td class="text-right font-mono font-bold">C$ ${nioTotalCounted.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
-                  <tr style="color: #b91c1c; font-size: 9.5px;">
+                  <tr style="font-size: 10.5px; font-weight: 900;">
                     <td colspan="2">(-) Traslado Inicial a Caja Chica:</td>
                     <td class="text-right font-mono font-bold">- C$ ${openingTransferToPetty.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   <tr class="highlight-row">
                     <td colspan="2"><strong>FONDO NETO EN GAVETA (NIO):</strong></td>
-                    <td class="text-right font-mono font-bold" style="font-size: 11px;">C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                    <td class="text-right font-mono font-bold" style="font-size: 11.5px;">C$ ${shift.totalOpeningNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   ` : `
                   <tr class="highlight-row">
@@ -2826,7 +2863,7 @@ export function printOfficialOpeningActBN(
                     )
                     .join('') : `
                     <tr>
-                      <td colspan="2" style="padding: 16px 8px; font-style: italic; color: #444;">
+                      <td colspan="2" style="padding: 16px 8px; font-weight: 800; color: #000000;">
                         ${(shift.openingNotes && shift.openingNotes.toLowerCase().includes('sobre')) ? 'Dólares apartados en sobre para Gerencia' : 'Sin dólares recibidos en gaveta'}
                       </td>
                       <td class="text-right font-mono font-bold" style="padding: 16px 8px;">
@@ -2846,15 +2883,15 @@ export function printOfficialOpeningActBN(
               </table>
 
               <!-- TOTAL CONSOLIDADO -->
-              <div style="border: 2px solid #000; padding: 10px; text-align: center; margin-top: 10px; background-color: #fff;">
+              <div style="border: 2.5px solid #000000; padding: 10px; text-align: center; margin-top: 10px; background-color: #ffffff;">
                 ${openingTransferToPetty > 0 ? `
-                <div style="font-size: 9.5px; color: #333; text-transform: uppercase;">CONTEO FÍSICO INICIAL EN GAVETA: C$ ${initialCashCounted.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
-                <div style="font-size: 10px; color: #b91c1c; font-weight: bold; text-transform: uppercase; margin-top: 2px;">(-) TRASLADO A CAJA CHICA (COMPRAS): - C$ ${openingTransferToPetty.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
-                <div style="font-size: 10.5px; font-weight: bold; text-transform: uppercase; margin-top: 5px; border-top: 1.5px solid #000; padding-top: 4px;">(=) FONDO NETO EN CAJA GENERAL:</div>
+                <div style="font-size: 10px; font-weight: 800; color: #000000; text-transform: uppercase;">CONTEO FÍSICO INICIAL EN GAVETA: C$ ${initialCashCounted.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
+                <div style="font-size: 10.5px; color: #000000; font-weight: 900; text-transform: uppercase; margin-top: 2px;">(-) TRASLADO A CAJA CHICA (COMPRAS): - C$ ${openingTransferToPetty.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</div>
+                <div style="font-size: 11px; font-weight: 900; text-transform: uppercase; margin-top: 5px; border-top: 2px solid #000000; padding-top: 4px;">(=) FONDO NETO EN CAJA GENERAL:</div>
                 ` : `
-                <div style="font-size: 10px; font-weight: bold; text-transform: uppercase;">FONDO INICIAL EN GAVETA:</div>
+                <div style="font-size: 11px; font-weight: 900; text-transform: uppercase;">FONDO INICIAL EN GAVETA:</div>
                 `}
-                <div style="font-size: 18px; font-weight: 900; font-family: monospace; margin-top: 4px;">
+                <div style="font-size: 19px; font-weight: 900; font-family: 'Courier New', Courier, monospace; margin-top: 4px;">
                   C$ ${shift.totalOpeningEquivNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                 </div>
               </div>
@@ -2863,7 +2900,7 @@ export function printOfficialOpeningActBN(
 
           <!-- NOTAS -->
           <div class="section-title">2. OBSERVACIONES DE APERTURA</div>
-          <div style="border: 1.5px solid #000; padding: 8px 10px; font-size: 10.5px; min-height: 38px; background-color: #fff;">
+          <div style="border: 2px solid #000000; padding: 8px 10px; font-size: 11px; font-weight: 800; min-height: 38px; background-color: #ffffff;">
             ${shift.openingNotes || 'Fondo entregado conforme sin anomalías. Operación comercial iniciada con éxito.'}
           </div>
         </div>
@@ -2874,16 +2911,16 @@ export function printOfficialOpeningActBN(
               <div style="height: 32px;"></div>
               <div>
                 <strong>CAJERO(A) EN TURNO / RECIBE Y DECLARA CONFORME</strong><br>
-                <span style="font-size: 9.5px;">Nombre: ${shift.openedBy}</span><br>
-                <span style="font-size: 9.5px;">Firma: ____________________________________</span>
+                <span style="font-size: 10.5px;">Nombre: ${shift.openedBy}</span><br>
+                <span style="font-size: 10.5px;">Firma: ____________________________________</span>
               </div>
             </div>
           </div>
 
           <!-- PIE DE HOJA 1 -->
-          <div style="margin-top: 12px; padding-top: 6px; border-top: 1px solid #000;">
-            <div style="font-size: 9px; color: #444; text-align: center;">
-              El Bodegón Restaurante & Bar • Documento Oficial de Apertura • ${showSheet2 ? 'Página 1 de 2' : 'Página 1 de 1'}
+          <div style="margin-top: 12px; padding-top: 6px; border-top: 1.5px solid #000000;">
+            <div style="font-size: 10px; font-weight: 800; color: #000000; text-align: center;">
+              El Bodegón Restaurante & Bar • Documento Oficial de Apertura (Tamaño Carta B/N) • ${showSheet2 ? 'Página 1 de 2' : 'Página 1 de 1'}
             </div>
           </div>
         </div>
@@ -2898,10 +2935,10 @@ export function printOfficialOpeningActBN(
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
                 <div class="brand">RESTAURANTE EL BODEGÓN</div>
-                <div class="doc-title">ESTADO DE GANANCIAS Y LIQUIDACIÓN COMERCIAL DE LA JORNADA ANTERIOR</div>
+                <div class="doc-title">ESTADO DE GANANCIAS Y LIQUIDACIÓN COMERCIAL DE LA JORNADA ANTERIOR (CARTA B/N)</div>
                 <div class="doc-subtitle">INGRESOS MULTIBANCO, EFECTIVO REAL CON PAGOS/SALIDAS, GASTOS DIARIOS Y GANANCIA NETA</div>
               </div>
-              <div style="text-align: right; font-size: 8.5px; font-family: monospace;">
+              <div style="text-align: right; font-size: 10px; font-family: 'Courier New', Courier, monospace; font-weight: 900;">
                 <div>DOC. OFICIAL N° <strong>GAN-${date.replace(/-/g, '')}</strong></div>
                 <div>AUDITADO EN APERTURA</div>
               </div>
@@ -2913,13 +2950,13 @@ export function printOfficialOpeningActBN(
               <td style="width: 25%;"><strong>JORNADA AUDITADA:</strong><br>${prevDiaSemanaCap}, ${prevFechaLarga}</td>
               <td style="width: 25%;"><strong>AUDITADO POR:</strong><br>${adminName || shift.openedBy}</td>
               <td style="width: 25%;"><strong>TOTAL GENERADO POR TODO:</strong><br><strong>C$ ${totalGenerado.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
-              <td style="width: 25%;"><strong>TOTAL GASTOS DEL DÍA:</strong><br><strong style="color: #b91c1c;">- C$ ${totalGastos.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
+              <td style="width: 25%;"><strong>TOTAL GASTOS DEL DÍA:</strong><br><strong>- C$ ${totalGastos.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
             </tr>
             <tr>
               <td><strong>VENTAS EN EFECTIVO (LOYVERSE):</strong><br>C$ ${salesCashLoyverse.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               <td><strong>TOTAL TARJETAS DATAFAST:</strong><br>C$ ${totalCards.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               <td><strong>DELIVERY PEDIDOSYA:</strong><br>C$ ${salesPedidosYa.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-              <td style="border: 1.5px solid #000; background-color: #f8fafc;"><strong>GANANCIA NETA LÍQUIDA:</strong><br><strong style="font-size: 11px;">C$ ${gananciaNeta.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong> (${margenPorcentaje.toFixed(1)}%)</td>
+              <td style="border: 2.5px solid #000000; background-color: #ffffff;"><strong>GANANCIA NETA LÍQUIDA:</strong><br><strong style="font-size: 12px;">C$ ${gananciaNeta.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong> (${margenPorcentaje.toFixed(1)}%)</td>
             </tr>
           </table>
 
@@ -2956,7 +2993,7 @@ export function printOfficialOpeningActBN(
                 <td class="text-right font-mono">C$ ${cardsLafise.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                 <td class="text-right font-mono">${(totalGenerado > 0 ? (cardsLafise / totalGenerado) * 100 : 0).toFixed(1)}%</td>
               </tr>
-              <tr style="font-weight: bold; background-color: #fafafa;">
+              <tr style="font-weight: 900; border-top: 2px solid #000000;">
                 <td colspan="2" style="text-align: right; padding-right: 8px;">SUBTOTAL TODAS LAS TARJETAS POS:</td>
                 <td class="text-right font-mono font-bold">C$ ${totalCards.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                 <td class="text-right font-mono font-bold">${(totalGenerado > 0 ? (totalCards / totalGenerado) * 100 : 0).toFixed(1)}%</td>
@@ -2992,7 +3029,7 @@ export function printOfficialOpeningActBN(
               ` : ''}
               <tr class="highlight-row">
                 <td colspan="2"><strong>TOTAL GENERADO POR TODO (INGRESOS BRUTOS REALES)</strong></td>
-                <td class="text-right font-mono" style="font-size: 10px;"><strong>C$ ${totalGenerado.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
+                <td class="text-right font-mono" style="font-size: 11.5px;"><strong>C$ ${totalGenerado.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
                 <td class="text-right font-mono"><strong>100.0%</strong></td>
               </tr>
             </tbody>
@@ -3026,7 +3063,7 @@ export function printOfficialOpeningActBN(
               </tr>
               <tr class="highlight-row">
                 <td colspan="2"><strong>TOTAL GASTOS Y SALIDAS DEL DÍA</strong></td>
-                <td class="text-right font-mono" style="font-size: 10px;"><strong>- C$ ${totalGastos.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
+                <td class="text-right font-mono" style="font-size: 11.5px;"><strong>- C$ ${totalGastos.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong></td>
               </tr>
             </tbody>
           </table>
@@ -3043,9 +3080,9 @@ export function printOfficialOpeningActBN(
                 <td><strong>(-) Total Gastos y Egresos Operativos del Día</strong> (Compras Efectivo + Transferencias + Propinas)</td>
                 <td class="text-right font-mono font-bold">- C$ ${totalGastos.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
-              <tr class="highlight-row" style="font-size: 12px;">
+              <tr class="highlight-row" style="font-size: 12.5px;">
                 <td><strong>(=) GANANCIA NETA DEL DÍA (UTILIDAD LÍQUIDA REAL DE LA JORNADA)</strong></td>
-                <td class="text-right font-mono font-bold" style="font-size: 14px;">
+                <td class="text-right font-mono font-bold" style="font-size: 14.5px;">
                   C$ ${gananciaNeta.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                 </td>
               </tr>
@@ -3063,16 +3100,16 @@ export function printOfficialOpeningActBN(
               <div style="height: 32px;"></div>
               <div>
                 <strong>CAJERO(A) EN TURNO / DECLARA CONFORME</strong><br>
-                <span style="font-size: 9.5px;">Nombre: ${shift.openedBy}</span><br>
-                <span style="font-size: 9.5px;">Firma: ____________________________________</span>
+                <span style="font-size: 10.5px;">Nombre: ${shift.openedBy}</span><br>
+                <span style="font-size: 10.5px;">Firma: ____________________________________</span>
               </div>
             </div>
           </div>
 
           <!-- PIE DE HOJA 2 -->
-          <div style="margin-top: 12px; padding-top: 6px; border-top: 1px solid #000;">
-            <div style="font-size: 9px; color: #444; text-align: center;">
-              El Bodegón Restaurante & Bar • Documento Oficial de Ganancias • Página 2 de 2
+          <div style="margin-top: 12px; padding-top: 6px; border-top: 1.5px solid #000000;">
+            <div style="font-size: 10px; font-weight: 800; color: #000000; text-align: center;">
+              El Bodegón Restaurante & Bar • Documento Oficial de Ganancias (Tamaño Carta B/N) • Página 2 de 2
             </div>
           </div>
         </div>
@@ -3080,9 +3117,9 @@ export function printOfficialOpeningActBN(
     `;
 
     const titleToolbar = mode === 'SOLO_GANANCIAS'
-      ? 'Liquidación y Ganancias de Ayer'
+      ? 'Liquidación y Ganancias de Ayer (Tamaño Carta)'
       : mode === 'SOLO_FONDO'
-      ? 'Acta Oficial de Apertura (Fondo Gaveta)'
+      ? 'Acta Oficial de Apertura (Tamaño Carta)'
       : 'Acta de Apertura (Hoja 1: Fondo | Hoja 2: Ganancias)';
 
     const fullHtml = `
@@ -3097,12 +3134,12 @@ export function printOfficialOpeningActBN(
       <body>
         <div class="print-toolbar no-print">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="background: #000; color: #fff; padding: 3px 8px; border-radius: 4px; font-weight: 900; font-size: 11px;">B/N OFICIAL</span>
-            <span style="font-weight: bold; font-size: 13px; color: #fff;">${titleToolbar}</span>
+            <span style="background: #ffffff; color: #000000 !important; padding: 3px 8px; border-radius: 4px; font-weight: 900; font-size: 11px;">CARTA B/N PURO</span>
+            <span style="font-weight: 900; font-size: 13px;">${titleToolbar}</span>
           </div>
           <div style="display: flex; gap: 8px;">
-            <button onclick="window.print()" style="background: #059669; color: #fff; border: none; padding: 6px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">🖨️ Mandar a Imprimir</button>
-            <button onclick="window.close()" style="background: #475569; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">✕ Cerrar</button>
+            <button onclick="window.print()" style="background: #ffffff; color: #000000 !important; border: 2px solid #ffffff; padding: 6px 16px; border-radius: 6px; font-weight: 900; cursor: pointer;">🖨️ Mandar a Imprimir</button>
+            <button onclick="window.close()" style="background: transparent; color: #ffffff !important; border: 1.5px solid #ffffff; padding: 6px 12px; border-radius: 6px; font-weight: 900; cursor: pointer;">✕ Cerrar</button>
           </div>
         </div>
 
@@ -3146,8 +3183,8 @@ export function printYesterdayEarningsActBN(
 
 
 /**
- * Imprime un comprobante individual de pago de nómina en tiquetera térmica de 80mm.
- * Diseño 100% monocromático B/N de alta nitidez, rectangular, con desglose y firma.
+ * Imprime un comprobante individual de pago de nómina en Hoja Tamaño Carta (100% B/N Puro).
+ * Diseño monocromático de alto contraste sin fondos grises ni letras finas.
  */
 export function printThermalIndividualPayrollReceipt(
   row: {
@@ -3185,9 +3222,9 @@ export function printThermalIndividualPayrollReceipt(
     const now = new Date();
     const fechaHora = now.toLocaleDateString('es-NI', {
       day: '2-digit',
-      month: 'short',
+      month: 'long',
       year: 'numeric',
-    }) + ' ' + now.toLocaleTimeString('es-NI', {
+    }) + ' — ' + now.toLocaleTimeString('es-NI', {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -3197,202 +3234,269 @@ export function printThermalIndividualPayrollReceipt(
       <html lang="es">
       <head>
         <meta charset="UTF-8">
-        <title>Recibo de Pago - ${row.name}</title>
+        <title>Comprobante de Pago (Carta) - ${row.name}</title>
         <style>
           @page {
-            size: 80mm auto;
-            margin: 0;
+            size: letter portrait;
+            margin: 12mm 15mm 12mm 15mm;
           }
           * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            color: #000000 !important;
+            -webkit-font-smoothing: none !important;
+            -moz-osx-font-smoothing: grayscale !important;
+            text-rendering: geometricPrecision !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           body {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 11px;
-            line-height: 1.25;
-            color: #000;
-            background: #fff;
-            width: 76mm;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.35;
+            color: #000000;
+            background: #ffffff;
+            margin: 0;
+            padding: 56px 16px 20px;
+          }
+          .print-toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 48px;
+            background: #000000 !important;
+            color: #ffffff !important;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 9999;
+            border-bottom: 2px solid #000000;
+          }
+          .print-toolbar * {
+            color: #ffffff !important;
+          }
+          .voucher-card {
+            max-width: 720px;
             margin: 0 auto;
-            padding: 4mm 2mm 8mm 2mm;
+            border: 2.5px solid #000000;
+            padding: 22px 26px;
+            background: #ffffff !important;
+          }
+          .header-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2.5px solid #000000;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+          }
+          .brand-title {
+            font-size: 20px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -0.3px;
+          }
+          .brand-sub {
+            font-size: 12.5px;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-top: 3px;
+          }
+          .meta-table, .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 14px;
+            border: 2px solid #000000;
+          }
+          .meta-table td, .detail-table td, .detail-table th {
+            border: 1.5px solid #000000;
+            padding: 7px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #ffffff !important;
+          }
+          .detail-table th {
+            font-weight: 900;
+            text-transform: uppercase;
+            border-bottom: 2.5px solid #000000;
           }
           .text-center { text-align: center; }
           .text-right { text-align: right; }
-          .text-left { text-align: left; }
-          .font-bold { font-weight: bold; }
-          .font-mono { font-family: 'Courier New', Courier, monospace; }
-          .divider-solid {
-            border-top: 1.5px solid #000;
-            margin: 5px 0;
-          }
-          .divider-dashed {
-            border-top: 1px dashed #000;
-            margin: 4px 0;
-          }
-          .divider-double {
-            border-top: 3px double #000;
-            margin: 5px 0;
-          }
-          .table-clean {
-            width: 100%;
-            border-collapse: collapse;
-          }
-          .table-clean td {
-            padding: 1.5px 0;
-            vertical-align: top;
-          }
+          .font-bold { font-weight: 900 !important; }
+          .font-mono { font-family: 'Courier New', Courier, monospace; font-weight: 800; }
           .box-total {
-            border: 2px solid #000;
-            padding: 5px;
-            margin: 6px 0;
+            border: 2.5px solid #000000;
+            padding: 12px 16px;
+            margin: 16px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff !important;
+          }
+          .sign-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 40px;
+            margin-top: 38px;
+          }
+          .sign-col {
+            flex: 1;
+            border-top: 2px solid #000000;
+            padding-top: 8px;
             text-align: center;
           }
-          .sign-area {
-            margin-top: 22px;
-            padding-top: 4px;
-            text-align: center;
-          }
-          .sign-line {
-            border-top: 1.5px solid #000;
-            width: 85%;
-            margin: 0 auto 4px auto;
+          @media print {
+            .no-print { display: none !important; }
+            body { padding: 0 !important; background: #ffffff !important; }
+            .voucher-card { max-width: 100%; }
           }
         </style>
       </head>
       <body>
-        <div class="text-center font-bold" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
-          EL BODEGÓN RESTAURANTE
-        </div>
-        <div class="text-center" style="font-size: 9.5px; margin-top: 1px;">
-          COMPROBANTE QUINCENAL DE PAGO
-        </div>
-        <div class="divider-double"></div>
-
-        <table class="table-clean" style="font-size: 10px;">
-          <tr>
-            <td style="width: 32%;"><strong>PERÍODO:</strong></td>
-            <td>${periodLabel} - ${monthName} ${year}</td>
-          </tr>
-          <tr>
-            <td><strong>EMPLEADO:</strong></td>
-            <td class="font-bold">${row.name.toUpperCase()}</td>
-          </tr>
-          <tr>
-            <td><strong>CARGO:</strong></td>
-            <td>${row.role || 'Personal Operativo'}</td>
-          </tr>
-          <tr>
-            <td><strong>FECHA/HORA:</strong></td>
-            <td>${fechaHora}</td>
-          </tr>
-        </table>
-
-        <div class="divider-solid"></div>
-        <div class="text-center font-bold" style="font-size: 10px; margin-bottom: 2px;">
-          1. DETALLE DE HABERES (DEVENGADO)
-        </div>
-        <table class="table-clean" style="font-size: 10.5px;">
-          <tr>
-            <td>Salario Quincenal Base</td>
-            <td class="text-right font-mono">C$ ${(row.baseSalary || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-          </tr>
-          ${(row.overtimeAmount && row.overtimeAmount > 0) ? `
-          <tr>
-            <td>Horas Extras (${row.overtimeHours || 0} hrs)</td>
-            <td class="text-right font-mono">C$ ${(row.overtimeAmount).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-          </tr>` : ''}
-          ${(row.holidaysAmount && row.holidaysAmount > 0) ? `
-          <tr>
-            <td>Feriados Trabajados (${row.holidaysCount || 0} d)</td>
-            <td class="text-right font-mono">C$ ${(row.holidaysAmount).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-          </tr>` : ''}
-          ${(row.bonuses && row.bonuses > 0) ? `
-          <tr>
-            <td>Bonificaciones / Otros</td>
-            <td class="text-right font-mono">C$ ${(row.bonuses).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-          </tr>` : ''}
-          <tr class="font-bold">
-            <td style="padding-top: 3px;">SUBTOTAL DEVENGADO:</td>
-            <td class="text-right font-mono" style="padding-top: 3px;">C$ ${totalEarnings.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-          </tr>
-        </table>
-
-        <div class="divider-dashed"></div>
-        <div class="text-center font-bold" style="font-size: 10px; margin-bottom: 2px;">
-          2. DETALLE DE DEDUCCIONES
-        </div>
-        <table class="table-clean" style="font-size: 10.5px;">
-          ${(row.loanDeduction && row.loanDeduction > 0) ? `
-          <tr>
-            <td>Deducción Préstamos</td>
-            <td class="text-right font-mono">- C$ ${(row.loanDeduction).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-          </tr>` : ''}
-          ${(row.restaurantServiceDeduction && row.restaurantServiceDeduction > 0) ? `
-          <tr>
-            <td>Consumo Restaurante</td>
-            <td class="text-right font-mono">- C$ ${(row.restaurantServiceDeduction).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-          </tr>` : ''}
-          ${(row.breakageDeduction && row.breakageDeduction > 0) ? `
-          <tr>
-            <td>Vajilla / Reposición</td>
-            <td class="text-right font-mono">- C$ ${(row.breakageDeduction).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-          </tr>` : ''}
-          ${totalDeductions === 0 ? `
-          <tr>
-            <td colspan="2" style="font-style: italic; color: #333;">Sin deducciones aplicadas en la quincena.</td>
-          </tr>` : ''}
-          <tr class="font-bold">
-            <td style="padding-top: 3px;">TOTAL DEDUCCIONES:</td>
-            <td class="text-right font-mono" style="padding-top: 3px;">- C$ ${totalDeductions.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-          </tr>
-        </table>
-
-        ${row.breakageNotes ? `
-        <div style="font-size: 9px; margin-top: 3px; border: 1px solid #000; padding: 2px 4px;">
-          <strong>Nota deducción:</strong> ${row.breakageNotes}
-        </div>` : ''}
-
-        <!-- TOTAL NETO RECIBIDO -->
-        <div class="box-total">
-          <div style="font-size: 9px; font-weight: bold; text-transform: uppercase;">
-            TOTAL NETO A PAGAR (CÓRDOBAS)
+        <div class="print-toolbar no-print">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="background: #ffffff; color: #000000 !important; padding: 3px 8px; border-radius: 4px; font-weight: 900; font-size: 11px;">CARTA B/N PURO</span>
+            <span style="font-weight: 900; font-size: 13px;">Comprobante Quincenal de Pago — ${row.name}</span>
           </div>
-          <div style="font-size: 15px; font-weight: 900; font-family: 'Courier New', Courier, monospace; margin-top: 2px;">
-            C$ ${row.totalPaid.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+          <div style="display: flex; gap: 8px;">
+            <button onclick="window.print()" style="background: #ffffff; color: #000000 !important; border: 2px solid #ffffff; padding: 6px 16px; border-radius: 6px; font-weight: 900; cursor: pointer;">🖨️ Mandar a Imprimir</button>
+            <button onclick="window.close()" style="background: transparent; color: #ffffff !important; border: 1.5px solid #ffffff; padding: 6px 12px; border-radius: 6px; font-weight: 900; cursor: pointer;">✕ Cerrar</button>
           </div>
         </div>
 
-        <!-- FIRMA DE RECIBIDO CONFORME -->
-        <div class="sign-area">
-          <div class="sign-line"></div>
-          <div class="font-bold" style="font-size: 9.5px; text-transform: uppercase;">RECIBÍ CONFORME</div>
-          <div style="font-size: 9px; margin-top: 1px;">${row.name.toUpperCase()}</div>
-          <div style="font-size: 8.5px; margin-top: 4px; text-align: left; padding: 0 4px;">
-            Cédula Identidad: ______________________
+        <div class="voucher-card">
+          <div class="header-box">
+            <div>
+              <div class="brand-title">RESTAURANTE EL BODEGÓN</div>
+              <div class="brand-sub">COMPROBANTE INDIVIDUAL DE PAGO QUINCENAL (TAMAÑO CARTA B/N)</div>
+            </div>
+            <div class="text-right font-mono" style="font-size: 11px; font-weight: 900;">
+              <div>PERÍODO: ${periodLabel}</div>
+              <div>${monthName.toUpperCase()} ${year}</div>
+              <div style="margin-top: 2px;">${fechaHora}</div>
+            </div>
           </div>
-        </div>
 
-        <div class="divider-dashed" style="margin-top: 14px;"></div>
-        <div class="text-center" style="font-size: 8px; color: #222;">
-          Autorizado por: ${adminName}<br>
-          Comprobante Contable Interno • El Bodegón
+          <table class="meta-table">
+            <tr>
+              <td style="width: 22%; font-weight: 900;">COLABORADOR(A):</td>
+              <td style="width: 38%; font-weight: 900; font-size: 13.5px; text-transform: uppercase;">${row.name}</td>
+              <td style="width: 15%; font-weight: 900;">CARGO:</td>
+              <td style="width: 25%; font-weight: 800;">${row.role || 'Personal Operativo'}</td>
+            </tr>
+          </table>
+
+          <div style="display: flex; gap: 14px;">
+            <div style="flex: 1;">
+              <table class="detail-table">
+                <thead>
+                  <tr>
+                    <th colspan="2">1. DETALLE DE HABERES (DEVENGADO)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Salario Quincenal Base</td>
+                    <td class="text-right font-mono">C$ ${(row.baseSalary || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr>
+                    <td>Horas Extras (${row.overtimeHours || 0} hrs)</td>
+                    <td class="text-right font-mono">C$ ${(row.overtimeAmount || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr>
+                    <td>Feriados Trabajados (${row.holidaysCount || 0} días)</td>
+                    <td class="text-right font-mono">C$ ${(row.holidaysAmount || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr>
+                    <td>Bonificaciones / Otros</td>
+                    <td class="text-right font-mono">C$ ${(row.bonuses || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr class="font-bold" style="border-top: 2.5px solid #000000;">
+                    <td>SUBTOTAL DEVENGADO:</td>
+                    <td class="text-right font-mono">C$ ${totalEarnings.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="flex: 1;">
+              <table class="detail-table">
+                <thead>
+                  <tr>
+                    <th colspan="2">2. DETALLE DE DEDUCCIONES</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Deducción Préstamos</td>
+                    <td class="text-right font-mono">- C$ ${(row.loanDeduction || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr>
+                    <td>Consumo Restaurante</td>
+                    <td class="text-right font-mono">- C$ ${(row.restaurantServiceDeduction || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr>
+                    <td>Vajilla / Reposición</td>
+                    <td class="text-right font-mono">- C$ ${(row.breakageDeduction || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr>
+                    <td>Notas / Observaciones</td>
+                    <td class="text-right" style="font-size: 11px;">${row.breakageNotes || 'Sin observaciones'}</td>
+                  </tr>
+                  <tr class="font-bold" style="border-top: 2.5px solid #000000;">
+                    <td>TOTAL DEDUCCIONES:</td>
+                    <td class="text-right font-mono">- C$ ${totalDeductions.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="box-total">
+            <div>
+              <div style="font-size: 13px; font-weight: 900; text-transform: uppercase;">
+                TOTAL NETO A PAGAR (CÓRDOBAS)
+              </div>
+              <div style="font-size: 11px; font-weight: 800; margin-top: 2px;">
+                Recibido conforme en efectivo / transferencia por liquidación quincenal
+              </div>
+            </div>
+            <div style="font-size: 24px; font-weight: 900; font-family: 'Courier New', Courier, monospace;">
+              C$ ${row.totalPaid.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+            </div>
+          </div>
+
+          <div class="sign-row">
+            <div class="sign-col">
+              <div style="height: 36px;"></div>
+              <div class="font-bold" style="font-size: 11.5px; text-transform: uppercase;">ENTREGADO POR ADMINISTRACIÓN</div>
+              <div style="font-size: 11px; margin-top: 3px;">${adminName}</div>
+            </div>
+            <div class="sign-col">
+              <div style="height: 36px;"></div>
+              <div class="font-bold" style="font-size: 11.5px; text-transform: uppercase;">RECIBÍ CONFORME (FIRMA Y CÉDULA)</div>
+              <div style="font-size: 11px; margin-top: 3px;">${row.name.toUpperCase()}</div>
+            </div>
+          </div>
+
+          <div style="border-top: 2px solid #000000; margin-top: 16px; padding-top: 8px; text-align: center; font-size: 10.5px; font-weight: 800;">
+            Restaurante El Bodegón • Comprobante Contable Interno (Hoja Tamaño Carta B/N)
+          </div>
         </div>
 
         <script>
           setTimeout(function() {
             window.focus();
             window.print();
-          }, 250);
+          }, 300);
         </script>
       </body>
       </html>
     `;
 
-    const printWindow = window.open('', '_blank', 'width=450,height=700,menubar=no,toolbar=no,location=no,status=no');
+    const printWindow = window.open('', '_blank', 'width=850,height=800,menubar=no,toolbar=no,location=no,status=no');
     if (printWindow) {
       printWindow.document.write(receiptHtml);
       printWindow.document.close();
@@ -3400,7 +3504,7 @@ export function printThermalIndividualPayrollReceipt(
       window.print();
     }
   } catch (err: any) {
-    alert('Error imprimiendo recibo térmico de pago: ' + err.message);
+    alert('Error imprimiendo recibo de pago: ' + err.message);
   }
 }
 

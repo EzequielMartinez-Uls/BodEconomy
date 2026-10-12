@@ -258,34 +258,74 @@ export const SpecialPayrollTable: React.FC<Props> = ({
                   </div>
                 </td>
 
-                {/* Aguinaldo Provisión (1/12) */}
-                <td className="p-1.5 text-right font-mono text-slate-700 border-r border-slate-200">
-                  <span className="text-[10px] text-slate-400 font-bold mr-1">C$</span>
-                  {row.aguinaldoProvision.toFixed(2)}
+                {/* Aguinaldo Provisión (1/12) Editable */}
+                <td className="p-1 border-r border-slate-200">
+                  <div className="flex items-center justify-end bg-white border border-slate-200 hover:border-slate-300 px-1 py-0.5 focus-within:border-indigo-700">
+                    <span className="text-[9px] text-slate-400 font-bold select-none mr-0.5">C$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={row.aguinaldoProvision ?? ''}
+                      onChange={(e) => handleFieldChange(idx, 'aguinaldoProvision', parseFloat(e.target.value) || 0)}
+                      className="w-16 text-right font-mono text-slate-700 bg-transparent outline-none text-xs"
+                    />
+                  </div>
                 </td>
 
-                {/* 7% Laboral Señalizado */}
-                <td className="p-1.5 text-right font-mono text-rose-700 border-r border-slate-200 font-bold">
-                  <span className="text-[10px] text-rose-400 font-bold mr-1">- C$</span>
-                  {row.inssLaboral.toFixed(2)}
+                {/* 7% Laboral Editable */}
+                <td className="p-1 border-r border-slate-200">
+                  <div className="flex items-center justify-end bg-white border border-slate-200 hover:border-slate-300 px-1 py-0.5 focus-within:border-rose-600">
+                    <span className="text-[9px] text-rose-400 font-bold select-none mr-0.5">-C$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={row.inssLaboral ?? ''}
+                      onChange={(e) => handleFieldChange(idx, 'inssLaboral', parseFloat(e.target.value) || 0)}
+                      className="w-16 text-right font-mono font-bold text-rose-700 bg-transparent outline-none text-xs"
+                    />
+                  </div>
                 </td>
 
-                {/* 21.5% Patronal */}
-                <td className="p-1.5 text-right font-mono text-slate-700 border-r border-slate-200">
-                  <span className="text-[10px] text-slate-400 font-bold mr-1">C$</span>
-                  {row.inssPatronal.toFixed(2)}
+                {/* 21.5% Patronal Editable */}
+                <td className="p-1 border-r border-slate-200">
+                  <div className="flex items-center justify-end bg-white border border-slate-200 hover:border-slate-300 px-1 py-0.5 focus-within:border-indigo-700">
+                    <span className="text-[9px] text-slate-400 font-bold select-none mr-0.5">C$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={row.inssPatronal ?? ''}
+                      onChange={(e) => handleFieldChange(idx, 'inssPatronal', parseFloat(e.target.value) || 0)}
+                      className="w-16 text-right font-mono text-slate-700 bg-transparent outline-none text-xs"
+                    />
+                  </div>
                 </td>
 
-                {/* 2% INATEC */}
-                <td className="p-1.5 text-right font-mono text-slate-700 border-r border-slate-200">
-                  <span className="text-[10px] text-slate-400 font-bold mr-1">C$</span>
-                  {row.inatecPatronal.toFixed(2)}
+                {/* 2% INATEC Editable */}
+                <td className="p-1 border-r border-slate-200">
+                  <div className="flex items-center justify-end bg-white border border-slate-200 hover:border-slate-300 px-1 py-0.5 focus-within:border-indigo-700">
+                    <span className="text-[9px] text-slate-400 font-bold select-none mr-0.5">C$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={row.inatecPatronal ?? ''}
+                      onChange={(e) => handleFieldChange(idx, 'inatecPatronal', parseFloat(e.target.value) || 0)}
+                      className="w-14 text-right font-mono text-slate-700 bg-transparent outline-none text-xs"
+                    />
+                  </div>
                 </td>
 
-                {/* Total Cotización INSS */}
-                <td className="p-1.5 text-right font-mono font-black text-slate-900 border-r border-slate-200 bg-amber-50/20">
-                  <span className="text-[10px] text-slate-400 font-bold mr-1">C$</span>
-                  {row.totalCotizacion.toFixed(2)}
+                {/* Total Cotización INSS Editable */}
+                <td className="p-1 border-r border-slate-200 bg-amber-50/20">
+                  <div className="flex items-center justify-end bg-white border border-slate-300 px-1 py-0.5 focus-within:border-amber-600">
+                    <span className="text-[9px] text-slate-400 font-bold select-none mr-0.5">C$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={row.totalCotizacion ?? ''}
+                      onChange={(e) => handleFieldChange(idx, 'totalCotizacion', parseFloat(e.target.value) || 0)}
+                      className="w-18 text-right font-mono font-black text-slate-900 bg-transparent outline-none text-xs"
+                    />
+                  </div>
                 </td>
 
                 {/* IR Laboral (Editable) */}
@@ -303,16 +343,32 @@ export const SpecialPayrollTable: React.FC<Props> = ({
                   </div>
                 </td>
 
-                {/* Costo Empresa */}
-                <td className="p-1.5 text-right font-mono font-bold text-slate-800 border-r border-slate-200 bg-slate-50">
-                  <span className="text-[10px] text-slate-400 font-bold mr-1">C$</span>
-                  {row.totalCostBodegon.toFixed(2)}
+                {/* Costo Empresa Editable */}
+                <td className="p-1 border-r border-slate-200 bg-slate-50">
+                  <div className="flex items-center justify-end bg-white border border-slate-300 px-1 py-0.5 focus-within:border-slate-800">
+                    <span className="text-[9px] text-slate-400 font-bold select-none mr-0.5">C$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={row.totalCostBodegon ?? ''}
+                      onChange={(e) => handleFieldChange(idx, 'totalCostBodegon', parseFloat(e.target.value) || 0)}
+                      className="w-20 text-right font-mono font-bold text-slate-800 bg-transparent outline-none text-xs"
+                    />
+                  </div>
                 </td>
 
-                {/* Neto Asegurado */}
-                <td className="p-1.5 text-right font-mono font-black text-emerald-800 bg-emerald-50/40 text-[12px] border-r border-slate-200">
-                  <span className="text-[10px] text-emerald-600 font-bold mr-1">C$</span>
-                  {row.netPayAsegurado.toFixed(2)}
+                {/* Neto Asegurado Editable */}
+                <td className="p-1 border-r border-slate-200 bg-emerald-50/40">
+                  <div className="flex items-center justify-end bg-white border border-emerald-300 px-1 py-0.5 focus-within:border-emerald-700">
+                    <span className="text-[9px] text-emerald-600 font-bold select-none mr-0.5">C$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={row.netPayAsegurado ?? ''}
+                      onChange={(e) => handleFieldChange(idx, 'netPayAsegurado', parseFloat(e.target.value) || 0)}
+                      className="w-20 text-right font-mono font-black text-emerald-800 bg-transparent outline-none text-[12px]"
+                    />
+                  </div>
                 </td>
 
                 {/* Acción Eliminar */}

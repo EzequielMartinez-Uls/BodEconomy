@@ -11,10 +11,11 @@ function getPeriodLabel(period: PayrollPeriod, month: number, year: number): str
 }
 
 /**
- * Abre una ventana emergente de impresión optimizada para blanco y negro
+ * Abre una ventana emergente de impresión optimizada 100% para impresoras Blanco y Negro (Tamaño Carta)
+ * Sin escalas de grises, sin fondos grises (cero tramado/dithering) y con trazos gruesos de alto contraste.
  */
 function openPrintWindow(htmlContent: string, title: string) {
-  const printWindow = window.open('', '_blank', 'width=1100,height=800');
+  const printWindow = window.open('', '_blank', 'width=1100,height=850');
   if (!printWindow) {
     alert('Por favor, permita las ventanas emergentes (pop-ups) para imprimir los reportes.');
     return;
@@ -28,49 +29,57 @@ function openPrintWindow(htmlContent: string, title: string) {
       <meta charset="UTF-8">
       <title>${title}</title>
       <style>
-        /* ESTILOS DE ALTO RENDIMIENTO MONOCROMÁTICO (BLANCO Y NEGRO PURO) */
+        /* ESTILOS DE NITIDEZ EXTREMA MONOCROMÁTICA (100% TINTA NEGRA PURA SOBRE BLANCO PURO) */
         * {
           box-sizing: border-box;
+          color: #000000 !important;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
+          -webkit-font-smoothing: none !important;
+          text-rendering: geometricPrecision !important;
         }
         body {
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-          color: #000000;
-          background: #ffffff;
+          font-family: Arial, "Helvetica Neue", Helvetica, "Segoe UI", sans-serif;
+          color: #000000 !important;
+          background: #ffffff !important;
           margin: 0;
           padding: 0;
-          font-size: 11px;
-          line-height: 1.25;
+          font-size: 11.5px;
+          font-weight: 700;
+          line-height: 1.3;
         }
 
         .print-btn-bar {
           position: fixed;
           top: 10px;
           right: 10px;
-          background: #000;
-          color: #fff;
-          padding: 8px 16px;
+          background: #000000 !important;
+          color: #ffffff !important;
+          border: 2px solid #000000;
+          padding: 8px 18px;
           border-radius: 6px;
-          font-weight: bold;
+          font-weight: 900;
           cursor: pointer;
           font-size: 13px;
           z-index: 9999;
-          box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
         @media print {
           .print-btn-bar {
             display: none !important;
           }
+          body {
+            background: #ffffff !important;
+          }
         }
       </style>
     </head>
     <body>
-      <button class="print-btn-bar" onclick="window.print()">🖨️ Mandar a Imprimir</button>
+      <button class="print-btn-bar" style="color: #ffffff !important;" onclick="window.print()">🖨️ Mandar a Imprimir (Tamaño Carta)</button>
       ${htmlContent}
       <script>
         window.addEventListener('load', () => {
           setTimeout(() => {
+            window.focus();
             window.print();
           }, 300);
         });
@@ -82,7 +91,7 @@ function openPrintWindow(htmlContent: string, title: string) {
 }
 
 /**
- * 1. IMPRESIÓN SÁBANA GENERAL QUINCENAL (Hoja Carta Horizontal)
+ * 1. IMPRESIÓN SÁBANA GENERAL QUINCENAL (Hoja Tamaño Carta Horizontal - Alto Contraste B/N)
  */
 export function printBiweeklyPayrollGeneral(
   period: PayrollPeriod,
@@ -93,7 +102,6 @@ export function printBiweeklyPayrollGeneral(
 ) {
   const periodLabel = getPeriodLabel(period, month, year);
 
-  // Totales
   let totalBase = 0;
   let totalHEHours = 0;
   let totalHEAmount = 0;
@@ -125,113 +133,121 @@ export function printBiweeklyPayrollGeneral(
     <style>
       @page {
         size: letter landscape;
-        margin: 8mm 6mm;
+        margin: 8mm 8mm;
       }
       .sheet-container {
         width: 100%;
         max-width: 1060px;
         margin: 0 auto;
+        background: #ffffff;
       }
       .header-title {
         text-align: center;
-        margin-bottom: 8px;
-        border-bottom: 2px solid #000;
-        padding-bottom: 4px;
+        margin-bottom: 10px;
+        border-bottom: 2.5px solid #000000;
+        padding-bottom: 6px;
       }
       .header-title h1 {
         margin: 0;
-        font-size: 15px;
+        font-size: 17px;
         font-weight: 900;
         letter-spacing: 0.5px;
         text-transform: uppercase;
       }
       .header-title h2 {
-        margin: 2px 0 0 0;
-        font-size: 11px;
-        font-weight: 700;
+        margin: 3px 0 0 0;
+        font-size: 12.5px;
+        font-weight: 800;
       }
       table.payroll-table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 12px;
+        margin-bottom: 14px;
+        border: 2px solid #000000;
       }
       table.payroll-table th, table.payroll-table td {
-        border: 1px solid #000000;
-        padding: 4px 4px;
+        border: 1.5px solid #000000;
+        padding: 5px 5px;
         text-align: left;
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 10.5px;
+        font-weight: 700;
       }
       table.payroll-table th {
-        font-weight: 800;
-        font-size: 9.5px;
+        font-weight: 900;
+        font-size: 10px;
         text-transform: uppercase;
-        background: #f4f4f4;
+        border-bottom: 2.5px solid #000000;
         text-align: center;
       }
       .text-right { text-align: right !important; }
       .text-center { text-align: center !important; }
-      .font-mono { font-family: "Courier New", Courier, monospace; }
-      .font-bold { font-weight: bold; }
+      .font-mono { font-family: "Courier New", Courier, monospace; font-weight: 800 !important; }
+      .font-bold { font-weight: 900 !important; }
       .totals-row td {
-        font-weight: 900;
-        background: #ebebeb;
-        border-top: 2px solid #000;
-        border-bottom: 2px solid #000;
-        font-size: 10px;
+        font-weight: 900 !important;
+        background: #ffffff !important;
+        border-top: 2.5px solid #000000 !important;
+        border-bottom: 2.5px solid #000000 !important;
+        font-size: 11px !important;
       }
       .notes-box {
-        border: 1px dashed #000;
-        padding: 6px 10px;
-        margin-top: 8px;
-        font-size: 9.5px;
+        border: 2px solid #000000;
+        padding: 8px 12px;
+        margin-top: 10px;
+        font-size: 10.5px;
+        font-weight: 700;
+        background: #ffffff;
       }
       .notes-box ul {
-        margin: 4px 0 0 16px;
+        margin: 4px 0 0 18px;
         padding: 0;
       }
       .signature-section {
         display: flex;
         justify-content: space-between;
-        margin-top: 25px;
+        margin-top: 32px;
         padding: 0 40px;
       }
       .signature-block {
         text-align: center;
-        width: 240px;
-        border-top: 1px solid #000;
-        padding-top: 4px;
-        font-weight: bold;
-        font-size: 10.5px;
+        width: 260px;
+        border-top: 2px solid #000000;
+        padding-top: 6px;
+        font-weight: 900;
+        font-size: 11.5px;
       }
     </style>
 
     <div class="sheet-container">
       <div class="header-title">
-        <h1>RESTAURANTE EL BODEGÓN — PLANILLA DE PAGO</h1>
+        <h1>RESTAURANTE EL BODEGÓN — PLANILLA GENERAL DE PAGO (TAMAÑO CARTA)</h1>
         <h2>CORRESPONDIENTE A LA ${periodLabel}</h2>
       </div>
 
       <table class="payroll-table">
         <thead>
           <tr>
-            <th rowspan="2" style="width: 25px;">No</th>
-            <th rowspan="2" style="width: 140px;">Empleado</th>
-            <th rowspan="2" style="width: 95px;">Cargo</th>
-            <th rowspan="2" style="width: 70px;">Salario<br>Quincenal</th>
-            <th colspan="2" style="width: 75px;">Horas Extras</th>
-            <th colspan="2" style="width: 75px;">Feriados</th>
-            <th rowspan="2" style="width: 55px;">Bonif.</th>
+            <th rowspan="2" style="width: 28px;">No</th>
+            <th rowspan="2" style="width: 150px;">Empleado</th>
+            <th rowspan="2" style="width: 100px;">Cargo</th>
+            <th rowspan="2" style="width: 78px;">Salario<br>Quincenal</th>
+            <th colspan="2" style="width: 80px;">Horas Extras</th>
+            <th colspan="2" style="width: 80px;">Feriados</th>
+            <th rowspan="2" style="width: 60px;">Bonif.</th>
             <th colspan="3">Deducciones</th>
-            <th rowspan="2" style="width: 80px;">TOTAL<br>PAGADO</th>
-            <th rowspan="2" style="width: 130px;">Firma del Empleado</th>
+            <th rowspan="2" style="width: 88px;">TOTAL<br>PAGADO</th>
+            <th rowspan="2" style="width: 135px;">Firma del Empleado</th>
           </tr>
           <tr>
-            <th style="font-size: 8px;">No</th>
-            <th style="font-size: 8px;">Valor</th>
-            <th style="font-size: 8px;">No</th>
-            <th style="font-size: 8px;">Valor</th>
-            <th style="font-size: 8px; width: 55px;">Préstamo</th>
-            <th style="font-size: 8px; width: 60px;">Serv. Rest</th>
-            <th style="font-size: 8px; width: 60px;">Vajilla/Otros</th>
+            <th style="font-size: 9.5px;">Hrs</th>
+            <th style="font-size: 9.5px;">Valor</th>
+            <th style="font-size: 9.5px;">Días</th>
+            <th style="font-size: 9.5px;">Valor</th>
+            <th style="font-size: 9.5px; width: 60px;">Préstamo</th>
+            <th style="font-size: 9.5px; width: 62px;">Serv. Rest</th>
+            <th style="font-size: 9.5px; width: 62px;">Vajilla/Otros</th>
           </tr>
         </thead>
         <tbody>
@@ -239,10 +255,10 @@ export function printBiweeklyPayrollGeneral(
             .map(
               (r, idx) => `
             <tr>
-              <td class="text-center">${idx + 1}</td>
+              <td class="text-center font-bold">${idx + 1}</td>
               <td class="font-bold">${r.name}</td>
               <td>${r.role}</td>
-              <td class="text-right font-mono font-bold">C$ ${r.baseSalary.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              <td class="text-right font-mono">C$ ${r.baseSalary.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               <td class="text-center font-mono">${r.overtimeHours ? r.overtimeHours.toFixed(1) : '-'}</td>
               <td class="text-right font-mono">${r.overtimeAmount ? r.overtimeAmount.toFixed(2) : '-'}</td>
               <td class="text-center font-mono">${r.holidaysCount ? r.holidaysCount : '-'}</td>
@@ -251,7 +267,7 @@ export function printBiweeklyPayrollGeneral(
               <td class="text-right font-mono">${r.loanDeduction ? r.loanDeduction.toFixed(2) : '-'}</td>
               <td class="text-right font-mono">${r.restaurantServiceDeduction ? r.restaurantServiceDeduction.toFixed(2) : '-'}</td>
               <td class="text-right font-mono">${r.breakageDeduction ? r.breakageDeduction.toFixed(2) : '-'}</td>
-              <td class="text-right font-mono font-bold" style="font-size: 10.5px;">C$ ${r.totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              <td class="text-right font-mono font-bold" style="font-size: 11.5px;">C$ ${r.totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               <td></td>
             </tr>
           `
@@ -268,7 +284,7 @@ export function printBiweeklyPayrollGeneral(
             <td class="text-right font-mono">C$ ${totalLoans.toFixed(2)}</td>
             <td class="text-right font-mono">C$ ${totalRest.toFixed(2)}</td>
             <td class="text-right font-mono">C$ ${totalBreakage.toFixed(2)}</td>
-            <td class="text-right font-mono font-bold" style="font-size: 11px;">C$ ${grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+            <td class="text-right font-mono font-bold" style="font-size: 12px;">C$ ${grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
             <td></td>
           </tr>
         </tbody>
@@ -288,11 +304,11 @@ export function printBiweeklyPayrollGeneral(
       <div class="signature-section">
         <div class="signature-block">
           ${authorizedBy}<br>
-          <span style="font-size: 9px; font-weight: normal;">Elaborado por</span>
+          <span style="font-size: 10.5px; font-weight: 800;">ELABORADO POR</span>
         </div>
         <div class="signature-block">
-          Autorizado: _________________________<br>
-          <span style="font-size: 9px; font-weight: normal;">Gerencia General El Bodegón</span>
+          AUTORIZADO POR<br>
+          <span style="font-size: 10.5px; font-weight: 800;">GERENCIA GENERAL EL BODEGÓN</span>
         </div>
       </div>
     </div>
@@ -302,7 +318,7 @@ export function printBiweeklyPayrollGeneral(
 }
 
 /**
- * 2. IMPRESIÓN DE RECIBOS INDIVIDUALES DE PAGO (Hoja Carta Vertical - 2 Vouchers por Hoja con Línea de Corte)
+ * 2. IMPRESIÓN DE RECIBOS INDIVIDUALES DE PAGO (Hoja Tamaño Carta Vertical - 2 Vouchers por Hoja con Línea de Corte)
  */
 export function printIndividualReceipts(
   period: PayrollPeriod,
@@ -313,7 +329,6 @@ export function printIndividualReceipts(
 ) {
   const periodLabel = getPeriodLabel(period, month, year);
 
-  // Agrupar en pares de 2 por hoja carta
   const pairs: BiweeklyPayrollRow[][] = [];
   for (let i = 0; i < rows.length; i += 2) {
     pairs.push(rows.slice(i, i + 2));
@@ -334,45 +349,45 @@ export function printIndividualReceipts(
             </div>
 
             <div class="employee-meta">
-              <div><strong>Colaborador:</strong> ${r.name}</div>
-              <div><strong>Cargo:</strong> ${r.role}</div>
+              <div><strong>COLABORADOR:</strong> ${r.name.toUpperCase()}</div>
+              <div><strong>CARGO:</strong> ${r.role.toUpperCase()}</div>
             </div>
 
             <div class="breakdown-grid">
               <div class="col-half">
-                <div class="col-title">INGRESOS & HABERES</div>
+                <div class="col-title">1. INGRESOS Y HABERES</div>
                 <div class="row-line"><span>Salario Quincenal:</span> <span class="font-mono">C$ ${r.baseSalary.toFixed(2)}</span></div>
                 ${r.overtimeAmount > 0 ? `<div class="row-line"><span>Horas Extras (${r.overtimeHours.toFixed(1)}h):</span> <span class="font-mono">C$ ${r.overtimeAmount.toFixed(2)}</span></div>` : ''}
                 ${r.holidaysAmount > 0 ? `<div class="row-line"><span>Feriados (${r.holidaysCount}d):</span> <span class="font-mono">C$ ${r.holidaysAmount.toFixed(2)}</span></div>` : ''}
                 ${r.bonuses > 0 ? `<div class="row-line"><span>Bonificación:</span> <span class="font-mono">C$ ${r.bonuses.toFixed(2)}</span></div>` : ''}
-                <div class="row-line subtotal"><span>Total Ingresos:</span> <span class="font-mono">C$ ${totalEarnings.toFixed(2)}</span></div>
+                <div class="row-line subtotal"><span>TOTAL INGRESOS:</span> <span class="font-mono">C$ ${totalEarnings.toFixed(2)}</span></div>
               </div>
 
               <div class="col-half">
-                <div class="col-title">DEDUCCIONES</div>
+                <div class="col-title">2. DEDUCCIONES</div>
                 ${r.loanDeduction > 0 ? `<div class="row-line"><span>Préstamo:</span> <span class="font-mono">- C$ ${r.loanDeduction.toFixed(2)}</span></div>` : ''}
                 ${r.restaurantServiceDeduction > 0 ? `<div class="row-line"><span>Servicio Restaurante:</span> <span class="font-mono">- C$ ${r.restaurantServiceDeduction.toFixed(2)}</span></div>` : ''}
                 ${r.breakageDeduction > 0 ? `<div class="row-line"><span>Vajilla / Otros:</span> <span class="font-mono">- C$ ${r.breakageDeduction.toFixed(2)}</span></div>` : ''}
-                ${r.breakageNotes ? `<div style="font-size: 8px; color: #333; margin-top: 2px;"><em>(${r.breakageNotes})</em></div>` : ''}
-                <div class="row-line subtotal"><span>Total Deducciones:</span> <span class="font-mono">- C$ ${totalDeductions.toFixed(2)}</span></div>
+                ${r.breakageNotes ? `<div style="font-size: 10px; font-weight: 800; margin-top: 4px;">Nota: ${r.breakageNotes}</div>` : ''}
+                <div class="row-line subtotal"><span>TOTAL DEDUCCIONES:</span> <span class="font-mono">- C$ ${totalDeductions.toFixed(2)}</span></div>
               </div>
             </div>
 
             <div class="net-banner">
-              <span>NETO A PAGAR:</span>
-              <span class="font-mono font-bold" style="font-size: 15px;">C$ ${r.totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span>TOTAL NETO A PAGAR:</span>
+              <span class="font-mono font-bold" style="font-size: 18px;">C$ ${r.totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
 
             <div class="signatures-row">
               <div class="sig-col">
                 <div class="sig-line"></div>
-                <div>Firma del Colaborador</div>
-                <div style="font-size: 8px; font-weight: normal;">Recibí Conforme</div>
+                <div>FIRMA DEL COLABORADOR</div>
+                <div style="font-size: 10px; font-weight: 800;">RECIBÍ CONFORME</div>
               </div>
               <div class="sig-col">
                 <div class="sig-line"></div>
-                <div>${authorizedBy}</div>
-                <div style="font-size: 8px; font-weight: normal;">Entregado Conforme</div>
+                <div>${authorizedBy.toUpperCase()}</div>
+                <div style="font-size: 10px; font-weight: 800;">ENTREGADO CONFORME</div>
               </div>
             </div>
           </div>
@@ -386,7 +401,7 @@ export function printIndividualReceipts(
             pair[1]
               ? `
             <div class="cut-divider">
-              <span>✂ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - LÍNEA DE CORTE - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ✂</span>
+              <span>✂ — — — — — — — — — — — — — — — — — — — LÍNEA DE CORTE — — — — — — — — — — — — — — — — — — — ✂</span>
             </div>
             ${renderReceipt(pair[1])}
           `
@@ -401,7 +416,7 @@ export function printIndividualReceipts(
     <style>
       @page {
         size: letter portrait;
-        margin: 10mm 10mm;
+        margin: 10mm 12mm;
       }
       .letter-page {
         width: 100%;
@@ -416,9 +431,9 @@ export function printIndividualReceipts(
         page-break-after: always;
       }
       .voucher-box {
-        border: 1px solid #000;
-        padding: 12px 14px;
-        background: #fff;
+        border: 2px solid #000000;
+        padding: 14px 16px;
+        background: #ffffff;
         height: 460px;
         display: flex;
         flex-direction: column;
@@ -426,31 +441,33 @@ export function printIndividualReceipts(
       }
       .voucher-header {
         text-align: center;
-        border-bottom: 1.5px solid #000;
-        padding-bottom: 4px;
+        border-bottom: 2px solid #000000;
+        padding-bottom: 5px;
       }
       .v-brand {
-        font-size: 13px;
+        font-size: 16px;
         font-weight: 900;
         letter-spacing: 0.5px;
       }
       .v-subtitle {
-        font-size: 10px;
-        font-weight: 700;
+        font-size: 11.5px;
+        font-weight: 800;
+        margin-top: 2px;
       }
       .v-period {
-        font-size: 9px;
-        font-weight: 600;
-        color: #222;
+        font-size: 10.5px;
+        font-weight: 800;
+        margin-top: 2px;
       }
       .employee-meta {
         display: flex;
         justify-content: space-between;
         margin: 6px 0;
-        padding: 4px 6px;
-        background: #f4f4f4;
-        border: 1px solid #000;
-        font-size: 10.5px;
+        padding: 6px 10px;
+        background: #ffffff;
+        border: 1.5px solid #000000;
+        font-size: 11.5px;
+        font-weight: 800;
       }
       .breakdown-grid {
         display: flex;
@@ -460,68 +477,71 @@ export function printIndividualReceipts(
       }
       .col-half {
         flex: 1;
-        border: 1px solid #000;
-        padding: 6px 8px;
+        border: 1.5px solid #000000;
+        padding: 8px 10px;
         display: flex;
         flex-direction: column;
+        background: #ffffff;
       }
       .col-title {
-        font-size: 9px;
+        font-size: 10.5px;
         font-weight: 900;
         text-align: center;
-        border-bottom: 1px solid #000;
-        padding-bottom: 3px;
-        margin-bottom: 4px;
-        background: #fafafa;
+        border-bottom: 2px solid #000000;
+        padding-bottom: 4px;
+        margin-bottom: 6px;
+        background: #ffffff;
       }
       .row-line {
         display: flex;
         justify-content: space-between;
-        font-size: 9.5px;
-        margin-bottom: 2px;
+        font-size: 11px;
+        font-weight: 700;
+        margin-bottom: 4px;
       }
       .row-line.subtotal {
         margin-top: auto;
-        border-top: 1px dashed #000;
-        padding-top: 3px;
-        font-weight: bold;
+        border-top: 1.5px solid #000000;
+        padding-top: 4px;
+        font-weight: 900;
+        font-size: 11.5px;
       }
       .net-banner {
-        border: 1.5px solid #000;
-        background: #f0f0f0;
+        border: 2.5px solid #000000;
+        background: #ffffff;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 6px 12px;
-        margin: 4px 0;
+        padding: 8px 14px;
+        margin: 6px 0;
         font-weight: 900;
-        font-size: 12px;
+        font-size: 14px;
       }
       .signatures-row {
         display: flex;
         justify-content: space-between;
-        margin-top: 10px;
-        padding: 0 20px;
+        margin-top: 16px;
+        padding: 0 24px;
       }
       .sig-col {
-        width: 170px;
+        width: 210px;
         text-align: center;
-        font-size: 9.5px;
-        font-weight: bold;
+        font-size: 11px;
+        font-weight: 900;
       }
       .sig-line {
-        border-top: 1px solid #000;
-        margin-bottom: 3px;
+        border-top: 2px solid #000000;
+        margin-bottom: 4px;
       }
       .cut-divider {
         text-align: center;
-        font-size: 8px;
-        color: #444;
+        font-size: 10px;
+        font-weight: 900;
         margin: 6px 0;
         user-select: none;
       }
-      .font-mono { font-family: "Courier New", Courier, monospace; }
-      .font-bold { font-weight: bold; }
+      .font-mono { font-family: "Courier New", Courier, monospace; font-weight: 800; }
+      .font-bold { font-weight: 900; }
     </style>
 
     ${pagesHtml}
@@ -531,7 +551,7 @@ export function printIndividualReceipts(
 }
 
 /**
- * 3. IMPRESIÓN PLANILLA ESPECIAL (INSS - Hoja Carta Horizontal)
+ * 3. IMPRESIÓN PLANILLA ESPECIAL (INSS - Hoja Tamaño Carta Horizontal - Alto Contraste B/N)
  */
 export function printSpecialPayrollINSS(
   period: PayrollPeriod,
@@ -565,90 +585,97 @@ export function printSpecialPayrollINSS(
     <style>
       @page {
         size: letter landscape;
-        margin: 8mm 6mm;
+        margin: 8mm 8mm;
       }
       .sheet-container {
         width: 100%;
         max-width: 1060px;
         margin: 0 auto;
+        background: #ffffff;
       }
       .header-title {
         text-align: center;
-        margin-bottom: 8px;
-        border-bottom: 2px solid #000;
-        padding-bottom: 4px;
+        margin-bottom: 10px;
+        border-bottom: 2.5px solid #000000;
+        padding-bottom: 6px;
       }
       .header-title h1 {
         margin: 0;
-        font-size: 14px;
+        font-size: 16px;
         font-weight: 900;
         letter-spacing: 0.5px;
       }
       .header-title h2 {
-        margin: 2px 0 0 0;
-        font-size: 11px;
-        font-weight: 700;
+        margin: 3px 0 0 0;
+        font-size: 12px;
+        font-weight: 800;
       }
       .header-title .patronal-badge {
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 900;
-        margin-top: 2px;
+        margin-top: 3px;
       }
       table.inss-table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 12px;
+        margin-bottom: 14px;
+        border: 2px solid #000000;
       }
       table.inss-table th, table.inss-table td {
-        border: 1px solid #000000;
-        padding: 4px 4px;
-        font-size: 9.5px;
+        border: 1.5px solid #000000;
+        padding: 5px 5px;
+        font-size: 10.5px;
+        font-weight: 700;
+        background: #ffffff !important;
+        color: #000000 !important;
       }
       table.inss-table th {
-        font-weight: 800;
-        font-size: 8.5px;
-        background: #f4f4f4;
+        font-weight: 900;
+        font-size: 10px;
+        border-bottom: 2.5px solid #000000;
         text-align: center;
+        text-transform: uppercase;
       }
       .text-right { text-align: right !important; }
       .text-center { text-align: center !important; }
-      .font-mono { font-family: "Courier New", Courier, monospace; }
-      .font-bold { font-weight: bold; }
+      .font-mono { font-family: "Courier New", Courier, monospace; font-weight: 800 !important; }
+      .font-bold { font-weight: 900 !important; }
       .totals-row td {
-        font-weight: 900;
-        background: #ebebeb;
-        border-top: 2px solid #000;
-        border-bottom: 2px solid #000;
-        font-size: 9.5px;
+        font-weight: 900 !important;
+        background: #ffffff !important;
+        border-top: 2.5px solid #000000 !important;
+        border-bottom: 2.5px solid #000000 !important;
+        font-size: 11px !important;
       }
       .summary-box {
-        border: 1px solid #000;
-        padding: 8px 12px;
-        margin-top: 10px;
-        font-size: 10px;
+        border: 2px solid #000000;
+        padding: 10px 14px;
+        margin-top: 12px;
+        font-size: 11.5px;
+        font-weight: 800;
         display: flex;
         justify-content: space-around;
-        background: #fafafa;
+        background: #ffffff;
       }
       .signature-section {
         display: flex;
         justify-content: space-between;
-        margin-top: 30px;
+        margin-top: 35px;
         padding: 0 40px;
       }
       .signature-block {
         text-align: center;
-        width: 240px;
-        border-top: 1px solid #000;
-        padding-top: 4px;
-        font-weight: bold;
-        font-size: 10px;
+        width: 260px;
+        border-top: 2px solid #000000;
+        padding-top: 6px;
+        font-weight: 900;
+        font-size: 11.5px;
       }
     </style>
 
     <div class="sheet-container">
       <div class="header-title">
-        <h1>RESTAURANTE EL BODEGÓN — PLANILLA ESPECIAL (INSS)</h1>
+        <h1>RESTAURANTE EL BODEGÓN — PLANILLA ESPECIAL (INSS - TAMAÑO CARTA)</h1>
         <h2>CORRESPONDIENTE A LA ${periodLabel}</h2>
         <div class="patronal-badge">REGISTRO PATRONAL No 1550850</div>
       </div>
@@ -656,24 +683,24 @@ export function printSpecialPayrollINSS(
       <table class="inss-table">
         <thead>
           <tr>
-            <th rowspan="2" style="width: 20px;">No</th>
-            <th rowspan="2" style="width: 75px;">NSS</th>
-            <th rowspan="2" style="width: 140px;">Nombres y Apellidos</th>
-            <th rowspan="2" style="width: 90px;">Cargo</th>
-            <th rowspan="2" style="width: 65px;">Fecha<br>Ingreso</th>
-            <th rowspan="2" style="width: 65px;">Salario<br>C$</th>
-            <th rowspan="2" style="width: 60px;">Aguinald.<br>(1/12)</th>
+            <th rowspan="2" style="width: 24px;">No</th>
+            <th rowspan="2" style="width: 80px;">NSS</th>
+            <th rowspan="2" style="width: 145px;">Nombres y Apellidos</th>
+            <th rowspan="2" style="width: 95px;">Cargo</th>
+            <th rowspan="2" style="width: 70px;">Fecha<br>Ingreso</th>
+            <th rowspan="2" style="width: 70px;">Salario<br>C$</th>
+            <th rowspan="2" style="width: 65px;">Aguinald.<br>(1/12)</th>
             <th colspan="4">Cotización INSS / INATEC</th>
-            <th rowspan="2" style="width: 45px;">IR<br>Lab.</th>
-            <th rowspan="2" style="width: 75px;">Total a Cargo<br>Bodegón</th>
-            <th rowspan="2" style="width: 70px;">Neto a<br>Pagar</th>
-            <th rowspan="2" style="width: 100px;">Firma</th>
+            <th rowspan="2" style="width: 50px;">IR<br>Lab.</th>
+            <th rowspan="2" style="width: 80px;">Total a Cargo<br>Bodegón</th>
+            <th rowspan="2" style="width: 75px;">Neto a<br>Pagar</th>
+            <th rowspan="2" style="width: 105px;">Firma</th>
           </tr>
           <tr>
-            <th style="font-size: 8px;">Laboral<br>(7%)</th>
-            <th style="font-size: 8px;">Patronal<br>(21.5%)</th>
-            <th style="font-size: 8px;">INATEC<br>(2%)</th>
-            <th style="font-size: 8px;">Total<br>Cotiz.</th>
+            <th style="font-size: 9.5px;">Laboral<br>(7%)</th>
+            <th style="font-size: 9.5px;">Patronal<br>(21.5%)</th>
+            <th style="font-size: 9.5px;">INATEC<br>(2%)</th>
+            <th style="font-size: 9.5px;">Total<br>Cotiz.</th>
           </tr>
         </thead>
         <tbody>
@@ -681,7 +708,7 @@ export function printSpecialPayrollINSS(
             .map(
               (r, idx) => `
             <tr>
-              <td class="text-center">${idx + 1}</td>
+              <td class="text-center font-bold">${idx + 1}</td>
               <td class="font-mono text-center font-bold">${r.nss}</td>
               <td class="font-bold">${r.name}</td>
               <td>${r.role}</td>
@@ -725,12 +752,12 @@ export function printSpecialPayrollINSS(
 
       <div class="signature-section">
         <div class="signature-block">
-          Admon Bodegón<br>
-          <span style="font-size: 8.5px; font-weight: normal;">Representante Legal / RRHH</span>
+          ADMON BODEGÓN<br>
+          <span style="font-size: 10.5px; font-weight: 800;">REPRESENTANTE LEGAL / RRHH</span>
         </div>
         <div class="signature-block">
-          Autorizado: _________________________<br>
-          <span style="font-size: 8.5px; font-weight: normal;">Gerencia General El Bodegón</span>
+          AUTORIZADO POR<br>
+          <span style="font-size: 10.5px; font-weight: 800;">GERENCIA GENERAL EL BODEGÓN</span>
         </div>
       </div>
     </div>

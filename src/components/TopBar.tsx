@@ -14,9 +14,6 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import {
-  printThermalOpeningTicket,
-  printThermalClosingTicket,
-  printThermalDailyExpensesTicket,
   printOfficialActBN,
   printOfficialOpeningActBN,
   computeYesterdayEarningsSummary,
@@ -262,28 +259,26 @@ export const TopBar: React.FC<Props> = ({
 
         {/* Acciones Rápidas del TopBar */}
         <div className="flex items-center gap-2.5">
-          {/* Indicador / Botón de Estado de Caja */}
+          {/* Indicador Informativo de Estado de Caja */}
           {isShiftOpen ? (
-            <button
-              onClick={onCloseShiftClick}
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-xs transition cursor-pointer"
-              title="Caja Abierta - Clic para ver opciones de cierre"
+            <div
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs select-none"
+              title="Estado actual de la jornada"
             >
               <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
               <span className="font-semibold text-emerald-800">Caja Abierta:</span>
               <span className="font-mono font-bold text-emerald-900">
                 C$ {state.currentShift?.totalOpeningEquivNIO.toFixed(2)}
               </span>
-            </button>
+            </div>
           ) : (
-            <button
-              onClick={onOpenShiftClick}
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs text-slate-700 font-semibold border border-slate-200 transition cursor-pointer"
-              title="Caja Cerrada - Clic para abrir turno de hoy"
+            <div
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 text-xs text-slate-700 font-semibold border border-slate-200 select-none"
+              title="Estado actual de la jornada"
             >
               <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-              <span>Caja Cerrada • Clic para Abrir</span>
-            </button>
+              <span>Caja Cerrada</span>
+            </div>
           )}
 
           {/* Indicador / Botón de Conexión Nube Supabase */}
@@ -335,53 +330,40 @@ export const TopBar: React.FC<Props> = ({
             </span>
           </button>
 
-          {/* Botón Impresión Oficial B/N */}
+          {/* Botón Impresión Oficial Tamaño Carta B/N */}
           <button
             onClick={() => setPrintModalOpen(true)}
-            title="Imprimir Acta Oficial en Blanco y Negro (1 o 2 Hojas)"
+            title="Imprimir Acta Oficial en Blanco y Negro (Tamaño Carta)"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white text-xs font-semibold transition cursor-pointer shadow-xs"
           >
             <Printer className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden md:inline">Acta Oficial (B/N)</span>
-            <span className="md:hidden">Acta B/N</span>
+            <span className="hidden md:inline">Imprimir Acta (Carta)</span>
+            <span className="md:hidden">Acta Carta</span>
           </button>
 
-          {/* Botón Único de Apertura de Turno (cuando la jornada está cerrada) */}
+          {/* Botón Único de Apertura y Cierre de Jornada en toda la App */}
           {!isShiftOpen && onOpenShiftClick && (
             <button
               onClick={onOpenShiftClick}
               title="Iniciar la apertura del día (Caja Chica y Caja General en un solo flujo)"
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#1c6856] hover:bg-[#155344] text-white text-xs font-semibold transition cursor-pointer shadow-xs"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#1c6856] hover:bg-[#155344] text-white text-xs font-bold transition cursor-pointer shadow-xs"
             >
               <Unlock className="w-3.5 h-3.5 text-white" />
-              <span>Abrir Turno</span>
+              <span>Abrir Jornada</span>
             </button>
           )}
 
-          {/* Botón de Cierre de Turno (cuando la jornada está abierta) */}
           {isShiftOpen && onCloseShiftClick && (
             <button
               onClick={onCloseShiftClick}
               title="Proceder al cierre de jornada (Noche)"
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold transition cursor-pointer shadow-xs"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold transition cursor-pointer shadow-xs"
             >
               <Lock className="w-3.5 h-3.5 text-white" />
-              <span className="hidden sm:inline">Cerrar Turno</span>
-              <span className="sm:hidden">Cierre</span>
+              <span className="hidden sm:inline">Cerrar Jornada</span>
+              <span className="sm:hidden">Cerrar</span>
             </button>
           )}
-
-        {/* Acceso Rápido a Impresiones */}
-        {isShiftOpen && state.currentShift && (
-          <button
-            onClick={() => printThermalOpeningTicket(state.currentShift!)}
-            title="Imprimir Tique de Apertura (80mm)"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 transition"
-          >
-            <Printer className="w-3.5 h-3.5 text-[#1c6856]" />
-            <span className="hidden md:inline">Tique Apertura</span>
-          </button>
-        )}
 
         {/* Botón Selector de Administrador */}
         <button

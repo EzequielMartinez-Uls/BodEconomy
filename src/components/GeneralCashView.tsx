@@ -1,8 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { AppState, CashShift, DenominationsNIO, DenominationsUSD, PettyCashTransaction } from '../types';
 import {
-  printThermalClosingTicket,
-  printThermalOpeningTicket,
   printOfficialActBN,
   printOfficialOpeningActBN,
   printYesterdayEarningsActBN,
@@ -333,21 +331,11 @@ export const GeneralCashView: React.FC<Props> = ({
       : (editingShift.actualCashNIO || ((editingShift.totalClosingNIO || 0) + totalClosingUSDInNIO) || editingShift.totalClosingEquivNIO || 0);
 
     const netCashAfterTipsNIO = parseFloat(Math.max(0, actualCashNIO - tipsPaidAmount).toFixed(2));
-    const isPendingArqueo = actualCashNIO === 0 && salesCashSystem === 0;
 
-    const expectedCashNIO = parseFloat(Math.max(0, salesCashSystem - tipsPaidAmount).toFixed(2));
-    const differenceNIO = isPendingArqueo 
-      ? 0 
-      : parseFloat((netCashAfterTipsNIO - expectedCashNIO).toFixed(2));
-
-    let auditStatus: 'SQUARED' | 'SURPLUS' | 'SHORTAGE' = 'SQUARED';
-    if (isPendingArqueo || Math.abs(differenceNIO) < 1.0) {
-      auditStatus = 'SQUARED';
-    } else if (differenceNIO > 0) {
-      auditStatus = 'SURPLUS';
-    } else {
-      auditStatus = 'SHORTAGE';
-    }
+    // En El Bodegón, el efectivo neto contado en gaveta tras entregar propinas es el saldo real cuadrado
+    const expectedCashNIO = netCashAfterTipsNIO;
+    const differenceNIO = 0;
+    const auditStatus: 'SQUARED' | 'SURPLUS' | 'SHORTAGE' = 'SQUARED';
 
     // Calcular gastos de caja chica de esa fecha para la utilidad neta
     const dayPettyExpenses = (state.pettyCashTransactions || [])
@@ -378,7 +366,9 @@ export const GeneralCashView: React.FC<Props> = ({
       tipRoundingDiff,
       actualCashNIO,
       netCashAfterTipsNIO,
-      totalClosingNIO: actualCashNIO,
+      totalClosingNIO: totalClosingUSDInNIO > 0 && editingShift.totalClosingNIO
+        ? editingShift.totalClosingNIO
+        : actualCashNIO,
       totalClosingEquivNIO: netCashAfterTipsNIO,
       expectedCashNIO,
       differenceNIO,
@@ -471,18 +461,10 @@ export const GeneralCashView: React.FC<Props> = ({
                 </span>
               </h4>
               <p className="text-amber-800 mt-0.5">
-                El turno del <strong>{currentShift.date}</strong> permanece abierto. Debe liquidarse antes de abrir una nueva jornada.
+                El turno del <strong>{currentShift.date}</strong> permanece abierto. Debe liquidarse usando el botón <strong>Cerrar Jornada</strong> en la barra superior antes de abrir una nueva jornada.
               </p>
             </div>
           </div>
-
-          <button
-            onClick={onCloseShiftClick}
-            className="w-full sm:w-auto px-4 py-2 rounded-lg bg-amber-700 hover:bg-amber-800 text-white font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer shrink-0"
-          >
-            <Lock className="w-4 h-4" />
-            <span>Proceder al Cierre {currentShift.date}</span>
-          </button>
         </div>
       )}
 
@@ -541,23 +523,14 @@ export const GeneralCashView: React.FC<Props> = ({
               </button>
 
               <button
-                onClick={() => printThermalOpeningTicket(currentShift)}
-                className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
-                title="Imprimir comprobante de apertura en tique térmico (80mm)"
-              >
-                <Printer className="w-3.5 h-3.5 text-slate-500" />
-                <span>Ticket (80mm)</span>
-              </button>
-
-              <button
                 onClick={() => {
                   printOfficialOpeningActBN(currentShift, state.activeAdminName, undefined, 'SOLO_FONDO');
                 }}
                 className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-black text-white font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
-                title="Imprimir Acta Oficial de Apertura (1 Hoja A4: Arqueo y Fondo de Gaveta)"
+                title="Imprimir Acta Oficial de Apertura en Hoja Tamaño Carta (B/N)"
               >
                 <Printer className="w-3.5 h-3.5 text-amber-400" />
-                <span>Acta Apertura (1 Hoja B/N)</span>
+                <span>Imprimir Apertura (Carta)</span>
               </button>
 
               <button
@@ -566,10 +539,10 @@ export const GeneralCashView: React.FC<Props> = ({
                   printYesterdayEarningsActBN(currentShift, state.activeAdminName, yesterdayEarnings);
                 }}
                 className="px-3 py-1.5 rounded-lg border border-emerald-700 bg-emerald-800 hover:bg-emerald-900 text-white font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
-                title="Imprimir únicamente el Estado de Ganancias y Ventas de Ayer (Hoja 2 A4)"
+                title="Imprimir Estado de Ganancias y Ventas de Ayer en Hoja Tamaño Carta (B/N)"
               >
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-300" />
-                <span>Ganancias de Ayer</span>
+                <span>Ganancias de Ayer (Carta)</span>
               </button>
 
               {onCancelOpenShift && (
@@ -582,14 +555,6 @@ export const GeneralCashView: React.FC<Props> = ({
                   <span>Cancelar Turno</span>
                 </button>
               )}
-
-              <button
-                onClick={onCloseShiftClick}
-                className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs flex items-center gap-2 transition cursor-pointer shadow-xs"
-              >
-                <Lock className="w-3.5 h-3.5" />
-                <span>Cerrar Turno (Noche)</span>
-              </button>
             </div>
           </div>
 
@@ -655,20 +620,12 @@ export const GeneralCashView: React.FC<Props> = ({
               {lastClosedShift && (
                 <>
                   <button
-                    onClick={() => printThermalClosingTicket(lastClosedShift)}
-                    className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
-                    title="Reimprimir ticket de cierre"
-                  >
-                    <Printer className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Ticket Cierre</span>
-                  </button>
-                  <button
                     onClick={() => setSelectedShiftForActa(lastClosedShift)}
                     className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-black text-white font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer"
-                    title="Imprimir Acta Oficial B/N de Cierre (1 o 2 Hojas)"
+                    title="Imprimir Acta Oficial de Cierre en Tamaño Carta (B/N)"
                   >
                     <Printer className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Acta B/N</span>
+                    <span>Imprimir Cierre (Carta)</span>
                   </button>
                   <button
                     onClick={() => exportShiftToExcel(lastClosedShift, state)}
@@ -688,14 +645,6 @@ export const GeneralCashView: React.FC<Props> = ({
                   </button>
                 </>
               )}
-
-              <button
-                onClick={onOpenShiftClick}
-                className="px-4 py-2 rounded-lg bg-[#1c6856] hover:bg-[#155344] text-white font-semibold text-xs flex items-center gap-2 transition cursor-pointer shadow-xs"
-              >
-                <Unlock className="w-4 h-4" />
-                <span>Abrir Turno de la Nueva Jornada</span>
-              </button>
             </div>
           </div>
 
@@ -874,18 +823,11 @@ export const GeneralCashView: React.FC<Props> = ({
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
                           <button
-                            onClick={() => printThermalClosingTicket(sh)}
-                            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 transition cursor-pointer"
-                            title="Imprimir ticket térmico"
-                          >
-                            <Printer className="w-3.5 h-3.5" />
-                          </button>
-                          <button
                             onClick={() => setSelectedShiftForActa(sh)}
                             className="p-1.5 rounded-lg border border-slate-900 bg-slate-900 hover:bg-black text-white transition cursor-pointer"
-                            title="Imprimir Acta Oficial B/N de este turno"
+                            title="Imprimir Acta Oficial Tamaño Carta (B/N) de este turno"
                           >
-                            <Printer className="w-3.5 h-3.5 text-emerald-400" />
+                            <Printer className="w-3.5 h-3.5 text-amber-400" />
                           </button>
                           <button
                             onClick={() => exportShiftToExcel(sh, state)}
@@ -1015,11 +957,15 @@ export const GeneralCashView: React.FC<Props> = ({
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => printThermalClosingTicket(selectedShiftDetails)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                  onClick={() => {
+                    const shiftToPrint = selectedShiftDetails;
+                    setSelectedShiftDetails(null);
+                    setSelectedShiftForActa(shiftToPrint);
+                  }}
+                  className="px-4 py-2.5 rounded-xl border border-slate-900 bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Printer className="w-4 h-4 text-slate-500" />
-                  <span>Tique</span>
+                  <Printer className="w-4 h-4 text-amber-400" />
+                  <span>Imprimir Acta (Carta)</span>
                 </button>
                 <button
                   onClick={() => setSelectedShiftDetails(null)}

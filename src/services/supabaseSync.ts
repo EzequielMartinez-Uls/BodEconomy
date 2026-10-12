@@ -642,17 +642,6 @@ export async function syncGeneralCashShiftToCloud(shift: CashShift): Promise<voi
       updatedAt: new Date().toISOString(),
     };
 
-    const auditObj = {
-      actualCashNIO: shift.actualCashNIO || 0,
-      netCashAfterTipsNIO: shift.netCashAfterTipsNIO || (shift.totalTipCollected ? Math.max(0, (shift.actualCashNIO || 0) - shift.totalTipCollected) : shift.actualCashNIO || 0),
-      expectedCashNIO: shift.expectedCashNIO || 0,
-      differenceNIO: shift.differenceNIO || 0,
-      auditStatus: shift.auditStatus || 'SQUARED',
-      dailyNetProfit: shift.dailyNetProfit || 0,
-      closedBy: shift.closedBy,
-      closedAt: shift.closedAt,
-    };
-
     const { data: existing } = await supabase
       .from('jornadas_diarias')
       .select('id, observaciones')
@@ -660,6 +649,45 @@ export async function syncGeneralCashShiftToCloud(shift: CashShift): Promise<voi
       .limit(1);
 
     const prevObs = existing && existing.length > 0 ? existing[0].observaciones : '';
+
+    let prevAudit: any = {};
+    const prevAuditMatch = (prevObs || '').match(/\[CLOSING_AUDIT:(\{.*?\})\]/);
+    if (prevAuditMatch && prevAuditMatch[1]) {
+      try {
+        prevAudit = JSON.parse(prevAuditMatch[1]);
+      } catch {}
+    }
+
+    const auditObj = {
+      ...prevAudit,
+      actualCashNIO: shift.actualCashNIO ?? prevAudit.actualCashNIO ?? 0,
+      netCashAfterTipsNIO:
+        shift.netCashAfterTipsNIO ??
+        prevAudit.netCashAfterTipsNIO ??
+        (shift.totalTipCollected
+          ? Math.max(0, (shift.actualCashNIO || 0) - shift.totalTipCollected)
+          : shift.actualCashNIO || 0),
+      expectedCashNIO: shift.expectedCashNIO ?? prevAudit.expectedCashNIO ?? 0,
+      differenceNIO: shift.differenceNIO ?? prevAudit.differenceNIO ?? 0,
+      auditStatus: shift.auditStatus || prevAudit.auditStatus || 'SQUARED',
+      dailyNetProfit: shift.dailyNetProfit ?? prevAudit.dailyNetProfit ?? 0,
+      closedBy: shift.closedBy || prevAudit.closedBy,
+      closedAt: shift.closedAt || prevAudit.closedAt,
+      totalClosingEquivNIO:
+        shift.totalClosingEquivNIO ?? prevAudit.totalClosingEquivNIO ?? shift.actualCashNIO ?? 0,
+      totalClosingNIO: shift.totalClosingNIO ?? prevAudit.totalClosingNIO ?? 0,
+      totalClosingUSD: shift.totalClosingUSD ?? prevAudit.totalClosingUSD ?? 0,
+      closingNIO: shift.closingNIO || prevAudit.closingNIO,
+      closingUSD: shift.closingUSD || prevAudit.closingUSD,
+      tipPaid: shift.tipPaid !== undefined ? shift.tipPaid : prevAudit.tipPaid,
+      totalTipCollected:
+        shift.totalTipCollected !== undefined ? shift.totalTipCollected : prevAudit.totalTipCollected,
+      tipDistributedTotal:
+        shift.tipDistributedTotal !== undefined
+          ? shift.tipDistributedTotal
+          : prevAudit.tipDistributedTotal,
+    };
+
     const finalObs = mergeJornadaTags(prevObs, {
       ventasData: salesDataObj,
       closingAudit: shift.status === 'CLOSED' ? auditObj : undefined,
@@ -1282,17 +1310,26 @@ export async function fetchFullCloudState(): Promise<{
         if (hasGeneralOpening && !activeShift) {
           activeShift = parseShiftFromJornada(j);
         }
-        if (hasPettyOpening && !hasPettyClosing && !activePettyShift) {
-          let prevDay = Number(j.fondo_inicial) || 0;
-          let genTrans = 0;
+        const openMatch = obs.match(/\[OPENING_DATA:(\{.*?\})\]/);
+        let openingTransferToPetty = 0;
+        if (openMatch && openMatch[1]) {
+          try {
+            const op = JSON.parse(openMatch[1]);
+            openingTransferToPetty = Number(op.openingTransferToPettyCash) || 0;
+          } catch {}
+        }
+
+        if ((hasPettyOpening || openingTransferToPetty > 0) && !hasPettyClosing && !activePettyShift) {
+          let prevDay = 0;
+          let genTrans = openingTransferToPetty;
           let bossCont = 0;
-          let initBal = Number(j.fondo_inicial) || 0;
+          let initBal = openingTransferToPetty || Number(j.fondo_inicial) || 0;
           const match = obs.match(/\[FONDOS_COMPOSITION:(\{.*?\})\]/);
           if (match && match[1]) {
             try {
               const p = JSON.parse(match[1]);
               prevDay = Number(p.previousDayRemaining) || 0;
-              genTrans = Number(p.generalCashTransfer) || 0;
+              genTrans = Number(p.generalCashTransfer) || genTrans;
               bossCont = Number(p.bossContribution) || 0;
               initBal = Number(p.initialBalance) || (prevDay + genTrans + bossCont);
             } catch {}
@@ -1404,9 +1441,11 @@ export async function fetchFullCloudState(): Promise<{
 export async function fetchCloudCatalogs(): Promise<{
   vendors: VendorItem[];
   categories: string[];
+  payrollEmployees?: import('../types/payroll').PayrollEmployee[];
+  payrollHistory?: import('../types/payroll').BiweeklyPayrollRecord[];
 }> {
   try {
-    // 1. Obtener registro de configuración del catálogo
+    // 1. Obtener registro de configuración del catálogo en Supabase
     const { data: configRows } = await supabase
       .from('jornadas_diarias')
       .select('id, observaciones')
@@ -1415,6 +1454,8 @@ export async function fetchCloudCatalogs(): Promise<{
 
     let cloudVendors: VendorItem[] = [];
     let cloudCategories: string[] = [];
+    let cloudPayrollEmployees: import('../types/payroll').PayrollEmployee[] | undefined = undefined;
+    let cloudPayrollHistory: import('../types/payroll').BiweeklyPayrollRecord[] | undefined = undefined;
 
     if (configRows && configRows.length > 0) {
       const obs = configRows[0].observaciones || '';
@@ -1427,65 +1468,28 @@ export async function fetchCloudCatalogs(): Promise<{
           const parsed = JSON.parse(jsonStr);
           if (Array.isArray(parsed.vendors)) cloudVendors = parsed.vendors;
           if (Array.isArray(parsed.categories)) cloudCategories = parsed.categories;
+          if (Array.isArray(parsed.payrollEmployees)) cloudPayrollEmployees = parsed.payrollEmployees;
+          if (Array.isArray(parsed.payrollHistory)) cloudPayrollHistory = parsed.payrollHistory;
         } catch (e) {
           console.warn('Error parsing SYSTEM_CATALOGS json:', e);
         }
       }
     }
 
-    // 2. Extraer proveedores y categorías históricas de compras_gastos para asegurar que no falte ninguno
-    const { data: gastosRows } = await supabase
-      .from('compras_gastos')
-      .select('proveedor, categoria');
-
-    const historicalVendorsMap = new Map<string, string>();
-    const historicalCategoriesSet = new Set<string>();
-
-    if (gastosRows) {
-      for (const row of gastosRows) {
-        if (row.proveedor && row.proveedor.trim()) {
-          const p = row.proveedor.trim();
-          if (!historicalVendorsMap.has(p.toLowerCase())) {
-            historicalVendorsMap.set(p.toLowerCase(), row.categoria || 'OTROS');
-          }
-        }
-        if (row.categoria && row.categoria.trim()) {
-          historicalCategoriesSet.add(row.categoria.trim());
-        }
-      }
-    }
-
-    // Fusionar proveedores
+    // Respetar estrictamente el catálogo oficial guardado en SYSTEM_CATALOGS (sin re-inyectar conceptos de compras_gastos)
     const finalVendors: VendorItem[] = cloudVendors.length > 0 ? [...cloudVendors] : [...DEFAULT_VENDORS];
-    const existingNames = new Set(finalVendors.map(v => v.name.toLowerCase().trim()));
 
-    // Agregar proveedores de compras_gastos que no estuvieran en la lista
-    historicalVendorsMap.forEach((cat, name) => {
-      if (!existingNames.has(name)) {
-        const origRow = gastosRows?.find(r => r.proveedor?.toLowerCase().trim() === name);
-        const origName = origRow?.proveedor?.trim() || name;
-        finalVendors.push({
-          id: `v-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-          name: origName,
-          defaultCategory: cat,
-          active: true,
-        });
-        existingNames.add(name);
-      }
-    });
-
-    // Fusionar categorías
-    const finalCategoriesSet = new Set<string>([
-      ...DEFAULT_EXPENSE_CATEGORIES,
-      ...cloudCategories,
-      ...historicalCategoriesSet,
-    ]);
+    const finalCategoriesSet = new Set<string>(
+      cloudCategories.length > 0 ? [...cloudCategories] : [...DEFAULT_EXPENSE_CATEGORIES]
+    );
     finalCategoriesSet.delete('FONDEO'); // 'FONDEO' es tipo de movimiento, no categoría de gasto operativo
     const finalCategories = Array.from(finalCategoriesSet);
 
     return {
       vendors: finalVendors,
       categories: finalCategories,
+      payrollEmployees: cloudPayrollEmployees,
+      payrollHistory: cloudPayrollHistory,
     };
   } catch (err) {
     console.warn('⚠️ Error al consultar catálogos en la nube (usando locales):', err);
@@ -1497,27 +1501,45 @@ export async function fetchCloudCatalogs(): Promise<{
 }
 
 /**
- * Guarda y actualiza el catálogo oficial de Proveedores y Categorías en Supabase
+ * Guarda y actualiza el catálogo oficial de Proveedores, Categorías y Nómina en Supabase
  */
 export async function syncCatalogsToCloud(
-  vendors: VendorItem[],
-  categories: string[]
+  vendors?: VendorItem[],
+  categories?: string[],
+  payrollEmployees?: import('../types/payroll').PayrollEmployee[],
+  payrollHistory?: import('../types/payroll').BiweeklyPayrollRecord[]
 ): Promise<boolean> {
   try {
+    const { data: existing } = await supabase
+      .from('jornadas_diarias')
+      .select('id, observaciones')
+      .eq('responsable', 'SYSTEM_CATALOGS')
+      .limit(1);
+
+    let prevParsed: any = {};
+    if (existing && existing.length > 0) {
+      const obs = existing[0].observaciones || '';
+      const tag = '[SYSTEM_CATALOGS:';
+      const start = obs.indexOf(tag);
+      if (start !== -1) {
+        const lastBracket = obs.lastIndexOf(']');
+        try {
+          prevParsed = JSON.parse(obs.substring(start + tag.length, lastBracket));
+        } catch (e) {}
+      }
+    }
+
     const payload = {
-      version: 1,
+      ...prevParsed,
+      version: 2,
       updatedAt: new Date().toISOString(),
-      vendors,
-      categories,
+      vendors: vendors && vendors.length > 0 ? vendors : (prevParsed.vendors || DEFAULT_VENDORS),
+      categories: categories && categories.length > 0 ? categories : (prevParsed.categories || DEFAULT_EXPENSE_CATEGORIES),
+      payrollEmployees: payrollEmployees !== undefined ? payrollEmployees : prevParsed.payrollEmployees,
+      payrollHistory: payrollHistory !== undefined ? payrollHistory : prevParsed.payrollHistory,
     };
 
     const obsString = `[SYSTEM_CATALOGS:${JSON.stringify(payload)}]`;
-
-    const { data: existing } = await supabase
-      .from('jornadas_diarias')
-      .select('id')
-      .eq('responsable', 'SYSTEM_CATALOGS')
-      .limit(1);
 
     if (existing && existing.length > 0) {
       const { error } = await supabase
@@ -1547,7 +1569,7 @@ export async function syncCatalogsToCloud(
       if (error) throw error;
     }
 
-    console.log(`✅ Catálogo de ${vendors.length} proveedores y ${categories.length} categorías guardado en Supabase.`);
+    console.log(`✅ Catálogo de ${payload.vendors.length} proveedores, ${payload.categories.length} categorías y nómina guardado en Supabase.`);
     return true;
   } catch (err) {
     console.warn('⚠️ Error al guardar catálogo en Supabase:', err);

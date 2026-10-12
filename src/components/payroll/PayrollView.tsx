@@ -25,6 +25,7 @@ import {
   testBodegonPassConnection,
   DEFAULT_BODEGON_PASS_URL,
 } from '../../services/bodegonPassSync';
+import { syncCatalogsToCloud } from '../../services/supabaseSync';
 import {
   Calendar,
   RefreshCw,
@@ -121,61 +122,13 @@ export const PayrollView: React.FC<Props> = ({
     const existing = (state.payrollHistory || []).find((h) => h.id === currentPeriodId);
 
     if (existing && existing.rows && existing.rows.length > 0) {
-      // Saneamiento estricto de filas del historial: descartar Maverick/Sandor y sincronizar nombres oficiales
       const isExcluded = (n: string) => {
         const s = (n || '').toLowerCase();
         return s.includes('maverick') || s.includes('sandor');
       };
 
-      const uniqueRows: BiweeklyPayrollRow[] = [];
-      for (const r of existing.rows.filter((row) => !isExcluded(row.name))) {
-        const emp = (state.payrollEmployees || []).find((e) => matchEmployeeName(e.name, r.name));
-        const canonicalName = emp ? emp.name : r.name;
-        const canonicalRole = emp ? emp.role : r.role;
-        const canonicalId = emp ? emp.id : r.employeeId;
-        const existingIdx = uniqueRows.findIndex((ur) => matchEmployeeName(ur.name, canonicalName));
-        if (existingIdx === -1) {
-          uniqueRows.push({ ...r, employeeId: canonicalId, name: canonicalName, role: canonicalRole });
-        } else {
-          const ex = uniqueRows[existingIdx];
-          uniqueRows[existingIdx] = {
-            ...ex,
-            overtimeHours: ex.overtimeHours || r.overtimeHours || 0,
-            overtimeAmount: ex.overtimeAmount || r.overtimeAmount || 0,
-            holidaysCount: ex.holidaysCount || r.holidaysCount || 0,
-            holidaysAmount: ex.holidaysAmount || r.holidaysAmount || 0,
-            bonuses: ex.bonuses || r.bonuses || 0,
-            loanDeduction: ex.loanDeduction || r.loanDeduction || 0,
-            restaurantServiceDeduction: ex.restaurantServiceDeduction || r.restaurantServiceDeduction || 0,
-            breakageDeduction: ex.breakageDeduction || r.breakageDeduction || 0,
-            breakageNotes: ex.breakageNotes || r.breakageNotes || '',
-            totalPaid: ex.totalPaid || r.totalPaid || (ex.baseSalary || 0),
-          };
-        }
-      }
-
-      const uniqueSpecial: SpecialPayrollRow[] = [];
-      for (const sr of (existing.specialRows || []).filter((s) => !isExcluded(s.name))) {
-        const emp = (state.payrollEmployees || []).find((e) => matchEmployeeName(e.name, sr.name));
-        const canonicalName = emp ? emp.name : sr.name;
-        const canonicalRole = emp ? emp.role : sr.role;
-        const canonicalId = emp ? emp.id : sr.employeeId;
-        const existingIdx = uniqueSpecial.findIndex((us) => matchEmployeeName(us.name, canonicalName));
-        if (existingIdx === -1) {
-          uniqueSpecial.push({
-            ...sr,
-            employeeId: canonicalId,
-            name: canonicalName,
-            role: canonicalRole,
-            nss: (emp && emp.nss) || sr.nss,
-            hireDate: (emp && emp.hireDate) || sr.hireDate,
-            reportedSalary: (emp && emp.reportedSalaryINSS) || sr.reportedSalary,
-          });
-        }
-      }
-
-      setRows(uniqueRows);
-      setSpecialRows(uniqueSpecial);
+      setRows(existing.rows.filter((row) => !isExcluded(row.name)));
+      setSpecialRows((existing.specialRows || []).filter((s) => !isExcluded(s.name)));
     } else {
       // Generar filas nuevas calculando incidencias de la bitácora en ese rango
       // Deduplicar empleados activos garantizando exactamente 1 por persona
@@ -301,9 +254,42 @@ export const PayrollView: React.FC<Props> = ({
   };
 
   const handleDeleteRow = (index: number) => {
-    const empName = rows[index]?.name || 'este colaborador';
-    if (window.confirm(`¿Seguro que deseas remover a "${empName}" de la nómina de esta quincena?`)) {
-      setRows((prev) => prev.filter((_, i) => i !== index));
+    const targetRow = rows[index];
+    const empName = targetRow?.name || 'este colaborador';
+    if (window.confirm(`¿Seguro que deseas eliminar a "${empName}" de la planilla y del padrón de personal?`)) {
+      const nextRows = rows.filter((_, i) => i !== index);
+      const nextSpecial = specialRows.filter(
+        (sr) => sr.employeeId !== targetRow.employeeId && !matchEmployeeName(sr.name, targetRow.name)
+      );
+      setRows(nextRows);
+      setSpecialRows(nextSpecial);
+
+      onUpdateState((prev) => {
+        const nextEmps = (prev.payrollEmployees || []).filter(
+          (e) => e.id !== targetRow.employeeId && !matchEmployeeName(e.name, targetRow.name)
+        );
+        const record: BiweeklyPayrollRecord = {
+          id: currentPeriodId,
+          year,
+          month,
+          period,
+          status: 'DRAFT',
+          rows: nextRows,
+          specialRows: nextSpecial,
+          authorizedBy: prev.activeAdminName || 'Admon Bodegón',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        const nextHist = [record, ...(prev.payrollHistory || []).filter((h) => h.id !== currentPeriodId)];
+        syncCatalogsToCloud(prev.vendorsList, prev.expenseCategories, nextEmps, nextHist).catch(console.warn);
+        return {
+          ...prev,
+          payrollEmployees: nextEmps,
+          payrollHistory: nextHist,
+        };
+      });
+      setSaveNotice(`Colaborador "${empName}" eliminado y sincronizado en la nube.`);
+      setTimeout(() => setSaveNotice(null), 3500);
     }
   };
 
@@ -330,14 +316,43 @@ export const PayrollView: React.FC<Props> = ({
   };
 
   const handleDeleteSpecialRow = (index: number) => {
-    const empName = specialRows[index]?.name || 'este colaborador';
+    const targetSr = specialRows[index];
+    const empName = targetSr?.name || 'este colaborador';
     if (window.confirm(`¿Seguro que deseas remover a "${empName}" de la planilla especial INSS?`)) {
-      setSpecialRows((prev) => prev.filter((_, i) => i !== index));
+      const nextSpecial = specialRows.filter((_, i) => i !== index);
+      setSpecialRows(nextSpecial);
+
+      onUpdateState((prev) => {
+        const nextEmps = (prev.payrollEmployees || []).map((e) =>
+          e.id === targetSr.employeeId || matchEmployeeName(e.name, targetSr.name)
+            ? { ...e, isInsuredINSS: false }
+            : e
+        );
+        const record: BiweeklyPayrollRecord = {
+          id: currentPeriodId,
+          year,
+          month,
+          period,
+          status: 'DRAFT',
+          rows,
+          specialRows: nextSpecial,
+          authorizedBy: prev.activeAdminName || 'Admon Bodegón',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        const nextHist = [record, ...(prev.payrollHistory || []).filter((h) => h.id !== currentPeriodId)];
+        syncCatalogsToCloud(prev.vendorsList, prev.expenseCategories, nextEmps, nextHist).catch(console.warn);
+        return {
+          ...prev,
+          payrollEmployees: nextEmps,
+          payrollHistory: nextHist,
+        };
+      });
     }
   };
 
-  // Guardar quincena en el historial del estado global
-  const handleSavePayroll = () => {
+  // Confirmar y Guardar quincena y catálogo de personal en estado local y Supabase Cloud
+  const handleSavePayroll = async () => {
     const record: BiweeklyPayrollRecord = {
       id: currentPeriodId,
       year,
@@ -351,16 +366,43 @@ export const PayrollView: React.FC<Props> = ({
       updatedAt: new Date().toISOString(),
     };
 
-    onUpdateState((prev) => {
-      const hist = (prev.payrollHistory || []).filter((h) => h.id !== currentPeriodId);
+    // Sincronizar también el padrón de empleados con las filas actuales (nombres, cargos, salarios base, INSS)
+    const updatedEmployees: PayrollEmployee[] = rows.map((r) => {
+      const existingEmp = (state.payrollEmployees || []).find(
+        (e) => e.id === r.employeeId || matchEmployeeName(e.name, r.name)
+      );
+      const matchingSpecial = specialRows.find(
+        (sr) => sr.employeeId === r.employeeId || matchEmployeeName(sr.name, r.name)
+      );
       return {
-        ...prev,
-        payrollHistory: [record, ...hist],
+        id: existingEmp?.id || r.employeeId || `emp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        name: r.name,
+        role: r.role,
+        baseSalaryBiweekly: r.baseSalary,
+        isInsuredINSS: !!matchingSpecial || (existingEmp?.isInsuredINSS ?? false),
+        nss: matchingSpecial?.nss || existingEmp?.nss,
+        hireDate: matchingSpecial?.hireDate || existingEmp?.hireDate,
+        reportedSalaryINSS: matchingSpecial?.reportedSalary || existingEmp?.reportedSalaryINSS,
+        isActive: true,
       };
     });
 
-    setSaveNotice('¡Quincena guardada con éxito en el sistema!');
-    setTimeout(() => setSaveNotice(null), 3500);
+    const nextHist = [record, ...(state.payrollHistory || []).filter((h) => h.id !== currentPeriodId)];
+
+    onUpdateState((prev) => ({
+      ...prev,
+      payrollEmployees: updatedEmployees,
+      payrollHistory: nextHist,
+    }));
+
+    setSaveNotice('Confirmando y sincronizando cambios en Supabase Cloud...');
+    const ok = await syncCatalogsToCloud(state.vendorsList, state.expenseCategories, updatedEmployees, nextHist);
+    if (ok) {
+      setSaveNotice('¡Cambios de planilla y personal confirmados y guardados en la nube con éxito!');
+    } else {
+      setSaveNotice('¡Cambios guardados localmente! (Se sincronizarán al conectar a la red)');
+    }
+    setTimeout(() => setSaveNotice(null), 4000);
   };
 
   // Duplicar Quincena Anterior: Clona colaboradores y sueldos base reiniciando extras y deducciones temporales
@@ -572,12 +614,114 @@ export const PayrollView: React.FC<Props> = ({
     }));
   };
 
-  // Guardar lista de empleados modificada
-  const handleSaveEmployees = (newEmployees: PayrollEmployee[]) => {
+  // Guardar lista de empleados modificada desde el modal y sincronizar con la sábana actual y Supabase Cloud
+  const handleSaveEmployees = async (newEmployees: PayrollEmployee[]) => {
+    const activeEmps = newEmployees.filter((e) => e.isActive !== false);
+
+    // Sincronizar las filas de la quincena actual con el nuevo padrón de empleados
+    const nextRows: BiweeklyPayrollRow[] = activeEmps.map((emp) => {
+      const existingRow = rows.find((r) => r.employeeId === emp.id || matchEmployeeName(r.name, emp.name));
+      if (existingRow) {
+        const base = emp.baseSalaryBiweekly || 0;
+        const holAmt = parseFloat(((base * 2 / 30) * (existingRow.holidaysCount || 0)).toFixed(2));
+        const earnings = base + (existingRow.overtimeAmount || 0) + holAmt + (existingRow.bonuses || 0);
+        const deductions =
+          (existingRow.loanDeduction || 0) +
+          (existingRow.restaurantServiceDeduction || 0) +
+          (existingRow.breakageDeduction || 0);
+        return {
+          ...existingRow,
+          employeeId: emp.id,
+          name: emp.name,
+          role: emp.role,
+          baseSalary: base,
+          holidaysAmount: holAmt,
+          totalPaid: parseFloat((earnings - deductions).toFixed(2)),
+        };
+      }
+      return {
+        employeeId: emp.id,
+        name: emp.name,
+        role: emp.role,
+        baseSalary: emp.baseSalaryBiweekly || 0,
+        overtimeHours: 0,
+        overtimeAmount: 0,
+        holidaysCount: 0,
+        holidaysAmount: 0,
+        bonuses: 0,
+        loanDeduction: 0,
+        restaurantServiceDeduction: 0,
+        breakageDeduction: 0,
+        breakageNotes: '',
+        totalPaid: emp.baseSalaryBiweekly || 0,
+      };
+    });
+
+    const insuredEmps = activeEmps.filter((e) => e.isInsuredINSS);
+    const nextSpecialRows: SpecialPayrollRow[] = insuredEmps.map((emp) => {
+      const existingSr = specialRows.find((sr) => sr.employeeId === emp.id || matchEmployeeName(sr.name, emp.name));
+      const sal = emp.reportedSalaryINSS || emp.baseSalaryBiweekly || existingSr?.reportedSalary || 5675.04;
+      const aguinaldo = parseFloat((sal / 12).toFixed(2));
+      const inssLab = parseFloat((sal * 0.07).toFixed(2));
+      const inssPat = parseFloat((sal * 0.215).toFixed(2));
+      const inatec = parseFloat((sal * 0.02).toFixed(2));
+      const cotiz = parseFloat((inssLab + inssPat + inatec).toFixed(2));
+      const cost = parseFloat((sal + aguinaldo + inssPat + inatec).toFixed(2));
+      const ir = existingSr?.irLaboral || 0;
+      const extra = existingSr?.extraHolidayAmount || 0;
+      const net = parseFloat((sal - inssLab - ir + extra).toFixed(2));
+
+      return {
+        employeeId: emp.id,
+        nss: emp.nss || existingSr?.nss || '',
+        name: emp.name,
+        role: emp.role,
+        hireDate: emp.hireDate || existingSr?.hireDate || '2025-11-01',
+        reportedSalary: sal,
+        extraHolidayAmount: extra,
+        aguinaldoProvision: aguinaldo,
+        inssLaboral: inssLab,
+        inssPatronal: inssPat,
+        inatecPatronal: inatec,
+        totalCotizacion: cotiz,
+        irLaboral: ir,
+        totalCostBodegon: cost,
+        netPayAsegurado: net,
+      };
+    });
+
+    setRows(nextRows);
+    setSpecialRows(nextSpecialRows);
+
+    const record: BiweeklyPayrollRecord = {
+      id: currentPeriodId,
+      year,
+      month,
+      period,
+      status: 'DRAFT',
+      rows: nextRows,
+      specialRows: nextSpecialRows,
+      authorizedBy: state.activeAdminName || 'Admon Bodegón',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const nextHist = [record, ...(state.payrollHistory || []).filter((h) => h.id !== currentPeriodId)];
+
     onUpdateState((prev) => ({
       ...prev,
       payrollEmployees: newEmployees,
+      payrollHistory: nextHist,
     }));
+
+    setSaveNotice('Sincronizando padrón de colaboradores en Supabase Cloud...');
+    const ok = await syncCatalogsToCloud(state.vendorsList, state.expenseCategories, newEmployees, nextHist);
+    if (ok) {
+      setSaveNotice('¡Padrón de colaboradores y planilla actualizados y guardados en la nube!');
+    } else {
+      setSaveNotice('¡Padrón de colaboradores actualizado localmente!');
+    }
+    setTimeout(() => setSaveNotice(null), 4000);
   };
 
   const monthsList = [
@@ -704,14 +848,14 @@ export const PayrollView: React.FC<Props> = ({
             </button>
           </div>
 
-          {/* Guardar Quincena */}
+          {/* Confirmar Cambios */}
           <button
             onClick={handleSavePayroll}
-            className="px-3 py-1.5 border border-slate-900 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
-            title="Guardar cambios de esta quincena en el sistema"
+            className="px-3.5 py-1.5 border border-[#165345] bg-[#1c6856] hover:bg-[#165345] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider shadow-xs"
+            title="Confirmar y guardar todos los cambios de esta planilla y del personal en el sistema y en la nube"
           >
-            <Save className="w-3.5 h-3.5" />
-            <span>Guardar</span>
+            <Check className="w-3.5 h-3.5" />
+            <span>Confirmar Cambios</span>
           </button>
 
           {/* Menú de Impresión Hoja Carta */}

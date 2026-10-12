@@ -50,6 +50,11 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
     const current = rows[index];
     const updated = { ...current, [field]: num };
 
+    if (field === 'totalPaid') {
+      onRowChange(index, updated);
+      return;
+    }
+
     // Recalcular monto de feriado si cambia salario o cantidad
     if (field === 'baseSalary' || field === 'holidaysCount') {
       const salary = field === 'baseSalary' ? num : (current.baseSalary || 0);
@@ -483,10 +488,19 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
                     </div>
                   </td>
 
-                  {/* TOTAL PAGADO (Calculado Automático y Señalizado) */}
-                  <td className="p-1.5 text-right border-r border-slate-200 font-mono font-black text-slate-900 bg-slate-50 text-[12px] whitespace-nowrap">
-                    <span className="text-[10px] text-slate-400 font-bold mr-1">C$</span>
-                    {row.totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {/* TOTAL PAGADO (Calculado Automático y 100% Editable) */}
+                  <td className="p-1 border-r border-slate-200 bg-slate-50">
+                    <div className="flex items-center justify-end bg-white border border-slate-300 px-1.5 py-0.5 focus-within:border-slate-900">
+                      <span className="text-[10px] text-slate-400 font-bold select-none mr-1">C$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={row.totalPaid ?? ''}
+                        onChange={(e) => handleNumChange(idx, 'totalPaid', e.target.value)}
+                        className="w-20 text-right font-mono font-black text-slate-900 bg-transparent outline-none text-[12px]"
+                      />
+                    </div>
                   </td>
 
                   {/* Nota / Detalle de deducción */}
@@ -500,16 +514,16 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
                     />
                   </td>
 
-                  {/* Acciones: Imprimir Recibo Térmico y Eliminar */}
+                  {/* Acciones: Imprimir Comprobante Carta y Eliminar */}
                   <td className="p-1 text-center">
                     <div className="flex items-center justify-center gap-1">
-                      {/* Botón Comprobante Térmico Individual */}
+                      {/* Botón Comprobante Individual en Hoja Carta */}
                       {onPrintRowReceipt && (
                         <button
                           type="button"
                           onClick={() => onPrintRowReceipt(row)}
                           className="p-1 text-slate-600 hover:text-slate-950 hover:bg-slate-100 border border-slate-200 transition cursor-pointer"
-                          title="Imprimir recibo térmico de pago 80mm para este colaborador"
+                          title="Imprimir comprobante individual de pago en Hoja Tamaño Carta (B/N)"
                         >
                           <Receipt className="w-3.5 h-3.5" />
                         </button>

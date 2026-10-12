@@ -292,117 +292,31 @@ export function loadState(): AppState {
     const normalizeStr = (s: string) =>
       s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 
-    // Saneamiento estricto de Nómina y Planillas:
-    // 1. Descartar Maverick y Sandor (ya no forman parte del equipo)
+    // Saneamiento de Nómina y Planillas (Respetando eliminaciones y ediciones del usuario):
     const isExcluded = (name: string) => {
       const n = normalizeStr(name);
       return n.includes('maverick') || n.includes('sandor');
     };
 
-    const isMatch = (nameA: string, nameB: string): boolean => {
-      const a = normalizeStr(nameA);
-      const b = normalizeStr(nameB);
-      if (!a || !b) return false;
-      if (a === b || a.includes(b) || b.includes(a)) return true;
-      const tokensB = b.split(/\s+/).filter((t) => t.length >= 3);
-      if (tokensB.length >= 2 && tokensB.filter((t) => a.includes(t)).length >= 2) return true;
-      const tokensA = a.split(/\s+/).filter((t) => t.length >= 3);
-      if (tokensA.length >= 2 && tokensA.filter((t) => b.includes(t)).length >= 2) return true;
-      return false;
-    };
-
-    const existingEmps = (loaded.payrollEmployees || []).filter((e) => !isExcluded(e.name));
-
-    // 2. Mapear cada empleado oficial de DEFAULT_PAYROLL_EMPLOYEES preservando datos existentes si los hay
-    const sanitizedEmps: PayrollEmployee[] = DEFAULT_PAYROLL_EMPLOYEES.map((defEmp) => {
-      const found = existingEmps.find((e) => isMatch(defEmp.name, e.name));
-      if (found) {
-        return {
-          ...defEmp,
-          baseSalaryBiweekly: found.baseSalaryBiweekly || defEmp.baseSalaryBiweekly,
-          reportedSalaryINSS: found.reportedSalaryINSS || defEmp.reportedSalaryINSS,
-          nss: found.nss || defEmp.nss,
-          hireDate: found.hireDate || defEmp.hireDate,
-          isActive: found.isActive !== undefined ? found.isActive : defEmp.isActive,
-        };
-      }
-      return { ...defEmp };
-    });
-
-    // 3. Agregar cualquier colaborador extra/personalizado que NO coincida con ninguno de la plantilla base
-    for (const e of existingEmps) {
-      const matchesOfficial = sanitizedEmps.some((def) => isMatch(def.name, e.name));
-      if (!matchesOfficial) {
-        const alreadyIn = sanitizedEmps.some((s) => normalizeStr(s.name) === normalizeStr(e.name));
-        if (!alreadyIn) {
-          sanitizedEmps.push({ ...e });
-        }
-      }
+    if (!Array.isArray(parsed.payrollEmployees)) {
+      loaded.payrollEmployees = [...DEFAULT_PAYROLL_EMPLOYEES];
+    } else {
+      loaded.payrollEmployees = parsed.payrollEmployees.filter((e: PayrollEmployee) => !isExcluded(e.name));
     }
-
-    loaded.payrollEmployees = sanitizedEmps;
 
     if (!loaded.payrollIncidents) {
       loaded.payrollIncidents = [];
     }
 
-    // 4. Limpiar historial de planillas (excluir Maverick y Sandor, deduplicar filas de cada período)
+    // Respetar el historial de planillas guardado por el usuario
     if (!loaded.payrollHistory) {
       loaded.payrollHistory = [];
     } else {
-      loaded.payrollHistory = loaded.payrollHistory.map((hist) => {
-        const uniqueRows: import('../types/payroll').BiweeklyPayrollRow[] = [];
-        for (const r of (hist.rows || []).filter((row) => !isExcluded(row.name))) {
-          const def = DEFAULT_PAYROLL_EMPLOYEES.find((d) => isMatch(d.name, r.name));
-          const canonicalName = def ? def.name : r.name;
-          const canonicalRole = def ? def.role : r.role;
-          const existingIndex = uniqueRows.findIndex((ur) => isMatch(ur.name, canonicalName));
-          if (existingIndex === -1) {
-            uniqueRows.push({ ...r, name: canonicalName, role: canonicalRole });
-          } else {
-            const existing = uniqueRows[existingIndex];
-            uniqueRows[existingIndex] = {
-              ...existing,
-              name: canonicalName,
-              role: canonicalRole,
-              overtimeHours: existing.overtimeHours || r.overtimeHours || 0,
-              overtimeAmount: existing.overtimeAmount || r.overtimeAmount || 0,
-              holidaysCount: existing.holidaysCount || r.holidaysCount || 0,
-              holidaysAmount: existing.holidaysAmount || r.holidaysAmount || 0,
-              bonuses: existing.bonuses || r.bonuses || 0,
-              loanDeduction: existing.loanDeduction || r.loanDeduction || 0,
-              restaurantServiceDeduction: existing.restaurantServiceDeduction || r.restaurantServiceDeduction || 0,
-              breakageDeduction: existing.breakageDeduction || r.breakageDeduction || 0,
-              breakageNotes: existing.breakageNotes || r.breakageNotes || '',
-              totalPaid: existing.totalPaid || r.totalPaid || (existing.baseSalary || 0),
-            };
-          }
-        }
-
-        const uniqueSpecial: import('../types/payroll').SpecialPayrollRow[] = [];
-        for (const sr of (hist.specialRows || []).filter((s) => !isExcluded(s.name))) {
-          const def = DEFAULT_PAYROLL_EMPLOYEES.find((d) => isMatch(d.name, sr.name));
-          const canonicalName = def ? def.name : sr.name;
-          const canonicalRole = def ? def.role : sr.role;
-          const existingIndex = uniqueSpecial.findIndex((us) => isMatch(us.name, canonicalName));
-          if (existingIndex === -1) {
-            uniqueSpecial.push({
-              ...sr,
-              name: canonicalName,
-              role: canonicalRole,
-              nss: (def && def.nss) || sr.nss,
-              hireDate: (def && def.hireDate) || sr.hireDate,
-              reportedSalary: (def && def.reportedSalaryINSS) || sr.reportedSalary,
-            });
-          }
-        }
-
-        return {
-          ...hist,
-          rows: uniqueRows,
-          specialRows: uniqueSpecial,
-        };
-      });
+      loaded.payrollHistory = loaded.payrollHistory.map((hist) => ({
+        ...hist,
+        rows: (hist.rows || []).filter((row) => !isExcluded(row.name)),
+        specialRows: (hist.specialRows || []).filter((s) => !isExcluded(s.name)),
+      }));
     }
 
     // 5. Configurar URL oficial de Bodegón Pass en Render

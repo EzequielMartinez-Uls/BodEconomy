@@ -47,10 +47,10 @@ export const PrintOfficialActModal: React.FC<Props> = ({
             </div>
             <div>
               <h3 className="font-bold text-base text-slate-900 leading-tight">
-                Impresión Oficial en B/N (Láser / A4)
+                Impresión Oficial en B/N (Tamaño Carta)
               </h3>
               <p className="text-xs text-slate-500 font-medium">
-                El Bodegón • Documentos para Archivo Físico & Firmas
+                El Bodegón • Documentos de Alto Contraste para Archivo Físico & Firmas
               </p>
             </div>
           </div>

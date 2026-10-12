@@ -7,7 +7,7 @@ import {
   calculateTotalUSD,
 } from '../services/storage';
 import { CashDenominationsInput } from './CashDenominationsInput';
-import { printThermalClosingTicket, printOfficialActBN } from '../services/thermalPrint';
+import { printOfficialActBN } from '../services/thermalPrint';
 import { exportShiftToExcel } from '../services/excelExport';
 import { extractLocalDateStr } from '../utils/dateUtils';
 import { processOutboxQueue } from '../services/supabaseSync';
@@ -1302,59 +1302,6 @@ export const ClosingModal: React.FC<Props> = ({
                       dailyNetProfit,
                       closingNotes,
                     };
-                    printThermalClosingTicket(previewShift);
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-300 transition cursor-pointer"
-                >
-                  <Printer className="w-3.5 h-3.5 text-slate-600" />
-                  <span>Ticket Cierre General A4</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const previewShift: CashShift = {
-                      ...shift,
-                      closedBy,
-                      closedAt: new Date().toISOString(),
-                      closingNIO,
-                      closingUSD,
-                      totalClosingNIO,
-                      totalClosingUSD,
-                      totalClosingEquivNIO,
-                      cardsBAC,
-                      cardsFicohsa,
-                      cardsBanpro,
-                      cardsLafise,
-                      totalCards,
-                      salesPedidosYa,
-                      salesBankTransfers,
-                      bankTransfersNotes,
-                      salesCashSystem,
-                      otherIncome,
-                      otherIncomeNotes,
-                      totalGrossSales,
-                      totalTipCollected,
-                      staffCount,
-                      individualTip,
-                      tipPaid,
-                      tipNotes,
-                      tipYahairaWorked,
-                      tipYahairaAmount: actualYahairaTip,
-                      tipTeamPool,
-                      tipIsRounded,
-                      tipDistributedTotal,
-                      tipRoundingDiff,
-                      transferToPettyCash,
-                      depositedFromPettyCash,
-                      totalWithdrawals: transferToPettyCash + tipsPaidAmount,
-                      actualCashNIO,
-                      expectedCashNIO,
-                      differenceNIO,
-                      auditStatus,
-                      dailyNetProfit,
-                      closingNotes,
-                    };
                     const dayTransactions = (state.pettyCashTransactions || [])
                       .filter((t) => extractLocalDateStr(t.date) === shift.date)
                       .map((t) => ({
@@ -1396,7 +1343,7 @@ export const ClosingModal: React.FC<Props> = ({
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition cursor-pointer"
                 >
                   <Printer className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Imprimir Acta Oficial B/N</span>
+                  <span>Imprimir Acta Oficial (Carta)</span>
                 </button>
 
                 <button
