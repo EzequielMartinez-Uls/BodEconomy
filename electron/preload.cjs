@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
   getVersion: () => ipcRenderer.invoke('app:version'),
   showSaveDialog: (options) => ipcRenderer.invoke('app:save-dialog', options),
+  refocusWindow: () => ipcRenderer.invoke('app:refocus'),
   checkForUpdates: () => ipcRenderer.invoke('updater:check'),
   restartAndInstall: () => ipcRenderer.invoke('updater:install'),
   onUpdateAvailable: (callback) => {

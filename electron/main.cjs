@@ -111,7 +111,21 @@ app.on('window-all-closed', () => {
 ipcMain.handle('app:version', () => app.getVersion());
 ipcMain.handle('app:save-dialog', async (event, options) => {
   if (!mainWindow) return null;
-  return await dialog.showSaveDialog(mainWindow, options);
+  const res = await dialog.showSaveDialog(mainWindow, options);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.focus();
+    mainWindow.webContents.focus();
+  }
+  return res;
+});
+
+ipcMain.handle('app:refocus', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.blur();
+    mainWindow.focus();
+    mainWindow.webContents.focus();
+  }
+  return true;
 });
 
 // IPC Handlers for Updates

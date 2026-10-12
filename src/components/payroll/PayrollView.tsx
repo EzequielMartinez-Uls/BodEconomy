@@ -67,18 +67,6 @@ export const PayrollView: React.FC<Props> = ({
     onUnsavedChangesChange?.(dirty);
   };
 
-  // Advertencia al cerrar o recargar la ventana si hay cambios sin confirmar
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnconfirmedChanges) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnconfirmedChanges]);
-
   // Pestaña activa (si no viene por prop, usar estado interno)
   const [internalSubTab, setInternalSubTab] = useState<'quincenal' | 'especial' | 'incidencias'>('quincenal');
   const activeSubTab = externalSubTab || internalSubTab;
