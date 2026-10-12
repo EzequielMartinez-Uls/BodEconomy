@@ -597,8 +597,8 @@ export async function fetchCloudActiveShift(): Promise<{
 
     const ultimaJornada = jData && jData.length > 0 ? jData[0] : null;
     const today = getLocalTodayStr();
-    // Solo se considera abierta si su estado es ABIERTA y corresponde al día actual de hoy
-    const isOpen = ultimaJornada?.estado === 'ABIERTA' && ultimaJornada?.fecha === today;
+    // Se considera abierta si su estado es ABIERTA (incluso si quedó pendiente de cierre de ayer)
+    const isOpen = ultimaJornada?.estado === 'ABIERTA';
 
     return {
       isOpen,
@@ -1277,11 +1277,12 @@ export async function fetchFullCloudState(): Promise<{
       const hasPettyOpening = /\[FONDOS_COMPOSITION:\{.*?\}\]/.test(obs);
       const hasPettyClosing = /\[PETTY_CLOSING:\{.*?\}\]/.test(obs) || /Cierre liquidado/.test(obs);
 
-      if (j.estado === 'ABIERTA' && j.fecha === today) {
-        if (hasGeneralOpening) {
+      // Si la jornada está ABIERTA (sea de hoy o pendiente de cierre de ayer):
+      if (j.estado === 'ABIERTA') {
+        if (hasGeneralOpening && !activeShift) {
           activeShift = parseShiftFromJornada(j);
         }
-        if (hasPettyOpening && !hasPettyClosing) {
+        if (hasPettyOpening && !hasPettyClosing && !activePettyShift) {
           let prevDay = Number(j.fondo_inicial) || 0;
           let genTrans = 0;
           let bossCont = 0;
