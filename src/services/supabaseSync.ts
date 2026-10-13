@@ -28,6 +28,8 @@ export function mapCategoryToCloud(cat: ExpenseCategory): string {
     case 'MERCADO':
     case 'LACTEOS':
     case 'PAGOS_PERSONAL':
+    case 'MUSICA_Y_EVENTOS':
+    case 'SERVICIOS/REPARACIONES':
     case 'OTROS':
       return cat;
     // Fallbacks para datos históricos / legados
@@ -44,7 +46,7 @@ export function mapCategoryToCloud(cat: ExpenseCategory): string {
     case ('ABARROTES' as any):
       return 'SUPERMERCADO';
     default:
-      return 'OTROS';
+      return cat || 'OTROS';
   }
 }
 

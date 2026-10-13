@@ -14,7 +14,10 @@ export type ExpenseCategory =
   | 'MERCADO'
   | 'LACTEOS'
   | 'PAGOS_PERSONAL'
-  | 'OTROS';
+  | 'MUSICA_Y_EVENTOS'
+  | 'SERVICIOS/REPARACIONES'
+  | 'OTROS'
+  | string;
 
 
 export interface DenominationsNIO {
