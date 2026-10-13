@@ -38,7 +38,7 @@ interface Props {
   onRemoveAdmin: (name: string) => void;
   onUpdateExpenseCategories?: (categories: string[]) => void;
   onUpdateVendors?: (vendors: VendorItem[]) => void;
-  initialTab?: 'admins' | 'exchange' | 'catalogs' | 'analytics';
+  initialTab?: 'admins' | 'exchange' | 'catalogs';
 }
 
 export const SettingsModal: React.FC<Props> = ({
@@ -54,7 +54,7 @@ export const SettingsModal: React.FC<Props> = ({
 }) => {
   if (!isOpen) return null;
 
-  const [activeTab, setActiveTab] = useState<'admins' | 'exchange' | 'catalogs' | 'analytics'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'admins' | 'exchange' | 'catalogs'>(initialTab);
   const [catalogSubTab, setCatalogSubTab] = useState<'vendors' | 'categories'>('vendors');
 
   // Administradores y Tasa
@@ -84,27 +84,22 @@ export const SettingsModal: React.FC<Props> = ({
   const [vendorFormNotes, setVendorFormNotes] = useState('');
   const [isSavingCatalog, setIsSavingCatalog] = useState(false);
 
-  // Análisis de Gastos (Supabase BI)
-  const [analyticsFilter, setAnalyticsFilter] = useState<'ALL' | 'MONTH' | 'WEEK'>('ALL');
+  // Estadísticas de catálogo desde Supabase
   const [analyticsData, setAnalyticsData] = useState<ExpenseAnalyticsData | null>(null);
-  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
 
-  // Cargar estadísticas de gastos desde Supabase cuando se activa la pestaña de Análisis
+  // Cargar estadísticas de gastos desde Supabase cuando se activa la pestaña de Catálogos
   useEffect(() => {
-    if (activeTab === 'analytics' || activeTab === 'catalogs') {
+    if (activeTab === 'catalogs') {
       loadAnalytics();
     }
-  }, [activeTab, analyticsFilter]);
+  }, [activeTab]);
 
   const loadAnalytics = async () => {
-    setIsLoadingAnalytics(true);
     try {
-      const data = await fetchCloudExpensesAnalytics(analyticsFilter);
+      const data = await fetchCloudExpensesAnalytics('ALL');
       setAnalyticsData(data);
     } catch (err) {
-      console.warn('Error cargando análisis de gastos:', err);
-    } finally {
-      setIsLoadingAnalytics(false);
+      console.warn('Error cargando análisis de gastos para catálogo:', err);
     }
   };
 
@@ -364,16 +359,6 @@ export const SettingsModal: React.FC<Props> = ({
             }`}
           >
             <Building2 className="w-3.5 h-3.5" /> Proveedores & Categorías
-          </button>
-          <button
-            onClick={() => setActiveTab('analytics')}
-            className={`py-3 px-4 border-b-2 transition flex items-center gap-2 cursor-pointer uppercase tracking-wider text-[11px] whitespace-nowrap ${
-              activeTab === 'analytics'
-                ? 'border-[#1c6856] text-[#1c6856] bg-white font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <BarChart3 className="w-3.5 h-3.5" /> Análisis de Gastos
           </button>
         </div>
 
@@ -731,256 +716,6 @@ export const SettingsModal: React.FC<Props> = ({
                         </div>
                       );
                     })}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* TAB 4: ANÁLISIS DE GASTOS (GRÁFICAS) */}
-          {activeTab === 'analytics' && (
-            <div className="space-y-5">
-              {/* Controles superiores */}
-              <div className="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-slate-200">
-                <div>
-                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                    Inteligencia Financiera de Gastos • El Bodegón
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Métricas consolidadas directamente desde la tabla <code className="font-mono text-[#1c6856]">compras_gastos</code> en Supabase.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="flex border border-slate-300 divide-x divide-slate-300 text-xs font-bold">
-                    <button
-                      type="button"
-                      onClick={() => setAnalyticsFilter('ALL')}
-                      className={`px-3 py-1 cursor-pointer transition ${
-                        analyticsFilter === 'ALL'
-                          ? 'bg-[#1c6856] text-white'
-                          : 'bg-white text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      Historial Completo
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAnalyticsFilter('MONTH')}
-                      className={`px-3 py-1 cursor-pointer transition ${
-                        analyticsFilter === 'MONTH'
-                          ? 'bg-[#1c6856] text-white'
-                          : 'bg-white text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      Este Mes
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAnalyticsFilter('WEEK')}
-                      className={`px-3 py-1 cursor-pointer transition ${
-                        analyticsFilter === 'WEEK'
-                          ? 'bg-[#1c6856] text-white'
-                          : 'bg-white text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      Últimos 7 Días
-                    </button>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={loadAnalytics}
-                    disabled={isLoadingAnalytics}
-                    className="p-1.5 border border-slate-300 hover:bg-slate-50 text-slate-700 transition cursor-pointer"
-                    title="Actualizar datos desde la nube"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingAnalytics ? 'animate-spin text-[#1c6856]' : ''}`} />
-                  </button>
-                </div>
-              </div>
-
-              {isLoadingAnalytics ? (
-                <div className="py-16 text-center text-slate-500 flex flex-col items-center justify-center gap-2">
-                  <RefreshCw className="w-6 h-6 animate-spin text-[#1c6856]" />
-                  <span className="text-xs font-bold uppercase tracking-wider">
-                    Calculando estadísticas desde Supabase...
-                  </span>
-                </div>
-              ) : !analyticsData || analyticsData.totalAmount === 0 ? (
-                <div className="py-12 text-center text-slate-400">
-                  No se registraron gastos operativos en el periodo seleccionado.
-                </div>
-              ) : (
-                <div className="space-y-5">
-                  {/* Tarjetas KPI */}
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                    <div className="p-3 bg-slate-50 border border-slate-200">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                        Gasto Total Acumulado
-                      </span>
-                      <span className="text-lg font-mono font-bold text-slate-900 block mt-0.5">
-                        C$ {analyticsData.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </span>
-                      <span className="text-[10px] text-slate-500">
-                        {analyticsData.totalTransactionsCount} transacciones operativas
-                      </span>
-                    </div>
-
-                    <div className="p-3 bg-emerald-50/60 border border-emerald-200">
-                      <span className="text-[10px] font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1">
-                        <Wallet className="w-3 h-3 text-emerald-700" /> Efectivo (Caja Chica)
-                      </span>
-                      <span className="text-lg font-mono font-bold text-emerald-950 block mt-0.5">
-                        C$ {analyticsData.cashAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </span>
-                      <span className="text-[10px] text-emerald-700 font-bold">
-                        {analyticsData.cashPercent.toFixed(1)}% del gasto total
-                      </span>
-                    </div>
-
-                    <div className="p-3 bg-blue-50/60 border border-blue-200">
-                      <span className="text-[10px] font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1">
-                        <Landmark className="w-3 h-3 text-blue-700" /> Transferencias (Bancos)
-                      </span>
-                      <span className="text-lg font-mono font-bold text-blue-950 block mt-0.5">
-                        C$ {analyticsData.transferAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </span>
-                      <span className="text-[10px] text-blue-700 font-bold">
-                        {analyticsData.transferPercent.toFixed(1)}% del gasto total
-                      </span>
-                    </div>
-
-                    <div className="p-3 bg-amber-50/60 border border-amber-200">
-                      <span className="text-[10px] font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1">
-                        <TrendingUp className="w-3 h-3 text-amber-700" /> Rubro Principal #1
-                      </span>
-                      <span className="text-sm font-bold text-amber-950 block mt-0.5 truncate">
-                        {analyticsData.byCategory[0]?.label || 'N/A'}
-                      </span>
-                      <span className="text-[10px] text-amber-800 font-mono font-bold">
-                        C$ {analyticsData.byCategory[0]?.total.toFixed(2)} ({analyticsData.byCategory[0]?.percent.toFixed(1)}%)
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Barra de Proporción Efectivo vs Transferencia */}
-                  <div className="p-3 bg-slate-50 border border-slate-200 space-y-1.5">
-                    <div className="flex justify-between text-xs font-bold">
-                      <span className="text-emerald-800 flex items-center gap-1">
-                        <span className="w-2 h-2 bg-emerald-600"></span> Efectivo: C$ {analyticsData.cashAmount.toFixed(2)} ({analyticsData.cashPercent.toFixed(1)}%)
-                      </span>
-                      <span className="text-blue-800 flex items-center gap-1">
-                        <span className="w-2 h-2 bg-blue-600"></span> Transferencia: C$ {analyticsData.transferAmount.toFixed(2)} ({analyticsData.transferPercent.toFixed(1)}%)
-                      </span>
-                    </div>
-                    <div className="w-full h-3 bg-slate-200 flex overflow-hidden">
-                      <div
-                        style={{ width: `${analyticsData.cashPercent}%` }}
-                        className="bg-emerald-600 h-full transition-all duration-300"
-                        title={`Efectivo: ${analyticsData.cashPercent.toFixed(1)}%`}
-                      ></div>
-                      <div
-                        style={{ width: `${analyticsData.transferPercent}%` }}
-                        className="bg-blue-600 h-full transition-all duration-300"
-                        title={`Transferencias: ${analyticsData.transferPercent.toFixed(1)}%`}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* Dos Columnas de Gráficas: Categorías vs Top Proveedores */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Gráfica de Categorías */}
-                    <div className="border border-slate-200 p-4 space-y-3">
-                      <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                        <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                          <Tag className="w-3.5 h-3.5 text-[#1c6856]" />
-                          Distribución por Categorías
-                        </h4>
-                        <span className="text-[11px] text-slate-500 font-mono">
-                          {analyticsData.byCategory.length} rubros
-                        </span>
-                      </div>
-
-                      <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-                        {analyticsData.byCategory.map((cat, idx) => (
-                          <div key={cat.category} className="space-y-1">
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                                <span className="text-[10px] font-mono text-slate-400">#{idx + 1}</span>
-                                {cat.label}
-                              </span>
-                              <div className="text-right">
-                                <span className="font-mono font-bold text-slate-900">
-                                  C$ {cat.total.toFixed(2)}
-                                </span>
-                                <span className="text-slate-500 text-[10px] ml-1.5 font-mono">
-                                  ({cat.percent.toFixed(1)}%)
-                                </span>
-                              </div>
-                            </div>
-                            <div className="w-full h-2 bg-slate-100 overflow-hidden">
-                              <div
-                                style={{ width: `${Math.min(cat.percent, 100)}%` }}
-                                className="h-full bg-[#1c6856] transition-all duration-300"
-                              ></div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Leaderboard Top Proveedores */}
-                    <div className="border border-slate-200 p-4 space-y-3">
-                      <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                        <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                          <Building2 className="w-3.5 h-3.5 text-blue-700" />
-                          Ranking Top Proveedores
-                        </h4>
-                        <span className="text-[11px] text-slate-500 font-mono">
-                          {analyticsData.byVendor.length} proveedores
-                        </span>
-                      </div>
-
-                      <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-                        {analyticsData.byVendor.slice(0, 15).map((ven, idx) => (
-                          <div key={ven.vendor} className="space-y-1">
-                            <div className="flex justify-between items-center text-xs">
-                              <div className="flex items-center gap-1.5 truncate max-w-[65%]">
-                                <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 ${
-                                  idx === 0 ? 'bg-amber-100 text-amber-900' :
-                                  idx === 1 ? 'bg-slate-200 text-slate-800' :
-                                  idx === 2 ? 'bg-amber-50 text-amber-800' :
-                                  'text-slate-400'
-                                }`}>
-                                  #{idx + 1}
-                                </span>
-                                <span className="font-bold text-slate-900 truncate">
-                                  {ven.vendor}
-                                </span>
-                                <span className="text-[9px] uppercase px-1 bg-slate-100 text-slate-500 shrink-0">
-                                  {ven.mainCategory.replace(/_/g, ' ')}
-                                </span>
-                              </div>
-                              <div className="text-right shrink-0">
-                                <span className="font-mono font-bold text-slate-900">
-                                  C$ {ven.total.toFixed(2)}
-                                </span>
-                                <span className="text-slate-500 text-[10px] ml-1.5 font-mono">
-                                  ({ven.percent.toFixed(1)}%)
-                                </span>
-                              </div>
-                            </div>
-                            <div className="w-full h-2 bg-slate-100 overflow-hidden">
-                              <div
-                                style={{ width: `${Math.min(ven.percent, 100)}%` }}
-                                className="h-full bg-blue-700 transition-all duration-300"
-                              ></div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}

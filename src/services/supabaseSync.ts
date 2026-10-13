@@ -292,147 +292,167 @@ export async function syncCloseShiftToCloud(shift: PettyCashShift): Promise<void
   }
 }
 
+// Mutex en memoria para evitar que la misma transacción se envíe dos veces en paralelo (carreras de red / outbox)
+const inFlightSyncMap = new Map<string, Promise<number | null>>();
+
 /**
  * Sincroniza una transacción (gasto o fondeo/depósito) de Caja Chica a Supabase
  */
 export async function syncTransactionToCloud(tx: PettyCashTransaction): Promise<number | null> {
-  try {
-    const isExpense = tx.type === 'EXPENSE';
-    const isTransfer = tx.method === 'TRANSFER';
-    const isCard = tx.method === 'CARD';
-    const metodoPago = isTransfer ? 'TRANSFERENCIA' : isCard ? 'TARJETA' : 'EFECTIVO';
-    const estadoPago = isTransfer ? 'PENDIENTE_TRANSFERENCIA' : 'PAGADO';
+  if (tx.id && inFlightSyncMap.has(tx.id)) {
+    return inFlightSyncMap.get(tx.id)!;
+  }
 
-    const cloudCategory = isExpense ? mapCategoryToCloud(tx.category) : 'FONDEO';
-    const cleanNotes = tx.notes?.trim();
-    const cleanVendor = tx.vendor?.trim() || (isExpense ? 'Proveedor' : 'Gerencia / Caja General');
-    const concepto = cleanNotes || cleanVendor;
-    const isOpeningTransfer =
-      tx.id?.startsWith('pct-transfer-open-') ||
-      isOpeningPettyCashTx(tx);
+  const syncPromise = (async (): Promise<number | null> => {
+    try {
+      const isExpense = tx.type === 'EXPENSE';
+      const isTransfer = tx.method === 'TRANSFER';
+      const isCard = tx.method === 'CARD';
+      const metodoPago = isTransfer ? 'TRANSFERENCIA' : isCard ? 'TARJETA' : 'EFECTIVO';
+      const estadoPago = isTransfer ? 'PENDIENTE_TRANSFERENCIA' : 'PAGADO';
 
-    const clientIdTag = tx.id ? `[CLIENT_ID:${tx.id}]` : '';
-    let baseObs = isExpense
-      ? (tx.receiptNumber ? `Doc: ${tx.receiptNumber}` : '')
-      : isOpeningTransfer
-        ? (tx.receiptNumber ? `[OPENING_TRANSFER:TRUE] [TIPO:FONDEO] Doc: ${tx.receiptNumber}` : '[OPENING_TRANSFER:TRUE] [TIPO:FONDEO] Traspaso desde Caja General')
-        : (tx.receiptNumber ? `[TIPO:FONDEO] Doc: ${tx.receiptNumber}` : '[TIPO:FONDEO] Depósito a caja chica');
+      const cloudCategory = isExpense ? mapCategoryToCloud(tx.category) : 'FONDEO';
+      const cleanNotes = tx.notes?.trim();
+      const cleanVendor = tx.vendor?.trim() || (isExpense ? 'Proveedor' : 'Gerencia / Caja General');
+      const concepto = cleanNotes || cleanVendor;
+      const isOpeningTransfer =
+        tx.id?.startsWith('pct-transfer-open-') ||
+        isOpeningPettyCashTx(tx);
 
-    const observaciones = clientIdTag ? (baseObs ? `${baseObs} ${clientIdTag}` : clientIdTag) : (baseObs || null);
+      const clientIdTag = tx.id ? `[CLIENT_ID:${tx.id}]` : '';
+      let baseObs = isExpense
+        ? (tx.receiptNumber ? `Doc: ${tx.receiptNumber}` : '')
+        : isOpeningTransfer
+          ? (tx.receiptNumber ? `[OPENING_TRANSFER:TRUE] [TIPO:FONDEO] Doc: ${tx.receiptNumber}` : '[OPENING_TRANSFER:TRUE] [TIPO:FONDEO] Traspaso desde Caja General')
+          : (tx.receiptNumber ? `[TIPO:FONDEO] Doc: ${tx.receiptNumber}` : '[TIPO:FONDEO] Depósito a caja chica');
 
-    let cloudJornadaId: number | null = null;
-    // 1. Extraer fecha comercial desde shiftId prioritariamente (ej: pc-shift-2026-10-02) para respetar el turno abierto
-    let commercialDate = '';
-    if (tx.shiftId && tx.shiftId.startsWith('pc-shift-')) {
-      commercialDate = tx.shiftId.replace('pc-shift-', '');
-    } else if (tx.date) {
-      commercialDate = extractLocalDateStr(tx.date);
-    } else {
-      commercialDate = getLocalTodayStr();
-    }
+      const observaciones = clientIdTag ? (baseObs ? `${baseObs} ${clientIdTag}` : clientIdTag) : (baseObs || null);
 
-    if (commercialDate) {
-      const { data: jData } = await supabase
-        .from('jornadas_diarias')
-        .select('id')
-        .eq('fecha', commercialDate)
-        .order('id', { ascending: false })
-        .limit(1);
-      if (jData && jData.length > 0) {
-        cloudJornadaId = jData[0].id;
+      let cloudJornadaId: number | null = null;
+      // 1. Extraer fecha comercial desde shiftId prioritariamente (ej: pc-shift-2026-10-02) para respetar el turno abierto
+      let commercialDate = '';
+      if (tx.shiftId && tx.shiftId.startsWith('pc-shift-')) {
+        commercialDate = tx.shiftId.replace('pc-shift-', '');
+      } else if (tx.date) {
+        commercialDate = extractLocalDateStr(tx.date);
+      } else {
+        commercialDate = getLocalTodayStr();
       }
-    }
 
-    // Si aún no se encontró jornada y hay una ABIERTA, asociar a la jornada abierta activa
-    if (!cloudJornadaId) {
-      const { data: openJornada } = await supabase
-        .from('jornadas_diarias')
-        .select('id')
-        .eq('estado', 'ABIERTA')
-        .order('id', { ascending: false })
-        .limit(1);
-      if (openJornada && openJornada.length > 0) {
-        cloudJornadaId = openJornada[0].id;
+      if (commercialDate) {
+        const { data: jData } = await supabase
+          .from('jornadas_diarias')
+          .select('id')
+          .eq('fecha', commercialDate)
+          .order('id', { ascending: false })
+          .limit(1);
+        if (jData && jData.length > 0) {
+          cloudJornadaId = jData[0].id;
+        }
       }
-    }
 
-    // Blindaje de seguridad: Si no hay jornada abierta, vincular a la jornada más reciente existente
-    if (!cloudJornadaId) {
-      const { data: latestJornada } = await supabase
-        .from('jornadas_diarias')
-        .select('id')
-        .neq('turno', 'CONFIG')
-        .order('id', { ascending: false })
-        .limit(1);
-      if (latestJornada && latestJornada.length > 0) {
-        cloudJornadaId = latestJornada[0].id;
+      // Si aún no se encontró jornada y hay una ABIERTA, asociar a la jornada abierta activa
+      if (!cloudJornadaId) {
+        const { data: openJornada } = await supabase
+          .from('jornadas_diarias')
+          .select('id')
+          .eq('estado', 'ABIERTA')
+          .order('id', { ascending: false })
+          .limit(1);
+        if (openJornada && openJornada.length > 0) {
+          cloudJornadaId = openJornada[0].id;
+        }
       }
-    }
 
-    // 2. Blindaje Anti-Duplicados (Idempotencia Fuerte):
-    // Paso A: Verificar por CLIENT_ID único si ya fue insertado en Supabase
-    if (tx.id) {
-      const { data: existingByClientId } = await supabase
+      // Blindaje de seguridad: Si no hay jornada abierta, vincular a la jornada más reciente existente
+      if (!cloudJornadaId) {
+        const { data: latestJornada } = await supabase
+          .from('jornadas_diarias')
+          .select('id')
+          .neq('turno', 'CONFIG')
+          .order('id', { ascending: false })
+          .limit(1);
+        if (latestJornada && latestJornada.length > 0) {
+          cloudJornadaId = latestJornada[0].id;
+        }
+      }
+
+      // 2. Blindaje Anti-Duplicados (Idempotencia Fuerte):
+      // Paso A: Verificar por CLIENT_ID único si ya fue insertado en Supabase
+      if (tx.id) {
+        const { data: existingByClientId } = await supabase
+          .from('compras_gastos')
+          .select('id')
+          .ilike('observaciones', `%[CLIENT_ID:${tx.id}]%`)
+          .limit(1);
+        if (existingByClientId && existingByClientId.length > 0) {
+          console.log(`ℹ️ Transacción ya existía en la nube por CLIENT_ID (${existingByClientId[0].id}). Se vincula sin duplicar.`);
+          return existingByClientId[0].id;
+        }
+      }
+
+      // Paso B: Verificar si ya existe en Supabase una idéntica reciente (monto, forma de pago y proveedor en los últimos 2 min)
+      const targetVendorLower = (tx.vendor || cleanVendor).trim().toLowerCase();
+      let dupQuery = supabase
         .from('compras_gastos')
-        .select('id')
-        .ilike('observaciones', `%[CLIENT_ID:${tx.id}]%`)
-        .limit(1);
-      if (existingByClientId && existingByClientId.length > 0) {
-        console.log(`ℹ️ Transacción ya existía en la nube por CLIENT_ID (${existingByClientId[0].id}). Se vincula sin duplicar.`);
-        return existingByClientId[0].id;
-      }
-    }
-
-    // Paso B: Verificar si ya existe en Supabase una idéntica reciente (monto, forma de pago y proveedor en los últimos 3 min)
-    if (cloudJornadaId) {
-      const { data: existingDup } = await supabase
-        .from('compras_gastos')
-        .select('id, concepto, proveedor, created_at')
-        .eq('jornada_id', cloudJornadaId)
+        .select('id, concepto, proveedor, created_at, observaciones')
         .eq('monto', tx.amount)
         .eq('metodo_pago', metodoPago)
         .order('id', { ascending: false })
         .limit(5);
 
+      if (cloudJornadaId) {
+        dupQuery = dupQuery.eq('jornada_id', cloudJornadaId);
+      }
+
+      const { data: existingDup } = await dupQuery;
       if (existingDup && existingDup.length > 0) {
-        const targetVendorLower = (tx.vendor || cleanVendor).trim().toLowerCase();
         const match = existingDup.find((ed) => {
           const prov = (ed.proveedor || '').trim().toLowerCase();
           const conc = (ed.concepto || '').trim().toLowerCase();
           const isSameParty = prov === targetVendorLower || conc.includes(targetVendorLower) || prov.includes(targetVendorLower);
           const timeDiff = Math.abs(Date.now() - new Date(ed.created_at).getTime());
-          return isSameParty && timeDiff < 180000; // 3 minutos
+          return isSameParty && timeDiff < 120000; // 2 minutos
         });
         if (match) {
           console.log(`ℹ️ Transacción idéntica reciente detectada en la nube (#${match.id}). Se vincula sin duplicar.`);
           return match.id;
         }
       }
+
+      const { data, error } = await supabase
+        .from('compras_gastos')
+        .insert({
+          jornada_id: cloudJornadaId,
+          fecha_hora: tx.date || new Date().toISOString(),
+          concepto: concepto || (isExpense ? 'Gasto Caja Chica' : 'Depósito a caja chica'),
+          categoria: cloudCategory,
+          proveedor: tx.vendor || (isExpense ? 'Proveedor' : 'Gerencia / Caja General'),
+          monto: tx.amount,
+          metodo_pago: metodoPago,
+          estado_pago: isExpense ? estadoPago : 'PAGADO',
+          registrado_por: tx.registeredBy || 'Bodegón Control PC',
+          observaciones: observaciones,
+        })
+        .select('id')
+        .single();
+
+      if (error) throw error;
+      return data?.id || null;
+    } catch (err) {
+      console.warn('⚠️ No se pudo registrar transacción en la nube (quedará en bandeja de reintento):', err);
+      return null;
     }
+  })();
 
-    const { data, error } = await supabase
-      .from('compras_gastos')
-      .insert({
-        jornada_id: cloudJornadaId,
-        fecha_hora: tx.date || new Date().toISOString(),
-        concepto: concepto || (isExpense ? 'Gasto Caja Chica' : 'Depósito a caja chica'),
-        categoria: cloudCategory,
-        proveedor: tx.vendor || (isExpense ? 'Proveedor' : 'Gerencia / Caja General'),
-        monto: tx.amount,
-        metodo_pago: metodoPago,
-        estado_pago: isExpense ? estadoPago : 'PAGADO',
-        registrado_por: tx.registeredBy || 'Bodegón Control PC',
-        observaciones: observaciones,
-      })
-      .select('id')
-      .single();
-
-    if (error) throw error;
-    return data?.id || null;
-  } catch (err) {
-    console.warn('⚠️ No se pudo registrar transacción en la nube (quedará en bandeja de reintento):', err);
-    return null;
+  if (tx.id) {
+    inFlightSyncMap.set(tx.id, syncPromise);
+    syncPromise.finally(() => {
+      inFlightSyncMap.delete(tx.id);
+    });
   }
+
+  return syncPromise;
 }
 
 /**
@@ -1832,6 +1852,126 @@ export async function fetchCloudExpensesAnalytics(
       byVendor: [],
       totalTransactionsCount: 0,
     };
+  }
+}
+
+/**
+ * Consulta la lista detallada de gastos operativos para auditoría y reasignación de rubros
+ */
+export async function fetchCloudExpensesList(
+  dateFilter: 'ALL' | 'MONTH' | 'WEEK' = 'ALL'
+): Promise<any[]> {
+  try {
+    let query = supabase
+      .from('compras_gastos')
+      .select('*')
+      .order('fecha_hora', { ascending: false });
+
+    const todayStr = getLocalTodayStr();
+    if (dateFilter === 'MONTH') {
+      const monthPrefix = todayStr.slice(0, 7);
+      query = query.gte('fecha_hora', `${monthPrefix}-01T00:00:00`);
+    } else if (dateFilter === 'WEEK') {
+      const d = new Date();
+      d.setDate(d.getDate() - 7);
+      const weekAgoStr = d.toISOString().slice(0, 10);
+      query = query.gte('fecha_hora', `${weekAgoStr}T00:00:00`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []).filter((r) => !isFondeoTransaction(r));
+  } catch (err) {
+    console.warn('⚠️ Error al consultar lista de gastos en Supabase:', err);
+    return [];
+  }
+}
+
+/**
+ * Renombra una categoría de gasto en todo el sistema:
+ * 1. Actualiza en Supabase compras_gastos todas las filas históricas que tenían la categoría antigua.
+ * 2. Actualiza el catálogo SYSTEM_CATALOGS en jornadas_diarias.
+ */
+export async function renameCloudExpenseCategory(
+  oldCategory: string,
+  newCategory: string,
+  updatedVendors: VendorItem[],
+  updatedCategories: string[]
+): Promise<boolean> {
+  try {
+    const cleanOld = oldCategory.trim().toUpperCase();
+    const cleanNew = newCategory.trim().toUpperCase().replace(/\s+/g, '_');
+
+    // 1. Actualizar registros históricos en compras_gastos
+    const { error: updateError } = await supabase
+      .from('compras_gastos')
+      .update({ categoria: cleanNew })
+      .ilike('categoria', cleanOld);
+
+    if (updateError) {
+      console.warn('⚠️ Advertencia al migrar compras_gastos en Supabase:', updateError);
+    }
+
+    // 2. Actualizar catálogo centralizado
+    await syncCatalogsToCloud(updatedVendors, updatedCategories);
+    return true;
+  } catch (err) {
+    console.error('❌ Error al renombrar categoría en la nube:', err);
+    return false;
+  }
+}
+
+/**
+ * Elimina una categoría de gasto en todo el sistema:
+ * 1. Reasigna en Supabase compras_gastos todas las filas de esa categoría a fallbackCategory (por defecto 'OTROS').
+ * 2. Actualiza el catálogo SYSTEM_CATALOGS en jornadas_diarias.
+ */
+export async function deleteCloudExpenseCategory(
+  categoryToDelete: string,
+  fallbackCategory: string = 'OTROS',
+  updatedVendors: VendorItem[],
+  updatedCategories: string[]
+): Promise<boolean> {
+  try {
+    const cleanDelete = categoryToDelete.trim().toUpperCase();
+    const cleanFallback = fallbackCategory.trim().toUpperCase().replace(/\s+/g, '_');
+
+    // 1. Reasignar gastos históricos a la categoría de respaldo
+    const { error: updateError } = await supabase
+      .from('compras_gastos')
+      .update({ categoria: cleanFallback })
+      .ilike('categoria', cleanDelete);
+
+    if (updateError) {
+      console.warn('⚠️ Advertencia al reasignar compras_gastos en Supabase:', updateError);
+    }
+
+    // 2. Actualizar catálogo centralizado
+    await syncCatalogsToCloud(updatedVendors, updatedCategories);
+    return true;
+  } catch (err) {
+    console.error('❌ Error al eliminar categoría en la nube:', err);
+    return false;
+  }
+}
+
+/**
+ * Reasigna la categoría de un gasto individual en Supabase
+ */
+export async function reassignExpenseCategory(
+  expenseId: number,
+  newCategory: string
+): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('compras_gastos')
+      .update({ categoria: newCategory.trim().toUpperCase() })
+      .eq('id', expenseId);
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.error('❌ Error reasignando categoría de gasto individual:', err);
+    return false;
   }
 }
 

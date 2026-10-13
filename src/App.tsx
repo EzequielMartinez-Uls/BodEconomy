@@ -8,6 +8,7 @@ import { PettyCashView } from './components/PettyCashView';
 import { TablewareView } from './components/TablewareView';
 import { DailyEarningsView } from './components/DailyEarningsView';
 import { PayrollView } from './components/payroll/PayrollView';
+import { ExpenseAnalyticsView } from './components/ExpenseAnalyticsView';
 import { OpeningModal } from './components/OpeningModal';
 import { ClosingModal } from './components/ClosingModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -39,11 +40,11 @@ import { getLocalTodayStr, getLocalDateTimeStr, extractLocalDateStr } from './ut
 
 export function App() {
   const [state, setState] = useState<AppState>(loadState);
-  const [activeTab, setActiveTab] = useState<'generalCash' | 'pettyCash' | 'tableware' | 'dailyEarnings' | 'payroll'>('generalCash');
+  const [activeTab, setActiveTab] = useState<'generalCash' | 'pettyCash' | 'tableware' | 'dailyEarnings' | 'payroll' | 'expenseAnalytics'>('generalCash');
   const [payrollSubTab, setPayrollSubTab] = useState<'quincenal' | 'especial' | 'incidencias'>('quincenal');
   const [payrollHasUnsavedChanges, setPayrollHasUnsavedChanges] = useState(false);
 
-  const handleGuardedTabChange = (nextTab: 'generalCash' | 'pettyCash' | 'tableware' | 'dailyEarnings' | 'payroll') => {
+  const handleGuardedTabChange = (nextTab: 'generalCash' | 'pettyCash' | 'tableware' | 'dailyEarnings' | 'payroll' | 'expenseAnalytics') => {
     if (nextTab === activeTab) return;
     if (activeTab === 'payroll' && payrollHasUnsavedChanges) {
       const proceed = window.confirm(
@@ -1697,6 +1698,20 @@ export function App() {
                 subTab={payrollSubTab}
                 onSubTabChange={setPayrollSubTab}
                 onUnsavedChangesChange={setPayrollHasUnsavedChanges}
+              />
+            )}
+
+            {activeTab === 'expenseAnalytics' && (
+              <ExpenseAnalyticsView
+                state={state}
+                onUpdateExpenseCategories={handleUpdateExpenseCategories}
+                onUpdateVendors={handleUpdateVendors}
+                onUpdateTransactions={(updater) => {
+                  setState((prev) => ({
+                    ...prev,
+                    pettyCashTransactions: updater(prev.pettyCashTransactions),
+                  }));
+                }}
               />
             )}
           </div>

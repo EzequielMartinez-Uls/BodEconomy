@@ -19,12 +19,13 @@ import {
   RefreshCw,
   Sparkles,
   Download,
+  BarChart3,
 } from 'lucide-react';
 
 interface Props {
   state: AppState;
-  activeTab: 'generalCash' | 'pettyCash' | 'tableware' | 'dailyEarnings' | 'payroll';
-  onTabChange: (tab: 'generalCash' | 'pettyCash' | 'tableware' | 'dailyEarnings' | 'payroll') => void;
+  activeTab: 'generalCash' | 'pettyCash' | 'tableware' | 'dailyEarnings' | 'payroll' | 'expenseAnalytics';
+  onTabChange: (tab: 'generalCash' | 'pettyCash' | 'tableware' | 'dailyEarnings' | 'payroll' | 'expenseAnalytics') => void;
   payrollSubTab?: 'quincenal' | 'especial' | 'incidencias';
   onPayrollSubTabChange?: (subTab: 'quincenal' | 'especial' | 'incidencias') => void;
   onOpenSettingsClick: () => void;
@@ -357,6 +358,30 @@ export const Sidebar: React.FC<Props> = ({
               </div>
             )}
           </div>
+
+          {/* Módulo 5: Análisis de Gastos & Inteligencia Financiera */}
+          <button
+            onClick={() => onTabChange('expenseAnalytics')}
+            className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer ${
+              activeTab === 'expenseAnalytics'
+                ? 'bg-[#1c6856] text-white shadow-md shadow-[#1c6856]/25 border border-[#154f42]'
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <BarChart3 className="w-4 h-4" />
+              <span>Análisis de Gastos</span>
+            </div>
+            <span
+              className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${
+                activeTab === 'expenseAnalytics'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-emerald-50 text-[#1c6856] border border-emerald-200'
+              }`}
+            >
+              Métricas
+            </span>
+          </button>
         </nav>
       </div>
 

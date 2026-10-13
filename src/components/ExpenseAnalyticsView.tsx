@@ -1,0 +1,837 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { AppState, VendorItem, PettyCashTransaction } from '../types';
+import {
+  BarChart3,
+  TrendingUp,
+  Wallet,
+  Landmark,
+  RefreshCw,
+  Tag,
+  Building2,
+  Plus,
+  Edit2,
+  Trash2,
+  Check,
+  X,
+  Filter,
+  CheckCircle2,
+  AlertTriangle,
+  Search,
+  ArrowRight,
+} from 'lucide-react';
+import {
+  ExpenseAnalyticsData,
+  fetchCloudExpensesAnalytics,
+  fetchCloudExpensesList,
+  renameCloudExpenseCategory,
+  deleteCloudExpenseCategory,
+  reassignExpenseCategory,
+  syncCatalogsToCloud,
+} from '../services/supabaseSync';
+import { DEFAULT_EXPENSE_CATEGORIES } from '../services/storage';
+
+interface Props {
+  state: AppState;
+  onUpdateExpenseCategories: (categories: string[]) => void;
+  onUpdateVendors: (vendors: VendorItem[]) => void;
+  onUpdateTransactions?: (updater: (prev: PettyCashTransaction[]) => PettyCashTransaction[]) => void;
+}
+
+export const ExpenseAnalyticsView: React.FC<Props> = ({
+  state,
+  onUpdateExpenseCategories,
+  onUpdateVendors,
+  onUpdateTransactions,
+}) => {
+  const [dateFilter, setDateFilter] = useState<'ALL' | 'MONTH' | 'WEEK'>('ALL');
+  const [analyticsData, setAnalyticsData] = useState<ExpenseAnalyticsData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [expensesList, setExpensesList] = useState<any[]>([]);
+  const [isLoadingExpenses, setIsLoadingExpenses] = useState(false);
+
+  // Filtros de tabla de detalle
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Gestión de categorías
+  const [editingCategoryKey, setEditingCategoryKey] = useState<string | null>(null);
+  const [editingCategoryName, setEditingCategoryName] = useState('');
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
+
+  // Modal para eliminar categoría
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [fallbackCategory, setFallbackCategory] = useState<string>('OTROS');
+
+  // Nueva categoría
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [showAddCategoryForm, setShowAddCategoryForm] = useState(false);
+
+  // Feedback de reclasificación
+  const [reclassifyingId, setReclassifyingId] = useState<number | null>(null);
+  const [reclassifiedSuccessId, setReclassifiedSuccessId] = useState<number | null>(null);
+
+  const currentCategories = useMemo(() => {
+    return state.expenseCategories && state.expenseCategories.length > 0
+      ? state.expenseCategories
+      : DEFAULT_EXPENSE_CATEGORIES;
+  }, [state.expenseCategories]);
+
+  const currentVendors = useMemo(() => {
+    return state.vendorsList || [];
+  }, [state.vendorsList]);
+
+  // Carga de datos
+  const loadData = async () => {
+    setIsLoading(true);
+    setIsLoadingExpenses(true);
+    try {
+      const [analytics, rawList] = await Promise.all([
+        fetchCloudExpensesAnalytics(dateFilter),
+        fetchCloudExpensesList(dateFilter),
+      ]);
+      setAnalyticsData(analytics);
+      setExpensesList(rawList);
+    } catch (err) {
+      console.warn('Error cargando análisis de gastos:', err);
+    } finally {
+      setIsLoading(false);
+      setIsLoadingExpenses(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [dateFilter]);
+
+  // --- CRUD CATEGORÍAS ---
+  const handleStartEdit = (catKey: string) => {
+    setEditingCategoryKey(catKey);
+    setEditingCategoryName(catKey.replace(/_/g, ' '));
+  };
+
+  const handleSaveEdit = async (oldCat: string) => {
+    const clean = editingCategoryName.trim().toUpperCase().replace(/\s+/g, '_');
+    if (!clean || clean === oldCat) {
+      setEditingCategoryKey(null);
+      return;
+    }
+
+    if (currentCategories.includes(clean)) {
+      alert(`Ya existe una categoría llamada "${clean}".`);
+      return;
+    }
+
+    setIsSavingCategory(true);
+    const updatedCats = currentCategories.map((c) => (c === oldCat ? clean : c));
+    const updatedVendors = currentVendors.map((v: VendorItem) =>
+      v.defaultCategory === oldCat ? { ...v, defaultCategory: clean } : v
+    );
+
+    // 1. Guardar en Supabase (migra compras_gastos y SYSTEM_CATALOGS)
+    const ok = await renameCloudExpenseCategory(oldCat, clean, updatedVendors, updatedCats);
+    if (ok) {
+      onUpdateExpenseCategories(updatedCats);
+      onUpdateVendors(updatedVendors);
+      if (onUpdateTransactions) {
+        onUpdateTransactions((prev) =>
+          prev.map((t) => (t.category === oldCat ? { ...t, category: clean as any } : t))
+        );
+      }
+      setEditingCategoryKey(null);
+      await loadData();
+    } else {
+      alert('Hubo un error al actualizar la categoría en la nube.');
+    }
+    setIsSavingCategory(false);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!categoryToDelete) return;
+    if (currentCategories.length <= 1) {
+      alert('Debe existir al menos una categoría en el sistema.');
+      setCategoryToDelete(null);
+      return;
+    }
+
+    setIsSavingCategory(true);
+    const updatedCats = currentCategories.filter((c) => c !== categoryToDelete);
+    const updatedVendors = currentVendors.map((v: VendorItem) =>
+      v.defaultCategory === categoryToDelete ? { ...v, defaultCategory: fallbackCategory } : v
+    );
+
+    const ok = await deleteCloudExpenseCategory(categoryToDelete, fallbackCategory, updatedVendors, updatedCats);
+    if (ok) {
+      onUpdateExpenseCategories(updatedCats);
+      onUpdateVendors(updatedVendors);
+      if (onUpdateTransactions) {
+        onUpdateTransactions((prev) =>
+          prev.map((t) => (t.category === categoryToDelete ? { ...t, category: fallbackCategory as any } : t))
+        );
+      }
+      setCategoryToDelete(null);
+      if (selectedCategoryFilter === categoryToDelete) {
+        setSelectedCategoryFilter('ALL');
+      }
+      await loadData();
+    } else {
+      alert('Hubo un error al eliminar la categoría en la nube.');
+    }
+    setIsSavingCategory(false);
+  };
+
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = newCategoryName.trim().toUpperCase().replace(/\s+/g, '_');
+    if (!clean) return;
+
+    if (currentCategories.includes(clean)) {
+      alert(`La categoría "${clean}" ya existe.`);
+      return;
+    }
+
+    setIsSavingCategory(true);
+    const updatedCats = [...currentCategories, clean];
+    onUpdateExpenseCategories(updatedCats);
+    await syncCatalogsToCloud(currentVendors, updatedCats);
+    setNewCategoryName('');
+    setShowAddCategoryForm(false);
+    setIsSavingCategory(false);
+    await loadData();
+  };
+
+  // Reclasificación individual de un gasto
+  const handleReassignExpense = async (expenseId: number, targetCat: string) => {
+    setReclassifyingId(expenseId);
+    const ok = await reassignExpenseCategory(expenseId, targetCat);
+    if (ok) {
+      setExpensesList((prev) =>
+        prev.map((exp) => (exp.id === expenseId ? { ...exp, categoria: targetCat } : exp))
+      );
+      setReclassifiedSuccessId(expenseId);
+      setTimeout(() => setReclassifiedSuccessId(null), 2500);
+
+      // Actualizar localmente si existe en memoria
+      if (onUpdateTransactions) {
+        onUpdateTransactions((prev) =>
+          prev.map((t) => (t.cloudId === expenseId ? { ...t, category: targetCat as any } : t))
+        );
+      }
+
+      // Refrescar KPIs
+      fetchCloudExpensesAnalytics(dateFilter).then((data) => setAnalyticsData(data));
+    } else {
+      alert('No se pudo reasignar el gasto en la nube.');
+    }
+    setReclassifyingId(null);
+  };
+
+  // Filtrado de gastos para la tabla de auditoría
+  const filteredExpenses = useMemo(() => {
+    return expensesList.filter((exp) => {
+      if (selectedCategoryFilter !== 'ALL') {
+        const cat = (exp.categoria || 'OTROS').toUpperCase().trim();
+        if (cat !== selectedCategoryFilter) return false;
+      }
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase().trim();
+        const prov = (exp.proveedor || '').toLowerCase();
+        const conc = (exp.concepto || '').toLowerCase();
+        if (!prov.includes(query) && !conc.includes(query)) return false;
+      }
+      return true;
+    });
+  }, [expensesList, selectedCategoryFilter, searchQuery]);
+
+  return (
+    <div className="space-y-6">
+      {/* ─── Encabezado Principal ────────────────────────────────────────── */}
+      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="p-2 rounded-lg bg-emerald-50 text-[#1c6856] border border-emerald-200">
+              <BarChart3 className="w-5 h-5" />
+            </span>
+            <div>
+              <h1 className="text-lg font-bold text-slate-900 tracking-tight">
+                Análisis de Gastos & Inteligencia Financiera
+              </h1>
+              <p className="text-xs text-slate-500">
+                Auditoría en vivo de <code className="font-mono text-[#1c6856] font-bold">compras_gastos</code> en Supabase. Limpieza, edición de rubros y control de egresos.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Controles de periodo y recarga */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex border border-slate-300 rounded-lg overflow-hidden bg-slate-50 text-xs font-bold shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setDateFilter('ALL')}
+              className={`px-3 py-1.5 transition cursor-pointer ${
+                dateFilter === 'ALL'
+                  ? 'bg-[#1c6856] text-white shadow-inner'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+            >
+              Historial Completo
+            </button>
+            <button
+              type="button"
+              onClick={() => setDateFilter('MONTH')}
+              className={`px-3 py-1.5 transition cursor-pointer border-l border-slate-200 ${
+                dateFilter === 'MONTH'
+                  ? 'bg-[#1c6856] text-white shadow-inner'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+            >
+              Este Mes
+            </button>
+            <button
+              type="button"
+              onClick={() => setDateFilter('WEEK')}
+              className={`px-3 py-1.5 transition cursor-pointer border-l border-slate-200 ${
+                dateFilter === 'WEEK'
+                  ? 'bg-[#1c6856] text-white shadow-inner'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+            >
+              Últimos 7 Días
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={loadData}
+            disabled={isLoading}
+            className="p-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition cursor-pointer shadow-2xs flex items-center gap-1.5 text-xs font-bold"
+            title="Recargar análisis desde Supabase"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-[#1c6856]' : 'text-slate-600'}`} />
+            <span className="hidden sm:inline">Actualizar</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ─── Tarjetas KPI Superiores ────────────────────────────────────── */}
+      {isLoading ? (
+        <div className="p-12 text-center bg-white rounded-xl border border-slate-200 flex flex-col items-center justify-center gap-2.5">
+          <RefreshCw className="w-6 h-6 animate-spin text-[#1c6856]" />
+          <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+            Consolidando estadísticas financieras desde la nube...
+          </span>
+        </div>
+      ) : !analyticsData || analyticsData.totalAmount === 0 ? (
+        <div className="p-12 text-center bg-white rounded-xl border border-slate-200 text-slate-400 text-xs">
+          No se encontraron egresos operativos registrados en el periodo seleccionado.
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* KPI 1: Gasto Total */}
+            <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                Gasto Total Acumulado
+              </span>
+              <span className="text-2xl font-mono font-extrabold text-slate-900 block">
+                C$ {analyticsData.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-[11px] text-slate-500 font-medium">
+                {analyticsData.totalTransactionsCount} transacciones operativas
+              </span>
+            </div>
+
+            {/* KPI 2: Efectivo */}
+            <div className="p-4 bg-emerald-50/40 rounded-xl border border-emerald-200/80 shadow-2xs space-y-1">
+              <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                <Wallet className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Efectivo (Caja Chica)</span>
+              </span>
+              <span className="text-2xl font-mono font-extrabold text-emerald-950 block">
+                C$ {analyticsData.cashAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-[11px] font-bold text-emerald-700">
+                {analyticsData.cashPercent.toFixed(1)}% del gasto total
+              </span>
+            </div>
+
+            {/* KPI 3: Transferencias */}
+            <div className="p-4 bg-blue-50/40 rounded-xl border border-blue-200/80 shadow-2xs space-y-1">
+              <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wider flex items-center gap-1.5">
+                <Landmark className="w-3.5 h-3.5 text-blue-600" />
+                <span>Transferencias / Bancos</span>
+              </span>
+              <span className="text-2xl font-mono font-extrabold text-blue-950 block">
+                C$ {analyticsData.transferAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-[11px] font-bold text-blue-700">
+                {analyticsData.transferPercent.toFixed(1)}% del gasto total
+              </span>
+            </div>
+
+            {/* KPI 4: Rubro Principal */}
+            <div className="p-4 bg-amber-50/40 rounded-xl border border-amber-200/80 shadow-2xs space-y-1">
+              <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5 text-amber-600" />
+                <span>Rubro Principal #1</span>
+              </span>
+              <span className="text-lg font-bold text-amber-950 block truncate">
+                {analyticsData.byCategory[0]?.label || 'Sin Categoría'}
+              </span>
+              <span className="text-[11px] font-mono font-bold text-amber-700 block">
+                C$ {(analyticsData.byCategory[0]?.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} ({analyticsData.byCategory[0]?.percent.toFixed(1)}%)
+              </span>
+            </div>
+          </div>
+
+          {/* Barra Comparativa Efectivo vs Transferencia */}
+          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs space-y-2">
+            <div className="flex justify-between items-center text-xs font-bold">
+              <span className="text-emerald-800 flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                Efectivo Gaveta: C$ {analyticsData.cashAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ({analyticsData.cashPercent.toFixed(1)}%)
+              </span>
+              <span className="text-blue-800 flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                Transferencia Banco: C$ {analyticsData.transferAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ({analyticsData.transferPercent.toFixed(1)}%)
+              </span>
+            </div>
+            <div className="w-full h-3 rounded-full bg-slate-100 flex overflow-hidden border border-slate-200">
+              <div
+                style={{ width: `${analyticsData.cashPercent}%` }}
+                className="bg-emerald-600 h-full transition-all duration-300"
+              ></div>
+              <div
+                style={{ width: `${analyticsData.transferPercent}%` }}
+                className="bg-blue-600 h-full transition-all duration-300"
+              ></div>
+            </div>
+          </div>
+
+          {/* ─── Sección de Dos Columnas: Categorías vs Top Proveedores ─────── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Columna Izquierda: Gestión de Categorías / Rubros */}
+            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-[#1c6856]" />
+                    <span>Distribución & Gestión de Categorías</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Puedes editar nombres o eliminar rubros que no correspondan.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAddCategoryForm((prev) => !prev)}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-50 text-[#1c6856] hover:bg-emerald-100 border border-emerald-300 text-xs font-bold flex items-center gap-1 transition cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Nueva Categoría</span>
+                </button>
+              </div>
+
+              {/* Formulario para agregar nueva categoría */}
+              {showAddCategoryForm && (
+                <form onSubmit={handleAddCategory} className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
+                  <span className="text-[11px] font-bold text-slate-700 block">Nombre del Nuevo Rubro:</span>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Ej: VERDURAS, LACTEOS, EMPAQUES..."
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      className="flex-1 bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold uppercase focus:outline-none focus:border-[#1c6856]"
+                      autoFocus
+                    />
+                    <button
+                      type="submit"
+                      disabled={isSavingCategory}
+                      className="px-3 py-1.5 rounded-lg bg-[#1c6856] text-white text-xs font-bold hover:bg-[#154f42] cursor-pointer disabled:opacity-50"
+                    >
+                      {isSavingCategory ? 'Guardando...' : 'Crear'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddCategoryForm(false)}
+                      className="px-2.5 py-1.5 rounded-lg bg-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-300 cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Lista de Categorías con barras y acciones */}
+              <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                {analyticsData.byCategory.map((cat, idx) => {
+                  const isEditing = editingCategoryKey === cat.category;
+                  const isFilterActive = selectedCategoryFilter === cat.category;
+
+                  return (
+                    <div
+                      key={cat.category}
+                      className={`p-3 rounded-xl border transition ${
+                        isFilterActive
+                          ? 'border-[#1c6856] bg-emerald-50/20 shadow-2xs'
+                          : 'border-slate-200 bg-slate-50/40 hover:bg-slate-50'
+                      }`}
+                    >
+                      {isEditing ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={editingCategoryName}
+                            onChange={(e) => setEditingCategoryName(e.target.value)}
+                            className="flex-1 px-2.5 py-1.5 bg-white border border-[#1c6856] rounded-lg text-xs font-bold uppercase text-slate-900 focus:outline-none"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleSaveEdit(cat.category)}
+                            disabled={isSavingCategory}
+                            title="Guardar nuevo nombre (actualiza historial en Supabase)"
+                            className="p-1.5 rounded-lg bg-[#1c6856] text-white hover:bg-[#154f42] cursor-pointer"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingCategoryKey(null)}
+                            title="Cancelar"
+                            className="p-1.5 rounded-lg bg-slate-200 text-slate-600 hover:bg-slate-300 cursor-pointer"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-mono font-bold text-slate-400">
+                                #{idx + 1}
+                              </span>
+                              <span className="font-bold text-slate-900 text-xs">
+                                {cat.label}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-mono">
+                                ({cat.count} {cat.count === 1 ? 'gasto' : 'gastos'})
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold text-slate-900 text-xs">
+                                C$ {cat.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                              <span className="text-[10px] font-mono font-bold text-slate-500">
+                                ({cat.percent.toFixed(1)}%)
+                              </span>
+
+                              {/* Acciones: Editar y Eliminar */}
+                              <div className="flex items-center gap-1 ml-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartEdit(cat.category)}
+                                  title="Renombrar categoría y actualizar todos los gastos"
+                                  className="p-1 rounded text-slate-400 hover:text-[#1c6856] hover:bg-white border border-transparent hover:border-slate-200 transition cursor-pointer"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setCategoryToDelete(cat.category);
+                                    setFallbackCategory(currentCategories.find((c) => c !== cat.category) || 'OTROS');
+                                  }}
+                                  title="Eliminar categoría y reasignar sus gastos"
+                                  className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-white border border-transparent hover:border-slate-200 transition cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedCategoryFilter(isFilterActive ? 'ALL' : cat.category)}
+                                  title={isFilterActive ? 'Quitar filtro' : 'Ver detalle de compras'}
+                                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition cursor-pointer ${
+                                    isFilterActive
+                                      ? 'bg-[#1c6856] text-white border-[#1c6856]'
+                                      : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
+                                  }`}
+                                >
+                                  {isFilterActive ? 'Filtrado' : 'Ver'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Barra de progreso */}
+                          <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
+                            <div
+                              style={{ width: `${Math.min(cat.percent, 100)}%` }}
+                              className="h-full bg-[#1c6856] rounded-full transition-all duration-300"
+                            ></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Columna Derecha: Ranking Top Proveedores */}
+            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-blue-700" />
+                    <span>Ranking Top Proveedores</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Proveedores con mayor volumen de compra en el periodo.
+                  </p>
+                </div>
+                <span className="text-xs font-mono font-bold text-slate-500">
+                  {analyticsData.byVendor.length} proveedores
+                </span>
+              </div>
+
+              <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                {analyticsData.byVendor.slice(0, 15).map((ven, idx) => (
+                  <div key={ven.vendor} className="p-3 bg-slate-50/50 rounded-xl border border-slate-200 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 truncate max-w-[65%]">
+                        <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                          idx === 0 ? 'bg-amber-100 text-amber-900' :
+                          idx === 1 ? 'bg-slate-200 text-slate-800' :
+                          idx === 2 ? 'bg-amber-50 text-amber-800 border border-amber-200' :
+                          'text-slate-400'
+                        }`}>
+                          #{idx + 1}
+                        </span>
+                        <span className="font-bold text-slate-900 truncate">
+                          {ven.vendor}
+                        </span>
+                        <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-bold shrink-0">
+                          {ven.mainCategory.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <span className="font-mono font-bold text-slate-900">
+                          C$ {ven.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                        <span className="text-[10px] font-mono font-bold text-slate-500 ml-1.5">
+                          ({ven.percent.toFixed(1)}%)
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="w-full h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                      <div
+                        style={{ width: `${Math.min(ven.percent, 100)}%` }}
+                        className="h-full bg-blue-700 rounded-full transition-all duration-300"
+                      ></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ─── Sección Inferior: Auditoría de Compras & Reclasificación ── */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-[#1c6856]" />
+                  <span>Auditoría de Compras & Reclasificación de Rubros</span>
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  Si un gasto tiene un rubro incorrecto, cámbialo en el selector y se actualizará al instante en Supabase.
+                </p>
+              </div>
+
+              {/* Filtros rápidos */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
+                  <input
+                    type="text"
+                    placeholder="Buscar proveedor o concepto..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:outline-none focus:border-[#1c6856] w-56"
+                  />
+                </div>
+
+                <select
+                  value={selectedCategoryFilter}
+                  onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+                  className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:border-[#1c6856]"
+                >
+                  <option value="ALL">Todos los Rubros ({expensesList.length})</option>
+                  {currentCategories.map((c) => (
+                    <option key={c} value={c}>
+                      {c.replace(/_/g, ' ')}
+                    </option>
+                  ))}
+                </select>
+
+                {selectedCategoryFilter !== 'ALL' && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCategoryFilter('ALL')}
+                    className="text-xs text-[#1c6856] hover:underline font-bold"
+                  >
+                    Limpiar
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Tabla de Compras */}
+            {isLoadingExpenses ? (
+              <div className="py-8 text-center text-slate-400 text-xs">
+                Cargando listado de gastos...
+              </div>
+            ) : filteredExpenses.length === 0 ? (
+              <div className="py-8 text-center text-slate-400 text-xs">
+                No hay compras que coincidan con los filtros aplicados.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-400 text-[10px] uppercase font-bold tracking-wider">
+                      <th className="py-2 px-3">Fecha / Hora</th>
+                      <th className="py-2 px-3">Proveedor</th>
+                      <th className="py-2 px-3">Concepto / Detalle</th>
+                      <th className="py-2 px-3">Método</th>
+                      <th className="py-2 px-3 text-right">Monto</th>
+                      <th className="py-2 px-3 text-center">Categoría Asignada (Cambiar en vivo)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredExpenses.map((exp) => {
+                      const isSaving = reclassifyingId === exp.id;
+                      const isSuccess = reclassifiedSuccessId === exp.id;
+                      const currentCat = (exp.categoria || 'OTROS').toUpperCase().trim();
+
+                      return (
+                        <tr key={exp.id} className="hover:bg-slate-50/80 transition">
+                          <td className="py-2.5 px-3 font-mono text-slate-500 whitespace-nowrap">
+                            {exp.fecha_hora ? exp.fecha_hora.slice(0, 16).replace('T', ' ') : '—'}
+                          </td>
+                          <td className="py-2.5 px-3 font-bold text-slate-900 whitespace-nowrap">
+                            {exp.proveedor || 'Sin Proveedor'}
+                          </td>
+                          <td className="py-2.5 px-3 text-slate-600 max-w-xs truncate" title={exp.concepto}>
+                            {exp.concepto || '—'}
+                          </td>
+                          <td className="py-2.5 px-3 whitespace-nowrap">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              exp.metodo_pago === 'TRANSFERENCIA'
+                                ? 'bg-blue-50 text-blue-800 border border-blue-200'
+                                : exp.metodo_pago === 'TARJETA'
+                                ? 'bg-purple-50 text-purple-800 border border-purple-200'
+                                : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                            }`}>
+                              {exp.metodo_pago === 'TRANSFERENCIA' ? 'Banco' : exp.metodo_pago === 'TARJETA' ? 'Tarjeta' : 'Efectivo'}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
+                            C$ {Number(exp.monto || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </td>
+                          <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                            <div className="inline-flex items-center gap-1.5">
+                              <select
+                                value={currentCat}
+                                disabled={isSaving}
+                                onChange={(e) => handleReassignExpense(exp.id, e.target.value)}
+                                className={`text-[11px] font-bold px-2 py-1 rounded-lg border focus:outline-none transition cursor-pointer ${
+                                  isSuccess
+                                    ? 'border-emerald-500 bg-emerald-50 text-emerald-900'
+                                    : 'border-slate-300 bg-white text-slate-800 hover:border-[#1c6856]'
+                                }`}
+                              >
+                                {currentCategories.map((c) => (
+                                  <option key={c} value={c}>
+                                    {c.replace(/_/g, ' ')}
+                                  </option>
+                                ))}
+                              </select>
+                              {isSaving && <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#1c6856]" />}
+                              {isSuccess && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── Modal Confirmar Eliminación de Categoría ───────────────────── */}
+      {categoryToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-2xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
+            <div className="flex items-center gap-3 text-rose-600 pb-2 border-b border-slate-100">
+              <AlertTriangle className="w-6 h-6 shrink-0" />
+              <h3 className="font-bold text-base text-slate-900">
+                Eliminar Categoría: {categoryToDelete.replace(/_/g, ' ')}
+              </h3>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              ¿Estás seguro de que deseas eliminar este rubro? Para no perder los registros contables históricos, selecciona a qué categoría deseas reasignar todas las compras asociadas:
+            </p>
+
+            <div className="space-y-1.5 bg-slate-50 p-3 rounded-lg border border-slate-200">
+              <label className="text-[11px] font-bold text-slate-700 block">
+                Reasignar compras históricas a:
+              </label>
+              <select
+                value={fallbackCategory}
+                onChange={(e) => setFallbackCategory(e.target.value)}
+                className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#1c6856]"
+              >
+                {currentCategories
+                  .filter((c) => c !== categoryToDelete)
+                  .map((c) => (
+                    <option key={c} value={c}>
+                      {c.replace(/_/g, ' ')}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setCategoryToDelete(null)}
+                className="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold transition cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isSavingCategory}
+                className="px-4 py-2 rounded-lg bg-rose-600 text-white hover:bg-rose-700 text-xs font-bold transition cursor-pointer disabled:opacity-50"
+              >
+                {isSavingCategory ? 'Eliminando...' : 'Confirmar Eliminación'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
