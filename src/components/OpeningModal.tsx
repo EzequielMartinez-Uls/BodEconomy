@@ -118,17 +118,17 @@ export const OpeningModal: React.FC<Props> = ({
 
   const totalNIO = calculateTotalNIO(denominationsNIO);
   const totalUSD = calculateTotalUSD(denominationsUSD); // Dólares que se entregan a Snyder
-  const totalEquivNIO = totalNIO; // Efectivo físico en gaveta en Córdobas
+  const totalEquivNIO = parseFloat((totalNIO + totalUSD * (exchangeRate || 36)).toFixed(2)); // Total físico en gaveta (Córdobas + Dólares convertidos)
 
   const expectedFromPrevious =
-    lastClosedShift?.netCashAfterTipsNIO ||
     lastClosedShift?.totalClosingEquivNIO ||
+    lastClosedShift?.netCashAfterTipsNIO ||
     lastClosedShift?.totalClosingNIO ||
     lastClosedShift?.actualCashNIO ||
     lastClosedShift?.totalOpeningNIO ||
     0;
-  const differenceWithPrevious = totalNIO - expectedFromPrevious;
-  const isCountInitiated = totalNIO > 0;
+  const differenceWithPrevious = parseFloat((totalEquivNIO - expectedFromPrevious).toFixed(2));
+  const isCountInitiated = totalNIO > 0 || totalUSD > 0;
   const isMatchWithPrevious = lastClosedShift ? Math.abs(differenceWithPrevious) < 1.0 : true;
 
   // Corroboración de Canales de Venta / Vouchers de Anoche
@@ -861,7 +861,7 @@ export const OpeningModal: React.FC<Props> = ({
                     <div>
                       <span className="text-[10px] uppercase font-bold text-emerald-700 block">Dólares (USD)</span>
                       <strong className="text-base font-bold text-emerald-700 font-mono">
-                        $ {totalUSD.toFixed(2)} USD
+                        $ {totalUSD.toFixed(2)} USD <span className="text-xs text-emerald-600 font-normal">(≈ C$ {(totalUSD * (exchangeRate || 36)).toLocaleString('es-NI', { minimumFractionDigits: 2 })})</span>
                       </strong>
                     </div>
                   )}

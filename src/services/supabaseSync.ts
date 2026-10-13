@@ -1391,6 +1391,34 @@ export async function fetchFullCloudState(): Promise<{
               initBal = Number(p.initialBalance) || (prevDay + genTrans + bossCont);
             } catch {}
           }
+
+          // Calcular gastos e ingresos reales de este día desde compras_gastos
+          const dayTxs = (gData || []).filter((g: any) => {
+            const gDate = extractLocalDateStr(g.fecha_hora);
+            return gDate === j.fecha || g.jornada_id === j.id;
+          });
+          let dayInflows = 0;
+          let dayCashExpenses = 0;
+          let dayTransfExpenses = 0;
+          let dayCardExpenses = 0;
+          for (const g of dayTxs) {
+            const isInf = isFondeoTransaction(g);
+            const amt = Number(g.monto) || 0;
+            if (isInf) dayInflows += amt;
+            else if (g.metodo_pago === 'TRANSFERENCIA') dayTransfExpenses += amt;
+            else if (g.metodo_pago === 'TARJETA') dayCardExpenses += amt;
+            else dayCashExpenses += amt;
+          }
+          const dayTotalExpenses = dayCashExpenses + dayTransfExpenses + dayCardExpenses;
+
+          // Si el arqueo cerrado no guardó conteo o vino en 0 pero hay fondo inicial o gastos:
+          if ((actualCounted === 0 && expBal === 0) || !matchClose) {
+            expBal = parseFloat((initBal + dayInflows - dayCashExpenses).toFixed(2));
+            actualCounted = expBal;
+            diff = 0;
+            auditStat = 'SQUARED';
+          }
+
           const parsedPetty: PettyCashShift = {
             id: `pc-shift-${j.fecha}`,
             date: j.fecha,
@@ -1403,6 +1431,8 @@ export async function fetchFullCloudState(): Promise<{
             generalCashTransfer: genTrans,
             bossContribution: bossCont,
             initialBalance: initBal,
+            totalExpenses: Number(j.total_gastos_efectivo) || dayTotalExpenses,
+            totalInflows: dayInflows,
             actualCashCounted: actualCounted,
             expectedBalance: expBal,
             difference: diff,

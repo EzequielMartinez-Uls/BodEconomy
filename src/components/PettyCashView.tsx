@@ -349,13 +349,16 @@ export const PettyCashView: React.FC<Props> = ({
   // Saldo físico en mano / al cierre de la jornada seleccionada
   const selectedFinalBalance = useMemo(() => {
     if (selectedShift?.status === 'CLOSED') {
-      return selectedShift.actualCashCounted ?? selectedShift.expectedBalance ?? 0;
+      const counted = selectedShift.actualCashCounted ?? selectedShift.expectedBalance;
+      if (counted !== undefined && counted !== null && counted > 0) return counted;
+      if (expectedSelectedBalance > 0) return expectedSelectedBalance;
+      return counted ?? 0;
     }
     if (selectedShift?.status === 'OPEN') {
       return parseFloat((selectedShift.initialBalance + selectedDateInflows - selectedDateCashExpenses).toFixed(2));
     }
     return 0;
-  }, [selectedShift, selectedDateInflows, selectedDateCashExpenses]);
+  }, [selectedShift, selectedDateInflows, selectedDateCashExpenses, expectedSelectedBalance]);
 
   // Iniciar Apertura para una fecha específica
   const handleStartOpenShiftModal = (dateToOpen?: string) => {
@@ -1167,19 +1170,19 @@ export const PettyCashView: React.FC<Props> = ({
                 <div>
                   <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Total Compras del Día</span>
                   <span className="font-mono font-bold text-rose-700 text-sm">
-                    - C$ {(selectedShift.totalExpenses || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                    - C$ {((selectedShift.totalExpenses && selectedShift.totalExpenses > 0) ? selectedShift.totalExpenses : selectedDateExpenses).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div>
                   <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Saldo Teórico Esperado</span>
                   <span className="font-mono font-bold text-slate-800 text-sm">
-                    C$ {(selectedShift.expectedBalance || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                    C$ {((selectedShift.expectedBalance && selectedShift.expectedBalance > 0) ? selectedShift.expectedBalance : expectedSelectedBalance).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div>
                   <span className="text-[10px] font-semibold text-emerald-800 uppercase tracking-wider block">Efectivo Físico Contado</span>
                   <span className="font-mono font-bold text-slate-900 text-sm">
-                    C$ {(selectedShift.actualCashCounted || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                    C$ {((selectedShift.actualCashCounted && selectedShift.actualCashCounted > 0) ? selectedShift.actualCashCounted : ((selectedShift.expectedBalance && selectedShift.expectedBalance > 0) ? selectedShift.expectedBalance : expectedSelectedBalance)).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
