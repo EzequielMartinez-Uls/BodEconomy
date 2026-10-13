@@ -18,6 +18,10 @@ import {
   AlertTriangle,
   Search,
   ArrowRight,
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  Receipt,
 } from 'lucide-react';
 import {
   ExpenseAnalyticsData,
@@ -66,6 +70,10 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
   const [newCategoryName, setNewCategoryName] = useState('');
   const [showAddCategoryForm, setShowAddCategoryForm] = useState(false);
 
+  // Paginación / Expansión de Rankings
+  const [showAllVendors, setShowAllVendors] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
+
   // Feedback de reclasificación
   const [reclassifyingId, setReclassifyingId] = useState<number | null>(null);
   const [reclassifiedSuccessId, setReclassifiedSuccessId] = useState<number | null>(null);
@@ -79,6 +87,81 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
   const currentVendors = useMemo(() => {
     return state.vendorsList || [];
   }, [state.vendorsList]);
+
+  // Búsqueda en Rankings
+  const [vendorSearchTerm, setVendorSearchTerm] = useState('');
+  const [categorySearchTerm, setCategorySearchTerm] = useState('');
+
+  // Gráfica de Tendencia Diaria (Evolución de compras por día)
+  const dailySpendData = useMemo(() => {
+    const dayMap = new Map<string, { total: number; count: number }>();
+    expensesList.forEach((exp) => {
+      const isFunding =
+        exp.categoria === 'FONDEO' ||
+        (exp.proveedor || '').toLowerCase().includes('caja general') ||
+        (exp.observaciones || '').includes('OPENING_TRANSFER');
+      if (isFunding) return;
+      const dayStr = (exp.fecha_hora || '').slice(0, 10);
+      if (!dayStr) return;
+      const current = dayMap.get(dayStr) || { total: 0, count: 0 };
+      dayMap.set(dayStr, {
+        total: current.total + (Number(exp.monto) || 0),
+        count: current.count + 1,
+      });
+    });
+
+    return Array.from(dayMap.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(-14)
+      .map(([date, data]) => ({
+        date,
+        dayLabel: new Date(date + 'T12:00:00').toLocaleDateString('es-NI', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+        }),
+        total: data.total,
+        count: data.count,
+      }));
+  }, [expensesList]);
+
+  const maxDailySpend = useMemo(() => {
+    return Math.max(...dailySpendData.map((d) => d.total), 1);
+  }, [dailySpendData]);
+
+  // Ticket promedio de compra
+  const averageTicket = useMemo(() => {
+    if (!analyticsData || analyticsData.totalTransactionsCount === 0) return 0;
+    return analyticsData.totalAmount / analyticsData.totalTransactionsCount;
+  }, [analyticsData]);
+
+  // Listas filtradas y paginadas de Categorías
+  const filteredCategories = useMemo(() => {
+    let list = analyticsData?.byCategory || [];
+    if (categorySearchTerm.trim()) {
+      const q = categorySearchTerm.toLowerCase();
+      list = list.filter((c) => c.label.toLowerCase().includes(q) || c.category.toLowerCase().includes(q));
+    }
+    return list;
+  }, [analyticsData?.byCategory, categorySearchTerm]);
+
+  const displayedCategories = useMemo(() => {
+    return showAllCategories ? filteredCategories : filteredCategories.slice(0, 15);
+  }, [filteredCategories, showAllCategories]);
+
+  // Listas filtradas y paginadas de Proveedores
+  const filteredVendors = useMemo(() => {
+    let list = analyticsData?.byVendor || [];
+    if (vendorSearchTerm.trim()) {
+      const q = vendorSearchTerm.toLowerCase();
+      list = list.filter((v) => v.vendor.toLowerCase().includes(q) || v.mainCategory.toLowerCase().includes(q));
+    }
+    return list;
+  }, [analyticsData?.byVendor, vendorSearchTerm]);
+
+  const displayedVendors = useMemo(() => {
+    return showAllVendors ? filteredVendors : filteredVendors.slice(0, 15);
+  }, [filteredVendors, showAllVendors]);
 
   // Carga de datos
   const loadData = async () => {
@@ -327,7 +410,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* KPI 1: Gasto Total */}
             <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-1">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
@@ -369,7 +452,21 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
               </span>
             </div>
 
-            {/* KPI 4: Rubro Principal */}
+            {/* KPI 4: Ticket Promedio */}
+            <div className="p-4 bg-purple-50/40 rounded-xl border border-purple-200/80 shadow-2xs space-y-1">
+              <span className="text-[10px] font-bold text-purple-800 uppercase tracking-wider flex items-center gap-1.5">
+                <Receipt className="w-3.5 h-3.5 text-purple-600" />
+                <span>Ticket Promedio / Compra</span>
+              </span>
+              <span className="text-2xl font-mono font-extrabold text-purple-950 block">
+                C$ {averageTicket.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-[11px] font-bold text-purple-700">
+                Gasto medio por transacción
+              </span>
+            </div>
+
+            {/* KPI 5: Rubro Principal */}
             <div className="p-4 bg-amber-50/40 rounded-xl border border-amber-200/80 shadow-2xs space-y-1">
               <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-amber-600" />
@@ -408,6 +505,74 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
             </div>
           </div>
 
+          {/* ─── Gráfica de Tendencia Diaria de Gastos (Histograma Real de Flujo) ─── */}
+          {dailySpendData.length > 0 && (
+            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-[#1c6856]" />
+                    <span>Tendencia Diaria de Egresos • Curva de Salidas de Dinero</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Historial cronológico de compras por día para detectar picos atípicos y controlar la liquidez.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="text-slate-500 font-medium">
+                    Promedio diario: <strong className="text-slate-900 font-mono">C$ {(dailySpendData.reduce((acc, d) => acc + d.total, 0) / dailySpendData.length).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-600"></span> Pico de gasto
+                  </span>
+                </div>
+              </div>
+
+              {/* Contenedor interactivo de barras */}
+              <div className="pt-6 pb-2">
+                <div className="grid grid-flow-col auto-cols-fr gap-2 sm:gap-3 items-end h-44 border-b border-slate-200 px-2">
+                  {dailySpendData.map((d) => {
+                    const heightPercent = Math.max(Math.round((d.total / maxDailySpend) * 100), 6);
+                    const isPeak = d.total === maxDailySpend;
+
+                    return (
+                      <div key={d.date} className="flex flex-col items-center h-full justify-end group relative">
+                        {/* Tooltip flotante al pasar el cursor */}
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-14 z-20 bg-slate-900 text-white text-[10px] py-1.5 px-2.5 rounded-lg shadow-xl pointer-events-none whitespace-nowrap text-center">
+                          <p className="font-bold">{d.date}</p>
+                          <p className="font-mono text-emerald-400 font-bold">C$ {d.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                          <p className="text-[9px] text-slate-300">{d.count} compras registradas</p>
+                        </div>
+
+                        {/* Monto abreviado encima de la barra */}
+                        <span className={`text-[9px] font-mono font-bold mb-1 truncate max-w-full hidden sm:block ${isPeak ? 'text-amber-700 font-extrabold' : 'text-slate-500'}`}>
+                          C${d.total >= 1000 ? (d.total / 1000).toFixed(1) + 'k' : d.total.toFixed(0)}
+                        </span>
+
+                        {/* Barra vertical interactiva */}
+                        <div className="w-full max-w-[42px] bg-slate-100 rounded-t-md overflow-hidden flex items-end h-full">
+                          <div
+                            style={{ height: `${heightPercent}%` }}
+                            className={`w-full rounded-t-md transition-all duration-500 ${
+                              isPeak
+                                ? 'bg-amber-600 hover:bg-amber-500'
+                                : 'bg-[#1c6856] hover:bg-[#154f42]'
+                            }`}
+                          ></div>
+                        </div>
+
+                        {/* Etiqueta de fecha */}
+                        <span className="text-[10px] font-medium text-slate-600 mt-2 truncate max-w-full text-center">
+                          {d.dayLabel}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ─── Sección de Dos Columnas: Categorías vs Top Proveedores ─────── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Columna Izquierda: Gestión de Categorías / Rubros */}
@@ -423,14 +588,29 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setShowAddCategoryForm((prev) => !prev)}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-50 text-[#1c6856] hover:bg-emerald-100 border border-emerald-300 text-xs font-bold flex items-center gap-1 transition cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Nueva Categoría</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  {analyticsData.byCategory.length > 8 && (
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        placeholder="Buscar rubro..."
+                        value={categorySearchTerm}
+                        onChange={(e) => setCategorySearchTerm(e.target.value)}
+                        className="pl-8 pr-2.5 py-1 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#1c6856] w-32 sm:w-36"
+                      />
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setShowAddCategoryForm((prev) => !prev)}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-50 text-[#1c6856] hover:bg-emerald-100 border border-emerald-300 text-xs font-bold flex items-center gap-1 transition cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Nueva Categoría</span>
+                  </button>
+                </div>
               </div>
 
               {/* Formulario para agregar nueva categoría */}
@@ -466,7 +646,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
 
               {/* Lista de Categorías con barras y acciones */}
               <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
-                {analyticsData.byCategory.map((cat, idx) => {
+                {displayedCategories.map((cat, idx) => {
                   const isEditing = editingCategoryKey === cat.category;
                   const isFilterActive = selectedCategoryFilter === cat.category;
 
@@ -578,6 +758,32 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                     </div>
                   );
                 })}
+
+                {filteredCategories.length === 0 && (
+                  <div className="py-8 text-center text-xs text-slate-400">
+                    No se encontraron rubros que coincidan con la búsqueda.
+                  </div>
+                )}
+
+                {filteredCategories.length > 15 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllCategories((p) => !p)}
+                    className="w-full py-2.5 rounded-xl border border-emerald-300 bg-emerald-50/60 hover:bg-emerald-100/70 text-[#1c6856] text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs mt-2"
+                  >
+                    {showAllCategories ? (
+                      <>
+                        <ChevronUp className="w-4 h-4" />
+                        <span>Mostrar solo el Top 15</span>
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="w-4 h-4" />
+                        <span>Ver todas las categorías ({filteredCategories.length} rubros)</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -593,13 +799,26 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                     Proveedores con mayor volumen de compra en el periodo.
                   </p>
                 </div>
-                <span className="text-xs font-mono font-bold text-slate-500">
-                  {analyticsData.byVendor.length} proveedores
-                </span>
+
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Buscar proveedor..."
+                      value={vendorSearchTerm}
+                      onChange={(e) => setVendorSearchTerm(e.target.value)}
+                      className="pl-8 pr-3 py-1 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-700 w-36 sm:w-44"
+                    />
+                  </div>
+                  <span className="text-xs font-mono font-bold text-slate-500 whitespace-nowrap">
+                    {filteredVendors.length} prov.
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
-                {analyticsData.byVendor.slice(0, 15).map((ven, idx) => (
+                {displayedVendors.map((ven, idx) => (
                   <div key={ven.vendor} className="p-3 bg-slate-50/50 rounded-xl border border-slate-200 space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2 truncate max-w-[65%]">
@@ -637,6 +856,32 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                     </div>
                   </div>
                 ))}
+
+                {displayedVendors.length === 0 && (
+                  <div className="py-8 text-center text-xs text-slate-400">
+                    No se encontraron proveedores que coincidan con la búsqueda.
+                  </div>
+                )}
+
+                {filteredVendors.length > 15 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllVendors((p) => !p)}
+                    className="w-full py-2.5 rounded-xl border border-blue-300 bg-blue-50/60 hover:bg-blue-100/70 text-blue-800 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs mt-2"
+                  >
+                    {showAllVendors ? (
+                      <>
+                        <ChevronUp className="w-4 h-4" />
+                        <span>Mostrar solo el Top 15</span>
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="w-4 h-4" />
+                        <span>Ver todos los proveedores ({filteredVendors.length} proveedores)</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           </div>
