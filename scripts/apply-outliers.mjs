@@ -110,6 +110,23 @@ async function runUpdates() {
   // Comercial Paniagua (133, 301) -> SUMINISTROS_DE_ARTICULOS_DE_LIMPIEZA
   await supabase.from('compras_gastos').update({ categoria: 'SUMINISTROS_DE_ARTICULOS_DE_LIMPIEZA' }).in('id', [133, 301]);
 
+  // 13. Reclasificación Global de Todas las Categorías
+  await supabase.from('compras_gastos').update({ categoria: 'GAS_Y_DEMAS' }).in('id', [136, 242, 243, 338, 356]);
+  await supabase.from('compras_gastos').update({ categoria: 'MARISCOS/PESCADOS' }).in('id', [115, 196, 216, 253, 297, 339]);
+  await supabase.from('compras_gastos').update({ categoria: 'SUMINISTRO_PARA_COCINA/BARRA' }).in('id', [357, 359]);
+  await supabase.from('compras_gastos').update({ categoria: 'RECIPIENTES/EMPAQUES_Y_OTROS' }).eq('id', 335);
+  await supabase.from('compras_gastos').update({ categoria: 'GASTOS ADMINISTRATIVOS' }).in('id', [146, 340]);
+  await supabase.from('compras_gastos').update({ categoria: 'GASTOS_COCINA' }).in('id', [245, 261]);
+  await supabase.from('compras_gastos').update({ categoria: 'FRUTAS_VEGETALES' }).eq('id', 303);
+  await supabase.from('compras_gastos').update({ proveedor: 'Delivery Particular', concepto: 'Delivery de aguacate', categoria: 'DELIVERYS_ACARREOS' }).eq('id', 302);
+  await supabase.from('compras_gastos').update({ proveedor: 'Fast Delivery', concepto: 'Delivery de aceite', categoria: 'DELIVERYS_ACARREOS' }).eq('id', 262);
+  await supabase.from('compras_gastos').update({ proveedor: 'Mercado Externo', categoria: 'GASTOS_COCINA' }).eq('id', 319);
+  await supabase.from('compras_gastos').update({ categoria: 'GASTOS_COCINA' }).eq('id', 263);
+  await supabase.from('compras_gastos').update({ categoria: 'LACTEOS' }).eq('id', 284);
+  await supabase.from('compras_gastos').update({ categoria: 'SUMINISTROS_DE_ARTICULOS_DE_LIMPIEZA' }).in('id', [343, 267]);
+  await supabase.from('compras_gastos').update({ categoria: 'PAPELERIA_Y_MAS' }).in('id', [180, 307, 365, 366]);
+  await supabase.from('compras_gastos').update({ categoria: 'SERVICIOS/REPARACIONES' }).eq('id', 337);
+
   // 8. Actualizar SYSTEM_CATALOGS para incluir 'GASTOS_COCINA' si no está
   const { data: catRows } = await supabase.from('jornadas_diarias').select('id, observaciones').eq('responsable', 'SYSTEM_CATALOGS');
   if (catRows && catRows.length > 0) {
