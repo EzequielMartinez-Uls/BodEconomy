@@ -72,6 +72,7 @@ export const DEFAULT_EXPENSE_CATEGORIES = [
   'MERCADO',
   'LACTEOS',
   'PAGOS_PERSONAL',
+  'GASTOS_COCINA',
   'OTROS',
 ];
 
