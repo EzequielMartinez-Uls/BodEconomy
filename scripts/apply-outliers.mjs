@@ -86,6 +86,30 @@ async function runUpdates() {
   if (r11.error) console.error('Error r11:', r11.error);
   else console.log('✅ IDs 145, 228, 347 actualizados a Luma Limones / FRUTAS_VEGETALES');
 
+  // 12. Limpieza de SUPERMERCADO
+  // Carnicería SyM (167) -> CARNES
+  await supabase.from('compras_gastos').update({ categoria: 'CARNES' }).eq('id', 167);
+  // Pan y Paz (182, 215) -> PANADERIA
+  await supabase.from('compras_gastos').update({ categoria: 'PANADERIA' }).in('id', [182, 215]);
+  // DOKAR (220) -> RECIPIENTES/EMPAQUES_Y_OTROS
+  await supabase.from('compras_gastos').update({ categoria: 'RECIPIENTES/EMPAQUES_Y_OTROS' }).eq('id', 220);
+  // Café Soluble (230) -> SUMINISTRO_PARA_COCINA/BARRA
+  await supabase.from('compras_gastos').update({ categoria: 'SUMINISTRO_PARA_COCINA/BARRA' }).eq('id', 230);
+  // Cerro de Oro (168, 170) -> BEBIDAS_ALCOHOLICAS
+  await supabase.from('compras_gastos').update({ categoria: 'BEBIDAS_ALCOHOLICAS' }).in('id', [168, 170]);
+  // Dulce Explosión (171) -> SUMINISTRO_PARA_COCINA/BARRA
+  await supabase.from('compras_gastos').update({ categoria: 'SUMINISTRO_PARA_COCINA/BARRA' }).eq('id', 171);
+  // Librería (187) -> PAPELERIA_Y_MAS
+  await supabase.from('compras_gastos').update({ categoria: 'PAPELERIA_Y_MAS' }).eq('id', 187);
+  // Compras Locales (241, 269, 271, 313) -> GASTOS_COCINA
+  await supabase.from('compras_gastos').update({ categoria: 'GASTOS_COCINA' }).in('id', [241, 269, 271, 313]);
+  // Pollo de La Colonia (246, 327) -> POLLO
+  await supabase.from('compras_gastos').update({ categoria: 'POLLO' }).in('id', [246, 327]);
+  // Proveedor de Aceite (174, 191) -> GASTOS_COCINA
+  await supabase.from('compras_gastos').update({ categoria: 'GASTOS_COCINA' }).in('id', [174, 191]);
+  // Comercial Paniagua (133, 301) -> SUMINISTROS_DE_ARTICULOS_DE_LIMPIEZA
+  await supabase.from('compras_gastos').update({ categoria: 'SUMINISTROS_DE_ARTICULOS_DE_LIMPIEZA' }).in('id', [133, 301]);
+
   // 8. Actualizar SYSTEM_CATALOGS para incluir 'GASTOS_COCINA' si no está
   const { data: catRows } = await supabase.from('jornadas_diarias').select('id, observaciones').eq('responsable', 'SYSTEM_CATALOGS');
   if (catRows && catRows.length > 0) {
