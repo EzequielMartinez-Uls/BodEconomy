@@ -58,6 +58,34 @@ async function runUpdates() {
   if (r7.error) console.error('Error r7:', r7.error);
   else console.log('✅ IDs 188, 236 actualizados a Gastos Varios / OTROS');
 
+  // 8. Fresas (128) -> Proveedor: 'Vendedor de fresas', Categoria: 'FRUTAS_VEGETALES'
+  const r8 = await supabase.from('compras_gastos')
+    .update({ proveedor: 'Vendedor de fresas', categoria: 'FRUTAS_VEGETALES' })
+    .eq('id', 128);
+  if (r8.error) console.error('Error r8:', r8.error);
+  else console.log('✅ ID 128 actualizado a Vendedor de fresas / FRUTAS_VEGETALES');
+
+  // 9. Cuajada (129) -> Proveedor: 'Mercado Externo', Categoria: 'LACTEOS'
+  const r9 = await supabase.from('compras_gastos')
+    .update({ proveedor: 'Mercado Externo', categoria: 'LACTEOS' })
+    .eq('id', 129);
+  if (r9.error) console.error('Error r9:', r9.error);
+  else console.log('✅ ID 129 actualizado a Mercado Externo / LACTEOS');
+
+  // 10. Lechugas (152) -> Proveedor: 'Supermercado (La Colonia)', Categoria: 'FRUTAS_VEGETALES'
+  const r10 = await supabase.from('compras_gastos')
+    .update({ proveedor: 'Supermercado (La Colonia)', categoria: 'FRUTAS_VEGETALES' })
+    .eq('id', 152);
+  if (r10.error) console.error('Error r10:', r10.error);
+  else console.log('✅ ID 152 actualizado a Supermercado (La Colonia) / FRUTAS_VEGETALES');
+
+  // 11. Limones (145, 228, 347) -> Proveedor: 'Luma Limones', Categoria: 'FRUTAS_VEGETALES'
+  const r11 = await supabase.from('compras_gastos')
+    .update({ proveedor: 'Luma Limones', categoria: 'FRUTAS_VEGETALES' })
+    .in('id', [145, 228, 347]);
+  if (r11.error) console.error('Error r11:', r11.error);
+  else console.log('✅ IDs 145, 228, 347 actualizados a Luma Limones / FRUTAS_VEGETALES');
+
   // 8. Actualizar SYSTEM_CATALOGS para incluir 'GASTOS_COCINA' si no está
   const { data: catRows } = await supabase.from('jornadas_diarias').select('id, observaciones').eq('responsable', 'SYSTEM_CATALOGS');
   if (catRows && catRows.length > 0) {
