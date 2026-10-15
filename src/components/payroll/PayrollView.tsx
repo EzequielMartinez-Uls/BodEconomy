@@ -41,7 +41,7 @@ import {
   Settings,
   Globe,
   X,
-  Copy,
+  Eraser,
 } from 'lucide-react';
 
 interface Props {
@@ -500,6 +500,42 @@ export const PayrollView: React.FC<Props> = ({
       setSaveNotice('¡Cambios guardados localmente! (Se sincronizarán al conectar a la red)');
     }
     setTimeout(() => setSaveNotice(null), 4000);
+  };
+
+  // Limpiar a cero las variables de quincena (horas extras, feriados, INSS, préstamos, deducciones)
+  const handleClearBiweeklyVariables = () => {
+    if (!rows || rows.length === 0) {
+      alert('No hay colaboradores registrados en esta quincena para limpiar.');
+      return;
+    }
+
+    const proceed = window.confirm(
+      '🧹 ¿Deseas reiniciar a cero las variables de esta quincena?\n\n' +
+      '• Se limpiarán a cero: Horas Extras, Feriados, Ded. INSS, Préstamos, Consumo Restaurante, Vajilla y Notas.\n' +
+      '• Se mantendrán intactos: Todos los colaboradores, sus cargos y sus salarios base.\n\n' +
+      '¿Deseas continuar con la limpieza?'
+    );
+    if (!proceed) return;
+
+    const nextRows: BiweeklyPayrollRow[] = rows.map((r) => ({
+      ...r,
+      overtimeHours: 0,
+      overtimeAmount: 0,
+      holidaysCount: 0,
+      holidaysAmount: 0,
+      inssDeduction: 0,
+      bonuses: 0,
+      loanDeduction: 0,
+      restaurantServiceDeduction: 0,
+      breakageDeduction: 0,
+      breakageNotes: '',
+      totalPaid: r.baseSalary || 0,
+    }));
+
+    setRows(nextRows);
+    persistDraftLocally(nextRows, specialRows);
+    setSaveNotice('🧹 Variables de la quincena reiniciadas a cero con éxito.');
+    setTimeout(() => setSaveNotice(null), 3500);
   };
 
   // Duplicar Quincena Anterior: Clona colaboradores y sueldos base reiniciando extras y deducciones temporales
@@ -1068,14 +1104,14 @@ export const PayrollView: React.FC<Props> = ({
 
         {/* Botones de Acción: Rectangulares Formales */}
         <div className="flex flex-wrap items-center gap-1.5">
-          {/* Duplicar Quincena Anterior */}
+          {/* Limpiar Variables Quincena */}
           <button
-            onClick={handleDuplicatePreviousPayroll}
-            className="px-2.5 py-1.5 border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
-            title="Copiar colaboradores y salarios del período anterior (reinicia extras y notas a cero)"
+            onClick={handleClearBiweeklyVariables}
+            className="px-2.5 py-1.5 border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-950 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+            title="Reiniciar a cero horas extras, feriados, INSS y deducciones de esta quincena (conserva colaboradores y salarios base)"
           >
-            <Copy className="w-3.5 h-3.5 text-slate-600" />
-            <span>Duplicar Quincena</span>
+            <Eraser className="w-3.5 h-3.5 text-slate-600" />
+            <span>Limpiar Variables</span>
           </button>
 
           {/* Sincronizar Bodegón Pass */}
@@ -1216,6 +1252,7 @@ export const PayrollView: React.FC<Props> = ({
       {activeSubTab === 'quincenal' && (
         <BiweeklyPayrollTable
           rows={rows}
+          employees={state.payrollEmployees}
           onRowChange={handleRowChange}
           onAddRow={handleAddRow}
           onDeleteRow={handleDeleteRow}

@@ -1,5 +1,6 @@
-import React from 'react';
-import { BiweeklyPayrollRow } from '../../types/payroll';
+import React, { useState } from 'react';
+import { BiweeklyPayrollRow, PayrollEmployee } from '../../types/payroll';
+import { matchEmployeeName } from '../../services/bodegonPassSync';
 import {
   Plus,
   Trash2,
@@ -10,10 +11,12 @@ import {
   Receipt,
   FileSpreadsheet,
   AlertTriangle,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface Props {
   rows: BiweeklyPayrollRow[];
+  employees?: PayrollEmployee[];
   onRowChange: (index: number, updatedRow: BiweeklyPayrollRow) => void;
   onAddRow?: () => void;
   onDeleteRow?: (index: number) => void;
@@ -23,12 +26,14 @@ interface Props {
 
 export const BiweeklyPayrollTable: React.FC<Props> = ({
   rows,
+  employees,
   onRowChange,
   onAddRow,
   onDeleteRow,
   onPrintRowReceipt,
   authorizedBy,
 }) => {
+  const [activeRowIdx, setActiveRowIdx] = useState<number | null>(null);
   // Manejador de cambio de texto (Nombre, Cargo, Notas)
   const handleTextChange = (
     index: number,
@@ -271,8 +276,18 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
         <table className="w-full text-xs text-left border-collapse">
           <thead>
             <tr className="bg-slate-100 text-slate-800 font-extrabold border-b border-slate-300 text-[11px] uppercase tracking-wider">
-              <th rowSpan={2} className="py-2.5 px-2 text-center w-10 border-r border-slate-300 align-middle">#</th>
-              <th rowSpan={2} className="py-2.5 px-3 min-w-[170px] border-r border-slate-300 align-middle">Colaborador</th>
+              <th
+                rowSpan={2}
+                className="sticky left-0 z-30 py-2.5 px-2 text-center w-[42px] min-w-[42px] max-w-[42px] border-r border-slate-300 align-middle bg-slate-100 shadow-[1px_0_0_0_#cbd5e1]"
+              >
+                #
+              </th>
+              <th
+                rowSpan={2}
+                className="sticky left-[42px] z-30 py-2.5 px-3 min-w-[210px] border-r-2 border-slate-300 align-middle bg-slate-100 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.12)]"
+              >
+                Colaborador
+              </th>
               <th rowSpan={2} className="py-2.5 px-2 min-w-[120px] border-r border-slate-300 align-middle">Cargo</th>
               <th rowSpan={2} className="py-2.5 px-3 min-w-[120px] text-right border-r border-slate-300 bg-emerald-50/70 align-middle text-emerald-950 font-bold">Salario Q. (C$)</th>
               <th colSpan={2} className="py-2 px-2 text-center border-r border-slate-300 bg-amber-100/70 text-amber-950 align-middle font-black text-[11px] tracking-wider">Horas Extras</th>
@@ -295,6 +310,10 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
           </thead>
           <tbody className="divide-y divide-slate-200">
             {rows.map((row, idx) => {
+              const isRowActive = activeRowIdx === idx;
+              const isInsured = employees?.some(
+                (e) => (e.id === row.employeeId || matchEmployeeName(e.name, row.name)) && e.isInsuredINSS
+              );
               const inssVal = Math.abs(row.inssDeduction !== undefined ? (row.inssDeduction || 0) : (row.bonuses || 0));
               const rowDeductions =
                 inssVal +
@@ -311,39 +330,67 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
               const isNegativeOrZero = row.totalPaid <= 0 && (row.baseSalary || 0) > 0;
 
               return (
-                <tr key={row.employeeId || idx} className="hover:bg-slate-50/90 transition-colors">
-                  <td className="p-1.5 text-center text-slate-500 font-mono text-[11px] border-r border-slate-200 bg-slate-50/50">
+                <tr
+                  key={row.employeeId || idx}
+                  onClick={() => setActiveRowIdx(idx)}
+                  onFocus={() => setActiveRowIdx(idx)}
+                  className={`${
+                    isRowActive ? 'bg-amber-50/70 ring-1 ring-amber-300' : 'hover:bg-slate-50/90'
+                  } transition-colors`}
+                >
+                  <td
+                    className={`sticky left-0 z-10 w-[42px] min-w-[42px] max-w-[42px] p-1.5 text-center font-mono text-[11px] border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] ${
+                      isRowActive ? 'bg-amber-100/90 text-amber-950 font-black' : 'bg-slate-50/95 text-slate-500'
+                    }`}
+                  >
                     {idx + 1}
                   </td>
 
-                  {/* Nombre Colaborador (Editable Inline) */}
-                  <td className="p-1 border-r border-slate-200">
+                  {/* Nombre Colaborador (Fijo a la izquierda + Badge Asegurado) */}
+                  <td
+                    className={`sticky left-[42px] z-10 p-1.5 border-r-2 border-slate-300 min-w-[210px] shadow-[4px_0_8px_-2px_rgba(0,0,0,0.12)] ${
+                      isRowActive ? 'bg-amber-50/95' : 'bg-white'
+                    }`}
+                  >
                     <div>
                       <input
                         type="text"
                         value={row.name}
                         onChange={(e) => handleTextChange(idx, 'name', e.target.value)}
-                        className="w-full font-bold text-slate-900 bg-transparent border border-transparent hover:border-slate-300 focus:border-slate-600 focus:bg-white px-1.5 py-1 text-xs outline-none transition"
+                        className="w-full font-bold text-slate-900 bg-transparent border border-transparent hover:border-slate-300 focus:border-slate-600 focus:bg-white px-1.5 py-0.5 text-xs outline-none transition"
                         placeholder="Nombre colaborador..."
                       />
-                      {/* Alerta Rectangular de Límite de Endeudamiento */}
-                      {isHighDeduction && (
-                        <div
-                          className="mt-0.5 inline-flex items-center gap-1 border border-amber-600 bg-amber-50 text-amber-900 text-[9px] font-mono font-bold uppercase px-1 py-0.2"
-                          title={`Deducciones representan el ${deductionPct}% del salario base quincenal`}
-                        >
-                          <AlertTriangle className="w-2.5 h-2.5 text-amber-600" />
-                          <span>ALERTA DEDUCCIÓN: {deductionPct}%</span>
-                        </div>
-                      )}
-                      {isNegativeOrZero && (
-                        <div
-                          className="mt-0.5 inline-flex items-center gap-1 border border-rose-600 bg-rose-50 text-rose-800 text-[9px] font-mono font-bold uppercase px-1 py-0.2 ml-1"
-                          title="El neto a pagar es cero o negativo tras las deducciones aplicadas"
-                        >
-                          <span>NETO ≤ C$ 0</span>
-                        </div>
-                      )}
+                      <div className="flex flex-wrap items-center gap-1 mt-0.5 px-1">
+                        {/* Etiqueta ASEGURADO INSS */}
+                        {isInsured && (
+                          <span
+                            className="inline-flex items-center gap-1 border border-indigo-200 bg-indigo-50 text-indigo-700 text-[9px] font-bold uppercase px-1.5 py-0.2 tracking-wider rounded-xs shadow-2xs"
+                            title="Colaborador cotizante inscrito en la Planilla Especial del Seguro Social (INSS)"
+                          >
+                            <ShieldCheck className="w-2.5 h-2.5 text-indigo-600" />
+                            <span>Asegurado</span>
+                          </span>
+                        )}
+
+                        {/* Alerta Rectangular de Límite de Endeudamiento */}
+                        {isHighDeduction && (
+                          <div
+                            className="inline-flex items-center gap-1 border border-amber-600 bg-amber-50 text-amber-900 text-[9px] font-mono font-bold uppercase px-1 py-0.2"
+                            title={`Deducciones representan el ${deductionPct}% del salario base quincenal`}
+                          >
+                            <AlertTriangle className="w-2.5 h-2.5 text-amber-600" />
+                            <span>ALERTA DED: {deductionPct}%</span>
+                          </div>
+                        )}
+                        {isNegativeOrZero && (
+                          <div
+                            className="inline-flex items-center gap-1 border border-rose-600 bg-rose-50 text-rose-800 text-[9px] font-mono font-bold uppercase px-1 py-0.2"
+                            title="El neto a pagar es cero o negativo tras las deducciones aplicadas"
+                          >
+                            <span>NETO ≤ C$ 0</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </td>
 
@@ -553,7 +600,11 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
           </tbody>
           <tfoot>
             <tr className="bg-slate-900 text-white font-black text-xs border-t-2 border-slate-900">
-              <td colSpan={3} className="p-2.5 text-center uppercase tracking-wider">Totales Generales</td>
+              <td className="sticky left-0 z-10 w-[42px] min-w-[42px] max-w-[42px] p-2.5 bg-slate-900 border-r border-slate-700"></td>
+              <td className="sticky left-[42px] z-10 min-w-[210px] p-2.5 uppercase tracking-wider bg-slate-900 border-r-2 border-slate-700 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.3)] font-bold">
+                Totales Generales
+              </td>
+              <td className="p-2.5 bg-slate-900 border-r border-slate-800"></td>
               <td className="p-2.5 text-right font-mono text-emerald-300">C$ {totalBase.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
               <td className="p-2.5 text-center font-mono">{totalHEHours ? `${totalHEHours.toFixed(1)}h` : '-'}</td>
               <td className="p-2.5 text-right font-mono">C$ {totalHEAmount.toFixed(2)}</td>
