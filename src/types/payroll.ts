@@ -40,7 +40,8 @@ export interface BiweeklyPayrollRow {
   overtimeAmount: number; // Horas Extras (Valor C$)
   holidaysCount: number; // Feriados (No)
   holidaysAmount: number; // Feriados (Valor C$: Salario * 2 / 30 * Feriados)
-  bonuses: number; // Bonificaciones C$
+  inssDeduction?: number; // Deducción INSS C$ (Resta del monto a pagar)
+  bonuses?: number; // (Legado / Bonificaciones C$)
 
   // Deducciones
   loanDeduction: number; // Préstamos del personal (cuota simple en quincena C$)

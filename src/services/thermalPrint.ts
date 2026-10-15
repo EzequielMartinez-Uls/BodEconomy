@@ -3195,6 +3195,7 @@ export function printThermalIndividualPayrollReceipt(
     overtimeAmount?: number;
     holidaysCount?: number;
     holidaysAmount?: number;
+    inssDeduction?: number;
     bonuses?: number;
     loanDeduction?: number;
     restaurantServiceDeduction?: number;
@@ -3208,13 +3209,14 @@ export function printThermalIndividualPayrollReceipt(
   adminName: string = 'Administración'
 ) {
   try {
+    const inss = Math.abs(row.inssDeduction !== undefined ? (row.inssDeduction || 0) : (row.bonuses || 0));
     const totalEarnings =
       (row.baseSalary || 0) +
       (row.overtimeAmount || 0) +
-      (row.holidaysAmount || 0) +
-      (row.bonuses || 0);
+      (row.holidaysAmount || 0);
 
     const totalDeductions =
+      inss +
       (row.loanDeduction || 0) +
       (row.restaurantServiceDeduction || 0) +
       (row.breakageDeduction || 0);
@@ -3409,10 +3411,6 @@ export function printThermalIndividualPayrollReceipt(
                     <td>Feriados Trabajados (${row.holidaysCount || 0} días)</td>
                     <td class="text-right font-mono">C$ ${(row.holidaysAmount || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                   </tr>
-                  <tr>
-                    <td>Bonificaciones / Otros</td>
-                    <td class="text-right font-mono">C$ ${(row.bonuses || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
-                  </tr>
                   <tr class="font-bold" style="border-top: 2.5px solid #000000;">
                     <td>SUBTOTAL DEVENGADO:</td>
                     <td class="text-right font-mono">C$ ${totalEarnings.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
@@ -3429,6 +3427,11 @@ export function printThermalIndividualPayrollReceipt(
                   </tr>
                 </thead>
                 <tbody>
+                  ${inss > 0 ? `
+                  <tr>
+                    <td>Deducción INSS</td>
+                    <td class="text-right font-mono">- C$ ${inss.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                  </tr>` : ''}
                   <tr>
                     <td>Deducción Préstamos</td>
                     <td class="text-right font-mono">- C$ ${(row.loanDeduction || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>

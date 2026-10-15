@@ -63,12 +63,13 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
     }
 
     // Recalcular Total Pagado
+    const inss = Math.abs(updated.inssDeduction !== undefined ? (updated.inssDeduction || 0) : (updated.bonuses || 0));
     const earnings =
       (updated.baseSalary || 0) +
       (updated.overtimeAmount || 0) +
-      (updated.holidaysAmount || 0) +
-      (updated.bonuses || 0);
+      (updated.holidaysAmount || 0);
     const deductions =
+      inss +
       (updated.loanDeduction || 0) +
       (updated.restaurantServiceDeduction || 0) +
       (updated.breakageDeduction || 0);
@@ -88,7 +89,7 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
       'Monto Horas Extras (C$)',
       'Feriados (d)',
       'Monto Feriados (C$)',
-      'Bonificaciones (C$)',
+      'Deducción INSS (C$)',
       'Deducción Préstamo (C$)',
       'Deducción Restaurante (C$)',
       'Deducción Vajilla/Otro (C$)',
@@ -98,7 +99,9 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
     ];
 
     const lines = rows.map((r, i) => {
+      const inssVal = Math.abs(r.inssDeduction !== undefined ? (r.inssDeduction || 0) : (r.bonuses || 0));
       const totalDed =
+        inssVal +
         (r.loanDeduction || 0) +
         (r.restaurantServiceDeduction || 0) +
         (r.breakageDeduction || 0);
@@ -112,7 +115,7 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
         (r.overtimeAmount || 0).toFixed(2),
         r.holidaysCount || 0,
         (r.holidaysAmount || 0).toFixed(2),
-        (r.bonuses || 0).toFixed(2),
+        inssVal.toFixed(2),
         (r.loanDeduction || 0).toFixed(2),
         (r.restaurantServiceDeduction || 0).toFixed(2),
         (r.breakageDeduction || 0).toFixed(2),
@@ -139,7 +142,7 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
   let totalHEAmount = 0;
   let totalHolidaysCount = 0;
   let totalHolidaysAmount = 0;
-  let totalBonuses = 0;
+  let totalINSS = 0;
   let totalLoans = 0;
   let totalRest = 0;
   let totalBreakage = 0;
@@ -151,15 +154,15 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
     totalHEAmount += r.overtimeAmount || 0;
     totalHolidaysCount += r.holidaysCount || 0;
     totalHolidaysAmount += r.holidaysAmount || 0;
-    totalBonuses += r.bonuses || 0;
+    totalINSS += Math.abs(r.inssDeduction !== undefined ? (r.inssDeduction || 0) : (r.bonuses || 0));
     totalLoans += r.loanDeduction || 0;
     totalRest += r.restaurantServiceDeduction || 0;
     totalBreakage += r.breakageDeduction || 0;
     grandTotal += r.totalPaid || 0;
   });
 
-  const totalDeductions = totalLoans + totalRest + totalBreakage;
-  const totalExtras = totalHEAmount + totalHolidaysAmount + totalBonuses;
+  const totalDeductions = totalINSS + totalLoans + totalRest + totalBreakage;
+  const totalExtras = totalHEAmount + totalHolidaysAmount;
 
   return (
     <div className="space-y-3">
@@ -210,7 +213,7 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
             <span className="text-xs text-rose-400 font-bold mr-1">- C$</span>
             {totalDeductions.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <span className="text-[10px] text-slate-500 font-medium">Préstamos, consumos y vajillas</span>
+          <span className="text-[10px] text-slate-500 font-medium">INSS, préstamos, consumos y vajillas</span>
         </div>
 
         <div className="p-3 border-2 border-[#1c6856] bg-emerald-50/30">
@@ -274,7 +277,7 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
               <th rowSpan={2} className="py-2.5 px-3 min-w-[120px] text-right border-r border-slate-300 bg-emerald-50/70 align-middle text-emerald-950 font-bold">Salario Q. (C$)</th>
               <th colSpan={2} className="py-2 px-2 text-center border-r border-slate-300 bg-amber-100/70 text-amber-950 align-middle font-black text-[11px] tracking-wider">Horas Extras</th>
               <th colSpan={2} className="py-2 px-2 text-center border-r border-slate-300 bg-blue-100/70 text-blue-950 align-middle font-black text-[11px] tracking-wider">Feriados</th>
-              <th rowSpan={2} className="py-2.5 px-2 min-w-[95px] text-right border-r border-slate-300 align-middle">Bonif. (C$)</th>
+              <th rowSpan={2} className="py-2.5 px-2 min-w-[95px] text-right border-r border-slate-300 bg-rose-50/70 text-rose-950 align-middle font-black text-[11px] tracking-wider">Ded. INSS (C$)</th>
               <th colSpan={3} className="py-2 px-2 text-center border-r border-slate-300 bg-rose-100/70 text-rose-950 align-middle font-black text-[11px] tracking-wider">Deducciones (C$)</th>
               <th rowSpan={2} className="py-2.5 px-3 min-w-[130px] text-right border-r border-slate-300 bg-slate-900 text-white font-bold align-middle">TOTAL PAGADO (C$)</th>
               <th rowSpan={2} className="py-2.5 px-3 min-w-[160px] border-r border-slate-300 align-middle">Concepto / Detalle Deducción</th>
@@ -292,7 +295,9 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
           </thead>
           <tbody className="divide-y divide-slate-200">
             {rows.map((row, idx) => {
+              const inssVal = Math.abs(row.inssDeduction !== undefined ? (row.inssDeduction || 0) : (row.bonuses || 0));
               const rowDeductions =
+                inssVal +
                 (row.loanDeduction || 0) +
                 (row.restaurantServiceDeduction || 0) +
                 (row.breakageDeduction || 0);
@@ -428,17 +433,17 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
                     </div>
                   </td>
 
-                  {/* Bonificación Señalizada */}
-                  <td className="p-1 border-r border-slate-200">
-                    <div className="flex items-center justify-end bg-white border border-slate-300 px-1.5 py-0.5 focus-within:border-slate-600">
-                      <span className="text-[10px] font-bold text-slate-400 select-none mr-1">C$</span>
+                  {/* Deducción: INSS Señalizada en Rojo (Resta del Neto) */}
+                  <td className="p-1 border-r border-slate-200 bg-rose-50/20">
+                    <div className="flex items-center justify-end bg-white border border-slate-300 px-1.5 py-0.5 focus-within:border-rose-600">
+                      <span className="text-[10px] font-bold text-rose-600 select-none mr-1">C$</span>
                       <input
                         type="number"
                         step="0.01"
                         placeholder="0.00"
-                        value={row.bonuses || ''}
-                        onChange={(e) => handleNumChange(idx, 'bonuses', e.target.value)}
-                        className="w-16 text-right font-mono font-bold text-slate-900 bg-transparent outline-none text-xs"
+                        value={row.inssDeduction !== undefined ? (row.inssDeduction || '') : (row.bonuses || '')}
+                        onChange={(e) => handleNumChange(idx, 'inssDeduction', e.target.value)}
+                        className="w-16 text-right font-mono font-bold text-rose-700 bg-transparent outline-none text-xs"
                       />
                     </div>
                   </td>
@@ -554,7 +559,7 @@ export const BiweeklyPayrollTable: React.FC<Props> = ({
               <td className="p-2.5 text-right font-mono">C$ {totalHEAmount.toFixed(2)}</td>
               <td className="p-2.5 text-center font-mono">{totalHolidaysCount ? `${totalHolidaysCount}d` : '-'}</td>
               <td className="p-2.5 text-right font-mono">C$ {totalHolidaysAmount.toFixed(2)}</td>
-              <td className="p-2.5 text-right font-mono">C$ {totalBonuses.toFixed(2)}</td>
+              <td className="p-2.5 text-right font-mono text-rose-300">- C$ {totalINSS.toFixed(2)}</td>
               <td className="p-2.5 text-right font-mono text-rose-300">- C$ {totalLoans.toFixed(2)}</td>
               <td className="p-2.5 text-right font-mono text-rose-300">- C$ {totalRest.toFixed(2)}</td>
               <td className="p-2.5 text-right font-mono text-rose-300">- C$ {totalBreakage.toFixed(2)}</td>

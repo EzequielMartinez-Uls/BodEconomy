@@ -106,7 +106,7 @@ export function printBiweeklyPayrollGeneral(
   let totalHEHours = 0;
   let totalHEAmount = 0;
   let totalHolidaysAmount = 0;
-  let totalBonuses = 0;
+  let totalINSS = 0;
   let totalLoans = 0;
   let totalRest = 0;
   let totalBreakage = 0;
@@ -117,7 +117,7 @@ export function printBiweeklyPayrollGeneral(
     totalHEHours += r.overtimeHours || 0;
     totalHEAmount += r.overtimeAmount || 0;
     totalHolidaysAmount += r.holidaysAmount || 0;
-    totalBonuses += r.bonuses || 0;
+    totalINSS += Math.abs(r.inssDeduction !== undefined ? (r.inssDeduction || 0) : (r.bonuses || 0));
     totalLoans += r.loanDeduction || 0;
     totalRest += r.restaurantServiceDeduction || 0;
     totalBreakage += r.breakageDeduction || 0;
@@ -235,7 +235,7 @@ export function printBiweeklyPayrollGeneral(
             <th rowspan="2" style="width: 78px;">Salario<br>Quincenal</th>
             <th colspan="2" style="width: 80px;">Horas Extras</th>
             <th colspan="2" style="width: 80px;">Feriados</th>
-            <th rowspan="2" style="width: 60px;">Bonif.</th>
+            <th rowspan="2" style="width: 65px;">Ded. INSS</th>
             <th colspan="3">Deducciones</th>
             <th rowspan="2" style="width: 88px;">TOTAL<br>PAGADO</th>
             <th rowspan="2" style="width: 135px;">Firma del Empleado</th>
@@ -253,7 +253,9 @@ export function printBiweeklyPayrollGeneral(
         <tbody>
           ${rows
             .map(
-              (r, idx) => `
+              (r, idx) => {
+                const inssVal = Math.abs(r.inssDeduction !== undefined ? (r.inssDeduction || 0) : (r.bonuses || 0));
+                return `
             <tr>
               <td class="text-center font-bold">${idx + 1}</td>
               <td class="font-bold">${r.name}</td>
@@ -263,14 +265,15 @@ export function printBiweeklyPayrollGeneral(
               <td class="text-right font-mono">${r.overtimeAmount ? r.overtimeAmount.toFixed(2) : '-'}</td>
               <td class="text-center font-mono">${r.holidaysCount ? r.holidaysCount : '-'}</td>
               <td class="text-right font-mono">${r.holidaysAmount ? r.holidaysAmount.toFixed(2) : '-'}</td>
-              <td class="text-right font-mono">${r.bonuses ? r.bonuses.toFixed(2) : '-'}</td>
+              <td class="text-right font-mono text-rose-700">${inssVal ? `- ${inssVal.toFixed(2)}` : '-'}</td>
               <td class="text-right font-mono">${r.loanDeduction ? r.loanDeduction.toFixed(2) : '-'}</td>
               <td class="text-right font-mono">${r.restaurantServiceDeduction ? r.restaurantServiceDeduction.toFixed(2) : '-'}</td>
               <td class="text-right font-mono">${r.breakageDeduction ? r.breakageDeduction.toFixed(2) : '-'}</td>
               <td class="text-right font-mono font-bold" style="font-size: 11.5px;">C$ ${r.totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               <td></td>
             </tr>
-          `
+          `;
+              }
             )
             .join('')}
           <tr class="totals-row">
@@ -280,7 +283,7 @@ export function printBiweeklyPayrollGeneral(
             <td class="text-right font-mono">C$ ${totalHEAmount.toFixed(2)}</td>
             <td class="text-center font-mono">-</td>
             <td class="text-right font-mono">C$ ${totalHolidaysAmount.toFixed(2)}</td>
-            <td class="text-right font-mono">C$ ${totalBonuses.toFixed(2)}</td>
+            <td class="text-right font-mono text-rose-300">- C$ ${totalINSS.toFixed(2)}</td>
             <td class="text-right font-mono">C$ ${totalLoans.toFixed(2)}</td>
             <td class="text-right font-mono">C$ ${totalRest.toFixed(2)}</td>
             <td class="text-right font-mono">C$ ${totalBreakage.toFixed(2)}</td>
@@ -337,8 +340,9 @@ export function printIndividualReceipts(
   const pagesHtml = pairs
     .map((pair, pIdx) => {
       const renderReceipt = (r: BiweeklyPayrollRow) => {
-        const totalEarnings = (r.baseSalary || 0) + (r.overtimeAmount || 0) + (r.holidaysAmount || 0) + (r.bonuses || 0);
-        const totalDeductions = (r.loanDeduction || 0) + (r.restaurantServiceDeduction || 0) + (r.breakageDeduction || 0);
+        const inss = Math.abs(r.inssDeduction !== undefined ? (r.inssDeduction || 0) : (r.bonuses || 0));
+        const totalEarnings = (r.baseSalary || 0) + (r.overtimeAmount || 0) + (r.holidaysAmount || 0);
+        const totalDeductions = inss + (r.loanDeduction || 0) + (r.restaurantServiceDeduction || 0) + (r.breakageDeduction || 0);
 
         return `
           <div class="voucher-box">
@@ -359,12 +363,12 @@ export function printIndividualReceipts(
                 <div class="row-line"><span>Salario Quincenal:</span> <span class="font-mono">C$ ${r.baseSalary.toFixed(2)}</span></div>
                 ${r.overtimeAmount > 0 ? `<div class="row-line"><span>Horas Extras (${r.overtimeHours.toFixed(1)}h):</span> <span class="font-mono">C$ ${r.overtimeAmount.toFixed(2)}</span></div>` : ''}
                 ${r.holidaysAmount > 0 ? `<div class="row-line"><span>Feriados (${r.holidaysCount}d):</span> <span class="font-mono">C$ ${r.holidaysAmount.toFixed(2)}</span></div>` : ''}
-                ${r.bonuses > 0 ? `<div class="row-line"><span>Bonificación:</span> <span class="font-mono">C$ ${r.bonuses.toFixed(2)}</span></div>` : ''}
                 <div class="row-line subtotal"><span>TOTAL INGRESOS:</span> <span class="font-mono">C$ ${totalEarnings.toFixed(2)}</span></div>
               </div>
 
               <div class="col-half">
                 <div class="col-title">2. DEDUCCIONES</div>
+                ${inss > 0 ? `<div class="row-line"><span>Deducción INSS:</span> <span class="font-mono">- C$ ${inss.toFixed(2)}</span></div>` : ''}
                 ${r.loanDeduction > 0 ? `<div class="row-line"><span>Préstamo:</span> <span class="font-mono">- C$ ${r.loanDeduction.toFixed(2)}</span></div>` : ''}
                 ${r.restaurantServiceDeduction > 0 ? `<div class="row-line"><span>Servicio Restaurante:</span> <span class="font-mono">- C$ ${r.restaurantServiceDeduction.toFixed(2)}</span></div>` : ''}
                 ${r.breakageDeduction > 0 ? `<div class="row-line"><span>Vajilla / Otros:</span> <span class="font-mono">- C$ ${r.breakageDeduction.toFixed(2)}</span></div>` : ''}

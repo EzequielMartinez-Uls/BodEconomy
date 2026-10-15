@@ -1390,12 +1390,13 @@ export function App() {
               const nextNotes = r.breakageNotes
                 ? `${r.breakageNotes}, ${newInc.concept}: C$${newInc.amount}`
                 : `${newInc.concept}: C$${newInc.amount}`;
+              const inss = Math.abs(r.inssDeduction !== undefined ? (r.inssDeduction || 0) : (r.bonuses || 0));
               const earnings =
                 (r.baseSalary || 0) +
                 (r.overtimeAmount || 0) +
-                (r.holidaysAmount || 0) +
-                (r.bonuses || 0);
+                (r.holidaysAmount || 0);
               const deductions =
+                inss +
                 (r.loanDeduction || 0) +
                 (r.restaurantServiceDeduction || 0) +
                 nextBrk;

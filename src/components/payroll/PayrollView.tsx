@@ -245,6 +245,7 @@ export const PayrollView: React.FC<Props> = ({
           overtimeAmount: 0,
           holidaysCount: 0,
           holidaysAmount: 0,
+          inssDeduction: 0,
           bonuses: 0,
           loanDeduction: loanDeduction,
           restaurantServiceDeduction: restDeduction,
@@ -317,6 +318,7 @@ export const PayrollView: React.FC<Props> = ({
       overtimeAmount: 0,
       holidaysCount: 0,
       holidaysAmount: 0,
+      inssDeduction: 0,
       bonuses: 0,
       loanDeduction: 0,
       restaurantServiceDeduction: 0,
@@ -521,6 +523,7 @@ export const PayrollView: React.FC<Props> = ({
         overtimeAmount: 0,
         holidaysCount: 0,
         holidaysAmount: 0,
+        inssDeduction: 0,
         bonuses: 0,
         loanDeduction: 0,
         restaurantServiceDeduction: 0,
@@ -568,6 +571,7 @@ export const PayrollView: React.FC<Props> = ({
           overtimeAmount: 0,
           holidaysCount: 0,
           holidaysAmount: 0,
+          inssDeduction: 0,
           bonuses: 0,
           loanDeduction: 0,
           restaurantServiceDeduction: 0,
@@ -613,8 +617,9 @@ export const PayrollView: React.FC<Props> = ({
           }
 
           const holAmount = parseFloat(((row.baseSalary * 2 / 30) * holCount).toFixed(2));
-          const earnings = row.baseSalary + otAmount + holAmount + row.bonuses;
-          const deductions = row.loanDeduction + row.restaurantServiceDeduction + row.breakageDeduction;
+          const inss = Math.abs(row.inssDeduction !== undefined ? (row.inssDeduction || 0) : (row.bonuses || 0));
+          const earnings = row.baseSalary + otAmount + holAmount;
+          const deductions = inss + (row.loanDeduction || 0) + (row.restaurantServiceDeduction || 0) + (row.breakageDeduction || 0);
 
           return {
             ...row,
@@ -622,6 +627,7 @@ export const PayrollView: React.FC<Props> = ({
             overtimeAmount: otAmount,
             holidaysCount: holCount,
             holidaysAmount: holAmount,
+            inssDeduction: inss,
             totalPaid: parseFloat((earnings - deductions).toFixed(2)),
           };
         });
@@ -717,12 +723,12 @@ export const PayrollView: React.FC<Props> = ({
       const nextBrk = parseFloat(brkIncs.reduce((s, i) => s + (i.amount || 0), 0).toFixed(2));
       const nextNotes = brkIncs.map((i) => `${i.concept}: C$${i.amount}`).join(', ');
 
+      const inss = Math.abs(row.inssDeduction !== undefined ? (row.inssDeduction || 0) : (row.bonuses || 0));
       const earnings =
         (row.baseSalary || 0) +
         (row.overtimeAmount || 0) +
-        (row.holidaysAmount || 0) +
-        (row.bonuses || 0);
-      const deductions = nextLoan + nextRest + nextBrk;
+        (row.holidaysAmount || 0);
+      const deductions = inss + nextLoan + nextRest + nextBrk;
 
       return {
         ...row,
@@ -730,6 +736,7 @@ export const PayrollView: React.FC<Props> = ({
         restaurantServiceDeduction: nextRest,
         breakageDeduction: nextBrk,
         breakageNotes: nextNotes,
+        inssDeduction: inss,
         totalPaid: parseFloat((earnings - deductions).toFixed(2)),
       };
     });
@@ -824,8 +831,10 @@ export const PayrollView: React.FC<Props> = ({
       if (existingRow) {
         const base = emp.baseSalaryBiweekly || 0;
         const holAmt = parseFloat(((base * 2 / 30) * (existingRow.holidaysCount || 0)).toFixed(2));
-        const earnings = base + (existingRow.overtimeAmount || 0) + holAmt + (existingRow.bonuses || 0);
+        const inss = Math.abs(existingRow.inssDeduction !== undefined ? (existingRow.inssDeduction || 0) : (existingRow.bonuses || 0));
+        const earnings = base + (existingRow.overtimeAmount || 0) + holAmt;
         const deductions =
+          inss +
           (existingRow.loanDeduction || 0) +
           (existingRow.restaurantServiceDeduction || 0) +
           (existingRow.breakageDeduction || 0);
@@ -836,6 +845,7 @@ export const PayrollView: React.FC<Props> = ({
           role: emp.role,
           baseSalary: base,
           holidaysAmount: holAmt,
+          inssDeduction: inss,
           totalPaid: parseFloat((earnings - deductions).toFixed(2)),
         };
       }
@@ -848,6 +858,7 @@ export const PayrollView: React.FC<Props> = ({
         overtimeAmount: 0,
         holidaysCount: 0,
         holidaysAmount: 0,
+        inssDeduction: 0,
         bonuses: 0,
         loanDeduction: 0,
         restaurantServiceDeduction: 0,
