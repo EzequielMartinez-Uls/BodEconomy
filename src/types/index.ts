@@ -205,8 +205,16 @@ export function isOpeningPettyCashTx(tx: PettyCashTransaction): boolean {
   if (
     notes.includes('[opening_transfer:true]') ||
     notes.includes('traspaso al abrir') ||
+    notes.includes('traspaso inicial') ||
+    notes.includes('deducido al abrir') ||
+    notes.includes('al abrir') ||
     notes.includes('fondeo inicial')
   ) {
+    return true;
+  }
+
+  const vendor = (tx.vendor || '').toLowerCase();
+  if (vendor.includes('traslado desde caja general') && notes.includes('traspaso')) {
     return true;
   }
 

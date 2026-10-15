@@ -1425,9 +1425,22 @@ export async function fetchFullCloudState(): Promise<{
           let dayCardExpenses = 0;
           for (const g of dayTxs) {
             const isInf = isFondeoTransaction(g);
+            const obsLower = (g.observaciones || '').toLowerCase();
+            const concLower = (g.concepto || '').toLowerCase();
+            const provLower = (g.proveedor || '').toLowerCase();
+            const isOpeningTrans =
+              obsLower.includes('[opening_transfer:true]') ||
+              obsLower.includes('deducido al abrir') ||
+              concLower.includes('traspaso inicial') ||
+              concLower.includes('al abrir') ||
+              (provLower.includes('traslado desde caja general') && concLower.includes('traspaso'));
+
             const amt = Number(g.monto) || 0;
-            if (isInf) dayInflows += amt;
-            else if (g.metodo_pago === 'TRANSFERENCIA') dayTransfExpenses += amt;
+            if (isInf) {
+              if (!isOpeningTrans) {
+                dayInflows += amt;
+              }
+            } else if (g.metodo_pago === 'TRANSFERENCIA') dayTransfExpenses += amt;
             else if (g.metodo_pago === 'TARJETA') dayCardExpenses += amt;
             else dayCashExpenses += amt;
           }
