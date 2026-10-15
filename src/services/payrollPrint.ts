@@ -74,7 +74,7 @@ function openPrintWindow(htmlContent: string, title: string) {
       </style>
     </head>
     <body>
-      <button class="print-btn-bar" style="color: #ffffff !important;" onclick="window.print()">🖨️ Mandar a Imprimir (Tamaño Carta)</button>
+      <button class="print-btn-bar" style="color: #ffffff !important;" onclick="window.print()">🖨️ Mandar a Imprimir (1 Sola Hoja Carta)</button>
       ${htmlContent}
       <script>
         window.addEventListener('load', () => {
@@ -126,60 +126,77 @@ export function printBiweeklyPayrollGeneral(
 
   const notesList = rows
     .filter((r) => r.breakageNotes && r.breakageNotes.trim().length > 0)
-    .map((r) => `<li><strong>${r.name}:</strong> ${r.breakageNotes}</li>`)
+    .map((r) => `<li>• <strong>${r.name}:</strong> ${r.breakageNotes}</li>`)
     .join('');
 
   const html = `
     <style>
       @page {
         size: letter landscape;
-        margin: 8mm 8mm;
+        margin: 4mm 6mm;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        font-family: Arial, "Helvetica Neue", Helvetica, "Segoe UI", sans-serif;
       }
       .sheet-container {
         width: 100%;
-        max-width: 1060px;
+        max-width: 1040px;
         margin: 0 auto;
         background: #ffffff;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
       }
       .header-title {
         text-align: center;
-        margin-bottom: 10px;
-        border-bottom: 2.5px solid #000000;
-        padding-bottom: 6px;
+        margin-bottom: 5px;
+        border-bottom: 2px solid #000000;
+        padding-bottom: 3px;
       }
       .header-title h1 {
         margin: 0;
-        font-size: 17px;
+        font-size: 14.5px;
         font-weight: 900;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.3px;
         text-transform: uppercase;
       }
       .header-title h2 {
-        margin: 3px 0 0 0;
-        font-size: 12.5px;
+        margin: 2px 0 0 0;
+        font-size: 11px;
         font-weight: 800;
       }
       table.payroll-table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 14px;
-        border: 2px solid #000000;
+        margin-bottom: 5px;
+        border: 1.5px solid #000000;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
       table.payroll-table th, table.payroll-table td {
-        border: 1.5px solid #000000;
-        padding: 5px 5px;
+        border: 1px solid #000000;
+        padding: 2px 3.5px;
         text-align: left;
         background: #ffffff !important;
         color: #000000 !important;
-        font-size: 10.5px;
+        font-size: 9px;
+        line-height: 1.15;
         font-weight: 700;
       }
       table.payroll-table th {
         font-weight: 900;
-        font-size: 10px;
+        font-size: 8.5px;
         text-transform: uppercase;
-        border-bottom: 2.5px solid #000000;
+        border-bottom: 2px solid #000000;
         text-align: center;
+        padding: 2.5px 2px;
       }
       .text-right { text-align: right !important; }
       .text-center { text-align: center !important; }
@@ -188,35 +205,69 @@ export function printBiweeklyPayrollGeneral(
       .totals-row td {
         font-weight: 900 !important;
         background: #ffffff !important;
-        border-top: 2.5px solid #000000 !important;
-        border-bottom: 2.5px solid #000000 !important;
-        font-size: 11px !important;
+        border-top: 2px solid #000000 !important;
+        border-bottom: 2px solid #000000 !important;
+        font-size: 9.5px !important;
+        padding: 2.5px 3.5px !important;
       }
       .notes-box {
-        border: 2px solid #000000;
-        padding: 8px 12px;
-        margin-top: 10px;
-        font-size: 10.5px;
+        border: 1.5px solid #000000;
+        padding: 4px 8px;
+        margin-top: 4px;
+        font-size: 8.5px;
         font-weight: 700;
         background: #ffffff;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .notes-box strong {
+        font-size: 8.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.2px;
       }
       .notes-box ul {
-        margin: 4px 0 0 18px;
+        margin: 2px 0 0 0;
         padding: 0;
+        list-style: none;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5px 14px;
+      }
+      .notes-box li {
+        font-size: 8px;
+        line-height: 1.15;
       }
       .signature-section {
         display: flex;
         justify-content: space-between;
-        margin-top: 32px;
+        margin-top: 10px;
         padding: 0 40px;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
       .signature-block {
         text-align: center;
-        width: 260px;
-        border-top: 2px solid #000000;
-        padding-top: 6px;
+        width: 230px;
+        border-top: 1.5px solid #000000;
+        padding-top: 3px;
         font-weight: 900;
-        font-size: 11.5px;
+        font-size: 10px;
+        line-height: 1.2;
+      }
+      @media print {
+        html, body {
+          width: 100% !important;
+          height: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: hidden !important;
+        }
+        .sheet-container {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          page-break-after: avoid !important;
+          break-after: avoid !important;
+        }
       }
     </style>
 
@@ -589,56 +640,73 @@ export function printSpecialPayrollINSS(
     <style>
       @page {
         size: letter landscape;
-        margin: 8mm 8mm;
+        margin: 4mm 6mm;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        font-family: Arial, "Helvetica Neue", Helvetica, "Segoe UI", sans-serif;
       }
       .sheet-container {
         width: 100%;
-        max-width: 1060px;
+        max-width: 1040px;
         margin: 0 auto;
         background: #ffffff;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
       }
       .header-title {
         text-align: center;
-        margin-bottom: 10px;
-        border-bottom: 2.5px solid #000000;
-        padding-bottom: 6px;
+        margin-bottom: 5px;
+        border-bottom: 2px solid #000000;
+        padding-bottom: 3px;
       }
       .header-title h1 {
         margin: 0;
-        font-size: 16px;
+        font-size: 14.5px;
         font-weight: 900;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.3px;
       }
       .header-title h2 {
-        margin: 3px 0 0 0;
-        font-size: 12px;
+        margin: 2px 0 0 0;
+        font-size: 11px;
         font-weight: 800;
       }
       .header-title .patronal-badge {
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 900;
-        margin-top: 3px;
+        margin-top: 2px;
       }
       table.inss-table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 14px;
-        border: 2px solid #000000;
+        margin-bottom: 5px;
+        border: 1.5px solid #000000;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
       table.inss-table th, table.inss-table td {
-        border: 1.5px solid #000000;
-        padding: 5px 5px;
-        font-size: 10.5px;
+        border: 1px solid #000000;
+        padding: 2.5px 3.5px;
+        font-size: 9px;
+        line-height: 1.15;
         font-weight: 700;
         background: #ffffff !important;
         color: #000000 !important;
       }
       table.inss-table th {
         font-weight: 900;
-        font-size: 10px;
-        border-bottom: 2.5px solid #000000;
+        font-size: 8.5px;
+        border-bottom: 2px solid #000000;
         text-align: center;
         text-transform: uppercase;
+        padding: 2.5px 2px;
       }
       .text-right { text-align: right !important; }
       .text-center { text-align: center !important; }
@@ -647,33 +715,54 @@ export function printSpecialPayrollINSS(
       .totals-row td {
         font-weight: 900 !important;
         background: #ffffff !important;
-        border-top: 2.5px solid #000000 !important;
-        border-bottom: 2.5px solid #000000 !important;
-        font-size: 11px !important;
+        border-top: 2px solid #000000 !important;
+        border-bottom: 2px solid #000000 !important;
+        font-size: 9.5px !important;
+        padding: 2.5px 3.5px !important;
       }
       .summary-box {
-        border: 2px solid #000000;
-        padding: 10px 14px;
-        margin-top: 12px;
-        font-size: 11.5px;
+        border: 1.5px solid #000000;
+        padding: 4px 10px;
+        margin-top: 5px;
+        font-size: 9.5px;
         font-weight: 800;
         display: flex;
         justify-content: space-around;
         background: #ffffff;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
       .signature-section {
         display: flex;
         justify-content: space-between;
-        margin-top: 35px;
+        margin-top: 10px;
         padding: 0 40px;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
       .signature-block {
         text-align: center;
-        width: 260px;
-        border-top: 2px solid #000000;
-        padding-top: 6px;
+        width: 230px;
+        border-top: 1.5px solid #000000;
+        padding-top: 3px;
         font-weight: 900;
-        font-size: 11.5px;
+        font-size: 10px;
+        line-height: 1.2;
+      }
+      @media print {
+        html, body {
+          width: 100% !important;
+          height: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: hidden !important;
+        }
+        .sheet-container {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          page-break-after: avoid !important;
+          break-after: avoid !important;
+        }
       }
     </style>
 
