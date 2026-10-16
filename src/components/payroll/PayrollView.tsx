@@ -1012,8 +1012,8 @@ export const PayrollView: React.FC<Props> = ({
             }}
             className="text-xs font-bold border border-slate-300 px-2 py-1.5 bg-white text-slate-800 outline-none cursor-pointer"
           >
-            <option value="FIRST_HALF">1ra Quincena (01 al 14)</option>
-            <option value="SECOND_HALF">2da Quincena (15 al Fin)</option>
+            <option value="FIRST_HALF">1ra Quincena (01 al 15)</option>
+            <option value="SECOND_HALF">2da Quincena (16 al Fin)</option>
           </select>
 
           {/* Año */}
@@ -1208,7 +1208,7 @@ export const PayrollView: React.FC<Props> = ({
           onPrintRowReceipt={(row) =>
             printThermalIndividualPayrollReceipt(
               row,
-              period === 'FIRST_HALF' ? '1ra Quincena (01 al 14)' : '2da Quincena (15 al Fin)',
+              period === 'FIRST_HALF' ? '1ra Quincena (01 al 15)' : '2da Quincena (16 al Fin)',
               monthsList[month - 1],
               year,
               state.activeAdminName || 'Admon Bodegón'
