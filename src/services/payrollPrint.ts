@@ -477,128 +477,142 @@ export function printIndividualReceipts(
     <style>
       @page {
         size: letter portrait;
-        margin: 10mm 12mm;
+        margin: 6mm 10mm;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        font-family: Arial, "Helvetica Neue", Helvetica, "Segoe UI", sans-serif;
       }
       .letter-page {
         width: 100%;
         max-width: 720px;
         margin: 0 auto;
-        height: 980px;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        justify-content: flex-start;
+        gap: 6px;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
       .page-break {
-        page-break-after: always;
+        page-break-after: always !important;
+        break-after: page !important;
       }
       .voucher-box {
         border: 2px solid #000000;
-        padding: 14px 16px;
+        padding: 10px 14px;
         background: #ffffff;
-        height: 460px;
+        height: 430px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
       .voucher-header {
         text-align: center;
         border-bottom: 2px solid #000000;
-        padding-bottom: 5px;
+        padding-bottom: 4px;
       }
       .v-brand {
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 900;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.4px;
       }
       .v-subtitle {
-        font-size: 11.5px;
+        font-size: 11px;
         font-weight: 800;
-        margin-top: 2px;
+        margin-top: 1px;
       }
       .v-period {
-        font-size: 10.5px;
+        font-size: 10px;
         font-weight: 800;
-        margin-top: 2px;
+        margin-top: 1px;
       }
       .employee-meta {
         display: flex;
         justify-content: space-between;
-        margin: 6px 0;
-        padding: 6px 10px;
+        margin: 4px 0;
+        padding: 5px 10px;
         background: #ffffff;
         border: 1.5px solid #000000;
-        font-size: 11.5px;
+        font-size: 11px;
         font-weight: 800;
       }
       .breakdown-grid {
         display: flex;
-        gap: 12px;
-        margin: 4px 0;
+        gap: 10px;
+        margin: 3px 0;
         flex: 1;
       }
       .col-half {
         flex: 1;
         border: 1.5px solid #000000;
-        padding: 8px 10px;
+        padding: 6px 10px;
         display: flex;
         flex-direction: column;
         background: #ffffff;
       }
       .col-title {
-        font-size: 10.5px;
+        font-size: 10px;
         font-weight: 900;
         text-align: center;
-        border-bottom: 2px solid #000000;
-        padding-bottom: 4px;
-        margin-bottom: 6px;
+        border-bottom: 1.5px solid #000000;
+        padding-bottom: 3px;
+        margin-bottom: 5px;
         background: #ffffff;
       }
       .row-line {
         display: flex;
         justify-content: space-between;
-        font-size: 11px;
+        font-size: 10.5px;
         font-weight: 700;
-        margin-bottom: 4px;
+        margin-bottom: 3px;
       }
       .row-line.subtotal {
         margin-top: auto;
         border-top: 1.5px solid #000000;
-        padding-top: 4px;
+        padding-top: 3px;
         font-weight: 900;
-        font-size: 11.5px;
+        font-size: 11px;
       }
       .net-banner {
-        border: 2.5px solid #000000;
+        border: 2px solid #000000;
         background: #ffffff;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 8px 14px;
-        margin: 6px 0;
+        padding: 6px 12px;
+        margin: 4px 0;
         font-weight: 900;
-        font-size: 14px;
+        font-size: 13px;
       }
       .signatures-row {
         display: flex;
         justify-content: space-between;
-        margin-top: 16px;
+        margin-top: 14px;
         padding: 0 24px;
       }
       .sig-col {
-        width: 210px;
+        width: 200px;
         text-align: center;
-        font-size: 11px;
+        font-size: 10.5px;
         font-weight: 900;
       }
       .sig-line {
-        border-top: 2px solid #000000;
-        margin-bottom: 4px;
+        border-top: 1.5px solid #000000;
+        margin-bottom: 3px;
       }
       .cut-divider {
         text-align: center;
-        font-size: 10px;
+        font-size: 9.5px;
         font-weight: 900;
-        margin: 6px 0;
+        margin: 2px 0;
         user-select: none;
       }
       .font-mono { font-family: "Courier New", Courier, monospace; font-weight: 800; }

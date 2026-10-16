@@ -1739,13 +1739,12 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
         }
         .sheet {
           width: 100%;
-          min-height: 97vh;
           display: flex;
           flex-direction: column;
-          justify-content: space-between;
+          justify-content: flex-start;
           page-break-after: always;
           break-after: page;
-          padding-top: 10px;
+          padding-top: 6px;
         }
         .sheet:last-child {
           page-break-after: auto;
@@ -1753,69 +1752,69 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
         }
         .header-box {
           border-bottom: 2.5px solid #000000;
-          padding-bottom: 6px;
-          margin-bottom: 8px;
+          padding-bottom: 5px;
+          margin-bottom: 6px;
         }
         .brand {
-          font-size: 18px;
+          font-size: 17px;
           font-weight: 900;
           letter-spacing: -0.3px;
           text-transform: uppercase;
         }
         .doc-title {
-          font-size: 13px;
+          font-size: 12.5px;
           font-weight: 900;
           letter-spacing: 0.3px;
           margin-top: 1px;
         }
         .doc-subtitle {
-          font-size: 10.5px;
+          font-size: 10px;
           font-weight: 800;
           color: #000000;
         }
         .meta-table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 8px;
+          margin-bottom: 6px;
           border: 2px solid #000000;
         }
         .meta-table td {
           border: 1.5px solid #000000;
-          padding: 5px 7px;
-          font-size: 10.5px;
+          padding: 4px 6px;
+          font-size: 10px;
           font-weight: 700;
           background-color: #ffffff !important;
         }
         .section-title {
-          font-size: 11.5px;
+          font-size: 11px;
           font-weight: 900;
           text-transform: uppercase;
           letter-spacing: 0.4px;
-          border-bottom: 2.5px solid #000000;
-          padding-bottom: 2.5px;
-          margin: 8px 0 4px 0;
+          border-bottom: 2px solid #000000;
+          padding-bottom: 2px;
+          margin: 6px 0 3px 0;
         }
         table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 6px;
-          font-size: 10.5px;
+          margin-bottom: 5px;
+          font-size: 10px;
           border: 2px solid #000000;
         }
         th {
           border: 1.5px solid #000000;
-          border-bottom: 2.5px solid #000000;
+          border-bottom: 2px solid #000000;
           background-color: #ffffff !important;
           color: #000000;
-          padding: 4.5px 6px;
+          padding: 3.5px 5px;
           font-weight: 900;
-          font-size: 10px;
+          font-size: 9.5px;
           text-align: left;
         }
         td {
           border: 1.5px solid #000000;
-          padding: 4px 6px;
-          font-size: 10.5px;
+          padding: 3px 5px;
+          font-size: 10px;
           font-weight: 700;
           background-color: #ffffff !important;
           color: #000000;
@@ -1827,25 +1826,27 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
         .highlight-row {
           background-color: #ffffff !important;
           font-weight: 900 !important;
-          border-top: 2.5px solid #000000;
-          border-bottom: 2.5px solid #000000;
+          border-top: 2px solid #000000;
+          border-bottom: 2px solid #000000;
         }
         .highlight-row td {
-          border-top: 2.5px solid #000000;
-          border-bottom: 2.5px solid #000000;
+          border-top: 2px solid #000000;
+          border-bottom: 2px solid #000000;
           font-weight: 900 !important;
         }
         .signatures {
           display: flex;
           justify-content: center;
-          margin-top: 10px;
+          margin-top: 12px;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
         }
         .sig-box {
-          width: 360px;
+          width: 340px;
           border-top: 2px solid #000000;
           padding-top: 4px;
           text-align: center;
-          font-size: 10.5px;
+          font-size: 10px;
           font-weight: 800;
         }
         @media print {
@@ -2613,11 +2614,10 @@ export function printOfficialOpeningActBN(
         }
         .sheet {
           width: 100%;
-          min-height: 96vh;
           display: flex;
           flex-direction: column;
-          justify-content: space-between;
-          padding: 6px 0;
+          justify-content: flex-start;
+          padding: 4px 0;
           page-break-after: always;
           break-after: page;
         }
@@ -2627,69 +2627,69 @@ export function printOfficialOpeningActBN(
         }
         .header-box {
           border-bottom: 2.5px solid #000000;
-          padding-bottom: 8px;
-          margin-bottom: 10px;
+          padding-bottom: 6px;
+          margin-bottom: 8px;
         }
         .brand {
-          font-size: 18px;
+          font-size: 17px;
           font-weight: 900;
           letter-spacing: -0.3px;
           text-transform: uppercase;
         }
         .doc-title {
-          font-size: 13.5px;
+          font-size: 13px;
           font-weight: 900;
           letter-spacing: 0.3px;
-          margin-top: 2px;
+          margin-top: 1px;
         }
         .doc-subtitle {
-          font-size: 10.5px;
+          font-size: 10px;
           font-weight: 800;
           color: #000000;
         }
         .meta-table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
           border: 2px solid #000000;
         }
         .meta-table td {
           border: 1.5px solid #000000;
-          padding: 6px 9px;
-          font-size: 11px;
+          padding: 5px 8px;
+          font-size: 10.5px;
           font-weight: 700;
           background-color: #ffffff !important;
         }
         .section-title {
-          font-size: 12px;
+          font-size: 11.5px;
           font-weight: 900;
           text-transform: uppercase;
           letter-spacing: 0.4px;
-          border-bottom: 2.5px solid #000000;
-          padding-bottom: 3px;
-          margin: 12px 0 6px 0;
+          border-bottom: 2px solid #000000;
+          padding-bottom: 2.5px;
+          margin: 8px 0 4px 0;
         }
         table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 8px;
-          font-size: 11px;
+          margin-bottom: 6px;
+          font-size: 10.5px;
           border: 2px solid #000000;
         }
         th {
           border: 1.5px solid #000000;
-          border-bottom: 2.5px solid #000000;
+          border-bottom: 2px solid #000000;
           background-color: #ffffff !important;
           color: #000000;
-          padding: 5.5px 7px;
+          padding: 4px 6px;
           font-weight: 900;
-          font-size: 10.5px;
+          font-size: 10px;
           text-align: left;
         }
         td {
           border: 1.5px solid #000000;
-          padding: 5px 7px;
-          font-size: 11px;
+          padding: 4px 6px;
+          font-size: 10.5px;
           font-weight: 700;
           background-color: #ffffff !important;
           color: #000000;
@@ -2701,31 +2701,33 @@ export function printOfficialOpeningActBN(
         .highlight-row {
           background-color: #ffffff !important;
           font-weight: 900 !important;
-          border-top: 2.5px solid #000000;
-          border-bottom: 2.5px solid #000000;
+          border-top: 2px solid #000000;
+          border-bottom: 2px solid #000000;
         }
         .highlight-row td {
-          border-top: 2.5px solid #000000;
-          border-bottom: 2.5px solid #000000;
+          border-top: 2px solid #000000;
+          border-bottom: 2px solid #000000;
           font-weight: 900 !important;
         }
         .signatures {
           display: flex;
           justify-content: center;
-          margin-top: 14px;
+          margin-top: 12px;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
         }
         .sig-box {
-          width: 380px;
+          width: 360px;
           border-top: 2px solid #000000;
-          padding-top: 6px;
+          padding-top: 4px;
           text-align: center;
-          font-size: 11px;
+          font-size: 10.5px;
           font-weight: 800;
         }
         @media print {
           .no-print { display: none !important; }
           body { padding: 0 !important; background: #ffffff !important; }
-          .sheet { padding: 0 !important; min-height: 96vh !important; }
+          .sheet { padding: 0 !important; }
         }
       </style>
     `;
