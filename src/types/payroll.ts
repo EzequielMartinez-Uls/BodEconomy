@@ -83,3 +83,90 @@ export interface BiweeklyPayrollRecord {
   createdAt: string;
   updatedAt: string;
 }
+
+/**
+ * Calcula por fórmula exacta (idéntica a Excel) todos los campos derivados de una fila de Planilla Especial INSS
+ * a partir del Salario C$ (reportedSalary) y la retención IR Laboral (irLaboral):
+ * - Aguinaldo (1/12): Salario / 12
+ * - INSS Laboral (7%): Salario * 0.07
+ * - INSS Patronal (21.5%): Salario * 0.215
+ * - INATEC (2%): Salario * 0.02
+ * - Total Cotización (30.5%): Laboral + Patronal + INATEC
+ * - Total Costo Bodegón: Salario + Aguinaldo + Patronal + INATEC
+ * - Neto a Pagar: Salario - Laboral - IR Laboral
+ */
+export function calculateSpecialPayrollRow(row: SpecialPayrollRow): SpecialPayrollRow {
+  const sal = Number(row.reportedSalary) || 0;
+  const ir = Number(row.irLaboral) || 0;
+
+  const aguinaldoRaw = sal / 12;
+  const inssLabRaw = sal * 0.07;
+  const inssPatRaw = sal * 0.215;
+  const inatecRaw = sal * 0.02;
+  const cotizRaw = inssLabRaw + inssPatRaw + inatecRaw;
+  const costRaw = sal + aguinaldoRaw + inssPatRaw + inatecRaw;
+  const netRaw = sal - inssLabRaw - ir;
+
+  return {
+    ...row,
+    reportedSalary: sal,
+    extraHolidayAmount: 0,
+    aguinaldoProvision: parseFloat(aguinaldoRaw.toFixed(2)),
+    inssLaboral: parseFloat(inssLabRaw.toFixed(2)),
+    inssPatronal: parseFloat(inssPatRaw.toFixed(2)),
+    inatecPatronal: parseFloat(inatecRaw.toFixed(2)),
+    totalCotizacion: parseFloat(cotizRaw.toFixed(2)),
+    irLaboral: ir,
+    totalCostBodegon: parseFloat(costRaw.toFixed(2)),
+    netPayAsegurado: parseFloat(netRaw.toFixed(2)),
+  };
+}
+
+/**
+ * Calcula los totales consolidados de la Planilla Especial INSS sumando las fórmulas exactas (igual que =SUM() en Excel)
+ */
+export function calculateSpecialPayrollTotals(rows: SpecialPayrollRow[]) {
+  let totalSalario = 0;
+  let totalAguinaldo = 0;
+  let totalINSSLaboral = 0;
+  let totalINSSPatronal = 0;
+  let totalINATEC = 0;
+  let totalCotiz = 0;
+  let totalIR = 0;
+  let totalCostEmpresa = 0;
+  let totalNeto = 0;
+
+  rows.forEach((r) => {
+    const sal = Number(r.reportedSalary) || 0;
+    const ir = Number(r.irLaboral) || 0;
+    const aguinaldoRaw = sal / 12;
+    const inssLabRaw = sal * 0.07;
+    const inssPatRaw = sal * 0.215;
+    const inatecRaw = sal * 0.02;
+    const cotizRaw = inssLabRaw + inssPatRaw + inatecRaw;
+    const costRaw = sal + aguinaldoRaw + inssPatRaw + inatecRaw;
+    const netRaw = sal - inssLabRaw - ir;
+
+    totalSalario += sal;
+    totalAguinaldo += aguinaldoRaw;
+    totalINSSLaboral += inssLabRaw;
+    totalINSSPatronal += inssPatRaw;
+    totalINATEC += inatecRaw;
+    totalCotiz += cotizRaw;
+    totalIR += ir;
+    totalCostEmpresa += costRaw;
+    totalNeto += netRaw;
+  });
+
+  return {
+    totalSalario: parseFloat(totalSalario.toFixed(2)),
+    totalAguinaldo: parseFloat(totalAguinaldo.toFixed(2)),
+    totalINSSLaboral: parseFloat(totalINSSLaboral.toFixed(2)),
+    totalINSSPatronal: parseFloat(totalINSSPatronal.toFixed(2)),
+    totalINATEC: parseFloat(totalINATEC.toFixed(2)),
+    totalCotiz: parseFloat(totalCotiz.toFixed(2)),
+    totalIR: parseFloat(totalIR.toFixed(2)),
+    totalCostEmpresa: parseFloat(totalCostEmpresa.toFixed(2)),
+    totalNeto: parseFloat(totalNeto.toFixed(2)),
+  };
+}

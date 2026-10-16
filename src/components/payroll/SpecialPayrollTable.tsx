@@ -1,6 +1,10 @@
 import React from 'react';
-import { SpecialPayrollRow } from '../../types/payroll';
-import { Plus, Trash2, Building2 } from 'lucide-react';
+import {
+  SpecialPayrollRow,
+  calculateSpecialPayrollRow,
+  calculateSpecialPayrollTotals,
+} from '../../types/payroll';
+import { Plus, Trash2 } from 'lucide-react';
 
 interface Props {
   rows: SpecialPayrollRow[];
@@ -18,30 +22,10 @@ export const SpecialPayrollTable: React.FC<Props> = ({
   const handleSalaryChange = (index: number, newSalaryStr: string) => {
     const salary = parseFloat(newSalaryStr) || 0;
     const current = rows[index];
-
-    // Cálculos por ley de Nicaragua:
-    const aguinaldo = parseFloat((salary / 12).toFixed(2));
-    const inssLab = parseFloat((salary * 0.07).toFixed(2));
-    const inssPat = parseFloat((salary * 0.215).toFixed(2));
-    const inatec = parseFloat((salary * 0.02).toFixed(2));
-    const cotizTotal = parseFloat((inssLab + inssPat + inatec).toFixed(2));
-    const costTotal = parseFloat((salary + aguinaldo + inssPat + inatec).toFixed(2));
-    const netPay = parseFloat(
-      (salary - inssLab - (current.irLaboral || 0) + (current.extraHolidayAmount || 0)).toFixed(2)
-    );
-
-    const updated: SpecialPayrollRow = {
+    const updated = calculateSpecialPayrollRow({
       ...current,
       reportedSalary: salary,
-      aguinaldoProvision: aguinaldo,
-      inssLaboral: inssLab,
-      inssPatronal: inssPat,
-      inatecPatronal: inatec,
-      totalCotizacion: cotizTotal,
-      totalCostBodegon: costTotal,
-      netPayAsegurado: netPay,
-    };
-
+    });
     onRowChange(index, updated);
   };
 
@@ -51,40 +35,25 @@ export const SpecialPayrollTable: React.FC<Props> = ({
     value: string | number
   ) => {
     const current = rows[index];
-    const updated = { ...current, [field]: value };
-
-    // Si cambió IR laboral o extras, recalcular neto
-    if (field === 'irLaboral' || field === 'extraHolidayAmount') {
-      const ir = field === 'irLaboral' ? (Number(value) || 0) : (current.irLaboral || 0);
-      const extra = field === 'extraHolidayAmount' ? (Number(value) || 0) : (current.extraHolidayAmount || 0);
-      updated.netPayAsegurado = parseFloat(
-        ((current.reportedSalary || 0) - (current.inssLaboral || 0) - ir + extra).toFixed(2)
-      );
-    }
-
+    const updated = calculateSpecialPayrollRow({
+      ...current,
+      [field]: value,
+    });
     onRowChange(index, updated);
   };
 
-  // Totales
-  let totalSalario = 0;
-  let totalAguinaldo = 0;
-  let totalINSSLaboral = 0;
-  let totalINSSPatronal = 0;
-  let totalINATEC = 0;
-  let totalCotiz = 0;
-  let totalCostEmpresa = 0;
-  let totalNeto = 0;
-
-  rows.forEach((r) => {
-    totalSalario += r.reportedSalary || 0;
-    totalAguinaldo += r.aguinaldoProvision || 0;
-    totalINSSLaboral += r.inssLaboral || 0;
-    totalINSSPatronal += r.inssPatronal || 0;
-    totalINATEC += r.inatecPatronal || 0;
-    totalCotiz += r.totalCotizacion || 0;
-    totalCostEmpresa += r.totalCostBodegon || 0;
-    totalNeto += r.netPayAsegurado || 0;
-  });
+  // Totales por fórmula exacta (igual a Excel =SUM)
+  const {
+    totalSalario,
+    totalAguinaldo,
+    totalINSSLaboral,
+    totalINSSPatronal,
+    totalINATEC,
+    totalCotiz,
+    totalIR,
+    totalCostEmpresa,
+    totalNeto,
+  } = calculateSpecialPayrollTotals(rows);
 
   return (
     <div className="space-y-3">
@@ -193,199 +162,174 @@ export const SpecialPayrollTable: React.FC<Props> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
-            {rows.map((row, idx) => (
-              <tr key={row.employeeId || idx} className="hover:bg-slate-50/90 transition-colors">
-                <td className="p-1.5 text-center text-slate-500 font-mono text-[11px] border-r border-slate-200 bg-slate-50/50">
-                  {idx + 1}
-                </td>
-
-                {/* NSS (Editable) */}
-                <td className="p-1 border-r border-slate-200">
-                  <input
-                    type="text"
-                    value={row.nss || ''}
-                    onChange={(e) => handleFieldChange(idx, 'nss', e.target.value)}
-                    className="w-full text-center font-mono font-bold text-indigo-800 bg-transparent border border-transparent hover:border-slate-300 focus:border-indigo-600 focus:bg-white px-1 py-0.5 text-xs outline-none transition"
-                    placeholder="NSS..."
-                  />
-                </td>
-
-                {/* Nombres y Apellidos (Editable) */}
-                <td className="p-1 border-r border-slate-200">
-                  <input
-                    type="text"
-                    value={row.name}
-                    onChange={(e) => handleFieldChange(idx, 'name', e.target.value)}
-                    className="w-full font-bold text-slate-900 bg-transparent border border-transparent hover:border-slate-300 focus:border-indigo-600 focus:bg-white px-1.5 py-0.5 text-xs outline-none transition"
-                    placeholder="Nombre completo..."
-                  />
-                </td>
-
-                {/* Cargo (Editable) */}
-                <td className="p-1 border-r border-slate-200">
-                  <input
-                    type="text"
-                    value={row.role}
-                    onChange={(e) => handleFieldChange(idx, 'role', e.target.value)}
-                    className="w-full text-slate-700 font-medium bg-transparent border border-transparent hover:border-slate-300 focus:border-indigo-600 focus:bg-white px-1.5 py-0.5 text-xs outline-none transition"
-                    placeholder="Cargo..."
-                  />
-                </td>
-
-                {/* Fecha Ingreso (Editable) */}
-                <td className="p-1 border-r border-slate-200 text-center">
-                  <input
-                    type="text"
-                    value={row.hireDate || ''}
-                    onChange={(e) => handleFieldChange(idx, 'hireDate', e.target.value)}
-                    className="w-20 text-center font-mono text-slate-600 bg-transparent border border-transparent hover:border-slate-300 focus:border-indigo-600 focus:bg-white px-1 py-0.5 text-xs outline-none transition"
-                    placeholder="YYYY-MM-DD"
-                  />
-                </td>
-
-                {/* Salario Declarado (Editable y Señalizado como Dinero) */}
-                <td className="p-1 border-r border-slate-200 bg-indigo-50/20">
-                  <div className="flex items-center justify-end bg-white border border-slate-300 px-1.5 py-0.5 focus-within:border-indigo-700">
-                    <span className="text-[10px] font-bold text-indigo-800 select-none mr-1">C$</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={row.reportedSalary || ''}
-                      onChange={(e) => handleSalaryChange(idx, e.target.value)}
-                      className="w-20 text-right font-mono font-bold text-indigo-950 bg-transparent outline-none text-xs"
-                      placeholder="0.00"
-                    />
-                  </div>
-                </td>
-
-                {/* Aguinaldo Provisión (1/12) Editable */}
-                <td className="p-1 border-r border-slate-200">
-                  <div className="flex items-center justify-end bg-white border border-slate-200 hover:border-slate-300 px-1 py-0.5 focus-within:border-indigo-700">
-                    <span className="text-[9px] text-slate-400 font-bold select-none mr-0.5">C$</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={row.aguinaldoProvision ?? ''}
-                      onChange={(e) => handleFieldChange(idx, 'aguinaldoProvision', parseFloat(e.target.value) || 0)}
-                      className="w-16 text-right font-mono text-slate-700 bg-transparent outline-none text-xs"
-                    />
-                  </div>
-                </td>
-
-                {/* 7% Laboral Editable */}
-                <td className="p-1 border-r border-slate-200">
-                  <div className="flex items-center justify-end bg-white border border-slate-200 hover:border-slate-300 px-1 py-0.5 focus-within:border-rose-600">
-                    <span className="text-[9px] text-rose-400 font-bold select-none mr-0.5">-C$</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={row.inssLaboral ?? ''}
-                      onChange={(e) => handleFieldChange(idx, 'inssLaboral', parseFloat(e.target.value) || 0)}
-                      className="w-16 text-right font-mono font-bold text-rose-700 bg-transparent outline-none text-xs"
-                    />
-                  </div>
-                </td>
-
-                {/* 21.5% Patronal Editable */}
-                <td className="p-1 border-r border-slate-200">
-                  <div className="flex items-center justify-end bg-white border border-slate-200 hover:border-slate-300 px-1 py-0.5 focus-within:border-indigo-700">
-                    <span className="text-[9px] text-slate-400 font-bold select-none mr-0.5">C$</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={row.inssPatronal ?? ''}
-                      onChange={(e) => handleFieldChange(idx, 'inssPatronal', parseFloat(e.target.value) || 0)}
-                      className="w-16 text-right font-mono text-slate-700 bg-transparent outline-none text-xs"
-                    />
-                  </div>
-                </td>
-
-                {/* 2% INATEC Editable */}
-                <td className="p-1 border-r border-slate-200">
-                  <div className="flex items-center justify-end bg-white border border-slate-200 hover:border-slate-300 px-1 py-0.5 focus-within:border-indigo-700">
-                    <span className="text-[9px] text-slate-400 font-bold select-none mr-0.5">C$</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={row.inatecPatronal ?? ''}
-                      onChange={(e) => handleFieldChange(idx, 'inatecPatronal', parseFloat(e.target.value) || 0)}
-                      className="w-14 text-right font-mono text-slate-700 bg-transparent outline-none text-xs"
-                    />
-                  </div>
-                </td>
-
-                {/* Total Cotización INSS Editable */}
-                <td className="p-1 border-r border-slate-200 bg-amber-50/20">
-                  <div className="flex items-center justify-end bg-white border border-slate-300 px-1 py-0.5 focus-within:border-amber-600">
-                    <span className="text-[9px] text-slate-400 font-bold select-none mr-0.5">C$</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={row.totalCotizacion ?? ''}
-                      onChange={(e) => handleFieldChange(idx, 'totalCotizacion', parseFloat(e.target.value) || 0)}
-                      className="w-18 text-right font-mono font-black text-slate-900 bg-transparent outline-none text-xs"
-                    />
-                  </div>
-                </td>
-
-                {/* IR Laboral (Editable) */}
-                <td className="p-1 border-r border-slate-200">
-                  <div className="flex items-center justify-center bg-white border border-slate-300 px-1 py-0.5">
-                    <span className="text-[10px] font-bold text-slate-400 select-none mr-0.5">C$</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={row.irLaboral || ''}
-                      onChange={(e) => handleFieldChange(idx, 'irLaboral', parseFloat(e.target.value) || 0)}
-                      className="w-14 text-right font-mono text-slate-800 bg-transparent outline-none text-xs"
-                    />
-                  </div>
-                </td>
-
-                {/* Costo Empresa Editable */}
-                <td className="p-1 border-r border-slate-200 bg-slate-50">
-                  <div className="flex items-center justify-end bg-white border border-slate-300 px-1 py-0.5 focus-within:border-slate-800">
-                    <span className="text-[9px] text-slate-400 font-bold select-none mr-0.5">C$</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={row.totalCostBodegon ?? ''}
-                      onChange={(e) => handleFieldChange(idx, 'totalCostBodegon', parseFloat(e.target.value) || 0)}
-                      className="w-20 text-right font-mono font-bold text-slate-800 bg-transparent outline-none text-xs"
-                    />
-                  </div>
-                </td>
-
-                {/* Neto Asegurado Editable */}
-                <td className="p-1 border-r border-slate-200 bg-emerald-50/40">
-                  <div className="flex items-center justify-end bg-white border border-emerald-300 px-1 py-0.5 focus-within:border-emerald-700">
-                    <span className="text-[9px] text-emerald-600 font-bold select-none mr-0.5">C$</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={row.netPayAsegurado ?? ''}
-                      onChange={(e) => handleFieldChange(idx, 'netPayAsegurado', parseFloat(e.target.value) || 0)}
-                      className="w-20 text-right font-mono font-black text-emerald-800 bg-transparent outline-none text-[12px]"
-                    />
-                  </div>
-                </td>
-
-                {/* Acción Eliminar */}
-                {onDeleteRow && (
-                  <td className="p-1 text-center">
-                    <button
-                      type="button"
-                      onClick={() => onDeleteRow(idx)}
-                      className="p-1 text-slate-400 hover:text-rose-700 hover:bg-rose-50 border border-slate-200 transition cursor-pointer"
-                      title="Quitar de planilla especial"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+            {rows.map((rawRow, idx) => {
+              const row = calculateSpecialPayrollRow(rawRow);
+              return (
+                <tr key={row.employeeId || idx} className="hover:bg-slate-50/90 transition-colors">
+                  <td className="p-1.5 text-center text-slate-500 font-mono text-[11px] border-r border-slate-200 bg-slate-50/50">
+                    {idx + 1}
                   </td>
-                )}
-              </tr>
-            ))}
+
+                  {/* NSS (Editable) */}
+                  <td className="p-1 border-r border-slate-200">
+                    <input
+                      type="text"
+                      value={row.nss || ''}
+                      onChange={(e) => handleFieldChange(idx, 'nss', e.target.value)}
+                      className="w-full text-center font-mono font-bold text-indigo-800 bg-transparent border border-transparent hover:border-slate-300 focus:border-indigo-600 focus:bg-white px-1 py-0.5 text-xs outline-none transition"
+                      placeholder="NSS..."
+                    />
+                  </td>
+
+                  {/* Nombres y Apellidos (Editable) */}
+                  <td className="p-1 border-r border-slate-200">
+                    <input
+                      type="text"
+                      value={row.name}
+                      onChange={(e) => handleFieldChange(idx, 'name', e.target.value)}
+                      className="w-full font-bold text-slate-900 bg-transparent border border-transparent hover:border-slate-300 focus:border-indigo-600 focus:bg-white px-1.5 py-0.5 text-xs outline-none transition"
+                      placeholder="Nombre completo..."
+                    />
+                  </td>
+
+                  {/* Cargo (Editable) */}
+                  <td className="p-1 border-r border-slate-200">
+                    <input
+                      type="text"
+                      value={row.role}
+                      onChange={(e) => handleFieldChange(idx, 'role', e.target.value)}
+                      className="w-full text-slate-700 font-medium bg-transparent border border-transparent hover:border-slate-300 focus:border-indigo-600 focus:bg-white px-1.5 py-0.5 text-xs outline-none transition"
+                      placeholder="Cargo..."
+                    />
+                  </td>
+
+                  {/* Fecha Ingreso (Editable) */}
+                  <td className="p-1 border-r border-slate-200 text-center">
+                    <input
+                      type="text"
+                      value={row.hireDate || ''}
+                      onChange={(e) => handleFieldChange(idx, 'hireDate', e.target.value)}
+                      className="w-20 text-center font-mono text-slate-600 bg-transparent border border-transparent hover:border-slate-300 focus:border-indigo-600 focus:bg-white px-1 py-0.5 text-xs outline-none transition"
+                      placeholder="YYYY-MM-DD"
+                    />
+                  </td>
+
+                  {/* Salario Declarado (Editable - Base de todas las fórmulas) */}
+                  <td className="p-1 border-r border-slate-200 bg-indigo-50/20">
+                    <div className="flex items-center justify-end bg-white border border-slate-300 px-1.5 py-0.5 focus-within:border-indigo-700">
+                      <span className="text-[10px] font-bold text-indigo-800 select-none mr-1">C$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={row.reportedSalary || ''}
+                        onChange={(e) => handleSalaryChange(idx, e.target.value)}
+                        className="w-20 text-right font-mono font-bold text-indigo-950 bg-transparent outline-none text-xs"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </td>
+
+                  {/* Aguinaldo Provisión (Fórmula Automática: Salario / 12) */}
+                  <td className="p-1 border-r border-slate-200 bg-slate-50/40" title="Fórmula: Salario ÷ 12">
+                    <div className="flex items-center justify-end px-1.5 py-0.5">
+                      <span className="text-[9px] text-slate-400 font-bold select-none mr-1">C$</span>
+                      <span className="font-mono text-slate-700 font-semibold text-xs">
+                        {row.aguinaldoProvision.toFixed(2)}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* 7% Laboral (Fórmula Automática: Salario * 7%) */}
+                  <td className="p-1 border-r border-slate-200 bg-rose-50/20" title="Fórmula: Salario × 7%">
+                    <div className="flex items-center justify-end px-1.5 py-0.5">
+                      <span className="text-[9px] text-rose-400 font-bold select-none mr-1">-C$</span>
+                      <span className="font-mono font-bold text-rose-700 text-xs">
+                        {row.inssLaboral.toFixed(2)}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* 21.5% Patronal (Fórmula Automática: Salario * 21.5%) */}
+                  <td className="p-1 border-r border-slate-200 bg-slate-50/40" title="Fórmula: Salario × 21.5%">
+                    <div className="flex items-center justify-end px-1.5 py-0.5">
+                      <span className="text-[9px] text-slate-400 font-bold select-none mr-1">C$</span>
+                      <span className="font-mono text-slate-700 font-semibold text-xs">
+                        {row.inssPatronal.toFixed(2)}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* 2% INATEC (Fórmula Automática: Salario * 2%) */}
+                  <td className="p-1 border-r border-slate-200 bg-slate-50/40" title="Fórmula: Salario × 2%">
+                    <div className="flex items-center justify-end px-1.5 py-0.5">
+                      <span className="text-[9px] text-slate-400 font-bold select-none mr-1">C$</span>
+                      <span className="font-mono text-slate-700 font-semibold text-xs">
+                        {row.inatecPatronal.toFixed(2)}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* Total Cotización INSS (Fórmula Automática: 7% + 21.5% + 2% = 30.5%) */}
+                  <td className="p-1 border-r border-slate-200 bg-amber-50/30" title="Fórmula: Laboral (7%) + Patronal (21.5%) + INATEC (2%)">
+                    <div className="flex items-center justify-end px-1.5 py-0.5">
+                      <span className="text-[9px] text-amber-700/70 font-bold select-none mr-1">C$</span>
+                      <span className="font-mono font-black text-slate-900 text-xs">
+                        {row.totalCotizacion.toFixed(2)}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* IR Laboral (Editable) */}
+                  <td className="p-1 border-r border-slate-200">
+                    <div className="flex items-center justify-center bg-white border border-slate-300 px-1 py-0.5">
+                      <span className="text-[10px] font-bold text-slate-400 select-none mr-0.5">C$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={row.irLaboral || ''}
+                        onChange={(e) => handleFieldChange(idx, 'irLaboral', parseFloat(e.target.value) || 0)}
+                        className="w-14 text-right font-mono text-slate-800 bg-transparent outline-none text-xs"
+                      />
+                    </div>
+                  </td>
+
+                  {/* Costo Empresa (Fórmula Automática: Salario + Aguinaldo + Patronal + INATEC) */}
+                  <td className="p-1 border-r border-slate-200 bg-slate-100/70" title="Fórmula: Salario + Aguinaldo + Patronal (21.5%) + INATEC (2%)">
+                    <div className="flex items-center justify-end px-1.5 py-0.5">
+                      <span className="text-[9px] text-slate-500 font-bold select-none mr-1">C$</span>
+                      <span className="font-mono font-bold text-slate-900 text-xs">
+                        {row.totalCostBodegon.toFixed(2)}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* Neto Asegurado (Fórmula Automática: Salario - INSS Laboral 7% - IR) */}
+                  <td className="p-1 border-r border-slate-200 bg-emerald-50/50" title="Fórmula: Salario - INSS Laboral (7%) - IR">
+                    <div className="flex items-center justify-end px-1.5 py-0.5">
+                      <span className="text-[9px] text-emerald-600 font-bold select-none mr-1">C$</span>
+                      <span className="font-mono font-black text-emerald-800 text-[12px]">
+                        {row.netPayAsegurado.toFixed(2)}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* Acción Eliminar */}
+                  {onDeleteRow && (
+                    <td className="p-1 text-center">
+                      <button
+                        type="button"
+                        onClick={() => onDeleteRow(idx)}
+                        className="p-1 text-slate-400 hover:text-rose-700 hover:bg-rose-50 border border-slate-200 transition cursor-pointer"
+                        title="Quitar de planilla especial"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
           </tbody>
           <tfoot>
             <tr className="bg-slate-900 text-white font-black text-xs border-t-2 border-slate-900">
@@ -396,7 +340,7 @@ export const SpecialPayrollTable: React.FC<Props> = ({
               <td className="p-2.5 text-right font-mono">C$ {totalINSSPatronal.toFixed(2)}</td>
               <td className="p-2.5 text-right font-mono">C$ {totalINATEC.toFixed(2)}</td>
               <td className="p-2.5 text-right font-mono text-amber-300">C$ {totalCotiz.toFixed(2)}</td>
-              <td className="p-2.5 text-center font-mono">0.00</td>
+              <td className="p-2.5 text-center font-mono">{totalIR.toFixed(2)}</td>
               <td className="p-2.5 text-right font-mono text-slate-300">C$ {totalCostEmpresa.toFixed(2)}</td>
               <td className="p-2.5 text-right font-mono text-emerald-400 text-sm">C$ {totalNeto.toFixed(2)}</td>
               {onDeleteRow && <td className="p-2.5 text-center font-mono">-</td>}

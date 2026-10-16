@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { CashShift, PettyCashShift, PettyCashTransaction, ExpenseCategory, isOpeningPettyCashTx, VendorItem } from '../types';
+import { calculateSpecialPayrollRow } from '../types/payroll';
 import { getLocalTodayStr, getLocalDateTimeStr, extractLocalDateStr } from '../utils/dateUtils';
 import { DEFAULT_DENOMINATIONS_NIO, DEFAULT_DENOMINATIONS_USD, DEFAULT_VENDORS, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_PAYROLL_EMPLOYEES, getDeletedPayrollNames, addDeletedPayrollName } from './storage';
 
@@ -1596,7 +1597,9 @@ export async function fetchCloudCatalogs(): Promise<{
       cloudPayrollHistory = cloudPayrollHistory.map((h) => ({
         ...h,
         rows: Array.isArray(h.rows) ? h.rows.filter((r) => !isLegacyExcluded(r.name)) : [],
-        specialRows: Array.isArray(h.specialRows) ? h.specialRows.filter((sr) => !isLegacyExcluded(sr.name)) : [],
+        specialRows: Array.isArray(h.specialRows)
+          ? h.specialRows.filter((sr) => !isLegacyExcluded(sr.name)).map(calculateSpecialPayrollRow)
+          : [],
       }));
     }
 

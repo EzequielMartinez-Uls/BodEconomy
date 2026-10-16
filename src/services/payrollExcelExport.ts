@@ -1,5 +1,10 @@
 import ExcelJS from 'exceljs';
-import { BiweeklyPayrollRow, SpecialPayrollRow, PayrollPeriod } from '../types/payroll';
+import {
+  BiweeklyPayrollRow,
+  SpecialPayrollRow,
+  PayrollPeriod,
+  calculateSpecialPayrollRow,
+} from '../types/payroll';
 
 function getPeriodLabel(period: PayrollPeriod, month: number, year: number): string {
   const months = [
@@ -16,9 +21,10 @@ export async function exportPayrollToExcel(
   month: number,
   year: number,
   rows: BiweeklyPayrollRow[],
-  specialRows: SpecialPayrollRow[],
+  rawSpecialRows: SpecialPayrollRow[],
   authorizedBy: string = 'Admon Bodegón'
 ) {
+  const specialRows = rawSpecialRows.map(calculateSpecialPayrollRow);
   const wb = new ExcelJS.Workbook();
   wb.creator = 'Restaurante El Bodegón';
   wb.created = new Date();
@@ -321,7 +327,7 @@ export async function exportPayrollToExcel(
     { formula: `SUM(H${spStartRow}:H${spEndDataRow})` },
     { formula: `SUM(I${spStartRow}:I${spEndDataRow})` },
     { formula: `SUM(J${spStartRow}:J${spEndDataRow})` },
-    { formula: `SUM(K${spStartRow}:K${endDataRow})` },
+    { formula: `SUM(K${spStartRow}:K${spEndDataRow})` },
     { formula: `SUM(L${spStartRow}:L${spEndDataRow})` },
     { formula: `SUM(M${spStartRow}:M${spEndDataRow})` },
     { formula: `SUM(N${spStartRow}:N${spEndDataRow})` },

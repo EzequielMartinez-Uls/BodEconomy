@@ -1,4 +1,5 @@
 import { AppState, CashShift, DenominationsNIO, DenominationsUSD, PettyCashShift, PettyCashTransaction, TablewareItem, isOpeningPettyCashTx, VendorItem } from '../types';
+import { calculateSpecialPayrollRow } from '../types/payroll';
 import { getLocalTodayStr, addDaysToDateStr, formatDateToFriendly, getLocalDateTimeStr, extractLocalDateStr } from '../utils/dateUtils';
 
 export { formatDateToFriendly, getLocalTodayStr, addDaysToDateStr, getLocalDateTimeStr, extractLocalDateStr };
@@ -355,7 +356,7 @@ export function loadState(): AppState {
       loaded.payrollHistory = loaded.payrollHistory.map((hist) => ({
         ...hist,
         rows: (hist.rows || []).filter((row) => !isExcluded(row.name)),
-        specialRows: (hist.specialRows || []).filter((s) => !isExcluded(s.name)),
+        specialRows: (hist.specialRows || []).filter((s) => !isExcluded(s.name)).map(calculateSpecialPayrollRow),
       }));
     }
 

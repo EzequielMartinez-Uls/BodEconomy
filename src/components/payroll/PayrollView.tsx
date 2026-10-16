@@ -7,6 +7,7 @@ import {
   PayrollIncident,
   PayrollEmployee,
   BiweeklyPayrollRecord,
+  calculateSpecialPayrollRow,
 } from '../../types/payroll';
 import { BiweeklyPayrollTable } from './BiweeklyPayrollTable';
 import { SpecialPayrollTable } from './SpecialPayrollTable';
@@ -198,7 +199,11 @@ export const PayrollView: React.FC<Props> = ({
 
     if (existing && existing.rows && existing.rows.length > 0) {
       setRows(existing.rows.filter((row) => !isExcluded(row.name)));
-      setSpecialRows((existing.specialRows || []).filter((s) => !isExcluded(s.name)));
+      setSpecialRows(
+        (existing.specialRows || [])
+          .filter((s) => !isExcluded(s.name))
+          .map(calculateSpecialPayrollRow)
+      );
     } else {
       // Generar filas nuevas calculando incidencias de la bitácora en ese rango
       // Deduplicar empleados activos garantizando exactamente 1 por persona
@@ -259,15 +264,7 @@ export const PayrollView: React.FC<Props> = ({
       const insuredEmps = activeEmps.filter((e) => e.isInsuredINSS);
       const newSpecialRows: SpecialPayrollRow[] = insuredEmps.map((emp) => {
         const sal = emp.reportedSalaryINSS || emp.baseSalaryBiweekly || 5675.04;
-        const aguinaldo = parseFloat((sal / 12).toFixed(2));
-        const inssLab = parseFloat((sal * 0.07).toFixed(2));
-        const inssPat = parseFloat((sal * 0.215).toFixed(2));
-        const inatec = parseFloat((sal * 0.02).toFixed(2));
-        const cotiz = parseFloat((inssLab + inssPat + inatec).toFixed(2));
-        const cost = parseFloat((sal + aguinaldo + inssPat + inatec).toFixed(2));
-        const net = parseFloat((sal - inssLab).toFixed(2));
-
-        return {
+        return calculateSpecialPayrollRow({
           employeeId: emp.id,
           nss: emp.nss || '',
           name: emp.name,
@@ -275,15 +272,15 @@ export const PayrollView: React.FC<Props> = ({
           hireDate: emp.hireDate || '2025-11-01',
           reportedSalary: sal,
           extraHolidayAmount: 0,
-          aguinaldoProvision: aguinaldo,
-          inssLaboral: inssLab,
-          inssPatronal: inssPat,
-          inatecPatronal: inatec,
-          totalCotizacion: cotiz,
+          aguinaldoProvision: 0,
+          inssLaboral: 0,
+          inssPatronal: 0,
+          inatecPatronal: 0,
+          totalCotizacion: 0,
           irLaboral: 0,
-          totalCostBodegon: cost,
-          netPayAsegurado: net,
-        };
+          totalCostBodegon: 0,
+          netPayAsegurado: 0,
+        });
       });
 
       setRows(newRows);
@@ -568,24 +565,9 @@ export const PayrollView: React.FC<Props> = ({
         totalPaid: r.baseSalary || 0,
       }));
 
-      const duplicatedSpecial: SpecialPayrollRow[] = (previousRecord.specialRows || []).map((sr) => {
-        const sal = sr.reportedSalary || 0;
-        const inssLab = parseFloat((sal * 0.07).toFixed(2));
-        const inssPat = parseFloat((sal * 0.215).toFixed(2));
-        const inatec = parseFloat((sal * 0.02).toFixed(2));
-        const aguinaldo = parseFloat((sal / 12).toFixed(2));
-        return {
-          ...sr,
-          extraHolidayAmount: 0,
-          aguinaldoProvision: aguinaldo,
-          inssLaboral: inssLab,
-          inssPatronal: inssPat,
-          inatecPatronal: inatec,
-          totalCotizacion: parseFloat((inssLab + inssPat + inatec).toFixed(2)),
-          totalCostBodegon: parseFloat((sal + aguinaldo + inssPat + inatec).toFixed(2)),
-          netPayAsegurado: parseFloat((sal - inssLab - (sr.irLaboral || 0)).toFixed(2)),
-        };
-      });
+      const duplicatedSpecial: SpecialPayrollRow[] = (previousRecord.specialRows || []).map((sr) =>
+        calculateSpecialPayrollRow(sr)
+      );
 
       setRows(duplicatedRows);
       setSpecialRows(duplicatedSpecial);
@@ -670,33 +652,8 @@ export const PayrollView: React.FC<Props> = ({
 
         setRows(updatedRows);
 
-        // Actualizar planilla especial INSS en caso de horas extras o feriados para asegurados
-        const updatedSpecialRows = specialRows.map((sr) => {
-          const matchRow = updatedRows.find((r) => matchEmployeeName(r.name, sr.name));
-          if (!matchRow) return sr;
-
-          const extraAmt = (matchRow.overtimeAmount || 0) + (matchRow.holidaysAmount || 0);
-          const sal = sr.reportedSalary;
-          const inssLab = parseFloat(((sal + extraAmt) * 0.07).toFixed(2));
-          const inssPat = parseFloat(((sal + extraAmt) * 0.215).toFixed(2));
-          const inatec = parseFloat(((sal + extraAmt) * 0.02).toFixed(2));
-          const cotiz = parseFloat((inssLab + inssPat + inatec).toFixed(2));
-          const aguinaldo = parseFloat(((sal + extraAmt) / 12).toFixed(2));
-          const cost = parseFloat(((sal + extraAmt) + aguinaldo + inssPat + inatec).toFixed(2));
-          const net = parseFloat(((sal + extraAmt) - inssLab).toFixed(2));
-
-          return {
-            ...sr,
-            extraHolidayAmount: extraAmt,
-            aguinaldoProvision: aguinaldo,
-            inssLaboral: inssLab,
-            inssPatronal: inssPat,
-            inatecPatronal: inatec,
-            totalCotizacion: cotiz,
-            totalCostBodegon: cost,
-            netPayAsegurado: net,
-          };
-        });
+        // En la Planilla Especial INSS se mantiene el cálculo formal sobre el Salario C$ declarado (sin mezclar extras operativas)
+        const updatedSpecialRows = specialRows.map(calculateSpecialPayrollRow);
 
         setSpecialRows(updatedSpecialRows);
         persistDraftLocally(updatedRows, updatedSpecialRows);
@@ -908,33 +865,25 @@ export const PayrollView: React.FC<Props> = ({
     const nextSpecialRows: SpecialPayrollRow[] = insuredEmps.map((emp) => {
       const existingSr = specialRows.find((sr) => sr.employeeId === emp.id || matchEmployeeName(sr.name, emp.name));
       const sal = emp.reportedSalaryINSS || emp.baseSalaryBiweekly || existingSr?.reportedSalary || 5675.04;
-      const aguinaldo = parseFloat((sal / 12).toFixed(2));
-      const inssLab = parseFloat((sal * 0.07).toFixed(2));
-      const inssPat = parseFloat((sal * 0.215).toFixed(2));
-      const inatec = parseFloat((sal * 0.02).toFixed(2));
-      const cotiz = parseFloat((inssLab + inssPat + inatec).toFixed(2));
-      const cost = parseFloat((sal + aguinaldo + inssPat + inatec).toFixed(2));
       const ir = existingSr?.irLaboral || 0;
-      const extra = existingSr?.extraHolidayAmount || 0;
-      const net = parseFloat((sal - inssLab - ir + extra).toFixed(2));
 
-      return {
+      return calculateSpecialPayrollRow({
         employeeId: emp.id,
         nss: emp.nss || existingSr?.nss || '',
         name: emp.name,
         role: emp.role,
         hireDate: emp.hireDate || existingSr?.hireDate || '2025-11-01',
         reportedSalary: sal,
-        extraHolidayAmount: extra,
-        aguinaldoProvision: aguinaldo,
-        inssLaboral: inssLab,
-        inssPatronal: inssPat,
-        inatecPatronal: inatec,
-        totalCotizacion: cotiz,
+        extraHolidayAmount: 0,
+        aguinaldoProvision: 0,
+        inssLaboral: 0,
+        inssPatronal: 0,
+        inatecPatronal: 0,
+        totalCotizacion: 0,
         irLaboral: ir,
-        totalCostBodegon: cost,
-        netPayAsegurado: net,
-      };
+        totalCostBodegon: 0,
+        netPayAsegurado: 0,
+      });
     });
 
     setRows(nextRows);

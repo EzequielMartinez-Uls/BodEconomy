@@ -1,4 +1,10 @@
-import { BiweeklyPayrollRow, SpecialPayrollRow, PayrollPeriod } from '../types/payroll';
+import {
+  BiweeklyPayrollRow,
+  SpecialPayrollRow,
+  PayrollPeriod,
+  calculateSpecialPayrollRow,
+  calculateSpecialPayrollTotals,
+} from '../types/payroll';
 
 function getPeriodLabel(period: PayrollPeriod, month: number, year: number): string {
   const months = [
@@ -612,29 +618,21 @@ export function printSpecialPayrollINSS(
   period: PayrollPeriod,
   month: number,
   year: number,
-  rows: SpecialPayrollRow[]
+  rawRows: SpecialPayrollRow[]
 ) {
   const periodLabel = getPeriodLabel(period, month, year);
-
-  let totalSalario = 0;
-  let totalAguinaldo = 0;
-  let totalINSSLaboral = 0;
-  let totalINSSPatronal = 0;
-  let totalINATEC = 0;
-  let totalCotiz = 0;
-  let totalCostEmpresa = 0;
-  let totalNeto = 0;
-
-  rows.forEach((r) => {
-    totalSalario += r.reportedSalary || 0;
-    totalAguinaldo += r.aguinaldoProvision || 0;
-    totalINSSLaboral += r.inssLaboral || 0;
-    totalINSSPatronal += r.inssPatronal || 0;
-    totalINATEC += r.inatecPatronal || 0;
-    totalCotiz += r.totalCotizacion || 0;
-    totalCostEmpresa += r.totalCostBodegon || 0;
-    totalNeto += r.netPayAsegurado || 0;
-  });
+  const rows = rawRows.map(calculateSpecialPayrollRow);
+  const {
+    totalSalario,
+    totalAguinaldo,
+    totalINSSLaboral,
+    totalINSSPatronal,
+    totalINATEC,
+    totalCotiz,
+    totalIR,
+    totalCostEmpresa,
+    totalNeto,
+  } = calculateSpecialPayrollTotals(rows);
 
   const html = `
     <style>
@@ -828,7 +826,7 @@ export function printSpecialPayrollINSS(
             <td class="text-right font-mono">C$ ${totalINSSPatronal.toFixed(2)}</td>
             <td class="text-right font-mono">C$ ${totalINATEC.toFixed(2)}</td>
             <td class="text-right font-mono font-bold">C$ ${totalCotiz.toFixed(2)}</td>
-            <td class="text-center font-mono">0.00</td>
+            <td class="text-center font-mono">${totalIR.toFixed(2)}</td>
             <td class="text-right font-mono font-bold">C$ ${totalCostEmpresa.toFixed(2)}</td>
             <td class="text-right font-mono font-bold">C$ ${totalNeto.toFixed(2)}</td>
             <td></td>
