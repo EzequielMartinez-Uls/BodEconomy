@@ -570,7 +570,7 @@ export function printThermalOpeningTicket(shift: CashShift): void {
     ` : ''}
 
     <div class="footer-note">
-      <span>BodegónControl ERP • Documento Oficial de Apertura (Tamaño Carta) • Responsable: ${shift.openedBy}</span>
+      <span>Bodegón Control · TEGA • Documento Oficial de Apertura (Tamaño Carta) • Responsable: ${shift.openedBy}</span>
       <span>Impreso el ${new Date().toLocaleString()}</span>
     </div>
   `;
@@ -770,7 +770,7 @@ export function printThermalClosingTicket(shift: CashShift): void {
     ` : ''}
 
     <div class="footer-note">
-      <span>BodegónControl ERP • Acta Oficial de Cierre (Tamaño Carta) • Responsable: ${shift.closedBy || shift.openedBy}</span>
+      <span>Bodegón Control · TEGA • Acta Oficial de Cierre (Tamaño Carta) • Responsable: ${shift.closedBy || shift.openedBy}</span>
       <span>Impreso el ${new Date().toLocaleString()}</span>
     </div>
   `;
@@ -912,7 +912,7 @@ export function printThermalDailyExpensesTicket(
     </div>
 
     <div class="footer-note">
-      <span>BodegónControl ERP • Reporte Oficial de Caja Chica (Tamaño Carta) • Responsable: ${adminName}</span>
+      <span>Bodegón Control · TEGA • Reporte Oficial de Caja Chica (Tamaño Carta) • Responsable: ${adminName}</span>
       <span>Impreso el ${new Date().toLocaleString()}</span>
     </div>
   `;
@@ -1196,7 +1196,7 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
           </div>
 
           <div class="footer-text">
-            Restaurante El Bodegón • Documento Oficial de Respaldo Contable de Compra (Hoja Tamaño Carta B/N)
+            Restaurante El Bodegón • Documento Oficial de Respaldo Contable de Compra (Hoja Tamaño Carta B/N) • Bodegón Control · TEGA
           </div>
         </div>
 
@@ -1330,7 +1330,7 @@ export function printThermalTablewareReport(
     </table>
 
     <div class="footer-note">
-      <span>BodegónControl ERP • Reporte de control de menaje (Tamaño Carta) • Auditoría: ${adminName}</span>
+      <span>Bodegón Control · TEGA • Reporte de control de menaje (Tamaño Carta) • Auditoría: ${adminName}</span>
       <span>Impreso el ${new Date().toLocaleString()}</span>
     </div>
   `;
@@ -1530,7 +1530,7 @@ export function printThermalPettyCashClosingAct(
     ` : ''}
 
     <div class="footer-note">
-      <span>BodegónControl ERP • Acta formal de cierre diario de caja chica (Tamaño Carta) • Responsable: ${closedByAdmin || shift.closedBy || shift.openedBy}</span>
+      <span>Bodegón Control · TEGA • Acta formal de cierre diario de caja chica (Tamaño Carta) • Responsable: ${closedByAdmin || shift.closedBy || shift.openedBy}</span>
       <span>Impreso el ${new Date().toLocaleString()}</span>
     </div>
   `;

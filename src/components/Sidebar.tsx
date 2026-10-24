@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { AppState } from '../types';
 import logoImg from '../assets/logo.png';
+import tegaImg from '../assets/tega.svg';
+import { AboutModal } from './AboutModal';
 import {
   Landmark,
   ShoppingCart,
@@ -47,6 +49,7 @@ export const Sidebar: React.FC<Props> = ({
   const isPettyCashLow = state.pettyCashBalance < 2000;
   const [payrollExpanded, setPayrollExpanded] = useState(activeTab === 'payroll');
   const [appVersion, setAppVersion] = useState('');
+  const [showAbout, setShowAbout] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const [indicator, setIndicator] = useState({ top: 0, height: 0 });
 
@@ -477,16 +480,20 @@ export const Sidebar: React.FC<Props> = ({
         )}
 
         <button
-          onClick={onOpenSettingsClick}
-          className="w-full pt-2 px-3 flex items-center justify-between text-[10px] font-semibold text-stone-400 hover:text-stone-600 transition cursor-pointer"
-          title="Ver configuración del sistema y respaldos"
+          onClick={() => setShowAbout(true)}
+          className="w-full pt-2 px-3 flex items-center justify-between gap-2 text-[10px] font-semibold text-stone-400 hover:text-stone-600 transition cursor-pointer"
+          title="Acerca de Bodegón Control"
         >
-          <span>Bodegón Control {appVersion}</span>
+          <span className="flex flex-col items-start gap-1">
+            <img src={tegaImg} alt="TEGA" className="h-3 w-auto" />
+            <span>Bodegón Control {appVersion}</span>
+          </span>
           <span className="inline-flex items-center gap-1 text-bodegon font-bold">
             <ShieldCheck className="w-3 h-3" /> Seguro
           </span>
         </button>
       </div>
+      {showAbout && <AboutModal version={appVersion} onClose={() => setShowAbout(false)} />}
     </aside>
   );
 };
