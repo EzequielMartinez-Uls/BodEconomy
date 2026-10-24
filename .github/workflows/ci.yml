@@ -18,6 +18,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      # Cuenta las hojas que usa cada documento impreso y falla si alguno desperdicia papel.
+      - run: npx playwright install --with-deps chromium
+      - run: npm run medir-hojas
       - run: npm run build
         env:
           VITE_SUPABASE_URL: https://ejemplo.supabase.co

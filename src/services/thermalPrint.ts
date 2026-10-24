@@ -2,10 +2,16 @@ import { AppState, CashShift, PettyCashShift, PettyCashTransaction, TablewareIte
 import { addDaysToDateStr, extractLocalDateStr, getLocalTodayStr } from '../utils/dateUtils';
 import logoImg from '../assets/logo.png';
 
+// Si la ventana de impresión no se pudo abrir, antes se imprimía la pantalla completa de la app
+// (una hoja desperdiciada). Ahora solo se avisa.
+function alertPrintBlocked(): void {
+  alert('No se pudo abrir la ventana de impresión. Permite las ventanas emergentes e inténtalo de nuevo.');
+}
+
 function openPrintWindow(title: string, bodyContent: string): void {
   const printWindow = window.open('', '_blank', 'width=1020,height=920,menubar=no,toolbar=no,location=no,status=no');
   if (!printWindow) {
-    alert('Por favor permite ventanas emergentes en tu navegador para visualizar e imprimir el reporte Tamaño Carta.');
+    alertPrintBlocked();
     return;
   }
 
@@ -136,8 +142,19 @@ function openPrintWindow(title: string, bodyContent: string): void {
               border: none !important;
               border-radius: 0 !important;
             }
-            table, tr, td, th {
+            /* Las tablas largas se pueden partir entre hojas (si no, la tabla completa salta
+               a la hoja siguiente y deja la primera casi en blanco); solo cada fila va entera. */
+            tr {
               page-break-inside: avoid;
+              break-inside: avoid;
+            }
+            thead { display: table-header-group; }
+            tfoot { display: table-row-group; }
+            th { padding: 3px 5px; font-size: 9px; }
+            td { padding: 3px 5px; font-size: 10px; }
+            .total-card, .info-box, .grid-2, .grid-3, .grid-4 {
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
           }
 
@@ -368,17 +385,21 @@ function openPrintWindow(title: string, bodyContent: string): void {
         <div class="a4-sheet">
           ${bodyContent}
         </div>
+        <script>
+          // Imprimir cuando ya cargaron el logo y las letras (antes a veces salía sin logo).
+          window.addEventListener('load', function() {
+            setTimeout(function() {
+              window.focus();
+              window.print();
+            }, 150);
+          });
+        </script>
       </body>
     </html>
   `;
 
   printWindow.document.write(html);
   printWindow.document.close();
-
-  setTimeout(() => {
-    printWindow.focus();
-    printWindow.print();
-  }, 350);
 }
 
 // ============================================================================
@@ -828,15 +849,15 @@ export function printThermalDailyExpensesTicket(
     <table>
       <thead>
         <tr>
-          <th style="width: 35px;">#</th>
-          <th style="width: 65px;">Hora</th>
-          <th style="width: 130px;">Rubro / Categoría</th>
-          <th>Concepto</th>
-          <th style="width: 90px;">Comprobante</th>
-          <th style="width: 75px;">Medio</th>
-          <th style="width: 90px;" class="text-right">Entradas (+)</th>
-          <th style="width: 90px;" class="text-right">Salidas (-)</th>
-          <th style="width: 95px;" class="text-right">Saldo Gaveta</th>
+          <th style="width: 4%;">#</th>
+          <th style="width: 8%;">Hora</th>
+          <th style="width: 13%;">Rubro</th>
+          <th style="width: 31%;">Concepto</th>
+          <th style="width: 8%;">Recibo</th>
+          <th style="width: 7%;">Medio</th>
+          <th style="width: 9%;" class="text-right">Entradas C$</th>
+          <th style="width: 10%;" class="text-right">Salidas C$</th>
+          <th style="width: 10%;" class="text-right">Saldo C$</th>
         </tr>
       </thead>
       <tbody>
@@ -854,17 +875,16 @@ export function printThermalDailyExpensesTicket(
             return `
               <tr>
                 <td class="font-mono text-center bold">${idx + 1}</td>
-                <td class="font-mono text-center">${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                <td><span class="badge">${tx.category}</span></td>
+                <td class="font-mono text-center" style="white-space: nowrap;">${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                <td style="font-size: 9px;">${tx.category}</td>
                 <td>
-                  <span class="bold">${tx.vendor}</span>
-                  ${tx.notes ? `<div style="font-size: 10px; font-weight: 700; color: #000000;">${tx.notes}</div>` : ''}
+                  <span class="bold">${tx.vendor}</span>${tx.notes && tx.notes.trim() !== (tx.vendor || '').trim() ? ` <span style="font-size: 9px; font-weight: 700; color: #000000;">— ${tx.notes}</span>` : ''}
                 </td>
-                <td class="font-mono text-center">${tx.receiptNumber ? `#${tx.receiptNumber}` : 'Sin Recibo'}</td>
+                <td class="font-mono text-center">${tx.receiptNumber ? `#${tx.receiptNumber}` : '—'}</td>
                 <td class="text-center">${isCash ? 'Efectivo' : tx.method === 'CARD' ? 'Tarjeta' : 'Transf.'}</td>
-                <td class="text-right font-mono ${isIn ? 'bold' : ''}">${isIn ? `+C$ ${tx.amount.toFixed(2)}` : '—'}</td>
-                <td class="text-right font-mono ${!isIn ? 'bold' : ''}">${!isIn ? `-C$ ${tx.amount.toFixed(2)}` : '—'}</td>
-                <td class="text-right font-mono bold">C$ ${runningBal.toFixed(2)}</td>
+                <td class="text-right font-mono ${isIn ? 'bold' : ''}" style="white-space: nowrap;">${isIn ? `+${tx.amount.toFixed(2)}` : '—'}</td>
+                <td class="text-right font-mono ${!isIn ? 'bold' : ''}" style="white-space: nowrap;">${!isIn ? `-${tx.amount.toFixed(2)}` : '—'}</td>
+                <td class="text-right font-mono bold" style="white-space: nowrap;">${runningBal.toFixed(2)}</td>
               </tr>
             `;
           }).join('');
@@ -1180,10 +1200,13 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
         </div>
 
         <script>
-          setTimeout(function() {
-            window.focus();
-            window.print();
-          }, 350);
+          // Imprimir cuando ya cargaron el logo y las letras (antes a veces salía sin logo).
+          window.addEventListener('load', function() {
+            setTimeout(function() {
+              window.focus();
+              window.print();
+            }, 150);
+          });
         </script>
       </body>
       </html>
@@ -1194,7 +1217,7 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
       printWindow.document.write(receiptHtml);
       printWindow.document.close();
     } else {
-      window.print();
+      alertPrintBlocked();
     }
   } catch (err: any) {
     alert('Error imprimiendo recibo de compra: ' + err.message);
@@ -1452,13 +1475,13 @@ export function printThermalPettyCashClosingAct(
     <table>
       <thead>
         <tr>
-          <th style="width: 9%; text-align: center;">Hora</th>
-          <th style="width: 33%;">Concepto</th>
-          <th style="width: 14%;">Rubro</th>
-          <th style="width: 12%; text-align: center;">Medio</th>
-          <th style="width: 11%;" class="text-right">Entradas (+)</th>
-          <th style="width: 11%;" class="text-right">Salidas (-)</th>
-          <th style="width: 10%;" class="text-right">Saldo (C$)</th>
+          <th style="width: 8%; text-align: center;">Hora</th>
+          <th style="width: 42%;">Concepto</th>
+          <th style="width: 12%;">Rubro</th>
+          <th style="width: 8%; text-align: center;">Medio</th>
+          <th style="width: 10%;" class="text-right">Entradas C$</th>
+          <th style="width: 10%;" class="text-right">Salidas C$</th>
+          <th style="width: 10%;" class="text-right">Saldo C$</th>
         </tr>
       </thead>
       <tbody>
@@ -1476,13 +1499,13 @@ export function printThermalPettyCashClosingAct(
             }
             return `
               <tr>
-                <td class="font-mono text-center">${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                <td><strong>${tx.vendor}</strong> ${tx.notes ? `<div style="font-size: 9.5px; font-weight: 700; color: #000000;">${tx.notes}</div>` : ''}</td>
-                <td><span class="badge">${tx.category}</span></td>
+                <td class="font-mono text-center" style="white-space: nowrap;">${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                <td><strong>${tx.vendor}</strong>${tx.notes && tx.notes.trim() !== (tx.vendor || '').trim() ? ` <span style="font-size: 9px; font-weight: 700; color: #000000;">— ${tx.notes}</span>` : ''}</td>
+                <td style="font-size: 9px;">${tx.category}</td>
                 <td class="text-center">${isCash ? 'Efectivo' : tx.method === 'CARD' ? 'Tarjeta' : 'Transf.'}</td>
-                <td class="text-right font-mono ${isIn ? 'bold' : ''}">${isIn ? `+C$ ${tx.amount.toFixed(2)}` : '—'}</td>
-                <td class="text-right font-mono ${!isIn ? 'bold' : ''}">${!isIn ? `-C$ ${tx.amount.toFixed(2)}` : '—'}</td>
-                <td class="text-right font-mono bold">C$ ${runningSaldoAct.toFixed(2)}</td>
+                <td class="text-right font-mono ${isIn ? 'bold' : ''}" style="white-space: nowrap;">${isIn ? `+${tx.amount.toFixed(2)}` : '—'}</td>
+                <td class="text-right font-mono ${!isIn ? 'bold' : ''}" style="white-space: nowrap;">${!isIn ? `-${tx.amount.toFixed(2)}` : '—'}</td>
+                <td class="text-right font-mono bold" style="white-space: nowrap;">${runningSaldoAct.toFixed(2)}</td>
               </tr>
             `;
           }).join('');
@@ -1631,7 +1654,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
               const isCash = raw === 'EFECTIVO' || raw === 'CASH';
               const isCard = raw === 'TARJETA' || raw === 'CARD';
               const metodoLabel = isCash ? 'Efectivo' : isCard ? 'Tarjeta' : raw === '-' ? '-' : 'Transferencia';
-              const estadoLabel = g.estado || (g.referencia ? `#${g.referencia}` : 'Liquidado');
+              const estadoLabel = g.estado || (g.referencia ? `#${g.referencia}` : '—');
 
               const isIngreso =
                 g.tipo === 'INGRESO' ||
@@ -1670,12 +1693,12 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
 
               const entradaText =
                 inflowVal > 0
-                  ? `+C$ ${inflowVal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}`
+                  ? `+${inflowVal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}`
                   : '—';
 
               const salidaText =
                 outflowVal > 0
-                  ? `-C$ ${outflowVal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}`
+                  ? `-${outflowVal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}`
                   : '—';
 
               return `
@@ -1685,10 +1708,10 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                 <td><strong style="font-weight: 900;">${g.concepto}</strong></td>
                 <td style="font-weight: 800;">${g.categoria || '—'}</td>
                 <td style="text-align: center; font-weight: 800;">${metodoLabel}</td>
-                <td style="text-align: center; font-size: 9.5px; font-weight: 800;">${estadoLabel}</td>
-                <td class="text-right font-mono ${inflowVal > 0 ? 'font-bold' : ''}">${entradaText}</td>
-                <td class="text-right font-mono ${outflowVal > 0 ? 'font-bold' : ''}">${salidaText}</td>
-                <td class="text-right font-mono font-bold">C$ ${Number(rowSaldo).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td style="text-align: center; font-size: 8.5px; font-weight: 800;">${estadoLabel}</td>
+                <td class="text-right font-mono ${inflowVal > 0 ? 'font-bold' : ''}" style="white-space: nowrap;">${entradaText}</td>
+                <td class="text-right font-mono ${outflowVal > 0 ? 'font-bold' : ''}" style="white-space: nowrap;">${salidaText}</td>
+                <td class="text-right font-mono font-bold" style="white-space: nowrap;">${Number(rowSaldo).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
             `;
             })
@@ -1860,6 +1883,19 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
           .sheet {
             padding-top: 0 !important;
           }
+          /* El espacio para la barra de botones solo es para la pantalla: impreso empujaba la hoja 1
+             y la firma caía sola en una hoja extra. */
+          .no-print-padding {
+            padding: 0 !important;
+          }
+          tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          thead { display: table-header-group; }
+          td, th { padding: 2px 4px; font-size: 9.5px; }
+          .section-title { margin: 4px 0 2px 0; }
+          .signatures { margin-top: 6px; }
         }
       </style>
     `;
@@ -2289,15 +2325,15 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
           <table>
             <thead>
               <tr>
-                <th style="width: 4%; text-align: center;">#</th>
-                <th style="width: 8%; text-align: center;">HORA</th>
-                <th style="width: 28%;">CONCEPTO DEL GASTO</th>
-                <th style="width: 14%;">CATEGORÍA</th>
-                <th style="width: 10%; text-align: center;">MÉTODO</th>
-                <th style="width: 9%; text-align: center;">COMPROBANTE</th>
-                <th style="width: 9%;" class="text-right">ENTRADAS (+)</th>
-                <th style="width: 9%;" class="text-right">SALIDAS (-)</th>
-                <th style="width: 9%;" class="text-right">SALDO (C$)</th>
+                <th style="width: 3%; text-align: center;">#</th>
+                <th style="width: 6%; text-align: center;">HORA</th>
+                <th style="width: 37%;">CONCEPTO DEL GASTO</th>
+                <th style="width: 11%;">CATEGORÍA</th>
+                <th style="width: 7%; text-align: center;">MÉTODO</th>
+                <th style="width: 7%; text-align: center;">RECIBO</th>
+                <th style="width: 9%;" class="text-right">ENTRADAS C$</th>
+                <th style="width: 10%;" class="text-right">SALIDAS C$</th>
+                <th style="width: 10%;" class="text-right">SALDO C$</th>
               </tr>
             </thead>
             <tbody>
@@ -2375,10 +2411,13 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
         </div>
 
         <script>
-          setTimeout(function() {
-            window.focus();
-            window.print();
-          }, 350);
+          // Imprimir cuando ya cargaron el logo y las letras (antes a veces salía sin logo).
+          window.addEventListener('load', function() {
+            setTimeout(function() {
+              window.focus();
+              window.print();
+            }, 150);
+          });
         </script>
       </body>
       </html>
@@ -2389,7 +2428,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
       printWindow.document.write(fullHtml);
       printWindow.document.close();
     } else {
-      window.print();
+      alertPrintBlocked();
     }
   } catch (err: any) {
     alert('Error generando impresión oficial: ' + err.message);
@@ -2728,6 +2767,9 @@ export function printOfficialOpeningActBN(
           .no-print { display: none !important; }
           body { padding: 0 !important; background: #ffffff !important; }
           .sheet { padding: 0 !important; }
+          /* El espacio de la barra de botones no se imprime (dejaba el pie solo en una hoja extra). */
+          .no-print-padding { padding: 0 !important; }
+          tr { page-break-inside: avoid; break-inside: avoid; }
         }
       </style>
     `;
@@ -3151,10 +3193,13 @@ export function printOfficialOpeningActBN(
         </div>
 
         <script>
-          setTimeout(function() {
-            window.focus();
-            window.print();
-          }, 350);
+          // Imprimir cuando ya cargaron el logo y las letras (antes a veces salía sin logo).
+          window.addEventListener('load', function() {
+            setTimeout(function() {
+              window.focus();
+              window.print();
+            }, 150);
+          });
         </script>
       </body>
       </html>
@@ -3165,7 +3210,7 @@ export function printOfficialOpeningActBN(
       printWindow.document.write(fullHtml);
       printWindow.document.close();
     } else {
-      window.print();
+      alertPrintBlocked();
     }
   } catch (err: any) {
     alert('Error imprimiendo acta de apertura y ganancias: ' + err.message);
@@ -3506,7 +3551,7 @@ export function printThermalIndividualPayrollReceipt(
       printWindow.document.write(receiptHtml);
       printWindow.document.close();
     } else {
-      window.print();
+      alertPrintBlocked();
     }
   } catch (err: any) {
     alert('Error imprimiendo recibo de pago: ' + err.message);
