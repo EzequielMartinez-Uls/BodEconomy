@@ -1629,7 +1629,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex font-sans antialiased">
+    <div className="min-h-screen bg-crema text-tinta flex font-sans antialiased">
       {/* Sidebar de Navegación Lateral */}
       <Sidebar
         state={state}
@@ -1652,7 +1652,7 @@ export function App() {
           onForceSyncClick={handleForceSyncPending}
         />
 
-        <main className="flex-1 overflow-y-auto p-6 lg:p-8 bg-slate-50">
+        <main className="flex-1 overflow-y-auto p-6 lg:p-8 bg-stone-50">
           <div className="max-w-7xl mx-auto space-y-6">
             {activeTab === 'generalCash' && (
               <GeneralCashView
@@ -1777,34 +1777,33 @@ export function App() {
 
       {/* Notificaciones de Auto-Actualización */}
       {updateInfo.status === 'downloading' && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900/95 border border-sky-500/50 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur-md animate-in slide-in-from-bottom duration-300">
-          <div className="w-4 h-4 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
+        <div className="fixed bottom-6 right-6 z-50 bg-stone-900/95 border border-stone-500/50 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom duration-300">
+          <div className="w-4 h-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" />
           <div className="text-xs">
-            <span className="font-bold text-sky-400">Descargando actualización</span>
-            {updateInfo.version && <span className="ml-1 text-slate-300">v{updateInfo.version}</span>}
+            <span className="font-bold text-stone-400">Descargando actualización</span>
+            {updateInfo.version && <span className="ml-1 text-stone-300">v{updateInfo.version}</span>}
             {updateInfo.progress !== undefined && (
-              <span className="ml-1 text-sky-300 font-mono font-bold">({updateInfo.progress}%)</span>
+              <span className="ml-1 text-stone-300 font-mono font-bold">({updateInfo.progress}%)</span>
             )}
           </div>
         </div>
       )}
 
       {updateInfo.status === 'downloaded' && (
-        <div className="fixed bottom-6 right-6 z-50 bg-emerald-950/95 border-2 border-emerald-400 text-white p-4 rounded-2xl shadow-2xl flex items-center gap-4 backdrop-blur-md animate-in slide-in-from-bottom duration-300">
+        <div className="fixed bottom-6 right-6 z-50 bg-bodegon-noche/95 border-2 border-bodegon/60 text-white p-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-in slide-in-from-bottom duration-300">
           <div>
-            <div className="text-[10px] font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-              <span>✨</span>
-              <span>Actualización Lista</span>
+            <div className="text-[10px] font-black text-bodegon uppercase tracking-wider flex items-center gap-1.5">
+                            <span>Actualización Lista</span>
             </div>
             <div className="text-sm font-black text-white mt-0.5">Versión {updateInfo.version || 'nueva'} instalable</div>
-            <div className="text-[11px] text-emerald-200/90 mt-0.5">
+            <div className="text-[11px] text-[#CFE3DC]/90 mt-0.5">
               Se aplicará al cerrar la app o puedes reiniciar ahora.
             </div>
           </div>
           <button
             type="button"
             onClick={() => window.electronAPI?.restartAndInstall?.()}
-            className="bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-xs px-3.5 py-2 rounded-xl transition cursor-pointer active:scale-95 whitespace-nowrap shadow-sm"
+            className="bg-bodegon/70 hover:bg-bodegon/30 text-stone-950 font-black text-xs px-3.5 py-2 rounded-xl transition cursor-pointer whitespace-nowrap shadow-sm"
           >
             Reiniciar Ahora
           </button>

@@ -32,47 +32,47 @@ export const PrintOfficialActModal: React.FC<Props> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
+      className="fixed inset-0 z-50 bg-stone-900/60 flex items-center justify-center p-4 animate-in fade-in"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl max-w-lg w-full p-5 shadow-xl border border-slate-200 animate-in zoom-in-95 duration-150"
+        className="bg-white rounded-xl max-w-lg w-full p-5 shadow-xl border border-stone-200 animate-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cabecera del Modal */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[#1c6856] text-white flex items-center justify-center text-xl shadow-xs shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-bodegon text-white flex items-center justify-center text-xl shadow-xs shrink-0">
               <Printer className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-base text-slate-900 leading-tight">
+              <h3 className="font-bold text-base text-stone-900 leading-tight">
                 Impresión Oficial en B/N (Tamaño Carta)
               </h3>
-              <p className="text-xs text-slate-500 font-medium">
+              <p className="text-xs text-stone-500 font-medium">
                 El Bodegón • Documentos de Alto Contraste para Archivo Físico & Firmas
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+            className="text-stone-400 hover:text-stone-700 p-1.5 rounded-lg hover:bg-stone-100 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Indicador de Fecha Contable */}
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-4 flex items-center justify-between">
+        <div className="bg-stone-50 border border-stone-200 rounded-lg p-3 mb-4 flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider block">
+            <span className="text-[10px] font-bold uppercase text-stone-500 tracking-wider block">
               Fecha del Acta a Imprimir:
             </span>
-            <span className="text-sm font-bold text-slate-900 capitalize">
+            <span className="text-sm font-bold text-stone-900 capitalize">
               {fechaLegible}
             </span>
           </div>
-          <span className="text-xs font-mono font-bold bg-white px-2.5 py-1 rounded-md border border-slate-200 text-slate-800">
+          <span className="text-xs font-mono font-bold bg-white px-2.5 py-1 rounded-md border border-stone-200 text-stone-800">
             {dateStr}
           </span>
         </div>
@@ -82,115 +82,115 @@ export const PrintOfficialActModal: React.FC<Props> = ({
           {/* Opción 1: Acta Completa (2 Hojas) */}
           <button
             onClick={() => onPrint('TODO')}
-            className="w-full text-left p-3.5 rounded-lg border border-slate-900 bg-slate-900 hover:bg-black text-white transition cursor-pointer flex items-center justify-between group shadow-xs"
+            className="w-full text-left p-3.5 rounded-lg border border-bodegon bg-bodegon hover:bg-bodegon-noche text-white transition cursor-pointer flex items-center justify-between group shadow-xs"
           >
             <div>
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
+                <FileText className="w-4 h-4 text-bodegon shrink-0" />
                 <span className="font-bold text-xs text-white">
                   ACTA COMPLETA DE CIERRE (2 HOJAS B/N)
                 </span>
-                <span className="text-[9.5px] font-bold uppercase px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="text-[9.5px] font-bold uppercase px-2 py-0.5 rounded-md bg-bodegon/20 text-[#CFE3DC] border border-bodegon/30">
                   Recomendado
                 </span>
               </div>
-              <p className="text-[11px] text-slate-300 mt-1 pl-6 leading-snug">
+              <p className="text-[11px] text-stone-300 mt-1 pl-6 leading-snug">
                 Hoja 1: Arqueo Billetes, Ventas Multibanco, Retiros y Cuadre de Caja
                 <br />
                 Hoja 2: Caja Chica & Detalle Exhaustivo de Compras con Comprobantes
               </p>
             </div>
-            <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-white transition shrink-0" />
+            <ChevronRight className="w-5 h-5 text-stone-400 group-hover:text-white transition shrink-0" />
           </button>
 
           {/* Opción 2: Acta de Apertura */}
           <button
             onClick={() => onPrint('APERTURA')}
-            className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-[#1c6856] bg-slate-50 hover:bg-white text-slate-900 transition cursor-pointer flex items-center justify-between group shadow-2xs"
+            className="w-full text-left p-3 rounded-lg border border-stone-200 hover:border-bodegon bg-stone-50 hover:bg-white text-stone-900 transition cursor-pointer flex items-center justify-between group shadow-2xs"
           >
             <div>
               <div className="flex items-center gap-2">
-                <Sunrise className="w-4 h-4 text-[#1c6856] shrink-0" />
-                <span className="font-bold text-xs text-slate-900">
+                <Sunrise className="w-4 h-4 text-bodegon shrink-0" />
+                <span className="font-bold text-xs text-stone-900">
                   ACTA OFICIAL DE APERTURA (1 HOJA B/N)
                 </span>
-                <span className="text-[9.5px] font-bold uppercase px-2 py-0.5 rounded-md bg-emerald-50 text-[#1c6856] border border-emerald-200">
+                <span className="text-[9.5px] font-bold uppercase px-2 py-0.5 rounded-md bg-bodegon/5 text-bodegon border border-bodegon/20">
                   Fondo de Gaveta
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-0.5 pl-6">
+              <p className="text-[11px] text-stone-500 mt-0.5 pl-6">
                 Arqueo físico de inicio, conteo de billetes en gaveta, fondo operativo y firmas.
               </p>
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition shrink-0" />
+            <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 transition shrink-0" />
           </button>
 
           {/* Opción 3: Estado de Ganancias de Ayer */}
           <button
             onClick={() => onPrint('GANANCIAS_AYER')}
-            className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-indigo-400 bg-slate-50 hover:bg-white text-slate-900 transition cursor-pointer flex items-center justify-between group shadow-2xs"
+            className="w-full text-left p-3 rounded-lg border border-stone-200 hover:border-indigo-400 bg-stone-50 hover:bg-white text-stone-900 transition cursor-pointer flex items-center justify-between group shadow-2xs"
           >
             <div>
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-indigo-600 shrink-0" />
-                <span className="font-bold text-xs text-slate-900">
+                <span className="font-bold text-xs text-stone-900">
                   ESTADO DE GANANCIAS JORNADA ANTERIOR (1 HOJA B/N)
                 </span>
                 <span className="text-[9.5px] font-bold uppercase px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
                   Auditoría de Ventas
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-0.5 pl-6">
+              <p className="text-[11px] text-stone-500 mt-0.5 pl-6">
                 Ventas multibanco (POS), PedidosYa, efectivo real c/ salidas, gastos y ganancia neta.
               </p>
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition shrink-0" />
+            <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 transition shrink-0" />
           </button>
 
           {/* Opción 3: Solo Hoja 1 Cierre */}
           <button
             onClick={() => onPrint('GENERAL')}
-            className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-white text-slate-900 transition cursor-pointer flex items-center justify-between group shadow-2xs"
+            className="w-full text-left p-3 rounded-lg border border-stone-200 hover:border-stone-300 bg-stone-50 hover:bg-white text-stone-900 transition cursor-pointer flex items-center justify-between group shadow-2xs"
           >
             <div>
               <div className="flex items-center gap-2">
-                <Banknote className="w-4 h-4 text-slate-600 shrink-0" />
-                <span className="font-bold text-xs text-slate-900">
+                <Banknote className="w-4 h-4 text-stone-600 shrink-0" />
+                <span className="font-bold text-xs text-stone-900">
                   SOLO CAJA GENERAL & VENTAS (HOJA 1 B/N)
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-0.5 pl-6">
+              <p className="text-[11px] text-stone-500 mt-0.5 pl-6">
                 Arqueo físico al cierre, ventas en efectivo, tarjetas Datafast, retiros y firmas.
               </p>
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition shrink-0" />
+            <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 transition shrink-0" />
           </button>
 
           {/* Opción 4: Solo Hoja 2 Caja Chica */}
           <button
             onClick={() => onPrint('CHICA')}
-            className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-white text-slate-900 transition cursor-pointer flex items-center justify-between group shadow-2xs"
+            className="w-full text-left p-3 rounded-lg border border-stone-200 hover:border-stone-300 bg-stone-50 hover:bg-white text-stone-900 transition cursor-pointer flex items-center justify-between group shadow-2xs"
           >
             <div>
               <div className="flex items-center gap-2">
-                <ShoppingCart className="w-4 h-4 text-slate-600 shrink-0" />
-                <span className="font-bold text-xs text-slate-900">
+                <ShoppingCart className="w-4 h-4 text-stone-600 shrink-0" />
+                <span className="font-bold text-xs text-stone-900">
                   SOLO CAJA CHICA & COMPRAS (HOJA 2 B/N)
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-0.5 pl-6">
+              <p className="text-[11px] text-stone-500 mt-0.5 pl-6">
                 Balance de fondo en gaveta y relación detallada de cada compra/gasto individual con firmas.
               </p>
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition shrink-0" />
+            <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 transition shrink-0" />
           </button>
         </div>
 
-        <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+        <div className="mt-4 pt-3 border-t border-stone-200 flex items-center justify-between text-xs text-stone-500">
           <span>Diseño B/N estricto para impresoras láser / térmicas</span>
           <button
             onClick={onClose}
-            className="px-3 py-1.5 font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
+            className="px-3 py-1.5 font-bold text-stone-600 hover:text-stone-900 cursor-pointer"
           >
             Cancelar
           </button>

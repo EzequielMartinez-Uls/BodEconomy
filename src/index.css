@@ -1,9 +1,48 @@
 @import "tailwindcss";
 
+/* Identidad El Bodegón: los mismos tokens que Bodegón Pass para que ambas apps se vean de la misma casa. */
+@theme inline {
+  --color-bodegon: #135e4a;
+  --color-bodegon-noche: #0e4536;
+  --color-dorado: #d2a445;
+  --color-dorado-vivo: #ebb43a;
+  --color-dorado-tinta: #8a6418;
+  --color-crema: #fcf9f5;
+  --color-cafe: #5a4210;
+  --color-barro: #a8432e;
+  --color-tinta: #1c1917;
+
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Big Shoulders Variable', 'Inter Variable', ui-sans-serif, sans-serif;
+}
+
 @layer base {
   body {
-    @apply bg-slate-100 text-slate-800 antialiased selection:bg-amber-500 selection:text-white font-sans;
+    @apply bg-crema text-tinta antialiased selection:bg-dorado/40 selection:text-tinta font-sans;
     overflow-x: hidden;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Títulos en Big Shoulders; los datos se quedan en Inter. */
+  h1,
+  h2,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
+  }
+  h1 {
+    text-transform: uppercase;
+    font-weight: 800;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
@@ -13,14 +52,14 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f5f0e8;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #d6cfc4;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #a8a29e;
 }
 
 #root {
@@ -38,4 +77,3 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
 }
-

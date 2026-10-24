@@ -303,39 +303,39 @@ export const SettingsModal: React.FC<Props> = ({
   }, [currentVendors, vendorSearch]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-150">
-      <div className="bg-white border border-slate-200 rounded-none w-full max-w-4xl overflow-hidden shadow-2xl flex flex-col my-4 max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/60 overflow-y-auto animate-in fade-in duration-150">
+      <div className="bg-white border border-stone-200 rounded-none w-full max-w-4xl overflow-hidden shadow-2xl flex flex-col my-4 max-h-[92vh]">
         {/* Header Rectangular Corporativo */}
-        <div className="flex items-center justify-between px-6 py-3.5 border-b border-slate-200 bg-slate-50">
+        <div className="flex items-center justify-between px-6 py-3.5 border-b border-stone-200 bg-stone-50">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-none bg-[#1c6856] text-white flex items-center justify-center shadow-xs">
+            <div className="w-8 h-8 rounded-none bg-bodegon text-white flex items-center justify-center shadow-xs">
               <Settings className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+              <h2 className="text-sm font-bold text-stone-900 uppercase tracking-wider">
                 Configuración & Catálogos Centralizados
               </h2>
-              <span className="text-[11px] text-slate-500 font-mono">
+              <span className="text-[11px] text-stone-500 font-mono">
                 Base de Datos Supabase • El Bodegón
               </span>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-200 transition cursor-pointer"
+            className="p-1.5 text-stone-400 hover:text-stone-800 hover:bg-stone-200 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Selector Principal */}
-        <div className="flex border-b border-slate-200 text-xs font-bold bg-slate-100/70 px-4 divide-x divide-slate-200 overflow-x-auto">
+        <div className="flex border-b border-stone-200 text-xs font-bold bg-stone-100/70 px-4 divide-x divide-stone-200 overflow-x-auto">
           <button
             onClick={() => setActiveTab('admins')}
             className={`py-3 px-4 border-b-2 transition flex items-center gap-2 cursor-pointer uppercase tracking-wider text-[11px] whitespace-nowrap ${
               activeTab === 'admins'
-                ? 'border-[#1c6856] text-[#1c6856] bg-white font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+                ? 'border-bodegon text-bodegon bg-white font-bold'
+                : 'border-transparent text-stone-600 hover:text-stone-900'
             }`}
           >
             <Users className="w-3.5 h-3.5" /> Administradores
@@ -344,8 +344,8 @@ export const SettingsModal: React.FC<Props> = ({
             onClick={() => setActiveTab('exchange')}
             className={`py-3 px-4 border-b-2 transition flex items-center gap-2 cursor-pointer uppercase tracking-wider text-[11px] whitespace-nowrap ${
               activeTab === 'exchange'
-                ? 'border-[#1c6856] text-[#1c6856] bg-white font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+                ? 'border-bodegon text-bodegon bg-white font-bold'
+                : 'border-transparent text-stone-600 hover:text-stone-900'
             }`}
           >
             <CircleDollarSign className="w-3.5 h-3.5" /> Tasa de Cambio
@@ -354,8 +354,8 @@ export const SettingsModal: React.FC<Props> = ({
             onClick={() => setActiveTab('catalogs')}
             className={`py-3 px-4 border-b-2 transition flex items-center gap-2 cursor-pointer uppercase tracking-wider text-[11px] whitespace-nowrap ${
               activeTab === 'catalogs'
-                ? 'border-[#1c6856] text-[#1c6856] bg-white font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+                ? 'border-bodegon text-bodegon bg-white font-bold'
+                : 'border-transparent text-stone-600 hover:text-stone-900'
             }`}
           >
             <Building2 className="w-3.5 h-3.5" /> Proveedores & Categorías
@@ -368,10 +368,10 @@ export const SettingsModal: React.FC<Props> = ({
           {activeTab === 'admins' && (
             <div className="space-y-4 max-w-2xl">
               <div>
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1">
+                <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wider mb-1">
                   Administradores de Turno (Auditoría Cruzada)
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-stone-500">
                   Personas autorizadas para realizar aperturas, cierres de caja y registro de gastos en el Bodegón.
                 </p>
               </div>
@@ -380,21 +380,21 @@ export const SettingsModal: React.FC<Props> = ({
                 {state.availableAdmins.map((admin) => (
                   <div
                     key={admin}
-                    className="flex items-center justify-between p-3 bg-slate-50 rounded-none border border-slate-200"
+                    className="flex items-center justify-between p-3 bg-stone-50 rounded-none border border-stone-200"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-none bg-[#1c6856] text-white flex items-center justify-center font-bold text-xs">
+                      <div className="w-7 h-7 rounded-none bg-bodegon text-white flex items-center justify-center font-bold text-xs">
                         {admin.charAt(0)}
                       </div>
                       <div>
-                        <span className="font-bold text-slate-900 text-xs">{admin}</span>
+                        <span className="font-bold text-stone-900 text-xs">{admin}</span>
                         {admin === state.activeAdminName && (
-                          <span className="ml-2 text-[10px] font-bold px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-300">
+                          <span className="ml-2 text-[10px] font-bold px-2 py-0.5 bg-bodegon/5 text-bodegon border border-bodegon/35">
                             Activo Ahora
                           </span>
                         )}
                         {(admin === 'Eddy' || admin === 'Xiomara') && (
-                          <span className="ml-2 text-[11px] text-slate-400 font-medium">
+                          <span className="ml-2 text-[11px] text-stone-400 font-medium">
                             (Admin Principal)
                           </span>
                         )}
@@ -405,7 +405,7 @@ export const SettingsModal: React.FC<Props> = ({
                       <button
                         type="button"
                         onClick={() => onRemoveAdmin(admin)}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                        className="p-1.5 text-stone-400 hover:text-barro hover:bg-barro/5 transition cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -420,11 +420,11 @@ export const SettingsModal: React.FC<Props> = ({
                   placeholder="Nombre de nuevo administrador..."
                   value={newAdminInput}
                   onChange={(e) => setNewAdminInput(e.target.value)}
-                  className="flex-1 bg-slate-50 border border-slate-300 px-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#1c6856] focus:bg-white transition"
+                  className="flex-1 bg-stone-50 border border-stone-300 px-3 py-1.5 text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-bodegon focus:bg-white transition"
                 />
                 <button
                   type="submit"
-                  className="flex items-center gap-1.5 px-4 py-1.5 bg-[#1c6856] hover:bg-[#154f42] text-white text-xs font-bold transition shadow-xs cursor-pointer uppercase tracking-wider"
+                  className="flex items-center gap-1.5 px-4 py-1.5 bg-bodegon hover:bg-bodegon-noche text-white text-xs font-bold transition shadow-xs cursor-pointer uppercase tracking-wider"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Agregar</span>
@@ -437,35 +437,35 @@ export const SettingsModal: React.FC<Props> = ({
           {activeTab === 'exchange' && (
             <div className="space-y-4 max-w-xl">
               <div>
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1">
+                <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wider mb-1">
                   Tasa de Cambio Oficial y Predeterminada
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-stone-500">
                   Esta tasa se usará automáticamente en todas las aperturas y cierres de turno para convertir billetes de dólares a córdobas.
                 </p>
               </div>
 
-              <form onSubmit={handleSaveRate} className="p-4 bg-slate-50 border border-slate-200 space-y-4">
+              <form onSubmit={handleSaveRate} className="p-4 bg-stone-50 border border-stone-200 space-y-4">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  <label className="block text-[11px] font-bold text-stone-700 uppercase tracking-wider mb-1.5">
                     Tasa Oficial (C$ por 1 US$)
                   </label>
                   <div className="flex items-center gap-2 max-w-xs">
-                    <span className="text-slate-400 font-mono font-bold text-sm">C$</span>
+                    <span className="text-stone-400 font-mono font-bold text-sm">C$</span>
                     <input
                       type="number"
                       step="0.01"
                       min="1"
                       value={rateInput}
                       onChange={(e) => setRateInput(e.target.value)}
-                      className="w-full bg-white border border-slate-300 p-2 text-xl font-mono font-bold text-slate-900 focus:outline-none focus:border-[#1c6856] transition"
+                      className="w-full bg-white border border-stone-300 p-2 text-xl font-mono font-bold text-stone-900 focus:outline-none focus:border-bodegon transition"
                     />
                   </div>
                 </div>
 
                 <button
                   type="submit"
-                  className="flex items-center gap-2 px-4 py-2 bg-[#1c6856] hover:bg-[#154f42] text-white font-bold text-xs transition cursor-pointer uppercase tracking-wider"
+                  className="flex items-center gap-2 px-4 py-2 bg-bodegon hover:bg-bodegon-noche text-white font-bold text-xs transition cursor-pointer uppercase tracking-wider"
                 >
                   <Check className="w-4 h-4" />
                   <span>Guardar Nueva Tasa</span>
@@ -478,15 +478,15 @@ export const SettingsModal: React.FC<Props> = ({
           {activeTab === 'catalogs' && (
             <div className="space-y-4">
               {/* Selector interno de Catálogos */}
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3 flex-wrap gap-2">
+              <div className="flex items-center justify-between border-b border-stone-200 pb-3 flex-wrap gap-2">
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => setCatalogSubTab('vendors')}
                     className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
                       catalogSubTab === 'vendors'
-                        ? 'bg-[#1c6856] text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        ? 'bg-bodegon text-white'
+                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
                     }`}
                   >
                     Proveedores Oficiales ({currentVendors.length})
@@ -496,8 +496,8 @@ export const SettingsModal: React.FC<Props> = ({
                     onClick={() => setCatalogSubTab('categories')}
                     className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
                       catalogSubTab === 'categories'
-                        ? 'bg-[#1c6856] text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        ? 'bg-bodegon text-white'
+                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
                     }`}
                   >
                     Categorías de Gastos ({currentCategories.length})
@@ -506,7 +506,7 @@ export const SettingsModal: React.FC<Props> = ({
 
                 <div className="flex items-center gap-2">
                   {isSavingCatalog && (
-                    <span className="text-[11px] text-[#1c6856] flex items-center gap-1 font-bold animate-pulse">
+                    <span className="text-[11px] text-bodegon flex items-center gap-1 font-bold animate-pulse">
                       <RefreshCw className="w-3 h-3 animate-spin" /> Guardando en Supabase...
                     </span>
                   )}
@@ -514,7 +514,7 @@ export const SettingsModal: React.FC<Props> = ({
                     <button
                       type="button"
                       onClick={handleOpenNewVendorModal}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-[#1c6856] hover:bg-[#154f42] text-white text-xs font-bold uppercase tracking-wider transition cursor-pointer"
+                      className="flex items-center gap-1 px-3 py-1.5 bg-bodegon hover:bg-bodegon-noche text-white text-xs font-bold uppercase tracking-wider transition cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Agregar Proveedor</span>
@@ -528,20 +528,20 @@ export const SettingsModal: React.FC<Props> = ({
                 <div className="space-y-3">
                   {/* Buscador */}
                   <div className="relative">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    <Search className="w-4 h-4 text-stone-400 absolute left-3 top-2.5" />
                     <input
                       type="text"
                       placeholder="Buscar por nombre, rubro o teléfono..."
                       value={vendorSearch}
                       onChange={(e) => setVendorSearch(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 focus:outline-none focus:border-[#1c6856]"
+                      className="w-full pl-9 pr-3 py-2 text-xs border border-stone-300 focus:outline-none focus:border-bodegon"
                     />
                   </div>
 
                   {/* Tabla de Proveedores */}
-                  <div className="border border-slate-200 overflow-hidden max-h-[50vh] overflow-y-auto">
+                  <div className="border border-stone-200 overflow-hidden max-h-[50vh] overflow-y-auto">
                     <table className="w-full text-left text-xs border-collapse">
-                      <thead className="bg-slate-100 text-slate-700 uppercase font-bold text-[10px] tracking-wider sticky top-0 border-b border-slate-200 z-10">
+                      <thead className="bg-stone-100 text-stone-700 uppercase font-bold text-[10px] tracking-wider sticky top-0 border-b border-stone-200 z-10">
                         <tr>
                           <th className="py-2.5 px-3">Proveedor</th>
                           <th className="py-2.5 px-3">Rubro Predeterminado</th>
@@ -550,10 +550,10 @@ export const SettingsModal: React.FC<Props> = ({
                           <th className="py-2.5 px-3 text-center">Acciones</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 text-slate-800 font-medium">
+                      <tbody className="divide-y divide-stone-100 text-stone-800 font-medium">
                         {filteredVendors.length === 0 ? (
                           <tr>
-                            <td colSpan={5} className="py-8 text-center text-slate-400">
+                            <td colSpan={5} className="py-8 text-center text-stone-400">
                               No se encontraron proveedores que coincidan con la búsqueda.
                             </td>
                           </tr>
@@ -561,20 +561,20 @@ export const SettingsModal: React.FC<Props> = ({
                           filteredVendors.map((v) => {
                             const spent = vendorSpendMap.get(v.name.toLowerCase().trim()) || 0;
                             return (
-                              <tr key={v.id} className="hover:bg-slate-50 transition">
-                                <td className="py-2.5 px-3 font-bold text-slate-900">
+                              <tr key={v.id} className="hover:bg-stone-50 transition">
+                                <td className="py-2.5 px-3 font-bold text-stone-900">
                                   {v.name}
                                 </td>
                                 <td className="py-2.5 px-3">
-                                  <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-100 border border-slate-300 text-slate-700 uppercase">
+                                  <span className="px-2 py-0.5 text-[10px] font-bold bg-stone-100 border border-stone-300 text-stone-700 uppercase">
                                     {(v.defaultCategory || 'OTROS').replace(/_/g, ' ')}
                                   </span>
                                 </td>
-                                <td className="py-2.5 px-3 text-slate-600 font-mono text-[11px]">
-                                  {v.phone || <span className="text-slate-300 font-sans italic">Sin teléfono</span>}
+                                <td className="py-2.5 px-3 text-stone-600 font-mono text-[11px]">
+                                  {v.phone || <span className="text-stone-300 font-sans italic">Sin teléfono</span>}
                                 </td>
-                                <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
-                                  {spent > 0 ? `C$ ${spent.toFixed(2)}` : <span className="text-slate-400 font-normal">C$ 0.00</span>}
+                                <td className="py-2.5 px-3 text-right font-mono font-bold text-stone-900">
+                                  {spent > 0 ? `C$ ${spent.toFixed(2)}` : <span className="text-stone-400 font-normal">C$ 0.00</span>}
                                 </td>
                                 <td className="py-2.5 px-3 text-center">
                                   <div className="flex items-center justify-center gap-1">
@@ -582,7 +582,7 @@ export const SettingsModal: React.FC<Props> = ({
                                       type="button"
                                       onClick={() => handleOpenEditVendorModal(v)}
                                       title="Editar proveedor"
-                                      className="p-1 text-slate-500 hover:text-[#1c6856] hover:bg-slate-100 transition cursor-pointer"
+                                      className="p-1 text-stone-500 hover:text-bodegon hover:bg-stone-100 transition cursor-pointer"
                                     >
                                       <Edit2 className="w-3.5 h-3.5" />
                                     </button>
@@ -590,7 +590,7 @@ export const SettingsModal: React.FC<Props> = ({
                                       type="button"
                                       onClick={() => handleDeleteVendor(v.id, v.name)}
                                       title="Eliminar proveedor"
-                                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                      className="p-1 text-stone-400 hover:text-barro hover:bg-barro/5 transition cursor-pointer"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
                                     </button>
@@ -610,30 +610,30 @@ export const SettingsModal: React.FC<Props> = ({
               {catalogSubTab === 'categories' && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between flex-wrap gap-2">
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-stone-500">
                       Define los rubros contables oficiales para clasificar las compras y salidas de caja.
                     </p>
                     <button
                       type="button"
                       onClick={handleResetCategories}
-                      className="px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-300 hover:bg-slate-50 transition cursor-pointer"
+                      className="px-2.5 py-1 text-xs font-semibold text-stone-600 hover:text-stone-900 border border-stone-300 hover:bg-stone-50 transition cursor-pointer"
                     >
                       Restablecer Predeterminadas
                     </button>
                   </div>
 
                   {/* Formulario Agregar Categoría */}
-                  <form onSubmit={handleAddCategory} className="flex gap-2 p-3 bg-slate-50 border border-slate-200">
+                  <form onSubmit={handleAddCategory} className="flex gap-2 p-3 bg-stone-50 border border-stone-200">
                     <input
                       type="text"
                       placeholder="Nueva categoría (ej: MANTENIMIENTO, EMPAQUES, PAPELERIA)..."
                       value={newCategoryInput}
                       onChange={(e) => setNewCategoryInput(e.target.value)}
-                      className="flex-1 bg-white border border-slate-300 px-3 py-1.5 text-xs font-bold uppercase placeholder:normal-case placeholder:font-normal focus:outline-none focus:border-[#1c6856]"
+                      className="flex-1 bg-white border border-stone-300 px-3 py-1.5 text-xs font-bold uppercase placeholder:normal-case placeholder:font-normal focus:outline-none focus:border-bodegon"
                     />
                     <button
                       type="submit"
-                      className="flex items-center gap-1.5 px-4 py-1.5 bg-[#1c6856] hover:bg-[#154f42] text-white text-xs font-bold transition shadow-xs cursor-pointer uppercase tracking-wider"
+                      className="flex items-center gap-1.5 px-4 py-1.5 bg-bodegon hover:bg-bodegon-noche text-white text-xs font-bold transition shadow-xs cursor-pointer uppercase tracking-wider"
                     >
                       <Plus className="w-4 h-4" />
                       <span>Agregar Categoría</span>
@@ -649,7 +649,7 @@ export const SettingsModal: React.FC<Props> = ({
                       return (
                         <div
                           key={cat}
-                          className="flex items-center justify-between p-3 border border-slate-200 bg-white hover:border-slate-300 transition text-xs font-semibold"
+                          className="flex items-center justify-between p-3 border border-stone-200 bg-white hover:border-stone-300 transition text-xs font-semibold"
                         >
                           {isEditing ? (
                             <div className="flex items-center gap-2 flex-1 mr-2">
@@ -657,33 +657,33 @@ export const SettingsModal: React.FC<Props> = ({
                                 type="text"
                                 value={editingCategoryName}
                                 onChange={(e) => setEditingCategoryName(e.target.value)}
-                                className="flex-1 px-2 py-1 border border-[#1c6856] text-xs uppercase font-bold focus:outline-none"
+                                className="flex-1 px-2 py-1 border border-bodegon text-xs uppercase font-bold focus:outline-none"
                                 autoFocus
                               />
                               <button
                                 type="button"
                                 onClick={() => handleSaveEditCategory(cat)}
-                                className="p-1 bg-[#1c6856] text-white hover:bg-[#154f42]"
+                                className="p-1 bg-bodegon text-white hover:bg-bodegon-noche"
                               >
                                 <Check className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setEditingCategoryKey(null)}
-                                className="p-1 bg-slate-200 text-slate-600 hover:bg-slate-300"
+                                className="p-1 bg-stone-200 text-stone-600 hover:bg-stone-300"
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           ) : (
                             <div className="flex items-center gap-2.5">
-                              <span className="w-2.5 h-2.5 bg-[#1c6856]"></span>
+                              <span className="w-2.5 h-2.5 bg-bodegon"></span>
                               <div>
-                                <span className="text-slate-900 block font-bold">
+                                <span className="text-stone-900 block font-bold">
                                   {cat.replace(/_/g, ' ')}
                                 </span>
                                 {stat && stat.total > 0 && (
-                                  <span className="text-[10px] text-slate-500 font-mono">
+                                  <span className="text-[10px] text-stone-500 font-mono">
                                     C$ {stat.total.toFixed(2)} ({stat.count} gastos)
                                   </span>
                                 )}
@@ -697,7 +697,7 @@ export const SettingsModal: React.FC<Props> = ({
                                 type="button"
                                 onClick={() => handleStartEditCategory(cat)}
                                 title="Editar nombre de categoría"
-                                className="p-1 text-slate-400 hover:text-[#1c6856] hover:bg-slate-100 transition cursor-pointer"
+                                className="p-1 text-stone-400 hover:text-bodegon hover:bg-stone-100 transition cursor-pointer"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
@@ -706,7 +706,7 @@ export const SettingsModal: React.FC<Props> = ({
                                   type="button"
                                   onClick={() => handleRemoveCategory(cat)}
                                   title={`Eliminar categoría ${cat}`}
-                                  className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                  className="p-1 text-stone-400 hover:text-barro hover:bg-barro/5 transition cursor-pointer"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
@@ -724,10 +724,10 @@ export const SettingsModal: React.FC<Props> = ({
         </div>
 
         {/* Footer Rectangular */}
-        <div className="flex justify-between items-center px-6 py-3 border-t border-slate-200 bg-slate-50">
-          <span className="text-[11px] text-slate-500">
+        <div className="flex justify-between items-center px-6 py-3 border-t border-stone-200 bg-stone-50">
+          <span className="text-[11px] text-stone-500">
             {isSavingCatalog ? (
-              <span className="text-[#1c6856] font-bold flex items-center gap-1">
+              <span className="text-bodegon font-bold flex items-center gap-1">
                 <RefreshCw className="w-3 h-3 animate-spin" /> Sincronizando con Supabase...
               </span>
             ) : (
@@ -737,7 +737,7 @@ export const SettingsModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-1.5 text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white transition cursor-pointer uppercase tracking-wider"
+            className="px-5 py-1.5 text-xs font-bold bg-bodegon hover:bg-bodegon-noche text-white transition cursor-pointer uppercase tracking-wider"
           >
             Listo
           </button>
@@ -746,17 +746,17 @@ export const SettingsModal: React.FC<Props> = ({
 
       {/* Modal / Formulario Flotante para Agregar o Editar Proveedor */}
       {vendorModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-2xs animate-in fade-in duration-100">
-          <div className="bg-white border border-slate-300 rounded-none w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-[#1c6856]" />
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-stone-900/60 animate-in fade-in duration-100">
+          <div className="bg-white border border-stone-300 rounded-none w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-stone-200 bg-stone-50 flex items-center justify-between">
+              <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-bodegon" />
                 {editingVendorId ? 'Editar Proveedor' : 'Registrar Nuevo Proveedor'}
               </h3>
               <button
                 type="button"
                 onClick={() => setVendorModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                className="text-stone-400 hover:text-stone-700 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -764,7 +764,7 @@ export const SettingsModal: React.FC<Props> = ({
 
             <form onSubmit={handleSaveVendorForm} className="p-5 space-y-4 text-xs">
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-stone-700 uppercase tracking-wider mb-1">
                   Nombre del Proveedor *
                 </label>
                 <input
@@ -773,19 +773,19 @@ export const SettingsModal: React.FC<Props> = ({
                   placeholder="Ej: Distribuidora Sol, CARNIC, Hielo Olito..."
                   value={vendorFormName}
                   onChange={(e) => setVendorFormName(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 font-semibold focus:outline-none focus:border-[#1c6856]"
+                  className="w-full px-3 py-2 border border-stone-300 font-semibold focus:outline-none focus:border-bodegon"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-stone-700 uppercase tracking-wider mb-1">
                   Rubro / Categoría Predeterminada *
                 </label>
                 <select
                   value={vendorFormCategory}
                   onChange={(e) => setVendorFormCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 font-semibold bg-white focus:outline-none focus:border-[#1c6856]"
+                  className="w-full px-3 py-2 border border-stone-300 font-semibold bg-white focus:outline-none focus:border-bodegon"
                 >
                   {currentCategories.map((cat) => (
                     <option key={cat} value={cat}>
@@ -793,13 +793,13 @@ export const SettingsModal: React.FC<Props> = ({
                     </option>
                   ))}
                 </select>
-                <p className="text-[10px] text-slate-500 mt-1">
+                <p className="text-[10px] text-stone-500 mt-1">
                   Al registrar una compra a este proveedor, el sistema autoseleccionará este rubro.
                 </p>
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-stone-700 uppercase tracking-wider mb-1">
                   Teléfono / WhatsApp (Opcional)
                 </label>
                 <input
@@ -807,12 +807,12 @@ export const SettingsModal: React.FC<Props> = ({
                   placeholder="Ej: 8888-1234"
                   value={vendorFormPhone}
                   onChange={(e) => setVendorFormPhone(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 font-mono focus:outline-none focus:border-[#1c6856]"
+                  className="w-full px-3 py-2 border border-stone-300 font-mono focus:outline-none focus:border-bodegon"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-stone-700 uppercase tracking-wider mb-1">
                   Notas / Observaciones (Opcional)
                 </label>
                 <textarea
@@ -820,21 +820,21 @@ export const SettingsModal: React.FC<Props> = ({
                   placeholder="Dirección, condiciones de pago, contacto o notas adicionales..."
                   value={vendorFormNotes}
                   onChange={(e) => setVendorFormNotes(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 focus:outline-none focus:border-[#1c6856]"
+                  className="w-full px-3 py-2 border border-stone-300 focus:outline-none focus:border-bodegon"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-2 border-t border-stone-100">
                 <button
                   type="button"
                   onClick={() => setVendorModalOpen(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 font-bold hover:bg-slate-50 transition cursor-pointer uppercase tracking-wider"
+                  className="px-4 py-2 border border-stone-300 text-stone-700 font-bold hover:bg-stone-50 transition cursor-pointer uppercase tracking-wider"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#1c6856] hover:bg-[#154f42] text-white font-bold transition shadow-xs cursor-pointer uppercase tracking-wider"
+                  className="px-4 py-2 bg-bodegon hover:bg-bodegon-noche text-white font-bold transition shadow-xs cursor-pointer uppercase tracking-wider"
                 >
                   {editingVendorId ? 'Guardar Cambios' : 'Registrar Proveedor'}
                 </button>

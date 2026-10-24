@@ -531,7 +531,7 @@ export const PayrollView: React.FC<Props> = ({
 
     setRows(nextRows);
     persistDraftLocally(nextRows, specialRows);
-    setSaveNotice('🧹 Variables de la quincena reiniciadas a cero con éxito.');
+    setSaveNotice('Variables de la quincena reiniciadas a cero con éxito.');
     setTimeout(() => setSaveNotice(null), 3500);
   };
 
@@ -658,12 +658,12 @@ export const PayrollView: React.FC<Props> = ({
         setSpecialRows(updatedSpecialRows);
         persistDraftLocally(updatedRows, updatedSpecialRows);
 
-        setSyncNotice(`✅ ${result.message}`);
+        setSyncNotice(`${result.message}`);
       } else {
         setSyncNotice(`ℹ️ ${result.message}`);
       }
     } catch (err: any) {
-      setSyncNotice(`⚠️ Error en la sincronización: ${err?.message || 'Error de red'}`);
+      setSyncNotice(`Error en la sincronización: ${err?.message || 'Error de red'}`);
     } finally {
       setSyncing(false);
       setTimeout(() => setSyncNotice(null), 7000);
@@ -940,18 +940,18 @@ export const PayrollView: React.FC<Props> = ({
   return (
     <div className="space-y-3 max-w-[1440px] mx-auto pb-12 select-none">
       {/* Barra Superior de Control y Navegación: Diseño Rectangular Corporativo */}
-      <div className="p-3 border border-slate-300 bg-white flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <div className="p-3 border border-stone-300 bg-white flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         {/* Pestañas Submenú Rectangulares */}
-        <div className="flex items-center border border-slate-300 bg-slate-100 p-0.5">
+        <div className="flex items-center border border-stone-300 bg-stone-100 p-0.5">
           <button
             onClick={() => setActiveSubTab('quincenal')}
             className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
               activeSubTab === 'quincenal'
-                ? 'bg-white text-slate-900 border border-slate-300 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white text-stone-900 border border-stone-300 shadow-2xs'
+                : 'text-stone-600 hover:text-stone-900'
             }`}
           >
-            <Calendar className="w-3.5 h-3.5 text-[#1c6856]" />
+            <Calendar className="w-3.5 h-3.5 text-bodegon" />
             <span>Planilla Quincenal</span>
           </button>
 
@@ -959,11 +959,11 @@ export const PayrollView: React.FC<Props> = ({
             onClick={() => setActiveSubTab('especial')}
             className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
               activeSubTab === 'especial'
-                ? 'bg-white text-slate-900 border border-slate-300 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white text-stone-900 border border-stone-300 shadow-2xs'
+                : 'text-stone-600 hover:text-stone-900'
             }`}
           >
-            <Building2 className="w-3.5 h-3.5 text-indigo-700" />
+            <Building2 className="w-3.5 h-3.5 text-stone-700" />
             <span>Planilla Especial (INSS)</span>
           </button>
 
@@ -971,14 +971,14 @@ export const PayrollView: React.FC<Props> = ({
             onClick={() => setActiveSubTab('incidencias')}
             className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
               activeSubTab === 'incidencias'
-                ? 'bg-white text-slate-900 border border-slate-300 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white text-stone-900 border border-stone-300 shadow-2xs'
+                : 'text-stone-600 hover:text-stone-900'
             }`}
           >
-            <UtensilsCrossed className="w-3.5 h-3.5 text-amber-700" />
+            <UtensilsCrossed className="w-3.5 h-3.5 text-dorado-tinta" />
             <span>Incidencias & Vajilla</span>
             {(state.payrollIncidents || []).length > 0 && (
-              <span className="px-1.5 py-0.2 border border-amber-300 bg-amber-100 text-amber-900 text-[9px] font-black">
+              <span className="px-1.5 py-0.2 border border-dorado/60 bg-dorado/20 text-cafe text-[9px] font-black">
                 {state.payrollIncidents.length}
               </span>
             )}
@@ -994,7 +994,7 @@ export const PayrollView: React.FC<Props> = ({
               const nextM = parseInt(e.target.value, 10);
               if (confirmPeriodChange()) setMonth(nextM);
             }}
-            className="text-xs font-bold border border-slate-300 px-2 py-1.5 bg-white text-slate-800 outline-none cursor-pointer"
+            className="text-xs font-bold border border-stone-300 px-2 py-1.5 bg-white text-stone-800 outline-none cursor-pointer"
           >
             {monthsList.map((m, idx) => (
               <option key={idx + 1} value={idx + 1}>
@@ -1010,7 +1010,7 @@ export const PayrollView: React.FC<Props> = ({
               const nextP = e.target.value as PayrollPeriod;
               if (confirmPeriodChange()) setPeriod(nextP);
             }}
-            className="text-xs font-bold border border-slate-300 px-2 py-1.5 bg-white text-slate-800 outline-none cursor-pointer"
+            className="text-xs font-bold border border-stone-300 px-2 py-1.5 bg-white text-stone-800 outline-none cursor-pointer"
           >
             <option value="FIRST_HALF">1ra Quincena (01 al 15)</option>
             <option value="SECOND_HALF">2da Quincena (16 al Fin)</option>
@@ -1023,7 +1023,7 @@ export const PayrollView: React.FC<Props> = ({
               const nextY = parseInt(e.target.value, 10);
               if (confirmPeriodChange()) setYear(nextY);
             }}
-            className="text-xs font-bold border border-slate-300 px-2 py-1.5 bg-white text-slate-800 outline-none cursor-pointer"
+            className="text-xs font-bold border border-stone-300 px-2 py-1.5 bg-white text-stone-800 outline-none cursor-pointer"
           >
             <option value={2026}>2026</option>
             <option value={2025}>2025</option>
@@ -1031,22 +1031,22 @@ export const PayrollView: React.FC<Props> = ({
 
           {/* Rango de Corte (Bodegón Pass & Incidencias) */}
           <div
-            className="flex items-center gap-1 border border-emerald-300 bg-emerald-50/70 px-2 py-1"
+            className="flex items-center gap-1 border border-bodegon/35 bg-bodegon/4 px-2 py-1"
             title="Rango exacto de fechas que se consulta en Bodegón Pass (horas extras y feriados) y en Incidencias"
           >
-            <span className="text-[10px] font-black uppercase text-[#1c6856] tracking-wider">Corte:</span>
+            <span className="text-[10px] font-black uppercase text-bodegon tracking-wider">Corte:</span>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="text-[11px] font-mono font-bold text-slate-800 bg-white border border-slate-300 px-1.5 py-0.5 outline-none cursor-pointer"
+              className="text-[11px] font-mono font-bold text-stone-800 bg-white border border-stone-300 px-1.5 py-0.5 outline-none cursor-pointer"
             />
-            <span className="text-[10px] font-bold text-slate-500">al</span>
+            <span className="text-[10px] font-bold text-stone-500">al</span>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="text-[11px] font-mono font-bold text-slate-800 bg-white border border-slate-300 px-1.5 py-0.5 outline-none cursor-pointer"
+              className="text-[11px] font-mono font-bold text-stone-800 bg-white border border-stone-300 px-1.5 py-0.5 outline-none cursor-pointer"
             />
           </div>
         </div>
@@ -1056,10 +1056,10 @@ export const PayrollView: React.FC<Props> = ({
           {/* Limpiar Variables Quincena */}
           <button
             onClick={handleClearBiweeklyVariables}
-            className="px-2.5 py-1.5 border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-950 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+            className="px-2.5 py-1.5 border border-stone-300 bg-white hover:bg-stone-50 text-stone-700 hover:text-stone-950 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
             title="Reiniciar a cero horas extras, feriados, INSS y deducciones de esta quincena (conserva colaboradores y salarios base)"
           >
-            <Eraser className="w-3.5 h-3.5 text-slate-600" />
+            <Eraser className="w-3.5 h-3.5 text-stone-600" />
             <span>Limpiar Variables</span>
           </button>
 
@@ -1068,7 +1068,7 @@ export const PayrollView: React.FC<Props> = ({
             <button
               onClick={handleSyncBodegonPass}
               disabled={syncing}
-              className="px-2.5 py-1.5 bg-emerald-50 text-[#1c6856] hover:bg-emerald-100 border border-emerald-300 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+              className="px-2.5 py-1.5 bg-bodegon/5 text-bodegon hover:bg-bodegon/10 border border-bodegon/35 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
               title={`Conectar con Bodegón Pass para importar horas extras y feriados del corte (${startDate} al ${endDate})`}
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
@@ -1079,7 +1079,7 @@ export const PayrollView: React.FC<Props> = ({
                 setTestResult(null);
                 setPassConfigOpen(true);
               }}
-              className="px-1.5 py-1.5 bg-emerald-50 text-[#1c6856] hover:bg-emerald-100 border-y border-r border-emerald-300 text-xs font-bold transition flex items-center cursor-pointer"
+              className="px-1.5 py-1.5 bg-bodegon/5 text-bodegon hover:bg-bodegon/10 border-y border-r border-bodegon/35 text-xs font-bold transition flex items-center cursor-pointer"
               title="Configurar servidor de Bodegón Pass"
             >
               <Settings className="w-3.5 h-3.5" />
@@ -1091,8 +1091,8 @@ export const PayrollView: React.FC<Props> = ({
             onClick={handleSavePayroll}
             className={`px-3.5 py-1.5 border text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider shadow-xs ${
               hasUnconfirmedChanges
-                ? 'border-amber-600 bg-amber-500 hover:bg-amber-600 text-slate-950 ring-2 ring-amber-300 animate-pulse'
-                : 'border-[#165345] bg-[#1c6856] hover:bg-[#165345] text-white'
+                ? 'border-dorado bg-dorado-vivo hover:bg-dorado text-stone-950 ring-2 ring-dorado/60 animate-pulse'
+                : 'border-bodegon-noche bg-bodegon hover:bg-bodegon-noche text-white'
             }`}
             title="Confirmar y guardar todos los cambios de esta planilla y del personal en el sistema y en la nube"
           >
@@ -1104,37 +1104,37 @@ export const PayrollView: React.FC<Props> = ({
           <div className="relative">
             <button
               onClick={() => setPrintMenuOpen((prev) => !prev)}
-              className="px-2.5 py-1.5 border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+              className="px-2.5 py-1.5 border border-stone-300 bg-white hover:bg-stone-50 text-stone-800 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
             >
-              <Printer className="w-3.5 h-3.5 text-slate-600" />
+              <Printer className="w-3.5 h-3.5 text-stone-600" />
               <span>Imprimir Carta</span>
-              <ChevronDown className="w-3 h-3 text-slate-400" />
+              <ChevronDown className="w-3 h-3 text-stone-400" />
             </button>
 
             {printMenuOpen && (
-              <div className="absolute right-0 mt-1 w-64 bg-white border border-slate-300 shadow-lg z-50 py-1 divide-y divide-slate-100">
+              <div className="absolute right-0 mt-1 w-64 bg-white border border-stone-300 shadow-lg z-50 py-1 divide-y divide-stone-100">
                 <button
                   onClick={handlePrintGeneral}
-                  className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer block"
+                  className="w-full text-left px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 cursor-pointer block"
                 >
-                  <div className="font-bold text-slate-900">Sábana General Quincenal</div>
-                  <div className="text-[10px] text-slate-500">Hoja Carta horizontal con firmas oficiales</div>
+                  <div className="font-bold text-stone-900">Sábana General Quincenal</div>
+                  <div className="text-[10px] text-stone-500">Hoja Carta horizontal con firmas oficiales</div>
                 </button>
 
                 <button
                   onClick={handlePrintReceipts}
-                  className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer block"
+                  className="w-full text-left px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 cursor-pointer block"
                 >
-                  <div className="font-bold text-slate-900">Recibos de Pago (2 por Hoja)</div>
-                  <div className="text-[10px] text-slate-500">Hoja Carta vertical cortable</div>
+                  <div className="font-bold text-stone-900">Recibos de Pago (2 por Hoja)</div>
+                  <div className="text-[10px] text-stone-500">Hoja Carta vertical cortable</div>
                 </button>
 
                 <button
                   onClick={handlePrintSpecialINSS}
-                  className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer block"
+                  className="w-full text-left px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 cursor-pointer block"
                 >
-                  <div className="font-bold text-slate-900">Planilla Especial INSS</div>
-                  <div className="text-[10px] text-slate-500">Registro Patronal No 1550850</div>
+                  <div className="font-bold text-stone-900">Planilla Especial INSS</div>
+                  <div className="text-[10px] text-stone-500">Registro Patronal No 1550850</div>
                 </button>
               </div>
             )}
@@ -1143,7 +1143,7 @@ export const PayrollView: React.FC<Props> = ({
           {/* Exportar a Excel */}
           <button
             onClick={handleExportExcel}
-            className="px-2.5 py-1.5 border border-emerald-800 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+            className="px-2.5 py-1.5 border border-bodegon bg-bodegon hover:bg-bodegon-noche text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
             title="Exportar archivo .xlsx con fórmulas"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
@@ -1153,10 +1153,10 @@ export const PayrollView: React.FC<Props> = ({
           {/* Gestionar Personal */}
           <button
             onClick={() => setEmployeesModalOpen(true)}
-            className="px-2.5 py-1.5 border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+            className="px-2.5 py-1.5 border border-stone-300 hover:bg-stone-50 text-stone-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
             title="Modificar catálogo de colaboradores, cargos y salarios"
           >
-            <Users className="w-3.5 h-3.5 text-slate-600" />
+            <Users className="w-3.5 h-3.5 text-stone-600" />
             <span>Personal</span>
           </button>
         </div>
@@ -1164,16 +1164,15 @@ export const PayrollView: React.FC<Props> = ({
 
       {/* Avisos de Notificación Rectangulares */}
       {hasUnconfirmedChanges && (
-        <div className="p-2.5 border-2 border-amber-400 bg-amber-50 text-amber-950 text-xs font-bold flex items-center justify-between">
+        <div className="p-2.5 border-2 border-dorado bg-dorado/10 text-cafe text-xs font-bold flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span>⚠️</span>
             <span>
               Tienes modificaciones en borrador. Presiona <strong>"Confirmar Cambios"</strong> para sincronizarlas oficialmente con el padrón de personal y la nube.
             </span>
           </div>
           <button
             onClick={handleSavePayroll}
-            className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black uppercase text-[10px] border border-amber-700 cursor-pointer"
+            className="px-3 py-1 bg-dorado-vivo hover:bg-dorado text-stone-950 font-black uppercase text-[10px] border border-dorado cursor-pointer"
           >
             Confirmar Ahora
           </button>
@@ -1181,19 +1180,19 @@ export const PayrollView: React.FC<Props> = ({
       )}
 
       {syncNotice && (
-        <div className="p-2.5 border border-blue-400 bg-blue-50 text-blue-950 text-xs font-semibold flex items-center justify-between">
+        <div className="p-2.5 border border-stone-400 bg-stone-50 text-stone-950 text-xs font-semibold flex items-center justify-between">
           <span>{syncNotice}</span>
-          <button onClick={() => setSyncNotice(null)} className="text-blue-700 hover:text-blue-900 font-bold ml-2">×</button>
+          <button onClick={() => setSyncNotice(null)} className="text-stone-700 hover:text-stone-900 font-bold ml-2">×</button>
         </div>
       )}
 
       {saveNotice && (
-        <div className="p-2.5 border border-emerald-400 bg-emerald-50 text-emerald-950 text-xs font-semibold flex items-center justify-between">
+        <div className="p-2.5 border border-bodegon/60 bg-bodegon/5 text-bodegon-noche text-xs font-semibold flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-emerald-700" />
+            <Check className="w-4 h-4 text-bodegon" />
             <span>{saveNotice}</span>
           </div>
-          <button onClick={() => setSaveNotice(null)} className="text-emerald-700 hover:text-emerald-900 font-bold ml-2">×</button>
+          <button onClick={() => setSaveNotice(null)} className="text-bodegon hover:text-bodegon-noche font-bold ml-2">×</button>
         </div>
       )}
 
@@ -1249,16 +1248,16 @@ export const PayrollView: React.FC<Props> = ({
 
       {/* Modal de Configuración del Servidor Bodegón Pass */}
       {passConfigOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-stone-200">
+            <div className="p-4 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
               <div className="flex items-center gap-2">
-                <Globe className="w-5 h-5 text-[#1c6856]" />
-                <h3 className="font-bold text-slate-900 text-sm">Servidor de Bodegón Pass</h3>
+                <Globe className="w-5 h-5 text-bodegon" />
+                <h3 className="font-bold text-stone-900 text-sm">Servidor de Bodegón Pass</h3>
               </div>
               <button
                 onClick={() => setPassConfigOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+                className="p-1 text-stone-400 hover:text-stone-600 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1266,7 +1265,7 @@ export const PayrollView: React.FC<Props> = ({
 
             <div className="p-4 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-stone-700 mb-1">
                   URL del Servidor API (Kiosco / Asistencia)
                 </label>
                 <input
@@ -1274,10 +1273,10 @@ export const PayrollView: React.FC<Props> = ({
                   value={passUrlInput}
                   onChange={(e) => setPassUrlInput(e.target.value)}
                   placeholder="https://asistenciabodegon-api.onrender.com"
-                  className="w-full text-xs font-mono border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus:bg-white focus:border-[#1c6856] outline-hidden"
+                  className="w-full text-xs font-mono border border-stone-200 rounded-lg px-3 py-2 bg-stone-50 focus:bg-white focus:border-bodegon outline-hidden"
                 />
-                <p className="text-[10px] text-slate-400 mt-1">
-                  URL oficial en la nube: <code className="text-[#1c6856] font-semibold">{DEFAULT_BODEGON_PASS_URL}</code>
+                <p className="text-[10px] text-stone-400 mt-1">
+                  URL oficial en la nube: <code className="text-bodegon font-semibold">{DEFAULT_BODEGON_PASS_URL}</code>
                 </p>
               </div>
 
@@ -1285,16 +1284,16 @@ export const PayrollView: React.FC<Props> = ({
                 <div
                   className={`p-3 rounded-xl text-xs font-medium ${
                     testResult.ok
-                      ? 'bg-emerald-50 text-emerald-900 border border-emerald-200'
-                      : 'bg-red-50 text-red-900 border border-red-200'
+                      ? 'bg-bodegon/5 text-bodegon-noche border border-bodegon/20'
+                      : 'bg-barro/5 text-barro border border-barro/25'
                   }`}
                 >
-                  {testResult.ok ? '✅ ' : '❌ '}
+                  
                   {testResult.message}
                 </div>
               )}
 
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between pt-2 border-t border-stone-100">
                 <button
                   type="button"
                   onClick={async () => {
@@ -1305,7 +1304,7 @@ export const PayrollView: React.FC<Props> = ({
                     setTestingPass(false);
                   }}
                   disabled={testingPass}
-                  className="px-3 py-1.5 text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg transition cursor-pointer flex items-center gap-1.5"
+                  className="px-3 py-1.5 text-xs font-bold border border-stone-200 hover:bg-stone-50 text-stone-700 rounded-lg transition cursor-pointer flex items-center gap-1.5"
                 >
                   <RefreshCw className={`w-3 h-3 ${testingPass ? 'animate-spin' : ''}`} />
                   <span>{testingPass ? 'Probando...' : 'Probar Conexión'}</span>
@@ -1317,7 +1316,7 @@ export const PayrollView: React.FC<Props> = ({
                     onClick={() => {
                       setPassUrlInput(DEFAULT_BODEGON_PASS_URL);
                     }}
-                    className="px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-700 font-semibold cursor-pointer"
+                    className="px-2.5 py-1.5 text-xs text-stone-500 hover:text-stone-700 font-semibold cursor-pointer"
                   >
                     Restablecer
                   </button>
@@ -1333,7 +1332,7 @@ export const PayrollView: React.FC<Props> = ({
                       setSyncNotice(`URL de Bodegón Pass guardada: ${clean}`);
                       setTimeout(() => setSyncNotice(null), 4000);
                     }}
-                    className="px-4 py-1.5 text-xs font-bold bg-[#1c6856] hover:bg-[#155243] text-white rounded-lg transition cursor-pointer shadow-xs"
+                    className="px-4 py-1.5 text-xs font-bold bg-bodegon hover:bg-bodegon-noche text-white rounded-lg transition cursor-pointer shadow-xs"
                   >
                     Guardar URL
                   </button>
