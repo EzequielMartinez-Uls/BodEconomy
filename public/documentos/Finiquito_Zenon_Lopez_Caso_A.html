@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Liquidación de Salida - Zenón López Morales</title>
+  <style>
+    @page { size: letter; margin: 12mm 15mm; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      color: #1e293b;
+      margin: 0;
+      padding: 20px;
+      background: #f8fafc;
+    }
+    .sheet {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    @media print {
+      body { background: #fff !important; padding: 0 !important; }
+      .sheet { border: none !important; box-shadow: none !important; padding: 0 !important; max-width: 100% !important; }
+      .no-print { display: none !important; }
+    }
+    h1 { margin: 4px 0 0 0; font-size: 18px; font-weight: 800; color: #0f172a; text-transform: uppercase; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .meta-box { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin: 16px 0; font-size: 11px; }
+    .meta-item span { display: block; color: #64748b; margin-bottom: 2px; }
+    .meta-item strong { color: #0f172a; font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 11.5px; }
+    th { background: #1e293b; color: white; text-align: left; padding: 6px 10px; font-size: 11px; text-transform: uppercase; }
+    th.right, td.right { text-align: right; }
+    th.center, td.center { text-align: center; }
+    th.ded { background: #7f1d1d; }
+    td { padding: 6px 10px; border-bottom: 1px solid #e2e8f0; }
+    tr.total-row { background: #f1f5f9; font-weight: bold; }
+    tr.total-ded { background: #fef2f2; font-weight: bold; }
+    .sec-title { font-size: 12px; font-weight: 800; color: #1e293b; margin: 16px 0 4px 0; text-transform: uppercase; }
+    .callout { display: flex; justify-content: space-between; align-items: center; background: #eff6ff; border: 2px solid #3b82f6; border-radius: 10px; padding: 12px 16px; margin: 18px 0; }
+    .callout-title { font-size: 12px; font-weight: 800; color: #1e40af; text-transform: uppercase; }
+    .callout-sub { font-size: 10px; color: #475569; margin-top: 2px; }
+    .callout-net { font-size: 26px; font-weight: 900; color: #1e3a8a; }
+    .legal { font-size: 9.5px; color: #475569; text-align: justify; line-height: 1.4; margin: 16px 0; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+    .signatures { display: grid; grid-template-columns: 1fr 1fr 120px; gap: 20px; text-align: center; font-size: 11px; margin-top: 24px; }
+    .sig-line { border-bottom: 1px solid #0f172a; margin-bottom: 6px; height: 35px; }
+    .thumb-box { border: 1px dashed #94a3b8; height: 60px; width: 60px; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #94a3b8; }
+    .btn-print { background: #0f172a; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div>
+        <span class="badge">RESTAURANTE EL BODEGÓN</span>
+        <h1>Finiquito y Liquidación Oficial de Salida</h1>
+        <p style="font-size: 11px; color: #64748b; margin: 2px 0 0 0;">Corte de Nómina Extraordinario • Caso A (2da Quincena Septiembre 2026)</p>
+      </div>
+      <button class="no-print btn-print" onclick="window.print()">
+        🖨️ Imprimir / Guardar PDF
+      </button>
+    </div>
+
+    <div class="meta-box">
+      <div class="meta-item"><span>Colaborador:</span><strong>Zenón Abad López Morales</strong></div>
+      <div class="meta-item"><span>Cargo / ID:</span><strong>Cocinero (ID #48)</strong></div>
+      <div class="meta-item"><span>Salario Base Quincenal:</span><strong>C$ 6,250.00</strong></div>
+      <div class="meta-item"><span>Fecha de Ingreso:</span><strong>17 de Abril 2026</strong></div>
+      <div class="meta-item"><span>Último Día Laborado:</span><strong>16 de Septiembre 2026</strong></div>
+      <div class="meta-item"><span>Salario Diario:</span><strong>C$ 416.67 (C$ 52.08/h)</strong></div>
+      <div class="meta-item"><span>Causa de Salida:</span><strong style="color: #dc2626;">Abandono (Art. 48 inc. a CT)</strong></div>
+      <div class="meta-item"><span>Fecha Notif. Abandono:</span><strong>19 de Septiembre 2026</strong></div>
+      <div class="meta-item"><span>1ra Quincena Sep:</span><strong>Pagada y Cancelada</strong></div>
+    </div>
+
+    <div class="sec-title">1. Percepciones y Haberes Devengados (2da Quincena)</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Concepto / Detalle</th>
+          <th class="center">Cantidad</th>
+          <th class="right">Base / Tarifa</th>
+          <th class="right">Total Devengado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Día efectivamente laborado</strong><br/><small style="color: #64748b;">Miércoles 16 de Septiembre de 2026 (Jornada ordinaria 8.0 hrs)</small></td>
+          <td class="center">1 día</td>
+          <td class="right">C$ 416.67 / día</td>
+          <td class="right"><strong>C$ 416.67</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Inasistencias injustificadas</strong><br/><small style="color: #dc2626;">Jueves 17 y Viernes 18 de Septiembre (Sin aviso / Abandono)</small></td>
+          <td class="center" style="color: #dc2626;">2 días falta</td>
+          <td class="right">C$ 0.00</td>
+          <td class="right" style="color: #dc2626;">C$ 0.00</td>
+        </tr>
+        <tr>
+          <td><strong>Horas extras acumuladas pendientes</strong><br/><small style="color: #64748b;">Acumuladas en Bodegón Pass (Art. 58 CT Ley - Recargo 100% doble)</small></td>
+          <td class="center">5.60 hrs</td>
+          <td class="right">C$ 104.17 / hr</td>
+          <td class="right"><strong>C$ 583.33</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Vacaciones proporcionales pendientes de pago</strong><br/><small style="color: #64748b;">Saldo acumulado a favor al corte de salida</small></td>
+          <td class="center">1.30 días</td>
+          <td class="right">C$ 416.67 / día</td>
+          <td class="right"><strong>C$ 541.67</strong></td>
+        </tr>
+        <tr class="total-row">
+          <td colspan="3" class="right">SUBTOTAL PERCEPCIONES DEVENGADAS:</td>
+          <td class="right" style="color: #047857; font-size: 12.5px;">C$ 1,541.67</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="sec-title" style="margin-top: 14px;">2. Deducciones Aplicadas (Consumo Servicio Restaurante)</div>
+    <table>
+      <thead>
+        <tr>
+          <th class="ded">Fecha Consumo</th>
+          <th class="ded">Descripción del Consumo / Detalle</th>
+          <th class="ded center">Cantidad</th>
+          <th class="ded right">Monto Deducido</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>02/10/2026</td>
+          <td>Cerveza Victoria Clásica</td>
+          <td class="center">2 unidades</td>
+          <td class="right" style="color: #b91c1c;"><strong>C$ 126.00</strong></td>
+        </tr>
+        <tr>
+          <td>05/10/2026</td>
+          <td>Cerveza Victoria Clásica</td>
+          <td class="center">3 unidades</td>
+          <td class="right" style="color: #b91c1c;"><strong>C$ 189.00</strong></td>
+        </tr>
+        <tr>
+          <td>06/10/2026</td>
+          <td>18 Alitas de Pollo + 3 Empaques para llevar</td>
+          <td class="center">1 orden compl.</td>
+          <td class="right" style="color: #b91c1c;"><strong>C$ 816.00</strong></td>
+        </tr>
+        <tr class="total-ded">
+          <td colspan="3" class="right">TOTAL DEDUCCIONES APLICADAS:</td>
+          <td class="right" style="color: #b91c1c; font-size: 12.5px;">C$ 1,131.00</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <div>
+        <div class="callout-title">Liquidación Final Neta a Pagar en Efectivo</div>
+        <div class="callout-sub">Subtotal Haberes (C$ 1,541.67) − Deducciones (C$ 1,131.00) • <i>Son: Cuatrocientos diez córdobas con 67/100</i></div>
+        <div style="font-size: 9.5px; color: #64748b; margin-top: 2px;">*(En caso de computar las horas extras a valor simple ordinario C$ 52.08, el neto resulta en C$ 119.01)*</div>
+      </div>
+      <div style="text-align: right;">
+        <span style="font-size: 10px; color: #1e40af; font-weight: 700; text-transform: uppercase;">Neto en Efectivo</span>
+        <div class="callout-net">C$ 410.67</div>
+      </div>
+    </div>
+
+    <div class="legal">
+      <strong>CONSTANCIA DE FINIQUITO:</strong> Hago constar por este medio que he recibido a mi entera satisfacción de <strong>Restaurante El Bodegón</strong> la cantidad líquida descrita en concepto de liquidación definitiva de salarios, horas extraordinarias y prestaciones acumuladas devengadas a mi fecha de salida. Declaro formalmente que la empresa no me adeuda saldo alguno por salarios ordinarios, extraordinarios, descansos, ni ningún otro reclamo de índole laboral o civil derivado de la relación contractual que hoy se extingue.
+    </div>
+
+    <div class="signatures">
+      <div>
+        <div class="sig-line"></div>
+        <strong>ELABORADO Y AUTORIZADO</strong><br/>
+        <span style="color: #64748b; font-size: 10px;">Administración Restaurante El Bodegón</span>
+      </div>
+      <div>
+        <div class="sig-line"></div>
+        <strong>RECIBÍ CONFORME</strong><br/>
+        <strong>Zenón Abad López Morales</strong><br/>
+        <span style="color: #64748b; font-size: 10px;">Cédula: _______________________</span>
+      </div>
+      <div>
+        <div class="thumb-box">Huella</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
