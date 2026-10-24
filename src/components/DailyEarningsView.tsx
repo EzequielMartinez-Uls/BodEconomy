@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { calculateShiftProfit } from '../utils/cashMath';
+import { AnimatedNumber } from './ui/AnimatedNumber';
 import { AppState, DailyEarningsSummary, CashShift } from '../types';
 import { printOfficialActBN, printOfficialOpeningActBN, computeYesterdayEarningsSummary } from '../services/thermalPrint';
 import { exportDailyEarningsToExcel, exportMonthlyEarningsToExcel } from '../services/excelExport';
@@ -723,7 +724,7 @@ export const DailyEarningsView: React.FC<Props> = ({
               </span>
             </div>
             <div className="text-2xl font-bold font-mono text-white">
-              C$ {activeDaySummary.netEarnings.toFixed(2)}
+              C$ <AnimatedNumber value={activeDaySummary.netEarnings} />
             </div>
           </div>
           <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center text-dorado-vivo">
@@ -751,11 +752,11 @@ export const DailyEarningsView: React.FC<Props> = ({
       )}
 
       {/* 3. Cuadrícula de KPIs Separados por Tipo de Ingreso — Todos Clickables */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+      <div className="bd-rise grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
         {/* Apartado 1: Ganancia en Efectivo */}
         <div
           onClick={() => setActiveModal('CASH')}
-          className="bg-white rounded-xl border border-stone-200 hover:border-stone-300 p-4 shadow-2xs transition cursor-pointer"
+          className="bd-lift bg-white rounded-xl border border-stone-200 hover:border-stone-300 p-4 shadow-2xs cursor-pointer"
           title="Haga clic para ver el detalle de ventas en efectivo"
         >
           <div className="flex items-center justify-between mb-2">
@@ -767,7 +768,7 @@ export const DailyEarningsView: React.FC<Props> = ({
             </div>
           </div>
           <div className="text-xl font-bold font-mono text-stone-900">
-            C$ {activeDaySummary.cashSales.toFixed(2)}
+            C$ <AnimatedNumber value={activeDaySummary.cashSales} />
           </div>
           <div className="mt-1 flex items-center justify-between text-xs">
             <span className="text-stone-400 text-[11px]">Participación:</span>
@@ -787,7 +788,7 @@ export const DailyEarningsView: React.FC<Props> = ({
         {/* Apartado 2: Ganancia en Tarjetas (Total + Bancos) */}
         <div
           onClick={() => setActiveModal('CARDS')}
-          className="bg-white rounded-xl border border-stone-200 hover:border-stone-300 p-4 shadow-2xs transition cursor-pointer"
+          className="bd-lift bg-white rounded-xl border border-stone-200 hover:border-stone-300 p-4 shadow-2xs cursor-pointer"
           title="Haga clic para ver el desglose de tarjetas por banco"
         >
           <div className="flex items-center justify-between mb-2">
@@ -799,7 +800,7 @@ export const DailyEarningsView: React.FC<Props> = ({
             </div>
           </div>
           <div className="text-xl font-bold font-mono text-stone-900">
-            C$ {activeDaySummary.totalCards.toFixed(2)}
+            C$ <AnimatedNumber value={activeDaySummary.totalCards} />
           </div>
           <div className="mt-1 flex items-center justify-between text-xs">
             <span className="text-stone-400 text-[11px]">Participación:</span>
@@ -819,7 +820,7 @@ export const DailyEarningsView: React.FC<Props> = ({
         {/* Apartado 3: PedidosYa & Delivery */}
         <div
           onClick={() => setActiveModal('DELIVERY')}
-          className="bg-white rounded-xl border border-stone-200 hover:border-stone-300 p-4 shadow-2xs transition cursor-pointer"
+          className="bd-lift bg-white rounded-xl border border-stone-200 hover:border-stone-300 p-4 shadow-2xs cursor-pointer"
           title="Haga clic para ver el detalle de pedidos y delivery"
         >
           <div className="flex items-center justify-between mb-2">
@@ -831,7 +832,7 @@ export const DailyEarningsView: React.FC<Props> = ({
             </div>
           </div>
           <div className="text-xl font-bold font-mono text-stone-900">
-            C$ {activeDaySummary.pedidosYaSales.toFixed(2)}
+            C$ <AnimatedNumber value={activeDaySummary.pedidosYaSales} />
           </div>
           <div className="mt-1 flex items-center justify-between text-xs">
             <span className="text-stone-400 text-[11px]">Participación:</span>
@@ -882,7 +883,7 @@ export const DailyEarningsView: React.FC<Props> = ({
         {/* Apartado 5: Total Ventas Brutas */}
         <div
           onClick={() => setActiveModal('GROSS')}
-          className="bg-white rounded-xl border border-stone-200 hover:border-stone-300 p-4 shadow-2xs transition cursor-pointer"
+          className="bd-lift bg-white rounded-xl border border-stone-200 hover:border-stone-300 p-4 shadow-2xs cursor-pointer"
           title="Haga clic para ver el resumen consolidado de ventas"
         >
           <div className="flex items-center justify-between mb-2">
@@ -894,12 +895,12 @@ export const DailyEarningsView: React.FC<Props> = ({
             </div>
           </div>
           <div className="text-xl font-bold font-mono text-stone-900">
-            C$ {activeDaySummary.totalGrossSales.toFixed(2)}
+            C$ <AnimatedNumber value={activeDaySummary.totalGrossSales} />
           </div>
           <div className="mt-1 flex items-center justify-between text-xs">
             <span className="text-stone-400 text-[11px]">Compras Insumos:</span>
             <span className="font-semibold text-barro font-mono text-[11px]">
-              - C$ {activeDaySummary.totalExpenses.toFixed(2)}
+              - C$ <AnimatedNumber value={activeDaySummary.totalExpenses} />
             </span>
           </div>
           <div className="mt-2.5 pt-2 border-t border-stone-100 text-[11px] text-stone-700 font-medium flex items-center justify-between">
@@ -913,17 +914,17 @@ export const DailyEarningsView: React.FC<Props> = ({
       <div className="bg-white rounded-2xl border border-stone-200/90 p-5 shadow-xs">
         <div className="flex items-center justify-between mb-4 border-b border-stone-100 pb-3">
           <div className="flex items-center gap-2">
-            <CreditCard className="w-4 h-4 text-indigo-600" />
+            <CreditCard className="w-4 h-4 text-bodegon" />
             <h3 className="text-sm font-black text-stone-900 uppercase tracking-wider">
               Desglose Individual de Tarjetas por Banco
             </h3>
           </div>
           <button
             onClick={() => setActiveModal('CARDS')}
-            className="text-xs font-mono font-extrabold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-xl border border-indigo-200 transition cursor-pointer"
+            className="text-xs font-mono font-extrabold text-bodegon bg-bodegon/5 hover:bg-bodegon/10 px-3 py-1 rounded-xl border border-bodegon/20 transition cursor-pointer"
             title="Haga clic para ver resumen de tarjetas"
           >
-            Total Tarjetas: C$ {activeDaySummary.totalCards.toFixed(2)}
+            Total Tarjetas: C$ <AnimatedNumber value={activeDaySummary.totalCards} />
           </button>
         </div>
 
@@ -931,7 +932,7 @@ export const DailyEarningsView: React.FC<Props> = ({
           {/* BAC */}
           <div
             onClick={() => setActiveModal('BAC')}
-            className="p-4 rounded-xl bg-barro/3 hover:bg-barro/5 border border-barro/20 hover:border-barro/40 flex items-center justify-between transition cursor-pointer group shadow-2xs"
+            className="bd-lift p-4 rounded-xl bg-white border border-stone-200 hover:border-stone-300 flex items-center justify-between cursor-pointer group shadow-2xs"
             title="Haga clic para ver el detalle de BAC Credomatic"
           >
             <div>
@@ -955,7 +956,7 @@ export const DailyEarningsView: React.FC<Props> = ({
           {/* FICOHSA */}
           <div
             onClick={() => setActiveModal('FICOHSA')}
-            className="p-4 rounded-xl bg-purple-50/60 hover:bg-purple-50 border border-purple-200/80 hover:border-purple-300 flex items-center justify-between transition cursor-pointer group shadow-2xs"
+            className="bd-lift p-4 rounded-xl bg-white border border-stone-200 hover:border-stone-300 flex items-center justify-between cursor-pointer group shadow-2xs"
             title="Haga clic para ver el detalle de Banco Ficohsa"
           >
             <div>
@@ -979,7 +980,7 @@ export const DailyEarningsView: React.FC<Props> = ({
           {/* BANPRO */}
           <div
             onClick={() => setActiveModal('BANPRO')}
-            className="p-4 rounded-xl bg-bodegon/3 hover:bg-bodegon/5 border border-bodegon/16 hover:border-bodegon/35 flex items-center justify-between transition cursor-pointer group shadow-2xs"
+            className="bd-lift p-4 rounded-xl bg-white border border-stone-200 hover:border-stone-300 flex items-center justify-between cursor-pointer group shadow-2xs"
             title="Haga clic para ver el detalle de Banpro Promerica"
           >
             <div>
@@ -1003,7 +1004,7 @@ export const DailyEarningsView: React.FC<Props> = ({
           {/* LAFISE */}
           <div
             onClick={() => setActiveModal('LAFISE')}
-            className="p-4 rounded-xl bg-blue-50/60 hover:bg-blue-50 border border-blue-200/80 hover:border-blue-300 flex items-center justify-between transition cursor-pointer group shadow-2xs"
+            className="bd-lift p-4 rounded-xl bg-white border border-stone-200 hover:border-stone-300 flex items-center justify-between cursor-pointer group shadow-2xs"
             title="Haga clic para ver el detalle de Banco LAFISE"
           >
             <div>

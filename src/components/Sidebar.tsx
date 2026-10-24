@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { AppState } from '../types';
 import logoImg from '../assets/logo.png';
 import {
@@ -46,7 +46,23 @@ export const Sidebar: React.FC<Props> = ({
   const isShiftOpen = state.currentShift?.status === 'OPEN';
   const isPettyCashLow = state.pettyCashBalance < 2000;
   const [payrollExpanded, setPayrollExpanded] = useState(activeTab === 'payroll');
-  const [appVersion, setAppVersion] = useState('v1.0.44');
+  const [appVersion, setAppVersion] = useState('');
+  const navRef = useRef<HTMLElement>(null);
+  const [indicator, setIndicator] = useState({ top: 0, height: 0 });
+
+  // Mide el botón del módulo activo para mover el fondo verde hasta él.
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const measure = () => {
+      const active = nav.querySelector<HTMLElement>('[data-nav-main][data-active="true"]');
+      setIndicator(active ? { top: active.offsetTop, height: active.offsetHeight } : { top: 0, height: 0 });
+    };
+    measure();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    ro?.observe(nav);
+    return () => ro?.disconnect();
+  }, [activeTab, payrollExpanded, payrollSubTab]);
 
   const [updateStatus, setUpdateStatus] = useState<{
     status: 'idle' | 'available' | 'downloading' | 'ready';
@@ -153,17 +169,25 @@ export const Sidebar: React.FC<Props> = ({
         </div>
 
         {/* Navigation Items Separados Claramente */}
-        <nav className="p-3 space-y-1.5 mt-2">
+        <nav ref={navRef} className="relative p-3 space-y-1.5 mt-2">
+          {/* Fondo verde del módulo activo: se desliza de un módulo a otro. */}
+          <div
+            aria-hidden="true"
+            className="absolute left-3 right-3 top-0 rounded-xl bg-bodegon shadow-md shadow-bodegon/25 pointer-events-none transition-[transform,height,opacity] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
+            style={{ transform: `translateY(${indicator.top}px)`, height: indicator.height, opacity: indicator.height ? 1 : 0 }}
+          />
           <div className="text-[10px] font-bold text-stone-400 uppercase tracking-wider px-3 mb-2">
             Módulos Independientes
           </div>
 
           {/* Módulo 1: Caja General */}
           <button
+            data-nav-main
+            data-active={activeTab === 'generalCash'}
             onClick={() => onTabChange('generalCash')}
-            className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer ${
+            className={`relative z-10 w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-colors duration-200 cursor-pointer ${
               activeTab === 'generalCash'
-                ? 'bg-bodegon text-white shadow-md shadow-bodegon/25 border border-bodegon-noche'
+                ? 'text-white'
                 : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
             }`}
           >
@@ -192,10 +216,12 @@ export const Sidebar: React.FC<Props> = ({
 
           {/* Módulo 2: Caja Chica */}
           <button
+            data-nav-main
+            data-active={activeTab === 'pettyCash'}
             onClick={() => onTabChange('pettyCash')}
-            className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer ${
+            className={`relative z-10 w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-colors duration-200 cursor-pointer ${
               activeTab === 'pettyCash'
-                ? 'bg-bodegon-noche text-white shadow-md shadow-bodegon-noche/25 border border-bodegon-noche'
+                ? 'text-white'
                 : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
             }`}
           >
@@ -237,10 +263,12 @@ export const Sidebar: React.FC<Props> = ({
 
           {/* Módulo 3: Ganancias & Ventas Diarias */}
           <button
+            data-nav-main
+            data-active={activeTab === 'dailyEarnings'}
             onClick={() => onTabChange('dailyEarnings')}
-            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+            className={`relative z-10 w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-colors duration-200 cursor-pointer ${
               activeTab === 'dailyEarnings'
-                ? 'bg-bodegon text-white shadow-xs'
+                ? 'text-white'
                 : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
             }`}
           >
@@ -262,6 +290,8 @@ export const Sidebar: React.FC<Props> = ({
           {/* Módulo 4: Nóminas & Planillas (Desplegable con Submenú) */}
           <div className="pt-1">
             <button
+              data-nav-main
+              data-active={activeTab === 'payroll'}
               onClick={() => {
                 if (activeTab !== 'payroll') {
                   onTabChange('payroll');
@@ -270,9 +300,9 @@ export const Sidebar: React.FC<Props> = ({
                   setPayrollExpanded((prev) => !prev);
                 }
               }}
-              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer ${
+              className={`relative z-10 w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-colors duration-200 cursor-pointer ${
                 activeTab === 'payroll'
-                  ? 'bg-bodegon text-white shadow-md shadow-bodegon/25 border border-bodegon-noche'
+                  ? 'text-white'
                   : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
               }`}
             >
@@ -361,10 +391,12 @@ export const Sidebar: React.FC<Props> = ({
 
           {/* Módulo 5: Análisis de Gastos & Inteligencia Financiera */}
           <button
+            data-nav-main
+            data-active={activeTab === 'expenseAnalytics'}
             onClick={() => onTabChange('expenseAnalytics')}
-            className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer ${
+            className={`relative z-10 w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-colors duration-200 cursor-pointer ${
               activeTab === 'expenseAnalytics'
-                ? 'bg-bodegon text-white shadow-md shadow-bodegon/25 border border-bodegon-noche'
+                ? 'text-white'
                 : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
             }`}
           >

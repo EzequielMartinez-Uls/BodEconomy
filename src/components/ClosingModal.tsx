@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { AnimatedNumber } from './ui/AnimatedNumber';
 import { CashShift, DenominationsNIO, DenominationsUSD, AppState } from '../types';
 import {
   DEFAULT_DENOMINATIONS_NIO,
@@ -213,10 +214,13 @@ export const ClosingModal: React.FC<Props> = ({
   const isPettyCashOpen = state.currentPettyCashShift?.status === 'OPEN';
 
   const triggerCelebration = () => {
+    // Confeti en los colores del Bodegón (verde y dorados) y solo si Windows permite animaciones.
     confetti({
       particleCount: 60,
       spread: 60,
       origin: { y: 0.6 },
+      colors: ['#135E4A', '#EBB43A', '#D2A445', '#FCF9F5'],
+      disableForReducedMotion: true,
     });
   };
 
@@ -496,7 +500,7 @@ export const ClosingModal: React.FC<Props> = ({
                 <div>
                   <span className="text-[10px] font-bold text-stone-500 uppercase">Efectivo Físico Contado en Gaveta:</span>
                   <div className="text-2xl font-bold font-mono text-bodegon">
-                    C$ {actualCashNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                    C$ <AnimatedNumber value={actualCashNIO} duration={350} />
                   </div>
                 </div>
                 <button

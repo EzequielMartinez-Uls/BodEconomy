@@ -50,6 +50,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
   const [dateFilter, setDateFilter] = useState<'ALL' | 'MONTH' | 'WEEK'>('ALL');
   const [analyticsData, setAnalyticsData] = useState<ExpenseAnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [expensesList, setExpensesList] = useState<any[]>([]);
   const [isLoadingExpenses, setIsLoadingExpenses] = useState(false);
 
@@ -167,7 +168,10 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
   const loadData = async () => {
     setIsLoading(true);
     setIsLoadingExpenses(true);
+    setLoadFailed(false);
     try {
+      // El servicio devuelve ceros cuando falla la red; sin internet se avisa en vez de mostrar "sin egresos".
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new Error('Sin conexión a internet');
       const [analytics, rawList] = await Promise.all([
         fetchCloudExpensesAnalytics(dateFilter),
         fetchCloudExpensesList(dateFilter),
@@ -176,6 +180,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
       setExpensesList(rawList);
     } catch (err) {
       console.warn('Error cargando análisis de gastos:', err);
+      setLoadFailed(true);
     } finally {
       setIsLoading(false);
       setIsLoadingExpenses(false);
@@ -398,11 +403,23 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
 
       {/* ─── Tarjetas KPI Superiores ────────────────────────────────────── */}
       {isLoading ? (
-        <div className="p-12 text-center bg-white rounded-xl border border-stone-200 flex flex-col items-center justify-center gap-2.5">
-          <RefreshCw className="w-6 h-6 animate-spin text-bodegon" />
-          <span className="text-xs font-bold text-stone-600 uppercase tracking-wider">
-            Consolidando estadísticas financieras desde la nube...
-          </span>
+        <div className="space-y-6" aria-busy="true" aria-label="Cargando estadísticas desde la nube">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div key={i} className="bd-shimmer h-24 rounded-xl" />
+            ))}
+          </div>
+          <div className="bd-shimmer h-72 rounded-xl" />
+        </div>
+      ) : loadFailed ? (
+        <div className="p-12 text-center bg-white rounded-xl border border-stone-200 text-stone-600 text-sm space-y-3">
+          <p>No se pudo conectar con la nube. Revisa el internet y vuelve a intentar.</p>
+          <button
+            onClick={loadData}
+            className="px-4 py-2 rounded-lg bg-bodegon hover:bg-bodegon-noche text-white text-xs font-semibold transition cursor-pointer"
+          >
+            Reintentar
+          </button>
         </div>
       ) : !analyticsData || analyticsData.totalAmount === 0 ? (
         <div className="p-12 text-center bg-white rounded-xl border border-stone-200 text-stone-400 text-xs">

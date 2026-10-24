@@ -3,6 +3,8 @@ import { AppState, CashShift, PettyCashShift, PettyCashTransaction, TablewareIte
 import { loadState, saveState, INITIAL_STATE } from './services/storage';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
+import { ClosingSeal, ClosingSealInfo } from './components/ui/ClosingSeal';
+import { Toaster, notify } from './components/ui/Toaster';
 import { GeneralCashView } from './components/GeneralCashView';
 import { PettyCashView } from './components/PettyCashView';
 import { TablewareView } from './components/TablewareView';
@@ -73,6 +75,7 @@ export function App() {
   // Modals
   const [openingModalOpen, setOpeningModalOpen] = useState(false);
   const [closingModalOpen, setClosingModalOpen] = useState(false);
+  const [closingSeal, setClosingSeal] = useState<ClosingSealInfo | null>(null);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [adminSelectModalOpen, setAdminSelectModalOpen] = useState(false);
   const [exchangeRateModalOpen, setExchangeRateModalOpen] = useState(false);
@@ -924,6 +927,16 @@ export function App() {
 
     playSound([523.25, 659.25, 783.99, 1046.5]); // Acorde triunfal
 
+    const pettyWasOpen = state.currentPettyCashShift?.status === 'OPEN';
+    setClosingSeal({
+      date: closedShift.date,
+      ganancia: closedShift.dailyNetProfit ?? null,
+      pettyDifference:
+        pettyWasOpen && pettyCounted !== null
+          ? parseFloat((pettyCounted - state.pettyCashBalance).toFixed(2))
+          : null,
+    });
+
     // Cierre atómico y unificado en Supabase (evita condiciones de carrera entre Caja General y Caja Chica)
     syncFullDayClosureToCloud({
       generalShift: closedShift,
@@ -1114,6 +1127,10 @@ export function App() {
     });
 
     playSound([587.33, 880]);
+    notify(
+      txWithStatus.type === 'EXPENSE' ? 'Gasto guardado' : 'Ingreso guardado',
+      `${txWithStatus.vendor} · C$ ${txWithStatus.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    );
 
     // Sincronizar de inmediato a Supabase
     try {
@@ -1767,6 +1784,9 @@ export function App() {
         availableAdmins={state.availableAdmins}
         onConfirmClose={handleConfirmCloseShift}
       />
+
+      <ClosingSeal info={closingSeal} onDismiss={() => setClosingSeal(null)} />
+      <Toaster />
 
       <SettingsModal
         isOpen={settingsModalOpen}

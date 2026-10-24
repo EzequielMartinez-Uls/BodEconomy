@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { AnimatedNumber } from './ui/AnimatedNumber';
 import { AppState, ExpenseCategory, PaymentMethod, PettyCashShift, PettyCashTransaction, isOpeningPettyCashTx } from '../types';
 import {
   printThermalDailyExpensesTicket,
@@ -199,6 +200,10 @@ export const PettyCashView: React.FC<Props> = ({
 
   // Modales de movimientos
   const [modalType, setModalType] = useState<'EXPENSE' | 'INFLOW' | null>(null);
+  // Movimiento recién guardado: su fila se ilumina un momento para que se vea dónde quedó.
+  const [justAdded, setJustAdded] = useState<{ vendor: string; amount: number; date: string } | null>(null);
+  const justAddedTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(justAddedTimer.current), []);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('TODOS');
 
@@ -586,6 +591,9 @@ export const PettyCashView: React.FC<Props> = ({
       };
 
       onAddTransaction(newTx);
+      setJustAdded({ vendor: newTx.vendor, amount: newTx.amount, date: newTx.date });
+      window.clearTimeout(justAddedTimer.current);
+      justAddedTimer.current = window.setTimeout(() => setJustAdded(null), 1700);
 
       if (modalType === 'EXPENSE' && printVoucherOnSave) {
         printThermalSingleExpenseVoucher(newTx);
@@ -892,7 +900,7 @@ export const PettyCashView: React.FC<Props> = ({
               {currentOpenShift ? 'Fondo en Mano Hoy' : 'Saldo Caja Chica'}
             </span>
             <span className="text-lg font-bold text-bodegon font-mono">
-              C$ {state.pettyCashBalance.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+              C$ <AnimatedNumber value={state.pettyCashBalance} />
             </span>
           </div>
         </div>
@@ -1527,10 +1535,16 @@ export const PettyCashView: React.FC<Props> = ({
                         const isTransf = row.tipoPago === 'TRANSFERENCIA';
                         const isCard = row.tipoPago === 'TARJETA';
 
+                        const isJustAdded =
+                          !!justAdded &&
+                          row.rawTx?.vendor === justAdded.vendor &&
+                          row.rawTx?.amount === justAdded.amount &&
+                          isSameMinute(row.rawTx.date, justAdded.date);
+
                         return (
                           <tr
                             key={row.id}
-                            className={`transition-colors border-b border-stone-100 ${
+                            className={`transition-colors border-b border-stone-100 ${isJustAdded ? 'bd-flash ' : ''}${
                               row.isOpening
                                 ? 'bg-dorado/3 font-medium'
                                 : 'hover:bg-stone-50/80'
