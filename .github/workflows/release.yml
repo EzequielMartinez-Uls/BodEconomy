@@ -46,6 +46,20 @@ jobs:
             exit 1
           fi
 
+      # GitHub solo acepta publicar una release sobre una etiqueta que ya existe.
+      # Al correrla a mano desde Actions, se crea la etiqueta de la versión aquí.
+      - name: Crear etiqueta si se corrió a mano
+        if: github.ref_type != 'tag'
+        shell: bash
+        run: |
+          VERSION="v$(node -p "require('./package.json').version")"
+          if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" >/dev/null; then
+            echo "La etiqueta $VERSION ya existe."
+          else
+            git tag "$VERSION"
+            git push origin "$VERSION"
+          fi
+
       - run: npm ci
 
       - name: Compilar
