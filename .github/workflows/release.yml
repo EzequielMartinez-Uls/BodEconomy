@@ -68,7 +68,23 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
 
-      - name: Empaquetar y publicar instalador
+      - name: Empaquetar instalador
+        run: npx electron-builder --win --publish never
+
+      # Se sube con gh y no con electron-builder: este último solo revisa la
+      # primera página de releases (los borradores viejos la llenan), no ve la
+      # versión ya creada e intenta crearla dos veces.
+      - name: Publicar en GitHub
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --win --publish always
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          ARCHIVOS=(dist-electron/latest.yml dist-electron/*-"$VERSION".exe dist-electron/*-"$VERSION".exe.blockmap)
+          ls -l "${ARCHIVOS[@]}"
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            gh release upload "v$VERSION" "${ARCHIVOS[@]}" --clobber
+            gh release edit "v$VERSION" --draft=false --latest
+          else
+            gh release create "v$VERSION" "${ARCHIVOS[@]}" --title "$VERSION" --notes "Versión $VERSION" --latest
+          fi
