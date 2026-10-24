@@ -1,0 +1,60 @@
+# Publica una versión nueva de Bodegón Control en GitHub Releases.
+# Se dispara al subir una etiqueta vX.Y.Z (igual a "version" de package.json)
+# o a mano desde la pestaña Actions. Las cajas la descargan solas con electron-updater.
+name: Publicar versión
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Revisar versión y claves de Supabase
+        shell: bash
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          VERSION="v$(node -p "require('./package.json').version")"
+          echo "Versión en package.json: $VERSION"
+          if [[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" != "$VERSION" ]]; then
+            echo "::error::La etiqueta $GITHUB_REF_NAME no coincide con package.json ($VERSION)."
+            exit 1
+          fi
+          # Sin estas claves la app compila pero no conecta con la nube; mejor no publicar.
+          if [[ -z "$VITE_SUPABASE_URL" || -z "$VITE_SUPABASE_ANON_KEY" ]]; then
+            echo "::error::Faltan los secretos VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - run: npm ci
+
+      - name: Compilar
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: npm run build
+
+      - name: Empaquetar y publicar instalador
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win --publish always
