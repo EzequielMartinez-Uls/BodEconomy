@@ -132,27 +132,27 @@ export const PayrollIncidentsView: React.FC<Props> = ({
   const renderTypeBadge = (t: IncidentType) => {
     if (t === 'VAJILLA_PERDIDA') {
       return (
-        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 border border-rose-400 bg-rose-50 text-rose-800">
+        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 border border-barro bg-barro/5 text-barro">
           Vajilla Quebrada
         </span>
       );
     }
     if (t === 'SERVICIO_RESTAURANTE') {
       return (
-        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 border border-amber-400 bg-amber-50 text-amber-900">
+        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 border border-dorado bg-dorado/10 text-cafe">
           Servicio Rest.
         </span>
       );
     }
     if (t === 'PRESTAMO_ADELANTO') {
       return (
-        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 border border-indigo-400 bg-indigo-50 text-indigo-900">
+        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 border border-stone-400 bg-stone-50 text-stone-900">
           Préstamo / Vale
         </span>
       );
     }
     return (
-      <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 border border-slate-400 bg-slate-100 text-slate-800">
+      <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 border border-stone-400 bg-stone-100 text-stone-800">
         Otro Descuento
       </span>
     );
@@ -162,75 +162,75 @@ export const PayrollIncidentsView: React.FC<Props> = ({
     <div className="space-y-3">
       {/* Resumen de Deducciones del Corte Activo */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
-        <div className="p-2.5 border border-slate-300 bg-white">
-          <div className="text-[10px] font-bold uppercase text-slate-500">Vajilla Quebrada / Otros</div>
-          <div className="text-base font-black font-mono text-rose-700 mt-0.5">
+        <div className="p-2.5 border border-stone-300 bg-white">
+          <div className="text-[10px] font-bold uppercase text-stone-500">Vajilla Quebrada / Otros</div>
+          <div className="text-base font-black font-mono text-barro mt-0.5">
             C$ {totalVajilla.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div className="text-[10px] text-slate-400">Se aplica en col. Vajilla + Notas</div>
+          <div className="text-[10px] text-stone-400">Se aplica en col. Vajilla + Notas</div>
         </div>
 
-        <div className="p-2.5 border border-slate-300 bg-white">
-          <div className="text-[10px] font-bold uppercase text-slate-500">Servicio de Restaurante</div>
-          <div className="text-base font-black font-mono text-amber-800 mt-0.5">
+        <div className="p-2.5 border border-stone-300 bg-white">
+          <div className="text-[10px] font-bold uppercase text-stone-500">Servicio de Restaurante</div>
+          <div className="text-base font-black font-mono text-dorado-tinta mt-0.5">
             C$ {totalRestaurante.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div className="text-[10px] text-slate-400">Se aplica en col. Servicio Rest.</div>
+          <div className="text-[10px] text-stone-400">Se aplica en col. Servicio Rest.</div>
         </div>
 
-        <div className="p-2.5 border border-slate-300 bg-white">
-          <div className="text-[10px] font-bold uppercase text-slate-500">Préstamos / Adelantos</div>
-          <div className="text-base font-black font-mono text-indigo-800 mt-0.5">
+        <div className="p-2.5 border border-stone-300 bg-white">
+          <div className="text-[10px] font-bold uppercase text-stone-500">Préstamos / Adelantos</div>
+          <div className="text-base font-black font-mono text-stone-800 mt-0.5">
             C$ {totalPrestamos.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div className="text-[10px] text-slate-400">Se aplica en col. Préstamos</div>
+          <div className="text-[10px] text-stone-400">Se aplica en col. Préstamos</div>
         </div>
 
-        <div className="p-2.5 border border-slate-900 bg-slate-900 text-white">
-          <div className="text-[10px] font-bold uppercase text-slate-300">Total Deducciones Listadas</div>
-          <div className="text-base font-black font-mono text-rose-300 mt-0.5">
+        <div className="p-2.5 border border-stone-900 bg-stone-900 text-white">
+          <div className="text-[10px] font-bold uppercase text-stone-300">Total Deducciones Listadas</div>
+          <div className="text-base font-black font-mono text-[#F3C9BF] mt-0.5">
             - C$ {totalIncidents.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div className="text-[10px] text-slate-400">Sincronizado con Sábana Quincenal</div>
+          <div className="text-[10px] text-stone-400">Sincronizado con Sábana Quincenal</div>
         </div>
       </div>
 
       {/* Formulario rápido para anotar incidencias: Diseño Rectangular Corporativo */}
-      <div className="p-3 border border-slate-300 bg-white">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-200">
+      <div className="p-3 border border-stone-300 bg-white">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2 border-b border-stone-200">
           <div className="flex items-center gap-2">
-            <UtensilsCrossed className="w-4 h-4 text-[#1c6856]" />
-            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+            <UtensilsCrossed className="w-4 h-4 text-bodegon" />
+            <h3 className="text-xs font-black text-stone-900 uppercase tracking-wider">
               Registrar Incidencia Diaria (Vajilla Quebrada, Consumo de Restaurante o Préstamo)
             </h3>
           </div>
-          <div className="text-[11px] font-mono font-bold text-[#1c6856] bg-emerald-50 border border-emerald-300 px-2 py-0.5">
+          <div className="text-[11px] font-mono font-bold text-bodegon bg-bodegon/5 border border-bodegon/35 px-2 py-0.5">
             Corte Quincenal Activo: {startDate} al {endDate}
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-2.5 items-end">
           <div>
-            <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
+            <label className="text-[10px] font-bold text-stone-600 uppercase tracking-wider block mb-1">
               Fecha
             </label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full text-xs font-mono border border-slate-300 px-2 py-1.5 outline-none focus:border-[#1c6856] bg-white"
+              className="w-full text-xs font-mono border border-stone-300 px-2 py-1.5 outline-none focus:border-bodegon bg-white"
               required
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
+            <label className="text-[10px] font-bold text-stone-600 uppercase tracking-wider block mb-1">
               Colaborador
             </label>
             <select
               value={selectedEmpId}
               onChange={(e) => setSelectedEmpId(e.target.value)}
-              className="w-full text-xs font-bold border border-slate-300 px-2 py-1.5 outline-none focus:border-[#1c6856] bg-white"
+              className="w-full text-xs font-bold border border-stone-300 px-2 py-1.5 outline-none focus:border-bodegon bg-white"
               required
             >
               {employees.map((emp) => (
@@ -242,13 +242,13 @@ export const PayrollIncidentsView: React.FC<Props> = ({
           </div>
 
           <div>
-            <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
+            <label className="text-[10px] font-bold text-stone-600 uppercase tracking-wider block mb-1">
               Columna / Tipo
             </label>
             <select
               value={type}
               onChange={(e) => setType(e.target.value as IncidentType)}
-              className="w-full text-xs font-semibold border border-slate-300 px-2 py-1.5 outline-none focus:border-[#1c6856] bg-white"
+              className="w-full text-xs font-semibold border border-stone-300 px-2 py-1.5 outline-none focus:border-bodegon bg-white"
             >
               <option value="VAJILLA_PERDIDA">Vajilla Quebrada / Pérdida</option>
               <option value="SERVICIO_RESTAURANTE">Servicio de Restaurante</option>
@@ -258,7 +258,7 @@ export const PayrollIncidentsView: React.FC<Props> = ({
           </div>
 
           <div>
-            <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
+            <label className="text-[10px] font-bold text-stone-600 uppercase tracking-wider block mb-1">
               Monto (C$)
             </label>
             <input
@@ -267,7 +267,7 @@ export const PayrollIncidentsView: React.FC<Props> = ({
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full text-xs font-mono font-bold border border-slate-300 px-2 py-1.5 outline-none focus:border-[#1c6856] bg-white"
+              className="w-full text-xs font-mono font-bold border border-stone-300 px-2 py-1.5 outline-none focus:border-bodegon bg-white"
               required
             />
           </div>
@@ -275,7 +275,7 @@ export const PayrollIncidentsView: React.FC<Props> = ({
           <div>
             <button
               type="submit"
-              className="w-full py-1.5 border border-[#165345] bg-[#1c6856] hover:bg-[#165345] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer uppercase tracking-wider"
+              className="w-full py-1.5 border border-bodegon-noche bg-bodegon hover:bg-bodegon-noche text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer uppercase tracking-wider"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Anotar y Aplicar</span>
@@ -288,34 +288,34 @@ export const PayrollIncidentsView: React.FC<Props> = ({
               placeholder="Concepto o detalle (ej: Plato hondo quebrado, copa de vino, 1 almuerzo extra, vale de quincena...)"
               value={concept}
               onChange={(e) => setConcept(e.target.value)}
-              className="w-full text-xs border border-slate-300 px-2.5 py-1.5 outline-none focus:border-[#1c6856] placeholder:text-slate-400 bg-white"
+              className="w-full text-xs border border-stone-300 px-2.5 py-1.5 outline-none focus:border-bodegon placeholder:text-stone-400 bg-white"
             />
           </div>
         </form>
       </div>
 
       {/* Historial de incidencias: Diseño Rectangular Formal */}
-      <div className="p-3 border border-slate-300 bg-white">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-200">
+      <div className="p-3 border border-stone-300 bg-white">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2 border-b border-stone-200">
           <div>
-            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+            <h3 className="text-xs font-black text-stone-900 uppercase tracking-wider">
               Bitácora de Incidencias Registradas ({filteredIncidents.length})
             </h3>
-            <span className="text-[11px] text-slate-500">
+            <span className="text-[11px] text-stone-500">
               Cada incidencia dentro del corte ({startDate} al {endDate}) actualiza automáticamente la Sábana Quincenal y se respalda en la nube
             </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             {/* Filtro de Rango */}
-            <div className="flex items-center border border-slate-300 bg-slate-100 p-0.5">
+            <div className="flex items-center border border-stone-300 bg-stone-100 p-0.5">
               <button
                 type="button"
                 onClick={() => setFilterPeriodMode('CUTOFF')}
                 className={`px-2.5 py-1 text-[10px] font-bold uppercase cursor-pointer transition flex items-center gap-1 ${
                   filterPeriodMode === 'CUTOFF'
-                    ? 'bg-white text-[#1c6856] border border-slate-300'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-bodegon border border-stone-300'
+                    : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
                 <Calendar className="w-3 h-3" />
@@ -326,8 +326,8 @@ export const PayrollIncidentsView: React.FC<Props> = ({
                 onClick={() => setFilterPeriodMode('ALL')}
                 className={`px-2.5 py-1 text-[10px] font-bold uppercase cursor-pointer transition ${
                   filterPeriodMode === 'ALL'
-                    ? 'bg-white text-slate-900 border border-slate-300'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-stone-900 border border-stone-300'
+                    : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
                 Todo el Historial ({incidents.length})
@@ -338,7 +338,7 @@ export const PayrollIncidentsView: React.FC<Props> = ({
             <select
               value={filterEmpId}
               onChange={(e) => setFilterEmpId(e.target.value)}
-              className="text-xs border border-slate-300 px-2 py-1 outline-none bg-white font-bold text-slate-800"
+              className="text-xs border border-stone-300 px-2 py-1 outline-none bg-white font-bold text-stone-800"
             >
               <option value="ALL">Todos los colaboradores</option>
               {employees.map((emp) => (
@@ -351,41 +351,41 @@ export const PayrollIncidentsView: React.FC<Props> = ({
         </div>
 
         {filteredIncidents.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 text-xs italic">
+          <div className="text-center py-8 text-stone-400 text-xs italic">
             No se han registrado incidencias de vajilla rota, consumos ni préstamos para este filtro.
           </div>
         ) : (
-          <div className="border border-slate-300 overflow-x-auto">
+          <div className="border border-stone-300 overflow-x-auto">
             <table className="w-full text-xs text-left border-collapse">
               <thead>
-                <tr className="bg-slate-100 text-[10px] font-bold text-slate-700 border-b border-slate-300 uppercase tracking-wider">
-                  <th className="p-2 w-28 border-r border-slate-300">Fecha</th>
-                  <th className="p-2 border-r border-slate-300">Colaborador</th>
-                  <th className="p-2 w-40 border-r border-slate-300">Tipo / Columna</th>
-                  <th className="p-2 border-r border-slate-300">Concepto / Detalle</th>
-                  <th className="p-2 w-28 text-right border-r border-slate-300">Monto (C$)</th>
+                <tr className="bg-stone-100 text-[10px] font-bold text-stone-700 border-b border-stone-300 uppercase tracking-wider">
+                  <th className="p-2 w-28 border-r border-stone-300">Fecha</th>
+                  <th className="p-2 border-r border-stone-300">Colaborador</th>
+                  <th className="p-2 w-40 border-r border-stone-300">Tipo / Columna</th>
+                  <th className="p-2 border-r border-stone-300">Concepto / Detalle</th>
+                  <th className="p-2 w-28 text-right border-r border-stone-300">Monto (C$)</th>
                   <th className="p-2 text-center w-20">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-stone-200">
                 {filteredIncidents.map((inc) => {
                   const isEditing = editingId === inc.id;
                   if (isEditing) {
                     return (
-                      <tr key={inc.id} className="bg-amber-50/60">
-                        <td className="p-1.5 border-r border-slate-200">
+                      <tr key={inc.id} className="bg-dorado/6">
+                        <td className="p-1.5 border-r border-stone-200">
                           <input
                             type="date"
                             value={editDate}
                             onChange={(e) => setEditDate(e.target.value)}
-                            className="w-full text-xs font-mono border border-slate-300 px-1.5 py-1 bg-white"
+                            className="w-full text-xs font-mono border border-stone-300 px-1.5 py-1 bg-white"
                           />
                         </td>
-                        <td className="p-1.5 border-r border-slate-200">
+                        <td className="p-1.5 border-r border-stone-200">
                           <select
                             value={editEmpId}
                             onChange={(e) => setEditEmpId(e.target.value)}
-                            className="w-full text-xs font-bold border border-slate-300 px-1.5 py-1 bg-white"
+                            className="w-full text-xs font-bold border border-stone-300 px-1.5 py-1 bg-white"
                           >
                             {employees.map((emp) => (
                               <option key={emp.id} value={emp.id}>
@@ -394,11 +394,11 @@ export const PayrollIncidentsView: React.FC<Props> = ({
                             ))}
                           </select>
                         </td>
-                        <td className="p-1.5 border-r border-slate-200">
+                        <td className="p-1.5 border-r border-stone-200">
                           <select
                             value={editType}
                             onChange={(e) => setEditType(e.target.value as IncidentType)}
-                            className="w-full text-xs font-semibold border border-slate-300 px-1.5 py-1 bg-white"
+                            className="w-full text-xs font-semibold border border-stone-300 px-1.5 py-1 bg-white"
                           >
                             <option value="VAJILLA_PERDIDA">Vajilla Quebrada</option>
                             <option value="SERVICIO_RESTAURANTE">Servicio Rest.</option>
@@ -406,21 +406,21 @@ export const PayrollIncidentsView: React.FC<Props> = ({
                             <option value="OTRO">Otro Descuento</option>
                           </select>
                         </td>
-                        <td className="p-1.5 border-r border-slate-200">
+                        <td className="p-1.5 border-r border-stone-200">
                           <input
                             type="text"
                             value={editConcept}
                             onChange={(e) => setEditConcept(e.target.value)}
-                            className="w-full text-xs border border-slate-300 px-2 py-1 bg-white"
+                            className="w-full text-xs border border-stone-300 px-2 py-1 bg-white"
                           />
                         </td>
-                        <td className="p-1.5 border-r border-slate-200">
+                        <td className="p-1.5 border-r border-stone-200">
                           <input
                             type="number"
                             step="0.01"
                             value={editAmount}
                             onChange={(e) => setEditAmount(e.target.value)}
-                            className="w-full text-right text-xs font-mono font-bold border border-slate-300 px-1.5 py-1 bg-white"
+                            className="w-full text-right text-xs font-mono font-bold border border-stone-300 px-1.5 py-1 bg-white"
                           />
                         </td>
                         <td className="p-1.5 text-center">
@@ -428,7 +428,7 @@ export const PayrollIncidentsView: React.FC<Props> = ({
                             <button
                               type="button"
                               onClick={() => handleSaveEdit(inc)}
-                              className="p-1 bg-[#1c6856] text-white hover:bg-[#165345] cursor-pointer"
+                              className="p-1 bg-bodegon text-white hover:bg-bodegon-noche cursor-pointer"
                               title="Guardar edición"
                             >
                               <Check className="w-3.5 h-3.5" />
@@ -436,7 +436,7 @@ export const PayrollIncidentsView: React.FC<Props> = ({
                             <button
                               type="button"
                               onClick={() => setEditingId(null)}
-                              className="p-1 bg-slate-200 text-slate-700 hover:bg-slate-300 cursor-pointer"
+                              className="p-1 bg-stone-200 text-stone-700 hover:bg-stone-300 cursor-pointer"
                               title="Cancelar"
                             >
                               <X className="w-3.5 h-3.5" />
@@ -448,12 +448,12 @@ export const PayrollIncidentsView: React.FC<Props> = ({
                   }
 
                   return (
-                    <tr key={inc.id} className="hover:bg-slate-50/90 transition-colors">
-                      <td className="p-2 font-mono text-slate-600 border-r border-slate-200">{inc.date}</td>
-                      <td className="p-2 font-bold text-slate-900 border-r border-slate-200">{inc.employeeName}</td>
-                      <td className="p-2 border-r border-slate-200">{renderTypeBadge(inc.type)}</td>
-                      <td className="p-2 text-slate-700 border-r border-slate-200">{inc.concept}</td>
-                      <td className="p-2 text-right font-mono font-bold text-rose-700 border-r border-slate-200">
+                    <tr key={inc.id} className="hover:bg-stone-50/90 transition-colors">
+                      <td className="p-2 font-mono text-stone-600 border-r border-stone-200">{inc.date}</td>
+                      <td className="p-2 font-bold text-stone-900 border-r border-stone-200">{inc.employeeName}</td>
+                      <td className="p-2 border-r border-stone-200">{renderTypeBadge(inc.type)}</td>
+                      <td className="p-2 text-stone-700 border-r border-stone-200">{inc.concept}</td>
+                      <td className="p-2 text-right font-mono font-bold text-barro border-r border-stone-200">
                         - C$ {inc.amount.toFixed(2)}
                       </td>
                       <td className="p-2 text-center">
@@ -461,7 +461,7 @@ export const PayrollIncidentsView: React.FC<Props> = ({
                           <button
                             type="button"
                             onClick={() => handleStartEdit(inc)}
-                            className="text-slate-500 hover:text-[#1c6856] p-1 transition cursor-pointer"
+                            className="text-stone-500 hover:text-bodegon p-1 transition cursor-pointer"
                             title="Editar incidencia"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
@@ -473,7 +473,7 @@ export const PayrollIncidentsView: React.FC<Props> = ({
                                 onDeleteIncident(inc.id);
                               }
                             }}
-                            className="text-slate-400 hover:text-rose-700 p-1 transition cursor-pointer"
+                            className="text-stone-400 hover:text-barro p-1 transition cursor-pointer"
                             title="Eliminar incidencia"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -485,11 +485,11 @@ export const PayrollIncidentsView: React.FC<Props> = ({
                 })}
               </tbody>
               <tfoot>
-                <tr className="bg-slate-900 font-bold border-t-2 border-slate-900 text-white">
+                <tr className="bg-stone-900 font-bold border-t-2 border-stone-900 text-white">
                   <td colSpan={4} className="p-2 text-right uppercase tracking-wider">
                     Total en Incidencias Listadas:
                   </td>
-                  <td className="p-2 text-right font-mono text-rose-300 font-black">
+                  <td className="p-2 text-right font-mono text-[#F3C9BF] font-black">
                     - C$ {totalIncidents.toFixed(2)}
                   </td>
                   <td></td>

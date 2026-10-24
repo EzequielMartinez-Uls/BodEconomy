@@ -116,37 +116,37 @@ export const Sidebar: React.FC<Props> = ({
   }, []);
 
   return (
-    <aside className="w-64 bg-white border-r border-slate-200/90 flex flex-col h-screen sticky top-0 z-40 select-none shadow-[2px_0_12px_-4px_rgba(0,0,0,0.03)] shrink-0">
+    <aside className="w-64 bg-white border-r border-stone-200/90 flex flex-col h-screen sticky top-0 z-40 select-none shadow-[2px_0_12px_-4px_rgba(0,0,0,0.03)] shrink-0">
       {/* Brand Header & Menú con Scroll Suave */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-4 border-b border-slate-100 flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl overflow-hidden shrink-0 border border-[#1c6856]/30 bg-[#1c6856] shadow-sm flex items-center justify-center">
+        <div className="p-4 border-b border-stone-100 flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl overflow-hidden shrink-0 border border-bodegon/30 bg-bodegon shadow-sm flex items-center justify-center">
             <img src={logoImg} alt="Restaurante El Bodegón" className="w-full h-full object-cover" />
           </div>
           <div className="overflow-hidden">
-            <div className="font-black tracking-tight text-slate-900 text-xs sm:text-sm leading-tight truncate">
-              EL BODEGÓN
+            <div className="font-display font-extrabold uppercase tracking-wide text-bodegon text-xl leading-none truncate">
+              Bodegón Control
             </div>
-            <div className="text-[10px] font-bold text-[#1c6856] uppercase tracking-wider mt-0.5">
-              Control ERP de Cajas
+            <div className="text-[10px] font-bold text-dorado-tinta uppercase tracking-wider mt-1">
+              Cajas y nómina
             </div>
           </div>
         </div>
 
         {/* Administrador Activo Selector Rápido */}
-        <div className="p-3 mx-3 mt-3 rounded-xl bg-emerald-50/40 border border-emerald-200/70 flex items-center justify-between">
+        <div className="p-3 mx-3 mt-3 rounded-xl bg-bodegon/2 border border-bodegon/14 flex items-center justify-between">
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-8 h-8 rounded-lg bg-white border border-emerald-200 text-[#1c6856] flex items-center justify-center font-bold text-xs shadow-xs">
-              <User className="w-4 h-4 text-[#1c6856]" />
+            <div className="w-8 h-8 rounded-lg bg-white border border-bodegon/20 text-bodegon flex items-center justify-center font-bold text-xs shadow-xs">
+              <User className="w-4 h-4 text-bodegon" />
             </div>
             <div className="truncate">
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Admin en Turno</span>
-              <span className="text-xs font-black text-slate-900 truncate block">{state.activeAdminName}</span>
+              <span className="text-[9.5px] font-bold text-stone-400 uppercase tracking-wider block">Admin en Turno</span>
+              <span className="text-xs font-black text-stone-900 truncate block">{state.activeAdminName}</span>
             </div>
           </div>
           <button
             onClick={onSelectAdminClick}
-            className="text-[11px] font-bold text-[#1c6856] hover:text-[#154f42] underline px-1 py-0.5 rounded cursor-pointer"
+            className="text-[11px] font-bold text-bodegon hover:text-bodegon-noche underline px-1 py-0.5 rounded cursor-pointer"
           >
             Cambiar
           </button>
@@ -154,7 +154,7 @@ export const Sidebar: React.FC<Props> = ({
 
         {/* Navigation Items Separados Claramente */}
         <nav className="p-3 space-y-1.5 mt-2">
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">
+          <div className="text-[10px] font-bold text-stone-400 uppercase tracking-wider px-3 mb-2">
             Módulos Independientes
           </div>
 
@@ -163,8 +163,8 @@ export const Sidebar: React.FC<Props> = ({
             onClick={() => onTabChange('generalCash')}
             className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer ${
               activeTab === 'generalCash'
-                ? 'bg-[#1c6856] text-white shadow-md shadow-[#1c6856]/25 border border-[#154f42]'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                ? 'bg-bodegon text-white shadow-md shadow-bodegon/25 border border-bodegon-noche'
+                : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -174,7 +174,7 @@ export const Sidebar: React.FC<Props> = ({
             {isShiftOpen ? (
               <span
                 className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${
-                  activeTab === 'generalCash' ? 'bg-white/25 text-white' : 'bg-emerald-100 text-emerald-800'
+                  activeTab === 'generalCash' ? 'bg-white/25 text-white' : 'bg-bodegon/10 text-bodegon'
                 }`}
               >
                 Abierta
@@ -182,7 +182,7 @@ export const Sidebar: React.FC<Props> = ({
             ) : (
               <span
                 className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                  activeTab === 'generalCash' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                  activeTab === 'generalCash' ? 'bg-white/20 text-white' : 'bg-stone-100 text-stone-500'
                 }`}
               >
                 Cerrada
@@ -195,8 +195,8 @@ export const Sidebar: React.FC<Props> = ({
             onClick={() => onTabChange('pettyCash')}
             className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer ${
               activeTab === 'pettyCash'
-                ? 'bg-[#154f42] text-white shadow-md shadow-[#154f42]/25 border border-[#0d342b]'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                ? 'bg-bodegon-noche text-white shadow-md shadow-bodegon-noche/25 border border-bodegon-noche'
+                : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -209,8 +209,8 @@ export const Sidebar: React.FC<Props> = ({
                   activeTab === 'pettyCash'
                     ? 'bg-white/25 text-white'
                     : state.currentPettyCashShift?.status === 'OPEN'
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : 'bg-slate-100 text-slate-500'
+                    ? 'bg-bodegon/10 text-bodegon'
+                    : 'bg-stone-100 text-stone-500'
                 }`}
               >
                 {state.currentPettyCashShift?.status === 'OPEN' ? 'Abierta' : 'Cerrada'}
@@ -220,8 +220,8 @@ export const Sidebar: React.FC<Props> = ({
                   activeTab === 'pettyCash'
                     ? 'bg-white/25 text-white'
                     : isPettyCashLow
-                    ? 'bg-amber-100 text-amber-800'
-                    : 'bg-slate-100 text-slate-700'
+                    ? 'bg-dorado/20 text-dorado-tinta'
+                    : 'bg-stone-100 text-stone-700'
                 }`}
               >
                 C$ {Math.round(
@@ -240,8 +240,8 @@ export const Sidebar: React.FC<Props> = ({
             onClick={() => onTabChange('dailyEarnings')}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
               activeTab === 'dailyEarnings'
-                ? 'bg-[#1c6856] text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                ? 'bg-bodegon text-white shadow-xs'
+                : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -252,7 +252,7 @@ export const Sidebar: React.FC<Props> = ({
               className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
                 activeTab === 'dailyEarnings'
                   ? 'bg-white/20 text-white'
-                  : 'bg-slate-100 text-slate-600'
+                  : 'bg-stone-100 text-stone-600'
               }`}
             >
               Día a Día
@@ -272,8 +272,8 @@ export const Sidebar: React.FC<Props> = ({
               }}
               className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer ${
                 activeTab === 'payroll'
-                  ? 'bg-[#1c6856] text-white shadow-md shadow-[#1c6856]/25 border border-[#154f42]'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  ? 'bg-bodegon text-white shadow-md shadow-bodegon/25 border border-bodegon-noche'
+                  : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -285,7 +285,7 @@ export const Sidebar: React.FC<Props> = ({
                   className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${
                     activeTab === 'payroll'
                       ? 'bg-white/25 text-white'
-                      : 'bg-emerald-50 text-[#1c6856]'
+                      : 'bg-bodegon/5 text-bodegon'
                   }`}
                 >
                   {(state.payrollEmployees || []).length}
@@ -300,7 +300,7 @@ export const Sidebar: React.FC<Props> = ({
 
             {/* Submenú Desplegable */}
             {payrollExpanded && (
-              <div className="ml-4 pl-3 border-l-2 border-slate-200/80 mt-1.5 space-y-1">
+              <div className="ml-4 pl-3 border-l-2 border-stone-200/80 mt-1.5 space-y-1">
                 {/* Submenú 1: Planilla Quincenal */}
                 <button
                   onClick={() => {
@@ -309,8 +309,8 @@ export const Sidebar: React.FC<Props> = ({
                   }}
                   className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition cursor-pointer text-left ${
                     activeTab === 'payroll' && payrollSubTab === 'quincenal'
-                      ? 'bg-emerald-50 text-[#1c6856] font-bold shadow-xs'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      ? 'bg-bodegon/5 text-bodegon font-bold shadow-xs'
+                      : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
                   }`}
                 >
                   <Calendar className="w-3.5 h-3.5 shrink-0" />
@@ -325,8 +325,8 @@ export const Sidebar: React.FC<Props> = ({
                   }}
                   className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition cursor-pointer text-left ${
                     activeTab === 'payroll' && payrollSubTab === 'especial'
-                      ? 'bg-indigo-50 text-indigo-700 font-bold shadow-xs'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      ? 'bg-stone-50 text-stone-700 font-bold shadow-xs'
+                      : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
                   }`}
                 >
                   <Building2 className="w-3.5 h-3.5 shrink-0" />
@@ -341,8 +341,8 @@ export const Sidebar: React.FC<Props> = ({
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition cursor-pointer text-left ${
                     activeTab === 'payroll' && payrollSubTab === 'incidencias'
-                      ? 'bg-amber-50 text-amber-800 font-bold shadow-xs'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      ? 'bg-dorado/10 text-dorado-tinta font-bold shadow-xs'
+                      : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 truncate">
@@ -350,7 +350,7 @@ export const Sidebar: React.FC<Props> = ({
                     <span className="truncate">Incidencias & Vajilla</span>
                   </div>
                   {(state.payrollIncidents || []).length > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[9px] font-black">
+                    <span className="px-1.5 py-0.2 rounded-full bg-dorado/20 text-dorado-tinta text-[9px] font-black">
                       {state.payrollIncidents.length}
                     </span>
                   )}
@@ -364,8 +364,8 @@ export const Sidebar: React.FC<Props> = ({
             onClick={() => onTabChange('expenseAnalytics')}
             className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer ${
               activeTab === 'expenseAnalytics'
-                ? 'bg-[#1c6856] text-white shadow-md shadow-[#1c6856]/25 border border-[#154f42]'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                ? 'bg-bodegon text-white shadow-md shadow-bodegon/25 border border-bodegon-noche'
+                : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -376,7 +376,7 @@ export const Sidebar: React.FC<Props> = ({
               className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${
                 activeTab === 'expenseAnalytics'
                   ? 'bg-white/20 text-white'
-                  : 'bg-emerald-50 text-[#1c6856] border border-emerald-200'
+                  : 'bg-bodegon/5 text-bodegon border border-bodegon/20'
               }`}
             >
               Métricas
@@ -386,25 +386,25 @@ export const Sidebar: React.FC<Props> = ({
       </div>
 
       {/* Footer Info & Configuración */}
-      <div className="p-3 border-t border-slate-100 space-y-1 shrink-0 bg-white">
+      <div className="p-3 border-t border-stone-100 space-y-1 shrink-0 bg-white">
         <button
           onClick={onChangeExchangeRateClick}
-          className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition"
+          className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-stone-600 hover:bg-stone-50 hover:text-stone-900 transition"
         >
           <div className="flex items-center gap-2">
-            <CircleDollarSign className="w-4 h-4 text-emerald-600" />
+            <CircleDollarSign className="w-4 h-4 text-bodegon" />
             <span>Tasa de Cambio</span>
           </div>
-          <span className="font-mono font-bold text-slate-900 text-[11px]">
+          <span className="font-mono font-bold text-stone-900 text-[11px]">
             C$ {state.defaultExchangeRate.toFixed(2)}
           </span>
         </button>
 
         <button
           onClick={onOpenSettingsClick}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition"
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-stone-600 hover:bg-stone-50 hover:text-stone-900 transition"
         >
-          <Settings className="w-4 h-4 text-slate-400" />
+          <Settings className="w-4 h-4 text-stone-400" />
           <span>Configuración & Catálogos</span>
         </button>
 
@@ -413,22 +413,22 @@ export const Sidebar: React.FC<Props> = ({
           <button
             onClick={handleCheckUpdates}
             disabled={checkingUpdate}
-            className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200 transition cursor-pointer"
+            className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-600 hover:bg-stone-50 hover:text-stone-900 border border-stone-200 transition cursor-pointer"
             title="Comprobar si existe una nueva versión en GitHub"
           >
             <div className="flex items-center gap-2">
-              <RefreshCw className={`w-3.5 h-3.5 text-slate-400 ${checkingUpdate ? 'animate-spin text-[#1c6856]' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-stone-400 ${checkingUpdate ? 'animate-spin text-bodegon' : ''}`} />
               <span>{checkingUpdate ? 'Buscando...' : 'Buscar actualización'}</span>
             </div>
             {updateFeedback && (
-              <span className="text-[10px] text-emerald-700 font-bold">{updateFeedback}</span>
+              <span className="text-[10px] text-bodegon font-bold">{updateFeedback}</span>
             )}
           </button>
         )}
 
         {updateStatus.status === 'downloading' && (
-          <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold flex items-center gap-2">
-            <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-600 shrink-0" />
+          <div className="p-2.5 rounded-xl bg-dorado/10 border border-dorado/40 text-dorado-tinta text-[11px] font-bold flex items-center gap-2">
+            <RefreshCw className="w-3.5 h-3.5 animate-spin text-dorado-tinta shrink-0" />
             <span>Descargando actualización ({updateStatus.percent || 0}%)...</span>
           </div>
         )}
@@ -436,21 +436,21 @@ export const Sidebar: React.FC<Props> = ({
         {updateStatus.status === 'ready' && (
           <button
             onClick={() => window.electronAPI?.restartAndInstall?.()}
-            className="w-full p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center justify-center gap-2 shadow-md transition cursor-pointer"
+            className="w-full p-2.5 rounded-xl bg-bodegon hover:bg-bodegon text-white text-xs font-black flex items-center justify-center gap-2 shadow-md transition cursor-pointer"
             title="Haz clic para reiniciar la aplicación e instalar la nueva versión"
           >
-            <Sparkles className="w-4 h-4 shrink-0 text-amber-300" />
+            <Sparkles className="w-4 h-4 shrink-0 text-dorado-vivo" />
             <span>Actualización lista • Reiniciar</span>
           </button>
         )}
 
         <button
           onClick={onOpenSettingsClick}
-          className="w-full pt-2 px-3 flex items-center justify-between text-[10px] font-semibold text-slate-400 hover:text-slate-600 transition cursor-pointer"
+          className="w-full pt-2 px-3 flex items-center justify-between text-[10px] font-semibold text-stone-400 hover:text-stone-600 transition cursor-pointer"
           title="Ver configuración del sistema y respaldos"
         >
           <span>Bodegón Control {appVersion}</span>
-          <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
+          <span className="inline-flex items-center gap-1 text-bodegon font-bold">
             <ShieldCheck className="w-3 h-3" /> Seguro
           </span>
         </button>

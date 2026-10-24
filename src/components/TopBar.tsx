@@ -231,28 +231,28 @@ export const TopBar: React.FC<Props> = ({
 
   return (
     <>
-      <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
+      <header className="h-16 bg-white border-b border-stone-200 px-6 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
         {/* Saludo y Fecha */}
         <div className="flex items-center gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
+              <h1 className="text-base font-bold text-stone-900 tracking-tight flex items-center gap-1.5">
                 <span>Sesión:</span>
-                <span className="text-[#1c6856] font-extrabold">{state.activeAdminName}</span>
+                <span className="text-bodegon font-extrabold">{state.activeAdminName}</span>
               </h1>
               <button
                 onClick={onSelectAdminClick}
-                className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition cursor-pointer"
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-200 transition cursor-pointer"
                 title="Haga clic para cambiar de administrador o turno"
               >
                 {state.activeAdminName === 'Eddy' ? 'Apertura' : state.activeAdminName === 'Xiomara' ? 'Cierre' : 'Administrador'}
               </button>
             </div>
-            <div className="text-xs text-slate-500 capitalize flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+            <div className="text-xs text-stone-500 capitalize flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-stone-400" />
               <span>{today}</span>
               <span>•</span>
-              <span className="text-slate-600 font-medium">El Bodegón Restaurante</span>
+              <span className="text-stone-600 font-medium">El Bodegón Restaurante</span>
             </div>
           </div>
         </div>
@@ -262,21 +262,21 @@ export const TopBar: React.FC<Props> = ({
           {/* Indicador Informativo de Estado de Caja */}
           {isShiftOpen ? (
             <div
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs select-none"
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-bodegon/5 border border-bodegon/20 text-xs select-none"
               title="Estado actual de la jornada"
             >
-              <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
-              <span className="font-semibold text-emerald-800">Caja Abierta:</span>
-              <span className="font-mono font-bold text-emerald-900">
+              <span className="w-2 h-2 rounded-full bg-bodegon"></span>
+              <span className="font-semibold text-bodegon">Caja Abierta:</span>
+              <span className="font-mono font-bold text-bodegon-noche">
                 C$ {state.currentShift?.totalOpeningEquivNIO.toFixed(2)}
               </span>
             </div>
           ) : (
             <div
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 text-xs text-slate-700 font-semibold border border-slate-200 select-none"
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-stone-100 text-xs text-stone-700 font-semibold border border-stone-200 select-none"
               title="Estado actual de la jornada"
             >
-              <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+              <span className="w-2 h-2 rounded-full bg-stone-400"></span>
               <span>Caja Cerrada</span>
             </div>
           )}
@@ -292,8 +292,8 @@ export const TopBar: React.FC<Props> = ({
             }}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold shadow-2xs transition cursor-pointer ${
               pendingCount > 0
-                ? 'bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900'
-                : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
+                ? 'bg-dorado/10 hover:bg-dorado/20 border-dorado/60 text-cafe'
+                : 'bg-stone-50 hover:bg-stone-100 border-stone-200 text-stone-700'
             }`}
             title={
               pendingCount > 0
@@ -303,7 +303,7 @@ export const TopBar: React.FC<Props> = ({
           >
             <span
               className={`w-2 h-2 rounded-full ${
-                pendingCount > 0 ? 'bg-amber-500' : 'bg-emerald-500'
+                pendingCount > 0 ? 'bg-dorado-tinta' : 'bg-bodegon'
               }`}
             ></span>
             <span className="hidden sm:inline">
@@ -319,9 +319,9 @@ export const TopBar: React.FC<Props> = ({
             onClick={handleManualCheckUpdate}
             disabled={checkingUpdate}
             title="Buscar si existe una actualización del software en GitHub"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold shadow-2xs transition cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-stone-200 bg-stone-50 hover:bg-stone-100 text-stone-700 text-xs font-semibold shadow-2xs transition cursor-pointer"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${checkingUpdate ? 'animate-spin text-[#1c6856]' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-stone-500 ${checkingUpdate ? 'animate-spin text-bodegon' : ''}`} />
             <span className="hidden xl:inline">
               {checkingUpdate ? 'Buscando...' : updateFeedback || 'Buscar actualización'}
             </span>
@@ -334,9 +334,9 @@ export const TopBar: React.FC<Props> = ({
           <button
             onClick={() => setPrintModalOpen(true)}
             title="Imprimir Acta Oficial en Blanco y Negro (Tamaño Carta)"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white text-xs font-semibold transition cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-300 bg-white hover:bg-stone-50 text-stone-800 text-xs font-semibold cursor-pointer"
           >
-            <Printer className="w-3.5 h-3.5 text-amber-400" />
+            <Printer className="w-3.5 h-3.5 text-bodegon" />
             <span className="hidden md:inline">Imprimir Acta (Carta)</span>
             <span className="md:hidden">Acta Carta</span>
           </button>
@@ -346,7 +346,7 @@ export const TopBar: React.FC<Props> = ({
             <button
               onClick={onOpenShiftClick}
               title="Iniciar la apertura del día (Caja Chica y Caja General en un solo flujo)"
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#1c6856] hover:bg-[#155344] text-white text-xs font-bold transition cursor-pointer shadow-xs"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-bodegon hover:bg-bodegon-noche text-white text-xs font-bold transition cursor-pointer shadow-xs"
             >
               <Unlock className="w-3.5 h-3.5 text-white" />
               <span>Abrir Jornada</span>
@@ -357,7 +357,7 @@ export const TopBar: React.FC<Props> = ({
             <button
               onClick={onCloseShiftClick}
               title="Proceder al cierre de jornada (Noche)"
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold transition cursor-pointer shadow-xs"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-barro hover:bg-barro text-white text-xs font-bold transition cursor-pointer shadow-xs"
             >
               <Lock className="w-3.5 h-3.5 text-white" />
               <span className="hidden sm:inline">Cerrar Jornada</span>
@@ -368,20 +368,20 @@ export const TopBar: React.FC<Props> = ({
         {/* Botón Selector de Administrador */}
         <button
           onClick={onSelectAdminClick}
-          className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 transition"
+          className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200/80 transition"
         >
-          <div className="w-8 h-8 rounded-lg bg-[#1c6856] text-white flex items-center justify-center font-bold text-xs shadow-sm shadow-[#1c6856]/20">
+          <div className="w-8 h-8 rounded-lg bg-bodegon text-white flex items-center justify-center font-bold text-xs shadow-sm shadow-bodegon/20">
             {state.activeAdminName.charAt(0)}
           </div>
           <div className="text-left hidden sm:block">
-            <span className="block font-bold text-slate-900 text-xs leading-tight">
+            <span className="block font-bold text-stone-900 text-xs leading-tight">
               {state.activeAdminName}
             </span>
-            <span className="block text-[10px] text-slate-500 leading-tight">
+            <span className="block text-[10px] text-stone-500 leading-tight">
               Cambiar Turno
             </span>
           </div>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-1" />
+          <ChevronDown className="w-3.5 h-3.5 text-stone-400 ml-1" />
         </button>
       </div>
     </header>

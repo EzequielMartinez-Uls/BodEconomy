@@ -328,18 +328,18 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
   return (
     <div className="space-y-6">
       {/* ─── Encabezado Principal ────────────────────────────────────────── */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white rounded-xl border border-stone-200 p-5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-lg bg-emerald-50 text-[#1c6856] border border-emerald-200">
+            <span className="p-2 rounded-lg bg-bodegon/5 text-bodegon border border-bodegon/20">
               <BarChart3 className="w-5 h-5" />
             </span>
             <div>
-              <h1 className="text-lg font-bold text-slate-900 tracking-tight">
+              <h1 className="text-lg font-bold text-stone-900 tracking-tight">
                 Análisis de Gastos & Inteligencia Financiera
               </h1>
-              <p className="text-xs text-slate-500">
-                Auditoría en vivo de <code className="font-mono text-[#1c6856] font-bold">compras_gastos</code> en Supabase. Limpieza, edición de rubros y control de egresos.
+              <p className="text-xs text-stone-500">
+                Auditoría en vivo de <code className="font-mono text-bodegon font-bold">compras_gastos</code> en Supabase. Limpieza, edición de rubros y control de egresos.
               </p>
             </div>
           </div>
@@ -347,14 +347,14 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
 
         {/* Controles de periodo y recarga */}
         <div className="flex items-center gap-2.5 flex-wrap">
-          <div className="flex border border-slate-300 rounded-lg overflow-hidden bg-slate-50 text-xs font-bold shadow-2xs">
+          <div className="flex border border-stone-300 rounded-lg overflow-hidden bg-stone-50 text-xs font-bold shadow-2xs">
             <button
               type="button"
               onClick={() => setDateFilter('ALL')}
               className={`px-3 py-1.5 transition cursor-pointer ${
                 dateFilter === 'ALL'
-                  ? 'bg-[#1c6856] text-white shadow-inner'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  ? 'bg-bodegon text-white shadow-inner'
+                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
               }`}
             >
               Historial Completo
@@ -362,10 +362,10 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => setDateFilter('MONTH')}
-              className={`px-3 py-1.5 transition cursor-pointer border-l border-slate-200 ${
+              className={`px-3 py-1.5 transition cursor-pointer border-l border-stone-200 ${
                 dateFilter === 'MONTH'
-                  ? 'bg-[#1c6856] text-white shadow-inner'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  ? 'bg-bodegon text-white shadow-inner'
+                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
               }`}
             >
               Este Mes
@@ -373,10 +373,10 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => setDateFilter('WEEK')}
-              className={`px-3 py-1.5 transition cursor-pointer border-l border-slate-200 ${
+              className={`px-3 py-1.5 transition cursor-pointer border-l border-stone-200 ${
                 dateFilter === 'WEEK'
-                  ? 'bg-[#1c6856] text-white shadow-inner'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  ? 'bg-bodegon text-white shadow-inner'
+                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
               }`}
             >
               Últimos 7 Días
@@ -387,10 +387,10 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
             type="button"
             onClick={loadData}
             disabled={isLoading}
-            className="p-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition cursor-pointer shadow-2xs flex items-center gap-1.5 text-xs font-bold"
+            className="p-2 rounded-lg border border-stone-300 bg-white hover:bg-stone-50 text-stone-700 transition cursor-pointer shadow-2xs flex items-center gap-1.5 text-xs font-bold"
             title="Recargar análisis desde Supabase"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-[#1c6856]' : 'text-slate-600'}`} />
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-bodegon' : 'text-stone-600'}`} />
             <span className="hidden sm:inline">Actualizar</span>
           </button>
         </div>
@@ -398,42 +398,42 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
 
       {/* ─── Tarjetas KPI Superiores ────────────────────────────────────── */}
       {isLoading ? (
-        <div className="p-12 text-center bg-white rounded-xl border border-slate-200 flex flex-col items-center justify-center gap-2.5">
-          <RefreshCw className="w-6 h-6 animate-spin text-[#1c6856]" />
-          <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+        <div className="p-12 text-center bg-white rounded-xl border border-stone-200 flex flex-col items-center justify-center gap-2.5">
+          <RefreshCw className="w-6 h-6 animate-spin text-bodegon" />
+          <span className="text-xs font-bold text-stone-600 uppercase tracking-wider">
             Consolidando estadísticas financieras desde la nube...
           </span>
         </div>
       ) : !analyticsData || analyticsData.totalAmount === 0 ? (
-        <div className="p-12 text-center bg-white rounded-xl border border-slate-200 text-slate-400 text-xs">
+        <div className="p-12 text-center bg-white rounded-xl border border-stone-200 text-stone-400 text-xs">
           No se encontraron egresos operativos registrados en el periodo seleccionado.
         </div>
       ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* KPI 1: Gasto Total */}
-            <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            <div className="p-4 bg-white rounded-xl border border-stone-200 shadow-2xs space-y-1">
+              <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">
                 Gasto Total Acumulado
               </span>
-              <span className="text-2xl font-mono font-extrabold text-slate-900 block">
+              <span className="text-2xl font-mono font-extrabold text-stone-900 block">
                 C$ {analyticsData.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
-              <span className="text-[11px] text-slate-500 font-medium">
+              <span className="text-[11px] text-stone-500 font-medium">
                 {analyticsData.totalTransactionsCount} transacciones operativas
               </span>
             </div>
 
             {/* KPI 2: Efectivo */}
-            <div className="p-4 bg-emerald-50/40 rounded-xl border border-emerald-200/80 shadow-2xs space-y-1">
-              <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
-                <Wallet className="w-3.5 h-3.5 text-emerald-600" />
+            <div className="p-4 bg-bodegon/2 rounded-xl border border-bodegon/16 shadow-2xs space-y-1">
+              <span className="text-[10px] font-bold text-bodegon uppercase tracking-wider flex items-center gap-1.5">
+                <Wallet className="w-3.5 h-3.5 text-bodegon" />
                 <span>Efectivo (Caja Chica)</span>
               </span>
-              <span className="text-2xl font-mono font-extrabold text-emerald-950 block">
+              <span className="text-2xl font-mono font-extrabold text-bodegon-noche block">
                 C$ {analyticsData.cashAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
-              <span className="text-[11px] font-bold text-emerald-700">
+              <span className="text-[11px] font-bold text-bodegon">
                 {analyticsData.cashPercent.toFixed(1)}% del gasto total
               </span>
             </div>
@@ -467,25 +467,25 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
             </div>
 
             {/* KPI 5: Rubro Principal */}
-            <div className="p-4 bg-amber-50/40 rounded-xl border border-amber-200/80 shadow-2xs space-y-1">
-              <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
-                <TrendingUp className="w-3.5 h-3.5 text-amber-600" />
+            <div className="p-4 bg-dorado/4 rounded-xl border border-dorado/32 shadow-2xs space-y-1">
+              <span className="text-[10px] font-bold text-dorado-tinta uppercase tracking-wider flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5 text-dorado-tinta" />
                 <span>Rubro Principal #1</span>
               </span>
-              <span className="text-lg font-bold text-amber-950 block truncate">
+              <span className="text-lg font-bold text-cafe block truncate">
                 {analyticsData.byCategory[0]?.label || 'Sin Categoría'}
               </span>
-              <span className="text-[11px] font-mono font-bold text-amber-700 block">
+              <span className="text-[11px] font-mono font-bold text-dorado-tinta block">
                 C$ {(analyticsData.byCategory[0]?.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} ({analyticsData.byCategory[0]?.percent.toFixed(1)}%)
               </span>
             </div>
           </div>
 
           {/* Barra Comparativa Efectivo vs Transferencia */}
-          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs space-y-2">
+          <div className="bg-white rounded-xl border border-stone-200 p-4 shadow-2xs space-y-2">
             <div className="flex justify-between items-center text-xs font-bold">
-              <span className="text-emerald-800 flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+              <span className="text-bodegon flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-bodegon"></span>
                 Efectivo Gaveta: C$ {analyticsData.cashAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ({analyticsData.cashPercent.toFixed(1)}%)
               </span>
               <span className="text-blue-800 flex items-center gap-1.5">
@@ -493,10 +493,10 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                 Transferencia Banco: C$ {analyticsData.transferAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ({analyticsData.transferPercent.toFixed(1)}%)
               </span>
             </div>
-            <div className="w-full h-3 rounded-full bg-slate-100 flex overflow-hidden border border-slate-200">
+            <div className="w-full h-3 rounded-full bg-stone-100 flex overflow-hidden border border-stone-200">
               <div
                 style={{ width: `${analyticsData.cashPercent}%` }}
-                className="bg-emerald-600 h-full transition-all duration-300"
+                className="bg-bodegon h-full transition-all duration-300"
               ></div>
               <div
                 style={{ width: `${analyticsData.transferPercent}%` }}
@@ -507,30 +507,30 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
 
           {/* ─── Gráfica de Tendencia Diaria de Gastos (Histograma Real de Flujo) ─── */}
           {dailySpendData.length > 0 && (
-            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+            <div className="bg-white rounded-xl border border-stone-200 p-5 shadow-2xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-stone-100">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-[#1c6856]" />
+                  <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-bodegon" />
                     <span>Tendencia Diaria de Egresos • Curva de Salidas de Dinero</span>
                   </h3>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-stone-500">
                     Historial cronológico de compras por día para detectar picos atípicos y controlar la liquidez.
                   </p>
                 </div>
                 <div className="flex items-center gap-3 text-xs">
-                  <span className="text-slate-500 font-medium">
-                    Promedio diario: <strong className="text-slate-900 font-mono">C$ {(dailySpendData.reduce((acc, d) => acc + d.total, 0) / dailySpendData.length).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                  <span className="text-stone-500 font-medium">
+                    Promedio diario: <strong className="text-stone-900 font-mono">C$ {(dailySpendData.reduce((acc, d) => acc + d.total, 0) / dailySpendData.length).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-600"></span> Pico de gasto
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-dorado/10 text-dorado-tinta text-[10px] font-bold border border-dorado/40">
+                    <span className="w-1.5 h-1.5 rounded-full bg-dorado-tinta"></span> Pico de gasto
                   </span>
                 </div>
               </div>
 
               {/* Contenedor interactivo de barras */}
               <div className="pt-6 pb-2">
-                <div className="grid grid-flow-col auto-cols-fr gap-2 sm:gap-3 items-end h-44 border-b border-slate-200 px-2">
+                <div className="grid grid-flow-col auto-cols-fr gap-2 sm:gap-3 items-end h-44 border-b border-stone-200 px-2">
                   {dailySpendData.map((d) => {
                     const heightPercent = Math.max(Math.round((d.total / maxDailySpend) * 100), 6);
                     const isPeak = d.total === maxDailySpend;
@@ -538,31 +538,31 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                     return (
                       <div key={d.date} className="flex flex-col items-center h-full justify-end group relative">
                         {/* Tooltip flotante al pasar el cursor */}
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-14 z-20 bg-slate-900 text-white text-[10px] py-1.5 px-2.5 rounded-lg shadow-xl pointer-events-none whitespace-nowrap text-center">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-14 z-20 bg-stone-900 text-white text-[10px] py-1.5 px-2.5 rounded-lg shadow-xl pointer-events-none whitespace-nowrap text-center">
                           <p className="font-bold">{d.date}</p>
-                          <p className="font-mono text-emerald-400 font-bold">C$ {d.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                          <p className="text-[9px] text-slate-300">{d.count} compras registradas</p>
+                          <p className="font-mono text-bodegon font-bold">C$ {d.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                          <p className="text-[9px] text-stone-300">{d.count} compras registradas</p>
                         </div>
 
                         {/* Monto abreviado encima de la barra */}
-                        <span className={`text-[9px] font-mono font-bold mb-1 truncate max-w-full hidden sm:block ${isPeak ? 'text-amber-700 font-extrabold' : 'text-slate-500'}`}>
+                        <span className={`text-[9px] font-mono font-bold mb-1 truncate max-w-full hidden sm:block ${isPeak ? 'text-dorado-tinta font-extrabold' : 'text-stone-500'}`}>
                           C${d.total >= 1000 ? (d.total / 1000).toFixed(1) + 'k' : d.total.toFixed(0)}
                         </span>
 
                         {/* Barra vertical interactiva */}
-                        <div className="w-full max-w-[42px] bg-slate-100 rounded-t-md overflow-hidden flex items-end h-full">
+                        <div className="w-full max-w-[42px] bg-stone-100 rounded-t-md overflow-hidden flex items-end h-full">
                           <div
                             style={{ height: `${heightPercent}%` }}
                             className={`w-full rounded-t-md transition-all duration-500 ${
                               isPeak
-                                ? 'bg-amber-600 hover:bg-amber-500'
-                                : 'bg-[#1c6856] hover:bg-[#154f42]'
+                                ? 'bg-dorado-tinta hover:bg-dorado-tinta'
+                                : 'bg-bodegon hover:bg-bodegon-noche'
                             }`}
                           ></div>
                         </div>
 
                         {/* Etiqueta de fecha */}
-                        <span className="text-[10px] font-medium text-slate-600 mt-2 truncate max-w-full text-center">
+                        <span className="text-[10px] font-medium text-stone-600 mt-2 truncate max-w-full text-center">
                           {d.dayLabel}
                         </span>
                       </div>
@@ -576,14 +576,14 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
           {/* ─── Sección de Dos Columnas: Categorías vs Top Proveedores ─────── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Columna Izquierda: Gestión de Categorías / Rubros */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
+            <div className="bg-white rounded-xl border border-stone-200 p-5 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-stone-100 flex-wrap gap-2">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <Tag className="w-4 h-4 text-[#1c6856]" />
+                  <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-bodegon" />
                     <span>Distribución & Gestión de Categorías</span>
                   </h3>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-stone-500">
                     Puedes editar nombres o eliminar rubros que no correspondan.
                   </p>
                 </div>
@@ -591,13 +591,13 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                 <div className="flex items-center gap-2">
                   {analyticsData.byCategory.length > 8 && (
                     <div className="relative">
-                      <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400" />
                       <input
                         type="text"
                         placeholder="Buscar rubro..."
                         value={categorySearchTerm}
                         onChange={(e) => setCategorySearchTerm(e.target.value)}
-                        className="pl-8 pr-2.5 py-1 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#1c6856] w-32 sm:w-36"
+                        className="pl-8 pr-2.5 py-1 bg-stone-50 border border-stone-300 rounded-lg text-xs font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-bodegon w-32 sm:w-36"
                       />
                     </div>
                   )}
@@ -605,7 +605,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={() => setShowAddCategoryForm((prev) => !prev)}
-                    className="px-2.5 py-1 rounded-lg bg-emerald-50 text-[#1c6856] hover:bg-emerald-100 border border-emerald-300 text-xs font-bold flex items-center gap-1 transition cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg bg-bodegon/5 text-bodegon hover:bg-bodegon/10 border border-bodegon/35 text-xs font-bold flex items-center gap-1 transition cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Nueva Categoría</span>
@@ -615,28 +615,28 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
 
               {/* Formulario para agregar nueva categoría */}
               {showAddCategoryForm && (
-                <form onSubmit={handleAddCategory} className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
-                  <span className="text-[11px] font-bold text-slate-700 block">Nombre del Nuevo Rubro:</span>
+                <form onSubmit={handleAddCategory} className="p-3 bg-stone-50 rounded-lg border border-stone-200 space-y-2">
+                  <span className="text-[11px] font-bold text-stone-700 block">Nombre del Nuevo Rubro:</span>
                   <div className="flex gap-2">
                     <input
                       type="text"
                       placeholder="Ej: VERDURAS, LACTEOS, EMPAQUES..."
                       value={newCategoryName}
                       onChange={(e) => setNewCategoryName(e.target.value)}
-                      className="flex-1 bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold uppercase focus:outline-none focus:border-[#1c6856]"
+                      className="flex-1 bg-white border border-stone-300 rounded-lg px-2.5 py-1.5 text-xs font-bold uppercase focus:outline-none focus:border-bodegon"
                       autoFocus
                     />
                     <button
                       type="submit"
                       disabled={isSavingCategory}
-                      className="px-3 py-1.5 rounded-lg bg-[#1c6856] text-white text-xs font-bold hover:bg-[#154f42] cursor-pointer disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-lg bg-bodegon text-white text-xs font-bold hover:bg-bodegon-noche cursor-pointer disabled:opacity-50"
                     >
                       {isSavingCategory ? 'Guardando...' : 'Crear'}
                     </button>
                     <button
                       type="button"
                       onClick={() => setShowAddCategoryForm(false)}
-                      className="px-2.5 py-1.5 rounded-lg bg-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-300 cursor-pointer"
+                      className="px-2.5 py-1.5 rounded-lg bg-stone-200 text-stone-600 text-xs font-bold hover:bg-stone-300 cursor-pointer"
                     >
                       Cancelar
                     </button>
@@ -655,8 +655,8 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                       key={cat.category}
                       className={`p-3 rounded-xl border transition ${
                         isFilterActive
-                          ? 'border-[#1c6856] bg-emerald-50/20 shadow-2xs'
-                          : 'border-slate-200 bg-slate-50/40 hover:bg-slate-50'
+                          ? 'border-bodegon bg-bodegon/2 shadow-2xs'
+                          : 'border-stone-200 bg-stone-50/40 hover:bg-stone-50'
                       }`}
                     >
                       {isEditing ? (
@@ -665,7 +665,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                             type="text"
                             value={editingCategoryName}
                             onChange={(e) => setEditingCategoryName(e.target.value)}
-                            className="flex-1 px-2.5 py-1.5 bg-white border border-[#1c6856] rounded-lg text-xs font-bold uppercase text-slate-900 focus:outline-none"
+                            className="flex-1 px-2.5 py-1.5 bg-white border border-bodegon rounded-lg text-xs font-bold uppercase text-stone-900 focus:outline-none"
                             autoFocus
                           />
                           <button
@@ -673,7 +673,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                             onClick={() => handleSaveEdit(cat.category)}
                             disabled={isSavingCategory}
                             title="Guardar nuevo nombre (actualiza historial en Supabase)"
-                            className="p-1.5 rounded-lg bg-[#1c6856] text-white hover:bg-[#154f42] cursor-pointer"
+                            className="p-1.5 rounded-lg bg-bodegon text-white hover:bg-bodegon-noche cursor-pointer"
                           >
                             <Check className="w-4 h-4" />
                           </button>
@@ -681,7 +681,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                             type="button"
                             onClick={() => setEditingCategoryKey(null)}
                             title="Cancelar"
-                            className="p-1.5 rounded-lg bg-slate-200 text-slate-600 hover:bg-slate-300 cursor-pointer"
+                            className="p-1.5 rounded-lg bg-stone-200 text-stone-600 hover:bg-stone-300 cursor-pointer"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -690,22 +690,22 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-xs">
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-mono font-bold text-slate-400">
+                              <span className="text-[10px] font-mono font-bold text-stone-400">
                                 #{idx + 1}
                               </span>
-                              <span className="font-bold text-slate-900 text-xs">
+                              <span className="font-bold text-stone-900 text-xs">
                                 {cat.label}
                               </span>
-                              <span className="text-[10px] text-slate-400 font-mono">
+                              <span className="text-[10px] text-stone-400 font-mono">
                                 ({cat.count} {cat.count === 1 ? 'gasto' : 'gastos'})
                               </span>
                             </div>
 
                             <div className="flex items-center gap-2">
-                              <span className="font-mono font-bold text-slate-900 text-xs">
+                              <span className="font-mono font-bold text-stone-900 text-xs">
                                 C$ {cat.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </span>
-                              <span className="text-[10px] font-mono font-bold text-slate-500">
+                              <span className="text-[10px] font-mono font-bold text-stone-500">
                                 ({cat.percent.toFixed(1)}%)
                               </span>
 
@@ -715,7 +715,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                                   type="button"
                                   onClick={() => handleStartEdit(cat.category)}
                                   title="Renombrar categoría y actualizar todos los gastos"
-                                  className="p-1 rounded text-slate-400 hover:text-[#1c6856] hover:bg-white border border-transparent hover:border-slate-200 transition cursor-pointer"
+                                  className="p-1 rounded text-stone-400 hover:text-bodegon hover:bg-white border border-transparent hover:border-stone-200 transition cursor-pointer"
                                 >
                                   <Edit2 className="w-3.5 h-3.5" />
                                 </button>
@@ -726,7 +726,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                                     setFallbackCategory(currentCategories.find((c) => c !== cat.category) || 'OTROS');
                                   }}
                                   title="Eliminar categoría y reasignar sus gastos"
-                                  className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-white border border-transparent hover:border-slate-200 transition cursor-pointer"
+                                  className="p-1 rounded text-stone-400 hover:text-barro hover:bg-white border border-transparent hover:border-stone-200 transition cursor-pointer"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
@@ -736,8 +736,8 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                                   title={isFilterActive ? 'Quitar filtro' : 'Ver detalle de compras'}
                                   className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition cursor-pointer ${
                                     isFilterActive
-                                      ? 'bg-[#1c6856] text-white border-[#1c6856]'
-                                      : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
+                                      ? 'bg-bodegon text-white border-bodegon'
+                                      : 'bg-white text-stone-600 border-stone-300 hover:border-stone-400'
                                   }`}
                                 >
                                   {isFilterActive ? 'Filtrado' : 'Ver'}
@@ -747,10 +747,10 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                           </div>
 
                           {/* Barra de progreso */}
-                          <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
+                          <div className="w-full h-2 rounded-full bg-stone-200 overflow-hidden">
                             <div
                               style={{ width: `${Math.min(cat.percent, 100)}%` }}
-                              className="h-full bg-[#1c6856] rounded-full transition-all duration-300"
+                              className="h-full bg-bodegon rounded-full transition-all duration-300"
                             ></div>
                           </div>
                         </div>
@@ -760,7 +760,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                 })}
 
                 {filteredCategories.length === 0 && (
-                  <div className="py-8 text-center text-xs text-slate-400">
+                  <div className="py-8 text-center text-xs text-stone-400">
                     No se encontraron rubros que coincidan con la búsqueda.
                   </div>
                 )}
@@ -769,7 +769,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={() => setShowAllCategories((p) => !p)}
-                    className="w-full py-2.5 rounded-xl border border-emerald-300 bg-emerald-50/60 hover:bg-emerald-100/70 text-[#1c6856] text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs mt-2"
+                    className="w-full py-2.5 rounded-xl border border-bodegon/35 bg-bodegon/3 hover:bg-bodegon/7 text-bodegon text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs mt-2"
                   >
                     {showAllCategories ? (
                       <>
@@ -788,30 +788,30 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
             </div>
 
             {/* Columna Derecha: Ranking Top Proveedores */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
+            <div className="bg-white rounded-xl border border-stone-200 p-5 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-stone-100 flex-wrap gap-2">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
                     <Building2 className="w-4 h-4 text-blue-700" />
                     <span>Ranking Top Proveedores</span>
                   </h3>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-stone-500">
                     Proveedores con mayor volumen de compra en el periodo.
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className="relative">
-                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400" />
                     <input
                       type="text"
                       placeholder="Buscar proveedor..."
                       value={vendorSearchTerm}
                       onChange={(e) => setVendorSearchTerm(e.target.value)}
-                      className="pl-8 pr-3 py-1 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-700 w-36 sm:w-44"
+                      className="pl-8 pr-3 py-1 bg-stone-50 border border-stone-300 rounded-lg text-xs font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-blue-700 w-36 sm:w-44"
                     />
                   </div>
-                  <span className="text-xs font-mono font-bold text-slate-500 whitespace-nowrap">
+                  <span className="text-xs font-mono font-bold text-stone-500 whitespace-nowrap">
                     {filteredVendors.length} prov.
                   </span>
                 </div>
@@ -819,36 +819,36 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
 
               <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
                 {displayedVendors.map((ven, idx) => (
-                  <div key={ven.vendor} className="p-3 bg-slate-50/50 rounded-xl border border-slate-200 space-y-1.5">
+                  <div key={ven.vendor} className="p-3 bg-stone-50/50 rounded-xl border border-stone-200 space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2 truncate max-w-[65%]">
                         <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
-                          idx === 0 ? 'bg-amber-100 text-amber-900' :
-                          idx === 1 ? 'bg-slate-200 text-slate-800' :
-                          idx === 2 ? 'bg-amber-50 text-amber-800 border border-amber-200' :
-                          'text-slate-400'
+                          idx === 0 ? 'bg-dorado/20 text-cafe' :
+                          idx === 1 ? 'bg-stone-200 text-stone-800' :
+                          idx === 2 ? 'bg-dorado/10 text-dorado-tinta border border-dorado/40' :
+                          'text-stone-400'
                         }`}>
                           #{idx + 1}
                         </span>
-                        <span className="font-bold text-slate-900 truncate">
+                        <span className="font-bold text-stone-900 truncate">
                           {ven.vendor}
                         </span>
-                        <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-bold shrink-0">
+                        <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 font-bold shrink-0">
                           {ven.mainCategory.replace(/_/g, ' ')}
                         </span>
                       </div>
 
                       <div className="text-right shrink-0">
-                        <span className="font-mono font-bold text-slate-900">
+                        <span className="font-mono font-bold text-stone-900">
                           C$ {ven.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
-                        <span className="text-[10px] font-mono font-bold text-slate-500 ml-1.5">
+                        <span className="text-[10px] font-mono font-bold text-stone-500 ml-1.5">
                           ({ven.percent.toFixed(1)}%)
                         </span>
                       </div>
                     </div>
 
-                    <div className="w-full h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                    <div className="w-full h-1.5 rounded-full bg-stone-200 overflow-hidden">
                       <div
                         style={{ width: `${Math.min(ven.percent, 100)}%` }}
                         className="h-full bg-blue-700 rounded-full transition-all duration-300"
@@ -858,7 +858,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                 ))}
 
                 {displayedVendors.length === 0 && (
-                  <div className="py-8 text-center text-xs text-slate-400">
+                  <div className="py-8 text-center text-xs text-stone-400">
                     No se encontraron proveedores que coincidan con la búsqueda.
                   </div>
                 )}
@@ -887,14 +887,14 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
           </div>
 
           {/* ─── Sección Inferior: Auditoría de Compras & Reclasificación ── */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div className="bg-white rounded-xl border border-stone-200 p-5 shadow-2xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-100">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-[#1c6856]" />
+                <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-bodegon" />
                   <span>Auditoría de Compras & Reclasificación de Rubros</span>
                 </h3>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-stone-500">
                   Si un gasto tiene un rubro incorrecto, cámbialo en el selector y se actualizará al instante en Supabase.
                 </p>
               </div>
@@ -902,20 +902,20 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
               {/* Filtros rápidos */}
               <div className="flex items-center gap-2 flex-wrap">
                 <div className="relative">
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
+                  <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2" />
                   <input
                     type="text"
                     placeholder="Buscar proveedor o concepto..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:outline-none focus:border-[#1c6856] w-56"
+                    className="pl-8 pr-3 py-1.5 bg-stone-50 border border-stone-300 rounded-lg text-xs font-medium focus:outline-none focus:border-bodegon w-56"
                   />
                 </div>
 
                 <select
                   value={selectedCategoryFilter}
                   onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-                  className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:border-[#1c6856]"
+                  className="px-2.5 py-1.5 bg-stone-50 border border-stone-300 rounded-lg text-xs font-bold text-stone-800 focus:outline-none focus:border-bodegon"
                 >
                   <option value="ALL">Todos los Rubros ({expensesList.length})</option>
                   {currentCategories.map((c) => (
@@ -929,7 +929,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={() => setSelectedCategoryFilter('ALL')}
-                    className="text-xs text-[#1c6856] hover:underline font-bold"
+                    className="text-xs text-bodegon hover:underline font-bold"
                   >
                     Limpiar
                   </button>
@@ -939,18 +939,18 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
 
             {/* Tabla de Compras */}
             {isLoadingExpenses ? (
-              <div className="py-8 text-center text-slate-400 text-xs">
+              <div className="py-8 text-center text-stone-400 text-xs">
                 Cargando listado de gastos...
               </div>
             ) : filteredExpenses.length === 0 ? (
-              <div className="py-8 text-center text-slate-400 text-xs">
+              <div className="py-8 text-center text-stone-400 text-xs">
                 No hay compras que coincidan con los filtros aplicados.
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 text-slate-400 text-[10px] uppercase font-bold tracking-wider">
+                    <tr className="border-b border-stone-200 text-stone-400 text-[10px] uppercase font-bold tracking-wider">
                       <th className="py-2 px-3">Fecha / Hora</th>
                       <th className="py-2 px-3">Proveedor</th>
                       <th className="py-2 px-3">Concepto / Detalle</th>
@@ -959,21 +959,21 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                       <th className="py-2 px-3 text-center">Categoría Asignada (Cambiar en vivo)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-stone-100">
                     {filteredExpenses.map((exp) => {
                       const isSaving = reclassifyingId === exp.id;
                       const isSuccess = reclassifiedSuccessId === exp.id;
                       const currentCat = (exp.categoria || 'OTROS').toUpperCase().trim();
 
                       return (
-                        <tr key={exp.id} className="hover:bg-slate-50/80 transition">
-                          <td className="py-2.5 px-3 font-mono text-slate-500 whitespace-nowrap">
+                        <tr key={exp.id} className="hover:bg-stone-50/80 transition">
+                          <td className="py-2.5 px-3 font-mono text-stone-500 whitespace-nowrap">
                             {exp.fecha_hora ? exp.fecha_hora.slice(0, 16).replace('T', ' ') : '—'}
                           </td>
-                          <td className="py-2.5 px-3 font-bold text-slate-900 whitespace-nowrap">
+                          <td className="py-2.5 px-3 font-bold text-stone-900 whitespace-nowrap">
                             {exp.proveedor || 'Sin Proveedor'}
                           </td>
-                          <td className="py-2.5 px-3 text-slate-600 max-w-xs truncate" title={exp.concepto}>
+                          <td className="py-2.5 px-3 text-stone-600 max-w-xs truncate" title={exp.concepto}>
                             {exp.concepto || '—'}
                           </td>
                           <td className="py-2.5 px-3 whitespace-nowrap">
@@ -982,12 +982,12 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                                 ? 'bg-blue-50 text-blue-800 border border-blue-200'
                                 : exp.metodo_pago === 'TARJETA'
                                 ? 'bg-purple-50 text-purple-800 border border-purple-200'
-                                : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                : 'bg-bodegon/5 text-bodegon border border-bodegon/20'
                             }`}>
                               {exp.metodo_pago === 'TRANSFERENCIA' ? 'Banco' : exp.metodo_pago === 'TARJETA' ? 'Tarjeta' : 'Efectivo'}
                             </span>
                           </td>
-                          <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
+                          <td className="py-2.5 px-3 text-right font-mono font-bold text-stone-900 whitespace-nowrap">
                             C$ {Number(exp.monto || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                           <td className="py-2.5 px-3 text-center whitespace-nowrap">
@@ -998,8 +998,8 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                                 onChange={(e) => handleReassignExpense(exp.id, e.target.value)}
                                 className={`text-[11px] font-bold px-2 py-1 rounded-lg border focus:outline-none transition cursor-pointer ${
                                   isSuccess
-                                    ? 'border-emerald-500 bg-emerald-50 text-emerald-900'
-                                    : 'border-slate-300 bg-white text-slate-800 hover:border-[#1c6856]'
+                                    ? 'border-bodegon bg-bodegon/5 text-bodegon-noche'
+                                    : 'border-stone-300 bg-white text-stone-800 hover:border-bodegon'
                                 }`}
                               >
                                 {currentCategories.map((c) => (
@@ -1008,8 +1008,8 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                                   </option>
                                 ))}
                               </select>
-                              {isSaving && <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#1c6856]" />}
-                              {isSuccess && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                              {isSaving && <RefreshCw className="w-3.5 h-3.5 animate-spin text-bodegon" />}
+                              {isSuccess && <CheckCircle2 className="w-3.5 h-3.5 text-bodegon" />}
                             </div>
                           </td>
                         </tr>
@@ -1025,27 +1025,27 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
 
       {/* ─── Modal Confirmar Eliminación de Categoría ───────────────────── */}
       {categoryToDelete && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-2xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
-            <div className="flex items-center gap-3 text-rose-600 pb-2 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-stone-200 space-y-4">
+            <div className="flex items-center gap-3 text-barro pb-2 border-b border-stone-100">
               <AlertTriangle className="w-6 h-6 shrink-0" />
-              <h3 className="font-bold text-base text-slate-900">
+              <h3 className="font-bold text-base text-stone-900">
                 Eliminar Categoría: {categoryToDelete.replace(/_/g, ' ')}
               </h3>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-xs text-stone-600 leading-relaxed">
               ¿Estás seguro de que deseas eliminar este rubro? Para no perder los registros contables históricos, selecciona a qué categoría deseas reasignar todas las compras asociadas:
             </p>
 
-            <div className="space-y-1.5 bg-slate-50 p-3 rounded-lg border border-slate-200">
-              <label className="text-[11px] font-bold text-slate-700 block">
+            <div className="space-y-1.5 bg-stone-50 p-3 rounded-lg border border-stone-200">
+              <label className="text-[11px] font-bold text-stone-700 block">
                 Reasignar compras históricas a:
               </label>
               <select
                 value={fallbackCategory}
                 onChange={(e) => setFallbackCategory(e.target.value)}
-                className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#1c6856]"
+                className="w-full bg-white border border-stone-300 rounded-lg p-2 text-xs font-bold text-stone-900 focus:outline-none focus:border-bodegon"
               >
                 {currentCategories
                   .filter((c) => c !== categoryToDelete)
@@ -1061,7 +1061,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => setCategoryToDelete(null)}
-                className="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold transition cursor-pointer"
+                className="px-4 py-2 rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-200 text-xs font-bold transition cursor-pointer"
               >
                 Cancelar
               </button>
@@ -1069,7 +1069,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={isSavingCategory}
-                className="px-4 py-2 rounded-lg bg-rose-600 text-white hover:bg-rose-700 text-xs font-bold transition cursor-pointer disabled:opacity-50"
+                className="px-4 py-2 rounded-lg bg-barro text-white hover:bg-barro text-xs font-bold transition cursor-pointer disabled:opacity-50"
               >
                 {isSavingCategory ? 'Eliminando...' : 'Confirmar Eliminación'}
               </button>

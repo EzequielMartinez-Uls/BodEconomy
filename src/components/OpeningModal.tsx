@@ -478,7 +478,7 @@ export const OpeningModal: React.FC<Props> = ({
     {
       id: 'bac',
       name: 'BAC Credomatic',
-      icon: <CreditCard className="w-3.5 h-3.5 text-red-600" />,
+      icon: <CreditCard className="w-3.5 h-3.5 text-barro" />,
       reported: repBAC,
       val: vouchersBAC,
       setVal: setVouchersBAC,
@@ -496,7 +496,7 @@ export const OpeningModal: React.FC<Props> = ({
     {
       id: 'banpro',
       name: 'Banpro Promerica',
-      icon: <CreditCard className="w-3.5 h-3.5 text-emerald-600" />,
+      icon: <CreditCard className="w-3.5 h-3.5 text-bodegon" />,
       reported: repBanpro,
       val: vouchersBanpro,
       setVal: setVouchersBanpro,
@@ -505,7 +505,7 @@ export const OpeningModal: React.FC<Props> = ({
     {
       id: 'lafise',
       name: 'Banco LAFISE',
-      icon: <CreditCard className="w-3.5 h-3.5 text-green-700" />,
+      icon: <CreditCard className="w-3.5 h-3.5 text-bodegon" />,
       reported: repLafise,
       val: vouchersLafise,
       setVal: setVouchersLafise,
@@ -514,7 +514,7 @@ export const OpeningModal: React.FC<Props> = ({
     {
       id: 'pedidosya',
       name: 'PedidosYa',
-      icon: <Truck className="w-3.5 h-3.5 text-rose-600" />,
+      icon: <Truck className="w-3.5 h-3.5 text-barro" />,
       reported: repPedidosYa,
       val: reportPedidosYa,
       setVal: setReportPedidosYa,
@@ -523,7 +523,7 @@ export const OpeningModal: React.FC<Props> = ({
     {
       id: 'loyverse',
       name: 'Efectivo',
-      icon: <Receipt className="w-3.5 h-3.5 text-amber-600" />,
+      icon: <Receipt className="w-3.5 h-3.5 text-dorado-tinta" />,
       reported: repLoyverseCash,
       val: reportLoyverseCash,
       setVal: setReportLoyverseCash,
@@ -541,23 +541,23 @@ export const OpeningModal: React.FC<Props> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white border border-slate-200 rounded-xl w-full max-w-3xl max-h-[94vh] flex flex-col shadow-xl overflow-hidden animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 overflow-y-auto">
+      <div className="bg-white border border-stone-200 rounded-xl w-full max-w-3xl max-h-[94vh] flex flex-col shadow-xl overflow-hidden animate-in zoom-in-95 duration-150">
         
         {/* Header con Indicador de 3 Pasos */}
-        <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/90 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-stone-200 bg-stone-50/90 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[#1c6856] text-white flex items-center justify-center shadow-xs">
+            <div className="w-9 h-9 rounded-lg bg-bodegon text-white flex items-center justify-center shadow-xs">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <h2 className="text-base font-bold text-stone-900 flex items-center gap-2">
                 <span>Apertura del Día</span>
-                <span className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">
+                <span className="text-[11px] px-2 py-0.5 rounded-md bg-bodegon/5 text-bodegon border border-bodegon/20 font-bold">
                   Paso {step} de 3
                 </span>
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-stone-500">
                 {step === 1 && 'Paso 1: Arqueo y corroboración física de Caja Chica'}
                 {step === 2 && 'Paso 2: Conteo de gaveta general & ganancias de ayer'}
                 {step === 3 && 'Paso 3: Distribución de dinero para Caja General y Caja Chica'}
@@ -566,27 +566,27 @@ export const OpeningModal: React.FC<Props> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+            className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Barra de Progreso de 3 Pasos */}
-        <div className="grid grid-cols-3 border-b border-slate-200 bg-white text-xs font-bold select-none divide-x divide-slate-100">
+        <div className="grid grid-cols-3 border-b border-stone-200 bg-white text-xs font-bold select-none divide-x divide-stone-100">
           <button
             type="button"
             onClick={() => setStep(1)}
             className={`py-3 px-3 flex items-center justify-center gap-2 border-b-2 transition cursor-pointer ${
               step === 1
-                ? 'border-[#1c6856] text-[#1c6856] bg-emerald-50/30'
+                ? 'border-bodegon text-bodegon bg-bodegon/2'
                 : isPettyVerified
-                ? 'border-transparent text-emerald-800 hover:bg-slate-50'
-                : 'border-transparent text-slate-400'
+                ? 'border-transparent text-bodegon hover:bg-stone-50'
+                : 'border-transparent text-stone-400'
             }`}
           >
             <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-mono font-bold ${
-              step === 1 ? 'bg-[#1c6856] text-white' : isPettyVerified ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
+              step === 1 ? 'bg-bodegon text-white' : isPettyVerified ? 'bg-bodegon/10 text-bodegon' : 'bg-stone-100 text-stone-500'
             }`}>
               1
             </span>
@@ -599,14 +599,14 @@ export const OpeningModal: React.FC<Props> = ({
             disabled={!isPettyVerified}
             className={`py-3 px-3 flex items-center justify-center gap-2 border-b-2 transition ${
               step === 2
-                ? 'border-[#1c6856] text-[#1c6856] bg-emerald-50/30'
+                ? 'border-bodegon text-bodegon bg-bodegon/2'
                 : !isPettyVerified
-                ? 'border-transparent text-slate-300 cursor-not-allowed'
-                : 'border-transparent text-slate-600 hover:bg-slate-50 cursor-pointer'
+                ? 'border-transparent text-stone-300 cursor-not-allowed'
+                : 'border-transparent text-stone-600 hover:bg-stone-50 cursor-pointer'
             }`}
           >
             <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-mono font-bold ${
-              step === 2 ? 'bg-[#1c6856] text-white' : 'bg-slate-100 text-slate-500'
+              step === 2 ? 'bg-bodegon text-white' : 'bg-stone-100 text-stone-500'
             }`}>
               2
             </span>
@@ -619,14 +619,14 @@ export const OpeningModal: React.FC<Props> = ({
             disabled={!isPettyVerified || totalNIO === 0}
             className={`py-3 px-3 flex items-center justify-center gap-2 border-b-2 transition ${
               step === 3
-                ? 'border-[#1c6856] text-[#1c6856] bg-emerald-50/30'
+                ? 'border-bodegon text-bodegon bg-bodegon/2'
                 : (!isPettyVerified || totalNIO === 0)
-                ? 'border-transparent text-slate-300 cursor-not-allowed'
-                : 'border-transparent text-slate-600 hover:bg-slate-50 cursor-pointer'
+                ? 'border-transparent text-stone-300 cursor-not-allowed'
+                : 'border-transparent text-stone-600 hover:bg-stone-50 cursor-pointer'
             }`}
           >
             <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-mono font-bold ${
-              step === 3 ? 'bg-[#1c6856] text-white' : 'bg-slate-100 text-slate-500'
+              step === 3 ? 'bg-bodegon text-white' : 'bg-stone-100 text-stone-500'
             }`}>
               3
             </span>
@@ -635,47 +635,47 @@ export const OpeningModal: React.FC<Props> = ({
         </div>
 
         {/* Contenido Principal por Pasos */}
-        <div className="p-6 overflow-y-auto space-y-5 flex-1 bg-slate-50/40">
+        <div className="p-6 overflow-y-auto space-y-5 flex-1 bg-stone-50/40">
 
           {/* ========================================================================= */}
           {/* PASO 1: ARQUEO Y CORROBORACIÓN DE CAJA CHICA */}
           {/* ========================================================================= */}
           {step === 1 && (
             <div className="space-y-4 animate-in fade-in duration-150">
-              <div className="bg-white rounded-xl p-5 border border-slate-200 space-y-4">
-                <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                  <div className="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold">
-                    <ShoppingCart className="w-5 h-5 text-[#1c6856]" />
+              <div className="bg-white rounded-xl p-5 border border-stone-200 space-y-4">
+                <div className="flex items-center gap-3 pb-3 border-b border-stone-100">
+                  <div className="w-9 h-9 rounded-lg bg-stone-100 text-stone-700 flex items-center justify-center font-bold">
+                    <ShoppingCart className="w-5 h-5 text-bodegon" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">
+                    <h3 className="text-sm font-bold text-stone-900">
                       Corroboración Física de Caja Chica
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-stone-500">
                       Cuenta el efectivo que quedó en el sobre o gaveta de Caja Chica antes de abrir el día.
                     </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 space-y-1">
-                    <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
+                  <div className="bg-stone-50 rounded-lg p-4 border border-stone-200 space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-stone-500 tracking-wider">
                       Remanente Esperado de Ayer
                     </span>
-                    <div className="text-2xl font-bold text-slate-900 font-mono">
+                    <div className="text-2xl font-bold text-stone-900 font-mono">
                       C$ {expectedPettyRemaining.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                     </div>
-                    <span className="text-[11px] text-slate-500 block">
+                    <span className="text-[11px] text-stone-500 block">
                       Saldo al cierre de la última jornada
                     </span>
                   </div>
 
-                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-slate-700 tracking-wider block">
+                  <div className="bg-stone-50 rounded-lg p-4 border border-stone-200 space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase text-stone-700 tracking-wider block">
                       Efectivo Físico Contado en Mano (C$) *
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3 top-2 text-xs font-bold text-slate-400">C$</span>
+                      <span className="absolute left-3 top-2 text-xs font-bold text-stone-400">C$</span>
                       <input
                         type="number"
                         step="0.01"
@@ -686,10 +686,10 @@ export const OpeningModal: React.FC<Props> = ({
                           setPettyPhysicalCountInput(e.target.value);
                           setIsPettyVerified(false);
                         }}
-                        className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-white border border-slate-300 text-base font-bold font-mono text-slate-900 focus:outline-none focus:border-[#1c6856] focus:ring-1 focus:ring-[#1c6856]"
+                        className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-white border border-stone-300 text-base font-bold font-mono text-stone-900 focus:outline-none focus:border-bodegon focus:ring-1 focus:ring-bodegon"
                       />
                     </div>
-                    <span className="text-[10px] text-slate-500">
+                    <span className="text-[10px] text-stone-500">
                       Digita lo que tienes físicamente en la cajita o sobre
                     </span>
                   </div>
@@ -698,16 +698,16 @@ export const OpeningModal: React.FC<Props> = ({
                 {/* Semáforo de Cuadre de Caja Chica */}
                 <div className={`p-3 rounded-lg border text-xs font-semibold flex items-center justify-between ${
                   isPettySquare
-                    ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                    ? 'bg-bodegon/5 border-bodegon/35 text-bodegon-noche'
                     : pettyDiff < 0
-                    ? 'bg-rose-50 border-rose-300 text-rose-900'
+                    ? 'bg-barro/5 border-barro/40 text-barro'
                     : 'bg-blue-50 border-blue-300 text-blue-900'
                 }`}>
                   <div className="flex items-center gap-2">
                     {isPettySquare ? (
-                      <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <CheckCircle className="w-4 h-4 text-bodegon shrink-0" />
                     ) : (
-                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                      <AlertTriangle className="w-4 h-4 text-dorado-tinta shrink-0" />
                     )}
                     <span>
                       {isPettySquare
@@ -723,8 +723,8 @@ export const OpeningModal: React.FC<Props> = ({
                     onClick={() => setIsPettyVerified(true)}
                     className={`px-3 py-1 rounded-md text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
                       isPettyVerified
-                        ? 'bg-[#1c6856] text-white shadow-xs'
-                        : 'bg-white border border-slate-300 text-slate-800 hover:bg-slate-100'
+                        ? 'bg-bodegon text-white shadow-xs'
+                        : 'bg-white border border-stone-300 text-stone-800 hover:bg-stone-100'
                     }`}
                   >
                     {isPettyVerified ? 'Corroborado' : 'Marcar como Conforme'}
@@ -740,7 +740,7 @@ export const OpeningModal: React.FC<Props> = ({
                     setIsPettyVerified(true);
                     setStep(2);
                   }}
-                  className="px-5 py-2.5 rounded-lg bg-[#1c6856] hover:bg-[#154f42] text-white font-bold text-xs shadow-sm flex items-center gap-2 cursor-pointer transition"
+                  className="px-5 py-2.5 rounded-lg bg-bodegon hover:bg-bodegon-noche text-white font-bold text-xs shadow-sm flex items-center gap-2 cursor-pointer transition"
                 >
                   <span>Paso 2: Conteo de Gaveta General</span>
                   <ArrowRight className="w-4 h-4" />
@@ -755,11 +755,11 @@ export const OpeningModal: React.FC<Props> = ({
           {step === 2 && (
             <div className="space-y-4 animate-in fade-in duration-150">
               {/* Parámetros Básicos */}
-              <div className="bg-white rounded-xl p-4 border border-slate-200">
+              <div className="bg-white rounded-xl p-4 border border-stone-200">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                    <label className="block text-[11px] font-bold text-stone-600 uppercase tracking-wider mb-1 flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-stone-400" />
                       <span>Fecha de la Jornada</span>
                     </label>
                     <input
@@ -768,19 +768,19 @@ export const OpeningModal: React.FC<Props> = ({
                       max={todayStr}
                       value={shiftDate}
                       onChange={(e) => setShiftDate(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:border-[#1c6856]"
+                      className="w-full bg-stone-50 border border-stone-300 rounded-lg px-3 py-1.5 text-xs font-bold text-stone-800 focus:bg-white focus:outline-none focus:border-bodegon"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 flex items-center gap-1">
-                      <UserCheck className="w-3.5 h-3.5 text-[#1c6856]" />
+                    <label className="block text-[11px] font-bold text-stone-600 uppercase tracking-wider mb-1 flex items-center gap-1">
+                      <UserCheck className="w-3.5 h-3.5 text-bodegon" />
                       <span>Responsable Apertura</span>
                     </label>
                     <select
                       value={openerName}
                       onChange={(e) => setOpenerName(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:border-[#1c6856]"
+                      className="w-full bg-stone-50 border border-stone-300 rounded-lg px-3 py-1.5 text-xs font-bold text-stone-800 focus:bg-white focus:outline-none focus:border-bodegon"
                     >
                       {availableAdmins.map((adm) => (
                         <option key={adm} value={adm}>
@@ -791,8 +791,8 @@ export const OpeningModal: React.FC<Props> = ({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 flex items-center gap-1">
-                      <DollarSign className="w-3.5 h-3.5 text-[#1c6856]" />
+                    <label className="block text-[11px] font-bold text-stone-600 uppercase tracking-wider mb-1 flex items-center gap-1">
+                      <DollarSign className="w-3.5 h-3.5 text-bodegon" />
                       <span>Tasa de Cambio</span>
                     </label>
                     <input
@@ -800,18 +800,18 @@ export const OpeningModal: React.FC<Props> = ({
                       step="0.01"
                       value={exchangeRate}
                       onChange={(e) => setExchangeRate(parseFloat(e.target.value) || defaultExchangeRate)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-mono font-bold text-slate-800 focus:bg-white focus:outline-none focus:border-[#1c6856]"
+                      className="w-full bg-stone-50 border border-stone-300 rounded-lg px-3 py-1.5 text-xs font-mono font-bold text-stone-800 focus:bg-white focus:outline-none focus:border-bodegon"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Conteo de Billetes y Monedas */}
-              <div className="bg-white rounded-xl p-5 border border-slate-200 space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="bg-white rounded-xl p-5 border border-stone-200 space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-stone-100">
                   <div className="flex items-center gap-2">
-                    <Banknote className="w-4 h-4 text-[#1c6856]" />
-                    <h3 className="text-sm font-bold text-slate-900">
+                    <Banknote className="w-4 h-4 text-bodegon" />
+                    <h3 className="text-sm font-bold text-stone-900">
                       Conteo Físico de Billetes y Monedas en Gaveta
                     </h3>
                   </div>
@@ -819,17 +819,17 @@ export const OpeningModal: React.FC<Props> = ({
                     <button
                       type="button"
                       onClick={handleCopyFromPrevious}
-                      className="px-2.5 py-1 text-[11px] font-bold bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-md transition border border-slate-300 flex items-center gap-1 cursor-pointer"
+                      className="px-2.5 py-1 text-[11px] font-bold bg-stone-50 hover:bg-stone-100 text-stone-700 rounded-md transition border border-stone-300 flex items-center gap-1 cursor-pointer"
                       title="Copiar denominaciones de anoche"
                     >
-                      <RotateCcw className="w-3 h-3 text-slate-500" />
+                      <RotateCcw className="w-3 h-3 text-stone-500" />
                       <span>Copiar de anoche</span>
                     </button>
                     {totalEquivNIO > 0 && (
                       <button
                         type="button"
                         onClick={handleResetCount}
-                        className="px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-md transition border border-rose-200 cursor-pointer"
+                        className="px-2.5 py-1 text-[11px] font-bold text-barro bg-barro/5 hover:bg-barro/10 rounded-md transition border border-barro/25 cursor-pointer"
                       >
                         Limpiar
                       </button>
@@ -849,30 +849,30 @@ export const OpeningModal: React.FC<Props> = ({
                 />
 
                 {/* Resumen del Conteo Físico */}
-                <div className="p-3 rounded-lg border bg-slate-50 border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="p-3 rounded-lg border bg-stone-50 border-stone-200 flex flex-wrap items-center justify-between gap-3 text-xs">
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Total Córdobas (C$)</span>
-                    <strong className="text-base font-bold text-slate-900 font-mono">
+                    <span className="text-[10px] uppercase font-bold text-stone-500 block">Total Córdobas (C$)</span>
+                    <strong className="text-base font-bold text-stone-900 font-mono">
                       C$ {totalNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                     </strong>
                   </div>
 
                   {totalUSD > 0 && (
                     <div>
-                      <span className="text-[10px] uppercase font-bold text-emerald-700 block">Dólares (USD)</span>
-                      <strong className="text-base font-bold text-emerald-700 font-mono">
-                        $ {totalUSD.toFixed(2)} USD <span className="text-xs text-emerald-600 font-normal">(≈ C$ {(totalUSD * (exchangeRate || 36)).toLocaleString('es-NI', { minimumFractionDigits: 2 })})</span>
+                      <span className="text-[10px] uppercase font-bold text-bodegon block">Dólares (USD)</span>
+                      <strong className="text-base font-bold text-bodegon font-mono">
+                        $ {totalUSD.toFixed(2)} USD <span className="text-xs text-bodegon font-normal">(≈ C$ {(totalUSD * (exchangeRate || 36)).toLocaleString('es-NI', { minimumFractionDigits: 2 })})</span>
                       </strong>
                     </div>
                   )}
 
                   <div className={`px-2.5 py-1 rounded-md border font-bold text-xs ${
                     !isCountInitiated
-                      ? 'bg-amber-50 border-amber-300 text-amber-900'
+                      ? 'bg-dorado/10 border-dorado/60 text-cafe'
                       : isMatchWithPrevious
-                      ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                      ? 'bg-bodegon/5 border-bodegon/35 text-bodegon-noche'
                       : differenceWithPrevious < 0
-                      ? 'bg-rose-50 border-rose-300 text-rose-900'
+                      ? 'bg-barro/5 border-barro/40 text-barro'
                       : 'bg-blue-50 border-blue-300 text-blue-900'
                   }`}>
                     {!isCountInitiated ? (
@@ -889,34 +889,34 @@ export const OpeningModal: React.FC<Props> = ({
               </div>
 
               {/* Auditoría de Canales de Venta & Casilla de Pagos y Salidas */}
-              <div className="bg-white rounded-xl p-5 border border-slate-200 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
+              <div className="bg-white rounded-xl p-5 border border-stone-200 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-stone-100 flex-wrap gap-2">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-[#1c6856]" />
+                    <h3 className="text-sm font-bold text-stone-900 flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-bodegon" />
                       <span>Auditoría de Ventas de Ayer & Pagos y Salidas</span>
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-stone-500">
                       Corrobora comprobantes POS y la casilla "Pagos y Salidas" del reporte de Loyverse.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={handleCopySalesFromPrevious}
-                    className="px-2.5 py-1 text-xs font-bold bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-md transition border border-slate-300 cursor-pointer"
+                    className="px-2.5 py-1 text-xs font-bold bg-stone-50 hover:bg-stone-100 text-stone-700 rounded-md transition border border-stone-300 cursor-pointer"
                   >
                     Copiar cifras de anoche
                   </button>
                 </div>
 
                 {/* Casilla Destacada: Pagos y Salidas Loyverse */}
-                <div className="p-3.5 bg-amber-50/70 border border-amber-200 rounded-lg space-y-2">
+                <div className="p-3.5 bg-dorado/7 border border-dorado/40 rounded-lg space-y-2">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <span className="text-xs font-bold text-amber-950 uppercase tracking-wide flex items-center gap-1.5">
-                        <Receipt className="w-4 h-4 text-amber-700" /> Casilla: Pagos y Salidas (Reporte de Loyverse)
+                      <span className="text-xs font-bold text-cafe uppercase tracking-wide flex items-center gap-1.5">
+                        <Receipt className="w-4 h-4 text-dorado-tinta" /> Casilla: Pagos y Salidas (Reporte de Loyverse)
                       </span>
-                      <p className="text-[11px] text-amber-800 mt-0.5">
+                      <p className="text-[11px] text-dorado-tinta mt-0.5">
                         Monto retirado de gaveta ayer según el reporte de Loyverse. Se suma a las ventas en <strong>Efectivo</strong> para calcular el <strong>Efectivo Generado del día anterior</strong>.
                       </p>
                     </div>
@@ -924,7 +924,7 @@ export const OpeningModal: React.FC<Props> = ({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center pt-1">
                     <div className="relative">
-                      <span className="absolute left-3 top-2 text-xs font-bold text-amber-600">C$</span>
+                      <span className="absolute left-3 top-2 text-xs font-bold text-dorado-tinta">C$</span>
                       <input
                         type="number"
                         step="0.01"
@@ -932,16 +932,16 @@ export const OpeningModal: React.FC<Props> = ({
                         placeholder="0.00"
                         value={loyversePaidOutInput}
                         onChange={(e) => setLoyversePaidOutInput(e.target.value)}
-                        className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-white border border-amber-300 text-sm font-bold font-mono text-amber-950 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-white border border-dorado/60 text-sm font-bold font-mono text-cafe focus:outline-none focus:ring-1 focus:ring-dorado"
                       />
                     </div>
 
-                    <div className="bg-white/90 rounded-md p-2 border border-amber-200 text-xs font-mono space-y-0.5">
-                      <div className="text-[10px] text-slate-500 uppercase font-bold">Fórmula de Efectivo Generado Ayer:</div>
-                      <div className="text-slate-700 text-[11px]">
+                    <div className="bg-white/90 rounded-md p-2 border border-dorado/40 text-xs font-mono space-y-0.5">
+                      <div className="text-[10px] text-stone-500 uppercase font-bold">Fórmula de Efectivo Generado Ayer:</div>
+                      <div className="text-stone-700 text-[11px]">
                         Efectivo: C$ {efectivoVentasAyer.toFixed(2)} + Pagos/Salidas: C$ {loyversePaidOut.toFixed(2)}
                       </div>
-                      <div className="text-emerald-700 font-bold text-xs pt-0.5">
+                      <div className="text-bodegon font-bold text-xs pt-0.5">
                         = Efectivo Generado Ayer: C$ {efectivoGeneradoRealAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </div>
                     </div>
@@ -953,9 +953,9 @@ export const OpeningModal: React.FC<Props> = ({
                   {channelsAuditConfig.map((ch) => (
                     <div
                       key={ch.id}
-                      className="p-3 rounded-lg border bg-slate-50/80 border-slate-200 space-y-1.5 text-xs"
+                      className="p-3 rounded-lg border bg-stone-50/80 border-stone-200 space-y-1.5 text-xs"
                     >
-                      <div className="flex items-center justify-between font-bold text-slate-800">
+                      <div className="flex items-center justify-between font-bold text-stone-800">
                         <div className="flex items-center gap-1.5">
                           {ch.icon}
                           <span>{ch.name}</span>
@@ -963,26 +963,26 @@ export const OpeningModal: React.FC<Props> = ({
                         <button
                           type="button"
                           onClick={() => ch.setVal(String(ch.reported))}
-                          className="text-[10px] text-slate-400 hover:text-[#1c6856] underline cursor-pointer"
+                          className="text-[10px] text-stone-400 hover:text-bodegon underline cursor-pointer"
                         >
                           Copiar
                         </button>
                       </div>
 
-                      <div className="flex justify-between text-[11px] text-slate-500 font-mono">
+                      <div className="flex justify-between text-[11px] text-stone-500 font-mono">
                         <span>Reportado:</span>
-                        <span className="font-bold text-slate-700">C$ {ch.reported.toFixed(2)}</span>
+                        <span className="font-bold text-stone-700">C$ {ch.reported.toFixed(2)}</span>
                       </div>
 
                       <div className="relative">
-                        <span className="absolute left-2.5 top-1.5 text-[11px] font-bold text-slate-400">C$</span>
+                        <span className="absolute left-2.5 top-1.5 text-[11px] font-bold text-stone-400">C$</span>
                         <input
                           type="number"
                           step="0.01"
                           placeholder={ch.reported.toFixed(2)}
                           value={ch.val}
                           onChange={(e) => ch.setVal(e.target.value)}
-                          className="w-full bg-white border border-slate-300 rounded-md pl-7 pr-2 py-1 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-[#1c6856]"
+                          className="w-full bg-white border border-stone-300 rounded-md pl-7 pr-2 py-1 text-xs font-mono font-bold text-stone-800 focus:outline-none focus:border-bodegon"
                         />
                       </div>
                     </div>
@@ -991,14 +991,14 @@ export const OpeningModal: React.FC<Props> = ({
               </div>
 
               {/* Desglose de Gastos de Ayer & Ganancia Neta (Excel Original) */}
-              <div className="bg-white rounded-xl p-5 border border-slate-200 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
+              <div className="bg-white rounded-xl p-5 border border-stone-200 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-stone-100 flex-wrap gap-2">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                      <FileSpreadsheet className="w-4 h-4 text-[#1c6856]" />
+                    <h3 className="text-sm font-bold text-stone-900 flex items-center gap-1.5">
+                      <FileSpreadsheet className="w-4 h-4 text-bodegon" />
                       <span>Gastos de Ayer & Rendimiento Contable (Excel Original)</span>
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-stone-500">
                       Desglose de compras en efectivo (caja chica), tarjeta/transferencias y propina entregada.
                     </p>
                   </div>
@@ -1009,7 +1009,7 @@ export const OpeningModal: React.FC<Props> = ({
                       setReportTransferExpensesAyer(String(initialTransferExpensesAyer));
                       setReportTipsExpensesAyer(String(initialTipsAyer));
                     }}
-                    className="px-2.5 py-1 text-xs font-bold bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-md transition border border-slate-300 cursor-pointer"
+                    className="px-2.5 py-1 text-xs font-bold bg-stone-50 hover:bg-stone-100 text-stone-700 rounded-md transition border border-stone-300 cursor-pointer"
                   >
                     Copiar cifras registradas
                   </button>
@@ -1018,41 +1018,41 @@ export const OpeningModal: React.FC<Props> = ({
                 {/* Grid de 3 tarjetas de Gastos de Ayer */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {/* 1. Compras / Gastos en Efectivo (Caja Chica) */}
-                  <div className="p-3 rounded-lg border bg-slate-50/80 border-slate-200 space-y-1.5 text-xs">
-                    <div className="flex items-center justify-between font-bold text-slate-800">
+                  <div className="p-3 rounded-lg border bg-stone-50/80 border-stone-200 space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between font-bold text-stone-800">
                       <div className="flex items-center gap-1.5">
-                        <Coins className="w-3.5 h-3.5 text-amber-600" />
+                        <Coins className="w-3.5 h-3.5 text-dorado-tinta" />
                         <span>Gastos Efectivo (Caja Chica)</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => setReportCashExpensesAyer(String(initialCashExpensesAyer))}
-                        className="text-[10px] text-slate-400 hover:text-[#1c6856] underline cursor-pointer"
+                        className="text-[10px] text-stone-400 hover:text-bodegon underline cursor-pointer"
                       >
                         Copiar
                       </button>
                     </div>
-                    <div className="flex justify-between text-[11px] text-slate-500 font-mono">
+                    <div className="flex justify-between text-[11px] text-stone-500 font-mono">
                       <span>Registrado:</span>
-                      <span className="font-bold text-slate-700">C$ {initialCashExpensesAyer.toFixed(2)}</span>
+                      <span className="font-bold text-stone-700">C$ {initialCashExpensesAyer.toFixed(2)}</span>
                     </div>
                     <div className="relative">
-                      <span className="absolute left-2.5 top-1.5 text-[11px] font-bold text-slate-400">C$</span>
+                      <span className="absolute left-2.5 top-1.5 text-[11px] font-bold text-stone-400">C$</span>
                       <input
                         type="number"
                         step="0.01"
                         placeholder={initialCashExpensesAyer.toFixed(2)}
                         value={reportCashExpensesAyer}
                         onChange={(e) => setReportCashExpensesAyer(e.target.value)}
-                        className="w-full bg-white border border-slate-300 rounded-md pl-7 pr-2 py-1 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-[#1c6856]"
+                        className="w-full bg-white border border-stone-300 rounded-md pl-7 pr-2 py-1 text-xs font-mono font-bold text-stone-800 focus:outline-none focus:border-bodegon"
                       />
                     </div>
-                    <span className="text-[10px] text-slate-400 block">Compras del día en efectivo</span>
+                    <span className="text-[10px] text-stone-400 block">Compras del día en efectivo</span>
                   </div>
 
                   {/* 2. Gastos Tarjeta / Transferencia */}
-                  <div className="p-3 rounded-lg border bg-slate-50/80 border-slate-200 space-y-1.5 text-xs">
-                    <div className="flex items-center justify-between font-bold text-slate-800">
+                  <div className="p-3 rounded-lg border bg-stone-50/80 border-stone-200 space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between font-bold text-stone-800">
                       <div className="flex items-center gap-1.5">
                         <CreditCard className="w-3.5 h-3.5 text-blue-600" />
                         <span>Tarjeta / Transferencia</span>
@@ -1060,120 +1060,120 @@ export const OpeningModal: React.FC<Props> = ({
                       <button
                         type="button"
                         onClick={() => setReportTransferExpensesAyer(String(initialTransferExpensesAyer))}
-                        className="text-[10px] text-slate-400 hover:text-[#1c6856] underline cursor-pointer"
+                        className="text-[10px] text-stone-400 hover:text-bodegon underline cursor-pointer"
                       >
                         Copiar
                       </button>
                     </div>
-                    <div className="flex justify-between text-[11px] text-slate-500 font-mono">
+                    <div className="flex justify-between text-[11px] text-stone-500 font-mono">
                       <span>Registrado:</span>
-                      <span className="font-bold text-slate-700">C$ {initialTransferExpensesAyer.toFixed(2)}</span>
+                      <span className="font-bold text-stone-700">C$ {initialTransferExpensesAyer.toFixed(2)}</span>
                     </div>
                     <div className="relative">
-                      <span className="absolute left-2.5 top-1.5 text-[11px] font-bold text-slate-400">C$</span>
+                      <span className="absolute left-2.5 top-1.5 text-[11px] font-bold text-stone-400">C$</span>
                       <input
                         type="number"
                         step="0.01"
                         placeholder={initialTransferExpensesAyer.toFixed(2)}
                         value={reportTransferExpensesAyer}
                         onChange={(e) => setReportTransferExpensesAyer(e.target.value)}
-                        className="w-full bg-white border border-slate-300 rounded-md pl-7 pr-2 py-1 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-[#1c6856]"
+                        className="w-full bg-white border border-stone-300 rounded-md pl-7 pr-2 py-1 text-xs font-mono font-bold text-stone-800 focus:outline-none focus:border-bodegon"
                       />
                     </div>
-                    <span className="text-[10px] text-slate-400 block">Pagos con banco / transferencia</span>
+                    <span className="text-[10px] text-stone-400 block">Pagos con banco / transferencia</span>
                   </div>
 
                   {/* 3. Propina entregada como gasto/salida */}
-                  <div className="p-3 rounded-lg border bg-slate-50/80 border-slate-200 space-y-1.5 text-xs">
-                    <div className="flex items-center justify-between font-bold text-slate-800">
+                  <div className="p-3 rounded-lg border bg-stone-50/80 border-stone-200 space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between font-bold text-stone-800">
                       <div className="flex items-center gap-1.5">
-                        <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                        <DollarSign className="w-3.5 h-3.5 text-bodegon" />
                         <span>Propina (Salida / Gasto)</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => setReportTipsExpensesAyer(String(initialTipsAyer))}
-                        className="text-[10px] text-slate-400 hover:text-[#1c6856] underline cursor-pointer"
+                        className="text-[10px] text-stone-400 hover:text-bodegon underline cursor-pointer"
                       >
                         Copiar
                       </button>
                     </div>
-                    <div className="flex justify-between text-[11px] text-slate-500 font-mono">
+                    <div className="flex justify-between text-[11px] text-stone-500 font-mono">
                       <span>Registrado:</span>
-                      <span className="font-bold text-slate-700">C$ {initialTipsAyer.toFixed(2)}</span>
+                      <span className="font-bold text-stone-700">C$ {initialTipsAyer.toFixed(2)}</span>
                     </div>
                     <div className="relative">
-                      <span className="absolute left-2.5 top-1.5 text-[11px] font-bold text-slate-400">C$</span>
+                      <span className="absolute left-2.5 top-1.5 text-[11px] font-bold text-stone-400">C$</span>
                       <input
                         type="number"
                         step="0.01"
                         placeholder={initialTipsAyer.toFixed(2)}
                         value={reportTipsExpensesAyer}
                         onChange={(e) => setReportTipsExpensesAyer(e.target.value)}
-                        className="w-full bg-white border border-slate-300 rounded-md pl-7 pr-2 py-1 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-[#1c6856]"
+                        className="w-full bg-white border border-stone-300 rounded-md pl-7 pr-2 py-1 text-xs font-mono font-bold text-stone-800 focus:outline-none focus:border-bodegon"
                       />
                     </div>
-                    <span className="text-[10px] text-slate-400 block">Propina entregada al personal</span>
+                    <span className="text-[10px] text-stone-400 block">Propina entregada al personal</span>
                   </div>
                 </div>
 
                 {/* Desglose Contable de Liquidación: Ganancia Neta Real */}
-                <div className="p-4 rounded-xl border bg-slate-900 text-white space-y-3 font-mono text-xs">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <span className="text-[11px] uppercase font-bold text-slate-300 font-sans flex items-center gap-1.5">
-                      <TrendingUp className="w-4 h-4 text-emerald-400" />
+                <div className="p-4 rounded-xl border bg-bodegon text-white space-y-3 font-mono text-xs">
+                  <div className="flex items-center justify-between border-b border-stone-800 pb-2">
+                    <span className="text-[11px] uppercase font-bold text-stone-300 font-sans flex items-center gap-1.5">
+                      <TrendingUp className="w-4 h-4 text-bodegon" />
                       Cálculo de Ganancia Neta de Ayer (Liquidación Completa del Día)
                     </span>
-                    <span className="text-[10px] text-slate-400 font-sans">
+                    <span className="text-[10px] text-stone-400 font-sans">
                       Fórmula del Excel Oficial
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                    <div className="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/60">
-                      <span className="text-[10px] text-slate-400 block uppercase font-sans">1. Venta Bruta Total</span>
+                    <div className="bg-stone-800/60 p-2.5 rounded-lg border border-stone-700/60">
+                      <span className="text-[10px] text-stone-400 block uppercase font-sans">1. Venta Bruta Total</span>
                       <strong className="text-sm font-bold text-white">
                         +C$ {totalVerifiedSales.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </strong>
                     </div>
 
-                    <div className="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/60">
-                      <span className="text-[10px] text-rose-300 block uppercase font-sans">2. (-) Compras Efectivo</span>
-                      <strong className="text-sm font-bold text-rose-300">
+                    <div className="bg-stone-800/60 p-2.5 rounded-lg border border-stone-700/60">
+                      <span className="text-[10px] text-[#F3C9BF] block uppercase font-sans">2. (-) Compras Efectivo</span>
+                      <strong className="text-sm font-bold text-[#F3C9BF]">
                         -C$ {numCashExpensesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </strong>
                     </div>
 
-                    <div className="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/60">
+                    <div className="bg-stone-800/60 p-2.5 rounded-lg border border-stone-700/60">
                       <span className="text-[10px] text-blue-300 block uppercase font-sans">3. (-) Transferencias</span>
                       <strong className="text-sm font-bold text-blue-300">
                         -C$ {numTransferExpensesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </strong>
                     </div>
 
-                    <div className="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/60">
-                      <span className="text-[10px] text-amber-300 block uppercase font-sans">4. (-) Propina Personal</span>
-                      <strong className="text-sm font-bold text-amber-300">
+                    <div className="bg-stone-800/60 p-2.5 rounded-lg border border-stone-700/60">
+                      <span className="text-[10px] text-dorado-vivo block uppercase font-sans">4. (-) Propina Personal</span>
+                      <strong className="text-sm font-bold text-dorado-vivo">
                         -C$ {numTipsExpensesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </strong>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950/70 p-3 rounded-lg border border-slate-800/80">
+                  <div className="pt-2 border-t border-stone-800 flex flex-wrap items-center justify-between gap-3 bg-stone-950/70 p-3 rounded-lg border border-stone-800/80">
                     <div>
-                      <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">
+                      <span className="text-[10px] uppercase font-bold text-stone-400 block font-sans">
                         = Ganancia Neta del Día (Pagando Gastos y Propina)
                       </span>
-                      <span className="text-[11px] text-slate-400 font-sans">
+                      <span className="text-[11px] text-stone-400 font-sans">
                         Utilidad real del restaurante tras pagar todos los egresos del día
                       </span>
                     </div>
                     <div className="text-right">
-                      <span className={`text-xl font-bold font-mono block ${gananciaNetaAyer >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      <span className={`text-xl font-bold font-mono block ${gananciaNetaAyer >= 0 ? 'text-bodegon' : 'text-barro'}`}>
                         C$ {gananciaNetaAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </span>
                       {totalVerifiedSales > 0 && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-800 font-sans font-bold inline-block mt-0.5">
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-bodegon-noche text-[#CFE3DC] border border-bodegon font-sans font-bold inline-block mt-0.5">
                           Margen Neto: {margenNetoAyer.toFixed(1)}%
                         </span>
                       )}
@@ -1187,7 +1187,7 @@ export const OpeningModal: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition"
+                  className="px-4 py-2 rounded-lg border border-stone-300 hover:bg-stone-100 text-stone-700 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span>Volver a Caja Chica</span>
@@ -1234,18 +1234,18 @@ export const OpeningModal: React.FC<Props> = ({
                       };
                       printYesterdayEarningsActBN(tempShift, openerName, summary);
                     }}
-                    className="px-4 py-2 rounded-lg border border-emerald-600 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition shadow-2xs"
+                    className="px-4 py-2 rounded-lg border border-bodegon bg-bodegon/5 hover:bg-bodegon/10 text-bodegon font-bold text-xs flex items-center gap-1.5 cursor-pointer transition shadow-2xs"
                     title="Imprimir directamente la hoja de ganancias y ventas de ayer"
                   >
-                    <Printer className="w-4 h-4 text-emerald-700" />
-                    <span>🖨️ Imprimir Ganancias de Ayer</span>
+                    <Printer className="w-4 h-4 text-bodegon" />
+                    <span>Imprimir ganancias de ayer</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setStep(3)}
                     disabled={totalNIO === 0}
-                    className="px-5 py-2.5 rounded-lg bg-[#1c6856] hover:bg-[#154f42] text-white font-bold text-xs shadow-sm flex items-center gap-2 cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-5 py-2.5 rounded-lg bg-bodegon hover:bg-bodegon-noche text-white font-bold text-xs shadow-sm flex items-center gap-2 cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <span>Paso 3: Distribuir Fondos de Hoy</span>
                     <ArrowRight className="w-4 h-4" />
@@ -1262,53 +1262,53 @@ export const OpeningModal: React.FC<Props> = ({
             <div className="space-y-4 animate-in fade-in duration-150">
               {/* 1. Dólares Apartados para Snyder */}
               {totalUSD > 0 ? (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between gap-4">
+                <div className="bg-bodegon/5 border border-bodegon/20 rounded-xl p-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-[#1c6856] text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+                    <div className="w-9 h-9 rounded-lg bg-bodegon text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
                       <DollarSign className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-slate-900">
+                      <h4 className="text-sm font-bold text-stone-900">
                         Dólares Apartados en Sobre para Snyder: ${totalUSD.toFixed(2)} USD
                       </h4>
-                      <p className="text-xs text-slate-600 mt-0.5">
+                      <p className="text-xs text-stone-600 mt-0.5">
                         Los <strong>${totalUSD.toFixed(2)} USD</strong> contados se guardan en el sobre para entrega a la gerencia. En gaveta quedan <strong>$0.00 USD</strong>.
                       </p>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-900 font-bold text-[11px] uppercase shrink-0">
+                  <span className="px-2.5 py-1 rounded-md bg-bodegon/10 text-bodegon-noche font-bold text-[11px] uppercase shrink-0">
                     Sobre Apartado
                   </span>
                 </div>
               ) : (
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-600 flex items-center gap-2">
-                  <Banknote className="w-4 h-4 text-slate-400" />
+                <div className="bg-stone-50 border border-stone-200 rounded-lg p-3 text-xs text-stone-600 flex items-center gap-2">
+                  <Banknote className="w-4 h-4 text-stone-400" />
                   <span>No se registraron dólares en el conteo. La gaveta operará 100% en Córdobas.</span>
                 </div>
               )}
 
               {/* 2. Distribución de Córdobas Contados */}
-              <div className="bg-white rounded-xl p-5 border border-slate-200 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="bg-white rounded-xl p-5 border border-stone-200 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-stone-100">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                      <ArrowRightLeft className="w-4 h-4 text-[#1c6856]" />
+                    <h3 className="text-sm font-bold text-stone-900 flex items-center gap-1.5">
+                      <ArrowRightLeft className="w-4 h-4 text-bodegon" />
                       <span>Distribución de Córdobas para la Operación de Hoy</span>
                     </h3>
-                    <p className="text-xs text-slate-500">
-                      Total Córdobas Contados en Gaveta: <strong className="text-slate-800 font-mono">C$ {totalNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
+                    <p className="text-xs text-stone-500">
+                      Total Córdobas Contados en Gaveta: <strong className="text-stone-800 font-mono">C$ {totalNIO.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
                     </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Fondo para Gaveta de Caja General */}
-                  <div className="p-3.5 rounded-lg border border-emerald-200 bg-emerald-50/30 space-y-2">
-                    <label className="text-[11px] font-bold uppercase text-emerald-950 tracking-wider block">
+                  <div className="p-3.5 rounded-lg border border-bodegon/20 bg-bodegon/2 space-y-2">
+                    <label className="text-[11px] font-bold uppercase text-bodegon-noche tracking-wider block">
                       Fondo para Caja General (Gaveta de Vuelto) *
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3 top-2 text-xs font-bold text-emerald-600">C$</span>
+                      <span className="absolute left-3 top-2 text-xs font-bold text-bodegon">C$</span>
                       <input
                         type="number"
                         step="0.01"
@@ -1316,21 +1316,21 @@ export const OpeningModal: React.FC<Props> = ({
                         max={totalNIO}
                         value={generalDrawerFloatInput}
                         onChange={(e) => handleGeneralFloatChange(e.target.value)}
-                        className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-white border border-emerald-300 text-base font-bold font-mono text-emerald-950 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-white border border-bodegon/35 text-base font-bold font-mono text-bodegon-noche focus:outline-none focus:ring-1 focus:ring-bodegon"
                       />
                     </div>
-                    <span className="text-[11px] text-emerald-800 block">
+                    <span className="text-[11px] text-bodegon block">
                       Dinero que queda en la gaveta para dar cambio a los clientes
                     </span>
                   </div>
 
                   {/* Traslado a Caja Chica */}
-                  <div className="p-3.5 rounded-lg border border-slate-300 bg-slate-50 space-y-2">
-                    <label className="text-[11px] font-bold uppercase text-slate-800 tracking-wider block">
+                  <div className="p-3.5 rounded-lg border border-stone-300 bg-stone-50 space-y-2">
+                    <label className="text-[11px] font-bold uppercase text-stone-800 tracking-wider block">
                       Traslado Automático a Caja Chica (Compras) *
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3 top-2 text-xs font-bold text-slate-400">C$</span>
+                      <span className="absolute left-3 top-2 text-xs font-bold text-stone-400">C$</span>
                       <input
                         type="number"
                         step="0.01"
@@ -1338,56 +1338,56 @@ export const OpeningModal: React.FC<Props> = ({
                         max={totalNIO}
                         value={transferToPettyInput}
                         onChange={(e) => handleTransferToPettyChange(e.target.value)}
-                        className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-white border border-slate-300 text-base font-bold font-mono text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                        className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-white border border-stone-300 text-base font-bold font-mono text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-400"
                       />
                     </div>
-                    <span className="text-[11px] text-slate-600 block">
+                    <span className="text-[11px] text-stone-600 block">
                       Monto trasladado de las ganancias para compras del día
                     </span>
                   </div>
                 </div>
 
                 {/* Comprobación de Suma Exacta */}
-                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs flex justify-between items-center font-mono">
-                  <span className="text-slate-600 font-sans">Comprobación:</span>
-                  <span className="font-bold text-slate-800">
+                <div className="p-2.5 rounded-lg bg-stone-50 border border-stone-200 text-xs flex justify-between items-center font-mono">
+                  <span className="text-stone-600 font-sans">Comprobación:</span>
+                  <span className="font-bold text-stone-800">
                     C$ {generalDrawerFloat.toFixed(2)} (General) + C$ {transferAmount.toFixed(2)} (Chica) = C$ {(generalDrawerFloat + transferAmount).toFixed(2)} / C$ {totalNIO.toFixed(2)}
                   </span>
                 </div>
               </div>
 
               {/* 3. Saldo Inicial Total Resultante de Caja Chica */}
-              <div className="bg-slate-900 text-white rounded-xl p-4 shadow-sm space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <div className="bg-bodegon text-white rounded-xl p-4 shadow-sm space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-stone-800">
                   <div className="flex items-center gap-2">
-                    <ShoppingCart className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                    <ShoppingCart className="w-4 h-4 text-bodegon" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-stone-300">
                       Saldo Inicial Resultante de Caja Chica para Hoy
                     </span>
                   </div>
-                  <span className="text-[11px] font-mono text-slate-400">
+                  <span className="text-[11px] font-mono text-stone-400">
                     Apertura Sincronizada
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Remanente de Ayer</span>
+                    <span className="text-[10px] uppercase font-bold text-stone-400 block">Remanente de Ayer</span>
                     <strong className="text-sm font-bold font-mono text-white">
                       C$ {pettyPhysicalCount.toFixed(2)}
                     </strong>
                   </div>
 
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">(+) Traslado de Hoy</span>
-                    <strong className="text-sm font-bold font-mono text-emerald-400">
+                    <span className="text-[10px] uppercase font-bold text-stone-400 block">(+) Traslado de Hoy</span>
+                    <strong className="text-sm font-bold font-mono text-bodegon">
                       + C$ {transferAmount.toFixed(2)}
                     </strong>
                   </div>
 
-                  <div className="bg-slate-800/90 rounded-lg p-2.5 border border-slate-700">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Fondo Caja Chica</span>
-                    <strong className="text-lg font-bold font-mono text-emerald-400">
+                  <div className="bg-stone-800/90 rounded-lg p-2.5 border border-stone-700">
+                    <span className="text-[10px] uppercase font-bold text-stone-400 block">Total Fondo Caja Chica</span>
+                    <strong className="text-lg font-bold font-mono text-bodegon">
                       C$ {resultingPettyInitialBalance.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                     </strong>
                   </div>
@@ -1395,30 +1395,30 @@ export const OpeningModal: React.FC<Props> = ({
               </div>
 
               {/* Resumen Contable de Auditoría de Ayer */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs font-mono space-y-1.5">
-                <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-slate-500 block">
+              <div className="bg-stone-50 border border-stone-200 rounded-xl p-3.5 text-xs font-mono space-y-1.5">
+                <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-stone-500 block">
                   Resumen Contable Oficial de la Jornada Anterior (Auditado):
                 </span>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <span className="text-slate-500 font-sans block text-[11px]">Venta Bruta:</span>
-                    <strong className="text-slate-800 text-xs">C$ {totalVerifiedSales.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
+                    <span className="text-stone-500 font-sans block text-[11px]">Venta Bruta:</span>
+                    <strong className="text-stone-800 text-xs">C$ {totalVerifiedSales.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
                   </div>
                   <div>
-                    <span className="text-slate-500 font-sans block text-[11px]">Compras Efectivo:</span>
-                    <strong className="text-rose-600 text-xs">-C$ {numCashExpensesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
+                    <span className="text-stone-500 font-sans block text-[11px]">Compras Efectivo:</span>
+                    <strong className="text-barro text-xs">-C$ {numCashExpensesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
                   </div>
                   <div>
-                    <span className="text-slate-500 font-sans block text-[11px]">Transferencias:</span>
+                    <span className="text-stone-500 font-sans block text-[11px]">Transferencias:</span>
                     <strong className="text-blue-600 text-xs">-C$ {numTransferExpensesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
                   </div>
                   <div>
-                    <span className="text-slate-500 font-sans block text-[11px]">Propina Pagada:</span>
-                    <strong className="text-amber-600 text-xs">-C$ {numTipsExpensesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
+                    <span className="text-stone-500 font-sans block text-[11px]">Propina Pagada:</span>
+                    <strong className="text-dorado-tinta text-xs">-C$ {numTipsExpensesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
                   </div>
-                  <div className="border-l border-slate-300 pl-3">
-                    <span className="text-slate-500 font-sans block text-[11px]">Ganancia Neta:</span>
-                    <strong className={`text-sm font-bold ${gananciaNetaAyer >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                  <div className="border-l border-stone-300 pl-3">
+                    <span className="text-stone-500 font-sans block text-[11px]">Ganancia Neta:</span>
+                    <strong className={`text-sm font-bold ${gananciaNetaAyer >= 0 ? 'text-bodegon' : 'text-barro'}`}>
                       C$ {gananciaNetaAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                     </strong>
                   </div>
@@ -1427,7 +1427,7 @@ export const OpeningModal: React.FC<Props> = ({
 
               {/* Observaciones Generales */}
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-bold text-stone-600 uppercase tracking-wider mb-1">
                   Observaciones de Apertura (Opcional)
                 </label>
                 <input
@@ -1435,27 +1435,27 @@ export const OpeningModal: React.FC<Props> = ({
                   placeholder="Ej: Se inicia turno con normalidad..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#1c6856] font-medium"
+                  className="w-full bg-white border border-stone-300 text-stone-900 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-bodegon font-medium"
                 />
               </div>
 
               {/* Impresión Oficial Obligatoria del Acta Oficial de Apertura */}
-              <div className="bg-emerald-50 border border-emerald-200/80 rounded-xl p-3 flex items-center justify-between">
+              <div className="bg-bodegon/5 border border-bodegon/16 rounded-xl p-3 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#1c6856] text-white flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-bodegon text-white flex items-center justify-center shrink-0">
                     <Printer className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-slate-900 block">
+                    <span className="text-xs font-bold text-stone-900 block">
                       Impresión Oficial Obligatoria (1 Hoja B/N)
                     </span>
-                    <span className="text-[11px] text-slate-500 block">
+                    <span className="text-[11px] text-stone-500 block">
                       Al confirmar, se abrirá el acta oficial con el conteo de billetes, subtotal en gaveta y firma del cajero.
                     </span>
                   </div>
                 </div>
-                <div className="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-xs font-bold border border-emerald-200 flex items-center gap-1.5 shrink-0">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-700" />
+                <div className="px-2.5 py-1 bg-bodegon/10 text-bodegon rounded-lg text-xs font-bold border border-bodegon/20 flex items-center gap-1.5 shrink-0">
+                  <CheckCircle className="w-3.5 h-3.5 text-bodegon" />
                   <span>Obligatorio</span>
                 </div>
               </div>
@@ -1465,7 +1465,7 @@ export const OpeningModal: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition"
+                  className="px-4 py-2 rounded-lg border border-stone-300 hover:bg-stone-100 text-stone-700 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span>Volver a Conteo</span>
@@ -1474,7 +1474,7 @@ export const OpeningModal: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={handleConfirm}
-                  className="px-6 py-2.5 rounded-lg bg-[#1c6856] hover:bg-[#154f42] text-white font-bold text-sm shadow-sm flex items-center gap-2 cursor-pointer transition"
+                  className="px-6 py-2.5 rounded-lg bg-bodegon hover:bg-bodegon-noche text-white font-bold text-sm shadow-sm flex items-center gap-2 cursor-pointer transition"
                 >
                   <CheckCircle className="w-4 h-4" />
                   <span>Confirmar Apertura e Imprimir Acta Oficial (1 Hoja)</span>
@@ -1486,9 +1486,9 @@ export const OpeningModal: React.FC<Props> = ({
         </div>
 
         {/* Footer Informativo */}
-        <div className="px-6 py-3 border-t border-slate-200 bg-white flex items-center justify-between text-xs text-slate-500">
+        <div className="px-6 py-3 border-t border-stone-200 bg-white flex items-center justify-between text-xs text-stone-500">
           <div>
-            Responsable: <strong className="text-slate-800">{openerName}</strong> • Fecha: <strong className="font-mono text-slate-800">{shiftDate}</strong>
+            Responsable: <strong className="text-stone-800">{openerName}</strong> • Fecha: <strong className="font-mono text-stone-800">{shiftDate}</strong>
           </div>
           <div>
             {step === 1 && 'Paso 1: Arqueo Caja Chica'}

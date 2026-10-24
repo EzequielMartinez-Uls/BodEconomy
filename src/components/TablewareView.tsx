@@ -124,76 +124,76 @@ export const TablewareView: React.FC<Props> = ({
     <div className="space-y-6">
       {/* Resumen Superior */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-white border border-stone-200 shadow-sm flex items-center justify-between">
           <div>
-            <div className="text-xs uppercase font-bold tracking-wider text-slate-400 mb-1">
+            <div className="text-xs uppercase font-bold tracking-wider text-stone-400 mb-1">
               Unidades en Stock
             </div>
-            <div className="text-2xl font-black text-slate-900 font-mono">{totalItemsCount} uds</div>
-            <div className="text-xs text-slate-500 mt-1">{state.tablewareItems.length} tipos de menaje</div>
+            <div className="text-2xl font-black text-stone-900 font-mono">{totalItemsCount} uds</div>
+            <div className="text-xs text-stone-500 mt-1">{state.tablewareItems.length} tipos de menaje</div>
           </div>
-          <div className="p-2.5 bg-slate-50 text-[#1c6856] rounded-lg border border-slate-200 shadow-sm">
+          <div className="p-2.5 bg-stone-50 text-bodegon rounded-lg border border-stone-200 shadow-sm">
             <UtensilsCrossed className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-white border border-stone-200 shadow-sm flex items-center justify-between">
           <div>
-            <div className="text-xs uppercase font-bold tracking-wider text-slate-400 mb-1">
+            <div className="text-xs uppercase font-bold tracking-wider text-stone-400 mb-1">
               Valor del Menaje
             </div>
-            <div className="text-2xl font-black text-[#1c6856] font-mono">
+            <div className="text-2xl font-black text-bodegon font-mono">
               C$ {totalInventoryValue.toLocaleString('es-NI', { maximumFractionDigits: 0 })}
             </div>
-            <div className="text-xs text-slate-500 mt-1">Costo de reposición estimado</div>
+            <div className="text-xs text-stone-500 mt-1">Costo de reposición estimado</div>
           </div>
-          <div className="p-2.5 bg-emerald-50 text-[#1c6856] rounded-lg border border-emerald-200 shadow-sm">
+          <div className="p-2.5 bg-bodegon/5 text-bodegon rounded-lg border border-bodegon/20 shadow-sm">
             <Wine className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-white border border-stone-200 shadow-sm flex items-center justify-between">
           <div>
-            <div className="text-xs uppercase font-bold tracking-wider text-slate-400 mb-1">
+            <div className="text-xs uppercase font-bold tracking-wider text-stone-400 mb-1">
               Pérdidas por Roturas
             </div>
-            <div className="text-2xl font-black text-rose-600 font-mono">
+            <div className="text-2xl font-black text-barro font-mono">
               C$ {totalLossesValue.toLocaleString('es-NI', { maximumFractionDigits: 0 })}
             </div>
-            <div className="text-xs text-slate-500 mt-1">
+            <div className="text-xs text-stone-500 mt-1">
               {state.tablewareLosses.reduce((acc, l) => acc + l.quantity, 0)} piezas rotas/perdidas
             </div>
           </div>
-          <div className="p-2.5 bg-rose-50 text-rose-600 rounded-lg border border-rose-200 shadow-sm">
+          <div className="p-2.5 bg-barro/5 text-barro rounded-lg border border-barro/25 shadow-sm">
             <TrendingDown className="w-5 h-5" />
           </div>
         </div>
 
         <div
           className={`p-4 rounded-xl border flex items-center justify-between shadow-sm ${
-            lowStockCount > 0 ? 'bg-rose-50/70 border-rose-200' : 'bg-white border-slate-200'
+            lowStockCount > 0 ? 'bg-barro/4 border-barro/25' : 'bg-white border-stone-200'
           }`}
         >
           <div>
-            <div className="text-xs uppercase font-bold tracking-wider text-slate-400 mb-1">
+            <div className="text-xs uppercase font-bold tracking-wider text-stone-400 mb-1">
               Stock Crítico (Reponer)
             </div>
             <div
               className={`text-2xl font-black font-mono ${
-                lowStockCount > 0 ? 'text-rose-600' : 'text-slate-800'
+                lowStockCount > 0 ? 'text-barro' : 'text-stone-800'
               }`}
             >
               {lowStockCount} alertas
             </div>
-            <div className="text-xs text-slate-500 mt-1">
+            <div className="text-xs text-stone-500 mt-1">
               {lowStockCount > 0 ? 'Urge compra para el fin de semana' : 'Inventario en niveles óptimos'}
             </div>
           </div>
           <div
             className={`p-2.5 rounded-lg border ${
               lowStockCount > 0
-                ? 'bg-rose-100 text-rose-700 border-rose-300'
-                : 'bg-slate-100 text-slate-400 border-slate-200'
+                ? 'bg-barro/10 text-barro border-barro/40'
+                : 'bg-stone-100 text-stone-400 border-stone-200'
             }`}
           >
             <AlertTriangle className="w-5 h-5" />
@@ -202,7 +202,7 @@ export const TablewareView: React.FC<Props> = ({
       </div>
 
       {/* Botones de Acción y Filtro por Área */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-white border border-stone-200 rounded-xl shadow-sm">
         <div className="flex gap-2">
           {(['TODOS', 'BARRA', 'SALON', 'COCINA'] as const).map((area) => (
             <button
@@ -210,8 +210,8 @@ export const TablewareView: React.FC<Props> = ({
               onClick={() => setActiveArea(area)}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                 activeArea === area
-                  ? 'bg-[#1c6856] text-white shadow-sm'
-                  : 'bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-200'
+                  ? 'bg-bodegon text-white shadow-sm'
+                  : 'bg-stone-50 text-stone-600 hover:text-stone-900 border border-stone-200'
               }`}
             >
               {area === 'TODOS' ? 'Todas las Áreas' : area}
@@ -222,16 +222,16 @@ export const TablewareView: React.FC<Props> = ({
         <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
           <button
             onClick={() => setLossModalOpen(true)}
-            className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-sm transition active:scale-95 flex-1 sm:flex-none cursor-pointer"
+            className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-barro hover:bg-barro text-white font-bold text-xs shadow-sm transition flex-1 sm:flex-none cursor-pointer"
           >
             <AlertTriangle className="w-4 h-4" />
             <span>Registrar Rotura</span>
           </button>
           <button
             onClick={() => setNewModalOpen(true)}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs border border-slate-300 transition active:scale-95 flex-1 sm:flex-none cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-stone-50 hover:bg-stone-100 text-stone-700 font-bold text-xs border border-stone-300 transition flex-1 sm:flex-none cursor-pointer"
           >
-            <PlusCircle className="w-4 h-4 text-[#1c6856]" />
+            <PlusCircle className="w-4 h-4 text-bodegon" />
             <span>+ Artículo</span>
           </button>
           <button
@@ -242,9 +242,9 @@ export const TablewareView: React.FC<Props> = ({
                 state.activeAdminName
               )
             }
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs border border-slate-300 transition active:scale-95 flex-1 sm:flex-none cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-stone-50 hover:bg-stone-100 text-stone-700 font-bold text-xs border border-stone-300 transition flex-1 sm:flex-none cursor-pointer"
           >
-            <Printer className="w-4 h-4 text-slate-500" />
+            <Printer className="w-4 h-4 text-stone-500" />
             <span>Imprimir A4</span>
           </button>
 
@@ -252,23 +252,23 @@ export const TablewareView: React.FC<Props> = ({
             onClick={() =>
               exportTablewareToExcel(state.tablewareItems, state.tablewareLosses)
             }
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-300 transition active:scale-95 flex-1 sm:flex-none cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-bodegon/5 hover:bg-bodegon/10 text-bodegon font-bold text-xs border border-bodegon/35 transition flex-1 sm:flex-none cursor-pointer"
             title="Exportar inventario y roturas a Excel"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            <FileSpreadsheet className="w-4 h-4 text-bodegon" />
             <span>Exportar Excel</span>
           </button>
         </div>
       </div>
 
       {/* Tabla de Menaje */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Utensils className="w-4 h-4 text-[#1c6856]" />
+      <div className="bg-white border border-stone-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
+          <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
+            <Utensils className="w-4 h-4 text-bodegon" />
             Catálogo de Cristalería, Vajilla y Utensilios
           </h3>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-stone-500">
             Click en cualquier fila para ajustar el conteo físico
           </span>
         </div>
@@ -276,7 +276,7 @@ export const TablewareView: React.FC<Props> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-sm">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/60 text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <tr className="border-b border-stone-100 bg-stone-50/60 text-xs font-bold text-stone-500 uppercase tracking-wider">
                 <th className="py-3 px-6">Artículo</th>
                 <th className="py-3 px-4">Área</th>
                 <th className="py-3 px-4 text-center">Stock Actual</th>
@@ -286,48 +286,48 @@ export const TablewareView: React.FC<Props> = ({
                 <th className="py-3 px-6 text-center">Estado</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-stone-100">
               {filteredItems.map((item) => {
                 const isCritical = item.currentStock <= item.minimumStock;
 
                 return (
                   <tr
                     key={item.id}
-                    className="hover:bg-slate-50/70 transition cursor-pointer"
+                    className="hover:bg-stone-50/70 transition cursor-pointer"
                     onClick={() => {
                       setStockAdjustModalItem(item);
                       setAdjustedStock(item.currentStock);
                     }}
                   >
-                    <td className="py-3.5 px-6 font-bold text-slate-900">
+                    <td className="py-3.5 px-6 font-bold text-stone-900">
                       {item.name}
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 border border-stone-200">
                         {item.area}
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-center">
-                      <span className="font-mono font-black text-base text-slate-900 bg-slate-50 px-3 py-1 rounded-lg border border-slate-200">
+                      <span className="font-mono font-black text-base text-stone-900 bg-stone-50 px-3 py-1 rounded-lg border border-stone-200">
                         {item.currentStock} {item.unit}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-center font-mono text-slate-500 text-xs font-medium">
+                    <td className="py-3.5 px-4 text-center font-mono text-stone-500 text-xs font-medium">
                       {item.minimumStock} {item.unit}
                     </td>
-                    <td className="py-3.5 px-4 text-right font-mono text-xs text-slate-600 font-semibold">
+                    <td className="py-3.5 px-4 text-right font-mono text-xs text-stone-600 font-semibold">
                       C$ {item.unitCostNIO.toFixed(2)}
                     </td>
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 text-xs">
+                    <td className="py-3.5 px-4 text-right font-mono font-bold text-stone-900 text-xs">
                       C$ {(item.currentStock * item.unitCostNIO).toLocaleString('es-NI', { maximumFractionDigits: 0 })}
                     </td>
                     <td className="py-3.5 px-6 text-center">
                       {isCritical ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-barro/5 text-barro border border-barro/25">
                           <AlertTriangle className="w-3 h-3" /> Urge Reponer
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-bodegon/5 text-bodegon border border-bodegon/20">
                           <CheckCircle2 className="w-3 h-3" /> Abastecido
                         </span>
                       )}
@@ -341,55 +341,55 @@ export const TablewareView: React.FC<Props> = ({
       </div>
 
       {/* Historial de Roturas */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <History className="w-4 h-4 text-rose-600" />
+      <div className="bg-white border border-stone-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
+          <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
+            <History className="w-4 h-4 text-barro" />
             Registro de Bajas y Roturas Recientes
           </h3>
-          <span className="text-xs text-slate-500 font-medium">
+          <span className="text-xs text-stone-500 font-medium">
             {state.tablewareLosses.length} eventos registrados
           </span>
         </div>
 
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-stone-100">
           {state.tablewareLosses.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 text-sm">
+            <div className="p-8 text-center text-stone-400 text-sm">
               No hay roturas reportadas.
             </div>
           ) : (
             state.tablewareLosses.map((l) => (
               <div
                 key={l.id}
-                className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:bg-slate-50/70 transition"
+                className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:bg-stone-50/70 transition"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-rose-50 text-rose-600 border border-rose-200">
+                  <div className="p-2 rounded-lg bg-barro/5 text-barro border border-barro/25">
                     <TrendingDown className="w-4 h-4" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900 text-sm">{l.itemName}</span>
-                      <span className="text-xs font-mono font-black text-rose-600">
+                      <span className="font-bold text-stone-900 text-sm">{l.itemName}</span>
+                      <span className="text-xs font-mono font-black text-barro">
                         -{l.quantity} uds
                       </span>
-                      <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                      <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-stone-100 text-stone-600">
                         {l.reason.replace('_', ' ')}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                    <div className="flex items-center gap-2 text-xs text-stone-500 mt-0.5">
                       <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-slate-400" />
+                        <Calendar className="w-3 h-3 text-stone-400" />
                         {new Date(l.date).toLocaleDateString()}
                       </span>
                       <span>•</span>
-                      <span>Registrado por: <strong className="text-slate-700">{l.registeredBy}</strong></span>
+                      <span>Registrado por: <strong className="text-stone-700">{l.registeredBy}</strong></span>
                       {l.notes && <span>• "{l.notes}"</span>}
                     </div>
                   </div>
                 </div>
 
-                <div className="font-mono text-sm font-bold text-rose-600 self-end sm:self-center">
+                <div className="font-mono text-sm font-bold text-barro self-end sm:self-center">
                   -C$ {l.totalCostNIO.toFixed(2)}
                 </div>
               </div>
@@ -400,15 +400,15 @@ export const TablewareView: React.FC<Props> = ({
 
       {/* Modal Registrar Rotura */}
       {lossModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-md overflow-y-auto max-h-[90vh] shadow-2xl">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/70">
-              <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-rose-600" /> Reportar Rotura o Baja de Menaje
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 overflow-y-auto">
+          <div className="bg-white border border-stone-200 rounded-xl w-full max-w-md overflow-y-auto max-h-[90vh] shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100 bg-stone-50/70">
+              <h3 className="text-base font-black text-stone-900 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-barro" /> Reportar Rotura o Baja de Menaje
               </h3>
               <button
                 onClick={() => setLossModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
+                className="p-1 rounded-lg text-stone-400 hover:text-stone-700 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -416,13 +416,13 @@ export const TablewareView: React.FC<Props> = ({
 
             <form onSubmit={handleRegisterLoss} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">
+                <label className="block text-xs font-bold text-stone-600 mb-1">
                   Selecciona el Artículo que se dañó *
                 </label>
                 <select
                   value={selectedItemId}
                   onChange={(e) => setSelectedItemId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856] font-semibold"
+                  className="w-full bg-stone-50 border border-stone-300 rounded-lg px-3 py-2 text-sm text-stone-900 focus:bg-white focus:outline-none focus:border-bodegon font-semibold"
                 >
                   {state.tablewareItems.map((it) => (
                     <option key={it.id} value={it.id}>
@@ -433,7 +433,7 @@ export const TablewareView: React.FC<Props> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">
+                <label className="block text-xs font-bold text-stone-600 mb-1">
                   Cantidad dañada / rota (unidades) *
                 </label>
                 <input
@@ -442,16 +442,16 @@ export const TablewareView: React.FC<Props> = ({
                   required
                   value={lossQuantity}
                   onChange={(e) => setLossQuantity(parseInt(e.target.value, 10) || 1)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xl font-black font-mono text-rose-600 focus:bg-white focus:outline-none focus:border-[#1c6856]"
+                  className="w-full bg-stone-50 border border-stone-300 rounded-lg px-3 py-2 text-xl font-black font-mono text-barro focus:bg-white focus:outline-none focus:border-bodegon"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Motivo de la Baja</label>
+                <label className="block text-xs font-bold text-stone-600 mb-1">Motivo de la Baja</label>
                 <select
                   value={lossReason}
                   onChange={(e) => setLossReason(e.target.value as any)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856] font-medium"
+                  className="w-full bg-stone-50 border border-stone-300 rounded-lg px-3 py-2 text-xs text-stone-900 focus:bg-white focus:outline-none focus:border-bodegon font-medium"
                 >
                   <option value="ROTURA_SALON">Caída / Rotura en Salón (Comedor)</option>
                   <option value="ROTURA_BARRA">Rotura en Barra / Coctelería</option>
@@ -462,13 +462,13 @@ export const TablewareView: React.FC<Props> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">
+                <label className="block text-xs font-bold text-stone-600 mb-1">
                   ¿Descontar en Planilla a algún Colaborador? (Opcional)
                 </label>
                 <select
                   value={responsibleEmpId}
                   onChange={(e) => setResponsibleEmpId(e.target.value)}
-                  className="w-full bg-amber-50/60 border border-amber-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856] font-bold"
+                  className="w-full bg-dorado/6 border border-dorado/60 rounded-lg px-3 py-2 text-xs text-stone-900 focus:bg-white focus:outline-none focus:border-bodegon font-bold"
                 >
                   <option value="">-- No descontar (Asumido por el local) --</option>
                   {(state.payrollEmployees || []).map((emp) => (
@@ -478,14 +478,14 @@ export const TablewareView: React.FC<Props> = ({
                   ))}
                 </select>
                 {responsibleEmpId && (
-                  <p className="text-[10px] text-amber-800 font-semibold mt-1">
+                  <p className="text-[10px] text-dorado-tinta font-semibold mt-1">
                     Se creará automáticamente el cargo en Incidencias & Planilla Quincenal para este colaborador.
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">
+                <label className="block text-xs font-bold text-stone-600 mb-1">
                   Observaciones (opcional)
                 </label>
                 <input
@@ -493,21 +493,21 @@ export const TablewareView: React.FC<Props> = ({
                   placeholder="Ej: Se cayó de la bandeja del mesero en mesa 3..."
                   value={lossNotes}
                   onChange={(e) => setLossNotes(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856]"
+                  className="w-full bg-stone-50 border border-stone-300 rounded-lg px-3 py-2 text-xs text-stone-900 focus:bg-white focus:outline-none focus:border-bodegon"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <div className="flex justify-end gap-3 pt-4 border-t border-stone-100">
                 <button
                   type="button"
                   onClick={() => setLossModalOpen(false)}
-                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
+                  className="px-4 py-2 text-xs font-bold text-stone-500 hover:text-stone-800 cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-lg font-bold text-xs text-white bg-rose-600 hover:bg-rose-500 shadow-sm transition active:scale-95 cursor-pointer"
+                  className="px-6 py-2.5 rounded-lg font-bold text-xs text-white bg-barro hover:bg-barro shadow-sm transition cursor-pointer"
                 >
                   Confirmar Baja
                 </button>
@@ -519,18 +519,18 @@ export const TablewareView: React.FC<Props> = ({
 
       {/* Modal Ajustar Stock */}
       {stockAdjustModalItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-sm overflow-y-auto max-h-[90vh] shadow-2xl p-6 space-y-4">
-            <h3 className="text-base font-black text-slate-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 overflow-y-auto">
+          <div className="bg-white border border-stone-200 rounded-xl w-full max-w-sm overflow-y-auto max-h-[90vh] shadow-2xl p-6 space-y-4">
+            <h3 className="text-base font-black text-stone-900">
               Ajustar Conteo Físico: <br />
-              <span className="text-[#1c6856]">{stockAdjustModalItem.name}</span>
+              <span className="text-bodegon">{stockAdjustModalItem.name}</span>
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-stone-500">
               Ingresa el conteo exacto de unidades físicas encontradas en la revisión de hoy.
             </p>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">
+              <label className="block text-xs font-bold text-stone-600 mb-1">
                 Nuevo Stock Físico (uds)
               </label>
               <input
@@ -538,7 +538,7 @@ export const TablewareView: React.FC<Props> = ({
                 min="0"
                 value={adjustedStock}
                 onChange={(e) => setAdjustedStock(parseInt(e.target.value, 10) || 0)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-2xl font-black font-mono text-center text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856]"
+                className="w-full bg-stone-50 border border-stone-300 rounded-lg p-3 text-2xl font-black font-mono text-center text-stone-900 focus:bg-white focus:outline-none focus:border-bodegon"
               />
             </div>
 
@@ -546,14 +546,14 @@ export const TablewareView: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => setStockAdjustModalItem(null)}
-                className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
+                className="px-4 py-2 text-xs font-bold text-stone-500 hover:text-stone-800 cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={handleSaveStockAdjust}
-                className="px-5 py-2.5 rounded-lg bg-[#1c6856] hover:bg-[#155244] text-white font-bold text-xs shadow-sm transition cursor-pointer"
+                className="px-5 py-2.5 rounded-lg bg-bodegon hover:bg-bodegon-noche text-white font-bold text-xs shadow-sm transition cursor-pointer"
               >
                 Guardar Ajuste
               </button>
@@ -564,15 +564,15 @@ export const TablewareView: React.FC<Props> = ({
 
       {/* Modal Nuevo Artículo */}
       {newModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white border border-slate-200 rounded-xl w-full max-w-md overflow-y-auto max-h-[90vh] shadow-2xl">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/70">
-              <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                <PlusCircle className="w-5 h-5 text-[#1c6856]" /> Añadir Artículo de Menaje
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 overflow-y-auto">
+          <div className="bg-white border border-stone-200 rounded-xl w-full max-w-md overflow-y-auto max-h-[90vh] shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100 bg-stone-50/70">
+              <h3 className="text-base font-black text-stone-900 flex items-center gap-2">
+                <PlusCircle className="w-5 h-5 text-bodegon" /> Añadir Artículo de Menaje
               </h3>
               <button
                 onClick={() => setNewModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
+                className="p-1 rounded-lg text-stone-400 hover:text-stone-700 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -580,7 +580,7 @@ export const TablewareView: React.FC<Props> = ({
 
             <form onSubmit={handleAddNewItem} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">
+                <label className="block text-xs font-bold text-stone-600 mb-1">
                   Nombre del Artículo *
                 </label>
                 <input
@@ -589,17 +589,17 @@ export const TablewareView: React.FC<Props> = ({
                   placeholder="Ej: Plato Hondo para Sopa, Copa Flauta Champán..."
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856]"
+                  className="w-full bg-stone-50 border border-stone-300 rounded-lg px-3 py-2 text-sm text-stone-900 focus:bg-white focus:outline-none focus:border-bodegon"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Área Destino</label>
+                  <label className="block text-xs font-bold text-stone-600 mb-1">Área Destino</label>
                   <select
                     value={newArea}
                     onChange={(e) => setNewArea(e.target.value as any)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-[#1c6856] font-semibold"
+                    className="w-full bg-stone-50 border border-stone-300 rounded-lg px-3 py-2 text-xs text-stone-900 focus:bg-white focus:outline-none focus:border-bodegon font-semibold"
                   >
                     <option value="BARRA">Barra</option>
                     <option value="SALON">Salón / Comedor</option>
@@ -608,53 +608,53 @@ export const TablewareView: React.FC<Props> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Stock Inicial</label>
+                  <label className="block text-xs font-bold text-stone-600 mb-1">Stock Inicial</label>
                   <input
                     type="number"
                     min="1"
                     value={newStock}
                     onChange={(e) => setNewStock(parseInt(e.target.value, 10) || 0)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none font-mono"
+                    className="w-full bg-stone-50 border border-stone-300 rounded-lg px-3 py-2 text-xs text-stone-900 focus:bg-white focus:outline-none font-mono"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Stock Mínimo (Alerta)</label>
+                  <label className="block text-xs font-bold text-stone-600 mb-1">Stock Mínimo (Alerta)</label>
                   <input
                     type="number"
                     min="1"
                     value={newMinStock}
                     onChange={(e) => setNewMinStock(parseInt(e.target.value, 10) || 0)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none font-mono"
+                    className="w-full bg-stone-50 border border-stone-300 rounded-lg px-3 py-2 text-xs text-stone-900 focus:bg-white focus:outline-none font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Costo Unit. Reposición (C$)</label>
+                  <label className="block text-xs font-bold text-stone-600 mb-1">Costo Unit. Reposición (C$)</label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={newUnitCost}
                     onChange={(e) => setNewUnitCost(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none font-mono"
+                    className="w-full bg-stone-50 border border-stone-300 rounded-lg px-3 py-2 text-xs text-stone-900 focus:bg-white focus:outline-none font-mono"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <div className="flex justify-end gap-3 pt-4 border-t border-stone-100">
                 <button
                   type="button"
                   onClick={() => setNewModalOpen(false)}
-                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
+                  className="px-4 py-2 text-xs font-bold text-stone-500 hover:text-stone-800 cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-lg font-bold text-xs text-white bg-[#1c6856] hover:bg-[#155244] shadow-sm transition cursor-pointer"
+                  className="px-6 py-2.5 rounded-lg font-bold text-xs text-white bg-bodegon hover:bg-bodegon-noche shadow-sm transition cursor-pointer"
                 >
                   Crear Artículo
                 </button>

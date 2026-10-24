@@ -77,20 +77,20 @@ export const DailySpreadsheetView: React.FC<Props> = ({
   return (
     <div className="space-y-6">
       {/* Header Estilo Planilla Contable */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl p-6 border border-stone-200/80 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-amber-500 text-white shadow-sm shadow-amber-500/25">
+            <span className="p-2 rounded-xl bg-dorado-tinta text-white shadow-sm shadow-dorado/25">
               <FileSpreadsheet className="w-5 h-5" />
             </span>
             <div>
-              <h2 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+              <h2 className="text-xl font-extrabold text-stone-900 tracking-tight flex items-center gap-2">
                 Planilla Diaria & Hoja de Cuadre
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 font-mono">
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200 font-mono">
                   {shiftToShow ? shiftToShow.date : getLocalTodayStr()}
                 </span>
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-stone-500 mt-0.5">
                 Vista unificada de Caja Grande (Ventas), Caja Chica (Gastos) y Cuadre de Turno
               </p>
             </div>
@@ -109,17 +109,17 @@ export const DailySpreadsheetView: React.FC<Props> = ({
                     printThermalOpeningTicket(shiftToShow);
                   }
                 }}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition"
               >
-                <Printer className="w-4 h-4 text-amber-600" />
+                <Printer className="w-4 h-4 text-dorado-tinta" />
                 <span>Imprimir 80mm</span>
               </button>
 
               <button
                 onClick={() => exportShiftToExcel(shiftToShow, state)}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-bodegon/5 hover:bg-bodegon/10 text-bodegon border border-bodegon/20 text-xs font-bold transition"
               >
-                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                <FileSpreadsheet className="w-4 h-4 text-bodegon" />
                 <span>Exportar Excel (.xlsx)</span>
               </button>
             </>
@@ -128,7 +128,7 @@ export const DailySpreadsheetView: React.FC<Props> = ({
           {isShiftOpen ? (
             <button
               onClick={onCloseShiftClick}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold shadow-md shadow-rose-600/25 transition active:scale-95"
+              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-barro hover:bg-barro text-white text-xs font-extrabold shadow-md shadow-barro/25 transition"
             >
               <Lock className="w-4 h-4" />
               <span>Cerrar Turno & Liquidar</span>
@@ -136,7 +136,7 @@ export const DailySpreadsheetView: React.FC<Props> = ({
           ) : (
             <button
               onClick={onOpenShiftClick}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow-md shadow-emerald-600/25 transition active:scale-95"
+              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-bodegon hover:bg-bodegon text-white text-xs font-extrabold shadow-md shadow-bodegon/25 transition"
             >
               <Unlock className="w-4 h-4" />
               <span>Abrir Turno de Hoy</span>
@@ -148,38 +148,38 @@ export const DailySpreadsheetView: React.FC<Props> = ({
       {/* Resumen Superior — 2 Cajas: Caja Grande y Caja Chica */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* 1. CAJA GRANDE (GAVETA DE VENTAS) */}
-        <div className="bg-white rounded-2xl p-5 border border-amber-200/80 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full -mr-6 -mt-6"></div>
+        <div className="bg-white rounded-2xl p-5 border border-dorado/32 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-dorado-tinta/5 rounded-full -mr-6 -mt-6"></div>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-700 flex items-center gap-1.5">
-              <Coins className="w-4 h-4 text-amber-600" />
+            <span className="text-xs font-bold uppercase tracking-wider text-dorado-tinta flex items-center gap-1.5">
+              <Coins className="w-4 h-4 text-dorado-tinta" />
               Caja Grande (Gaveta de Ventas)
             </span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-dorado/20 text-dorado-tinta">
               {isShiftOpen ? 'Turno Abierto' : 'Último Cierre'}
             </span>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black font-mono text-slate-900 tracking-tight">
+            <div className="text-2xl font-black font-mono text-stone-900 tracking-tight">
               C$ {(isShiftOpen
                 ? shiftToShow?.totalOpeningEquivNIO || 0
                 : shiftToShow?.totalClosingEquivNIO || shiftToShow?.totalOpeningEquivNIO || 0
               ).toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">
+            <p className="text-[11px] text-stone-500 mt-1">
               {isShiftOpen
                 ? `Fondo apertura contado por ${shiftToShow?.openedBy || 'Eddy'} · Ventas en efectivo: C$ ${(shiftToShow?.salesCashSystem || 0).toFixed(2)}`
                 : `Saldo cierre contado · Fondo apertura mañana`}
             </p>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-[11px]">
+          <div className="mt-3 pt-3 border-t border-stone-100 grid grid-cols-2 gap-2 text-[11px]">
             <div>
-              <span className="text-slate-400 block">Venta Bruta Acumulada</span>
-              <span className="font-mono font-bold text-emerald-700">C$ {totalGrossIncome.toFixed(2)}</span>
+              <span className="text-stone-400 block">Venta Bruta Acumulada</span>
+              <span className="font-mono font-bold text-bodegon">C$ {totalGrossIncome.toFixed(2)}</span>
             </div>
             <div>
-              <span className="text-slate-400 block">Retiros / Deducciones</span>
-              <span className="font-mono font-bold text-rose-600">−C$ {totalWithdrawals.toFixed(2)}</span>
+              <span className="text-stone-400 block">Retiros / Deducciones</span>
+              <span className="font-mono font-bold text-barro">−C$ {totalWithdrawals.toFixed(2)}</span>
             </div>
           </div>
         </div>
@@ -200,45 +200,45 @@ export const DailySpreadsheetView: React.FC<Props> = ({
             </button>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black font-mono text-slate-900 tracking-tight">
+            <div className="text-2xl font-black font-mono text-stone-900 tracking-tight">
               C$ {state.pettyCashBalance.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">
+            <p className="text-[11px] text-stone-500 mt-1">
               Saldo disponible en fondo de compras y gastos operativos
             </p>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-[11px]">
+          <div className="mt-3 pt-3 border-t border-stone-100 grid grid-cols-2 gap-2 text-[11px]">
             <div>
-              <span className="text-slate-400 block">Gastos en Efectivo Hoy</span>
-              <span className="font-mono font-bold text-rose-600">−C$ {cashExpensesTotal.toFixed(2)}</span>
+              <span className="text-stone-400 block">Gastos en Efectivo Hoy</span>
+              <span className="font-mono font-bold text-barro">−C$ {cashExpensesTotal.toFixed(2)}</span>
             </div>
             <div>
-              <span className="text-slate-400 block">Pagos por Transferencia</span>
-              <span className="font-mono font-bold text-rose-600">−C$ {transferExpensesTotal.toFixed(2)}</span>
+              <span className="text-stone-400 block">Pagos por Transferencia</span>
+              <span className="font-mono font-bold text-barro">−C$ {transferExpensesTotal.toFixed(2)}</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* LA PLANILLA MAESTRA INTEGRAL (TABLA ESTILO EXCEL CON SUPERPODERES) */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="bg-slate-50/80 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+        <div className="bg-stone-50/80 px-6 py-4 border-b border-stone-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-            <h3 className="font-extrabold text-sm text-slate-900 uppercase tracking-wider">
+            <div className="w-3 h-3 rounded-full bg-bodegon"></div>
+            <h3 className="font-extrabold text-sm text-stone-900 uppercase tracking-wider">
               Hoja de Trabajo y Cuadre de Turno (Auditoría Cruzada Eddy & Xiomara)
             </h3>
           </div>
-          <span className="text-xs text-slate-500 font-medium">
-            Tasa de Cambio Oficial: <strong className="text-slate-800 font-mono">C$ {shiftToShow?.exchangeRate || state.defaultExchangeRate}</strong>
+          <span className="text-xs text-stone-500 font-medium">
+            Tasa de Cambio Oficial: <strong className="text-stone-800 font-mono">C$ {shiftToShow?.exchangeRate || state.defaultExchangeRate}</strong>
           </span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200">
+        <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-stone-200">
           {/* COLUMNA IZQUIERDA: INGRESOS & VENTAS */}
           <div className="p-6 space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-2">
+            <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+              <h4 className="font-extrabold text-xs uppercase tracking-wider text-stone-700 flex items-center gap-2">
                 <CreditCard className="w-4 h-4 text-blue-600" />
                 Ventas Registradas del Día (Ingresos)
               </h4>
@@ -248,91 +248,91 @@ export const DailySpreadsheetView: React.FC<Props> = ({
             </div>
 
             <table className="w-full text-xs">
-              <thead className="text-slate-400 font-bold uppercase text-[10px] border-b border-slate-100">
+              <thead className="text-stone-400 font-bold uppercase text-[10px] border-b border-stone-100">
                 <tr>
                   <th className="text-left pb-2">Canal / Medio de Pago</th>
                   <th className="text-right pb-2">Monto (C$)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium">
+              <tbody className="divide-y divide-stone-100 font-medium">
                 <tr>
-                  <td className="py-2.5 text-slate-700 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                  <td className="py-2.5 text-stone-700 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-dorado-tinta"></span>
                     Ventas en Efectivo
                   </td>
-                  <td className="py-2.5 text-right font-mono font-bold text-slate-900">
+                  <td className="py-2.5 text-right font-mono font-bold text-stone-900">
                     C$ {salesCash.toFixed(2)}
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-2.5 text-slate-700 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                  <td className="py-2.5 text-stone-700 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-barro"></span>
                     Vouchers Tarjetas BAC Credomatic
                   </td>
-                  <td className="py-2.5 text-right font-mono text-slate-800">
+                  <td className="py-2.5 text-right font-mono text-stone-800">
                     C$ {bac.toFixed(2)}
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-2.5 text-slate-700 flex items-center gap-2">
+                  <td className="py-2.5 text-stone-700 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
                     Vouchers Tarjetas Ficohsa
                   </td>
-                  <td className="py-2.5 text-right font-mono text-slate-800">
+                  <td className="py-2.5 text-right font-mono text-stone-800">
                     C$ {ficohsa.toFixed(2)}
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-2.5 text-slate-700 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <td className="py-2.5 text-stone-700 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-bodegon"></span>
                     Vouchers Tarjetas Banpro
                   </td>
-                  <td className="py-2.5 text-right font-mono text-slate-800">
+                  <td className="py-2.5 text-right font-mono text-stone-800">
                     C$ {banpro.toFixed(2)}
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-2.5 text-slate-700 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                  <td className="py-2.5 text-stone-700 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-bodegon"></span>
                     Vouchers Tarjetas Lafise
                   </td>
-                  <td className="py-2.5 text-right font-mono text-slate-800">
+                  <td className="py-2.5 text-right font-mono text-stone-800">
                     C$ {lafise.toFixed(2)}
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-2.5 text-slate-700 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                  <td className="py-2.5 text-stone-700 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-dorado-tinta"></span>
                     PedidosYa (Ventas Plataforma)
                   </td>
-                  <td className="py-2.5 text-right font-mono text-slate-800">
+                  <td className="py-2.5 text-right font-mono text-stone-800">
                     C$ {pedYa.toFixed(2)}
                   </td>
                 </tr>
                 {bankTransf > 0 && (
                   <tr>
-                    <td className="py-2.5 text-slate-700 flex items-center gap-2">
+                    <td className="py-2.5 text-stone-700 flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
                       Transferencias Bancarias Recibidas
                     </td>
-                    <td className="py-2.5 text-right font-mono text-slate-800 font-bold">
+                    <td className="py-2.5 text-right font-mono text-stone-800 font-bold">
                       C$ {bankTransf.toFixed(2)}
                     </td>
                   </tr>
                 )}
                 {otherInc > 0 && (
                   <tr>
-                    <td className="py-2.5 text-slate-700 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-slate-500"></span>
+                    <td className="py-2.5 text-stone-700 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-stone-500"></span>
                       Otros Ingresos
                     </td>
-                    <td className="py-2.5 text-right font-mono text-slate-800 font-bold">
+                    <td className="py-2.5 text-right font-mono text-stone-800 font-bold">
                       C$ {otherInc.toFixed(2)}
                     </td>
                   </tr>
                 )}
               </tbody>
-              <tfoot className="border-t border-slate-200 font-extrabold text-slate-900 bg-slate-50/50">
+              <tfoot className="border-t border-stone-200 font-extrabold text-stone-900 bg-stone-50/50">
                 <tr>
                   <td className="py-2.5 px-2">Subtotal Venta Bruta</td>
                   <td className="py-2.5 px-2 text-right font-mono text-sm text-blue-900">
@@ -343,17 +343,17 @@ export const DailySpreadsheetView: React.FC<Props> = ({
             </table>
 
             {/* Arqueo de Apertura (Caja de Vueltos) */}
-            <div className="p-3.5 bg-amber-50/70 rounded-xl border border-amber-200/80 text-xs space-y-2">
-              <div className="flex items-center justify-between font-bold text-amber-900">
+            <div className="p-3.5 bg-dorado/7 rounded-xl border border-dorado/32 text-xs space-y-2">
+              <div className="flex items-center justify-between font-bold text-cafe">
                 <span className="flex items-center gap-1.5">
-                  <Coins className="w-3.5 h-3.5 text-amber-600" />
+                  <Coins className="w-3.5 h-3.5 text-dorado-tinta" />
                   Fondo de Apertura (Caja de Vueltos Inicial)
                 </span>
                 <span className="font-mono">
                   C$ {shiftToShow?.totalOpeningEquivNIO.toFixed(2) || '0.00'}
                 </span>
               </div>
-              <div className="text-[11px] text-amber-800 flex justify-between">
+              <div className="text-[11px] text-dorado-tinta flex justify-between">
                 <span>Abierto por: <strong>{shiftToShow?.openedBy || 'Eddy'}</strong></span>
                 <span className="font-mono">
                   C$ {shiftToShow?.totalOpeningNIO || 0} + US$ {shiftToShow?.totalOpeningUSD || 0}
@@ -364,61 +364,61 @@ export const DailySpreadsheetView: React.FC<Props> = ({
 
           {/* COLUMNA DERECHA: EGRESOS, CAJA GRANDE Y CUADRE */}
           <div className="p-6 space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-2">
-                <Wallet className="w-4 h-4 text-rose-600" />
+            <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+              <h4 className="font-extrabold text-xs uppercase tracking-wider text-stone-700 flex items-center gap-2">
+                <Wallet className="w-4 h-4 text-barro" />
                 Gastos Operativos & Deducciones (Egresos)
               </h4>
-              <span className="text-xs font-mono font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded">
+              <span className="text-xs font-mono font-bold text-barro bg-barro/5 px-2 py-0.5 rounded">
                 Total: C$ {totalEgress.toFixed(2)}
               </span>
             </div>
 
             <table className="w-full text-xs">
-              <thead className="text-slate-400 font-bold uppercase text-[10px] border-b border-slate-100">
+              <thead className="text-stone-400 font-bold uppercase text-[10px] border-b border-stone-100">
                 <tr>
                   <th className="text-left pb-2">Concepto de Egreso</th>
                   <th className="text-right pb-2">Monto (C$)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium">
+              <tbody className="divide-y divide-stone-100 font-medium">
                 <tr>
-                  <td className="py-2 text-slate-700">Gastos Caja Chica (Efectivo en gaveta)</td>
-                  <td className="py-2 text-right font-mono font-bold text-slate-800">
+                  <td className="py-2 text-stone-700">Gastos Caja Chica (Efectivo en gaveta)</td>
+                  <td className="py-2 text-right font-mono font-bold text-stone-800">
                     C$ {cashExpensesTotal.toFixed(2)}
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-2 text-slate-700">Compras pagadas por Transferencia Bancaria</td>
-                  <td className="py-2 text-right font-mono text-slate-800">
+                  <td className="py-2 text-stone-700">Compras pagadas por Transferencia Bancaria</td>
+                  <td className="py-2 text-right font-mono text-stone-800">
                     C$ {transferExpensesTotal.toFixed(2)}
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-2 text-slate-700">
+                  <td className="py-2 text-stone-700">
                     Propinas Repartidas ({shiftToShow?.staffCount || 10} personas)
                   </td>
-                  <td className="py-2 text-right font-mono text-slate-800">
+                  <td className="py-2 text-right font-mono text-stone-800">
                     C$ {tips.toFixed(2)}
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-2 text-slate-700">Horas Extras y Feriados en Efectivo</td>
-                  <td className="py-2 text-right font-mono text-slate-800">
+                  <td className="py-2 text-stone-700">Horas Extras y Feriados en Efectivo</td>
+                  <td className="py-2 text-right font-mono text-stone-800">
                     C$ {overtime.toFixed(2)}
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-2 text-slate-700">Reservas (DGI + Planilla + Vacaciones)</td>
-                  <td className="py-2 text-right font-mono text-slate-800">
+                  <td className="py-2 text-stone-700">Reservas (DGI + Planilla + Vacaciones)</td>
+                  <td className="py-2 text-right font-mono text-stone-800">
                     C$ {(dgi + payroll + vacations).toFixed(2)}
                   </td>
                 </tr>
               </tbody>
-              <tfoot className="border-t border-slate-200 font-extrabold text-slate-900 bg-slate-50/50">
+              <tfoot className="border-t border-stone-200 font-extrabold text-stone-900 bg-stone-50/50">
                 <tr>
                   <td className="py-2.5 px-2">Total Egresos del Día</td>
-                  <td className="py-2.5 px-2 text-right font-mono text-sm text-rose-900">
+                  <td className="py-2.5 px-2 text-right font-mono text-sm text-barro">
                     C$ {totalEgress.toFixed(2)}
                   </td>
                 </tr>
@@ -426,26 +426,26 @@ export const DailySpreadsheetView: React.FC<Props> = ({
             </table>
 
             {/* RESUMEN CUADRE DE CAJA GRANDE */}
-            <div className="p-4 bg-amber-50/60 rounded-xl border border-amber-200 text-xs space-y-2.5">
-              <div className="flex items-center justify-between text-amber-900 font-extrabold text-sm border-b border-amber-200 pb-1.5">
+            <div className="p-4 bg-dorado/6 rounded-xl border border-dorado/40 text-xs space-y-2.5">
+              <div className="flex items-center justify-between text-cafe font-extrabold text-sm border-b border-dorado/40 pb-1.5">
                 <span className="flex items-center gap-1.5">
-                  <Coins className="w-4 h-4 text-amber-600" />
+                  <Coins className="w-4 h-4 text-dorado-tinta" />
                   Saldo al Cierre de Caja Grande
                 </span>
                 <span className="font-mono text-base">
                   C$ {(shiftToShow?.totalClosingEquivNIO || shiftToShow?.totalOpeningEquivNIO || 0).toFixed(2)}
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-2 pt-1 text-[11px] text-slate-600">
+              <div className="grid grid-cols-2 gap-2 pt-1 text-[11px] text-stone-600">
                 <div>
-                  <span className="block text-slate-400">Fondo Apertura Mañana:</span>
-                  <span className="font-mono font-bold text-amber-800">
+                  <span className="block text-stone-400">Fondo Apertura Mañana:</span>
+                  <span className="font-mono font-bold text-dorado-tinta">
                     C$ {(shiftToShow?.totalClosingEquivNIO || shiftToShow?.totalOpeningEquivNIO || 0).toFixed(2)}
                   </span>
                 </div>
                 <div>
-                  <span className="block text-slate-400">Utilidad Neta de la Jornada:</span>
-                  <span className={`font-mono font-bold ${netProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                  <span className="block text-stone-400">Utilidad Neta de la Jornada:</span>
+                  <span className={`font-mono font-bold ${netProfit >= 0 ? 'text-bodegon' : 'text-barro'}`}>
                     C$ {netProfit.toFixed(2)}
                   </span>
                 </div>
@@ -456,10 +456,10 @@ export const DailySpreadsheetView: React.FC<Props> = ({
             <div className="pt-2">
               <div className={`p-3 rounded-xl border flex items-center justify-between text-xs font-bold ${
                 shiftToShow?.auditStatus === 'SQUARED' || !shiftToShow
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                  ? 'bg-bodegon/5 border-bodegon/20 text-bodegon'
                   : shiftToShow.auditStatus === 'SURPLUS'
                   ? 'bg-blue-50 border-blue-200 text-blue-800'
-                  : 'bg-rose-50 border-rose-200 text-rose-800'
+                  : 'bg-barro/5 border-barro/25 text-barro'
               }`}>
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4" />
