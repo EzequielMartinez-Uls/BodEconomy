@@ -35,7 +35,10 @@ import {
   isFondeoTransaction,
   processOutboxQueue,
   supabase,
+  CLOUD_JORNADAS_LIMIT,
+  CLOUD_GASTOS_LIMIT,
 } from './services/supabaseSync';
+import { keepOlderLocalShifts, keepOlderLocalTransactions } from './utils/cloudMerge';
 import { getLocalTodayStr, getLocalDateTimeStr, extractLocalDateStr } from './utils/dateUtils';
 
 export function App() {
@@ -129,15 +132,21 @@ export function App() {
     if (isSyncingRef.current) return;
     isSyncingRef.current = true;
     try {
-      const { activeShift, activePettyShift, shiftHistory: cloudHistory, pettyCashShiftHistory: cloudPettyHistory, gastos } = await fetchFullCloudState();
+      const { activeShift, activePettyShift, shiftHistory: cloudHistory, pettyCashShiftHistory: cloudPettyHistory, gastos, jornadasCount } = await fetchFullCloudState();
       setState((prev) => {
         const today = getLocalTodayStr();
 
         // 1. Supabase es el cerebro oficial del Historial de Turnos de Caja General y Caja Chica:
-        let mergedHistory = [...cloudHistory];
+        let mergedHistory = [
+          ...cloudHistory,
+          ...keepOlderLocalShifts(prev.shiftHistory, cloudHistory, jornadasCount, CLOUD_JORNADAS_LIMIT),
+        ];
         mergedHistory.sort((a, b) => b.date.localeCompare(a.date));
 
-        let mergedPettyHistory = [...(cloudPettyHistory || [])];
+        let mergedPettyHistory = [
+          ...(cloudPettyHistory || []),
+          ...keepOlderLocalShifts(prev.pettyCashShiftHistory, cloudPettyHistory || [], jornadasCount, CLOUD_JORNADAS_LIMIT),
+        ];
         mergedPettyHistory.sort((a, b) => b.date.localeCompare(a.date));
 
         // 2. Determinar Turno Activo de Caja General desde Supabase:
@@ -151,7 +160,10 @@ export function App() {
         const pendingOfflineLocalTxs = prev.pettyCashTransactions.filter(
           (t) => !t.cloudId && !t.id.startsWith('pct-cloud-') && !t.id.startsWith('pct-init-') && t.syncStatus === 'PENDING'
         );
-        let updatedTxs: PettyCashTransaction[] = [...pendingOfflineLocalTxs];
+        let updatedTxs: PettyCashTransaction[] = [
+          ...pendingOfflineLocalTxs,
+          ...keepOlderLocalTransactions(prev.pettyCashTransactions, gastos || [], CLOUD_GASTOS_LIMIT),
+        ];
 
         if (gastos && gastos.length > 0) {
           for (const g of gastos) {
@@ -275,15 +287,15 @@ export function App() {
         updatedTxs = dedupedTxs;
 
         // Si la base de datos en la nube está completamente limpia para comenzar producción real,
-        // purgar todo el estado local y reiniciar a cero absoluto.
-        if ((!cloudHistory || cloudHistory.length === 0) && (!gastos || gastos.length === 0)) {
+        // reiniciar el estado local (conservando las compras hechas sin internet que aún no se suben).
+        if (jornadasCount === 0 && (!gastos || gastos.length === 0)) {
           return {
             ...prev,
             currentShift: null,
             shiftHistory: [],
             currentPettyCashShift: null,
             pettyCashShiftHistory: [],
-            pettyCashTransactions: [],
+            pettyCashTransactions: pendingOfflineLocalTxs,
             pettyCashBalance: 0,
           };
         }

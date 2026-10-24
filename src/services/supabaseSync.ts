@@ -1299,22 +1299,33 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
 /**
  * Consulta el estado completo de la nube para mantener sincronizadas múltiples computadoras y la web
  */
+/** Cuántas jornadas y compras recientes se bajan de la nube en cada sincronización. */
+export const CLOUD_JORNADAS_LIMIT = 45;
+export const CLOUD_GASTOS_LIMIT = 350;
+
 export async function fetchFullCloudState(): Promise<{
   activeShift: CashShift | null;
   activePettyShift: PettyCashShift | null;
   shiftHistory: CashShift[];
   pettyCashShiftHistory: PettyCashShift[];
   gastos: any[];
+  jornadasCount: number;
 }> {
   try {
     // Auto-sanar en segundo plano compras huérfanas en la nube para garantizar integridad del visualizador
     autoHealOrphanedCloudTransactions().catch(() => {});
 
     const today = getLocalTodayStr();
-    const [{ data: jData }, { data: gData }] = await Promise.all([
-      supabase.from('jornadas_diarias').select('*').neq('turno', 'CONFIG').order('fecha', { ascending: false }).limit(45),
-      supabase.from('compras_gastos').select('*').order('fecha_hora', { ascending: false }).limit(350),
+    const [{ data: jData, error: jError }, { data: gData, error: gError }] = await Promise.all([
+      supabase.from('jornadas_diarias').select('*').neq('turno', 'CONFIG').order('fecha', { ascending: false }).limit(CLOUD_JORNADAS_LIMIT),
+      supabase.from('compras_gastos').select('*').order('fecha_hora', { ascending: false }).limit(CLOUD_GASTOS_LIMIT),
     ]);
+
+    // Sin internet Supabase no lanza error: devuelve data = null. Si lo tomáramos como
+    // "nube vacía", la app borraría la caja abierta y las compras pendientes de subir.
+    if (jError || gError || !jData || !gData) {
+      throw new Error(`No se pudo leer la nube: ${(jError || gError)?.message || 'sin datos'}`);
+    }
 
     const jornadas = (jData || []) as any[];
     let activeShift: CashShift | null = null;
@@ -1494,10 +1505,11 @@ export async function fetchFullCloudState(): Promise<{
       shiftHistory,
       pettyCashShiftHistory,
       gastos: gData || [],
+      jornadasCount: jornadas.length,
     };
   } catch (err) {
     console.warn('⚠️ Error al consultar estado completo de la nube:', err);
-    return { activeShift: null, activePettyShift: null, shiftHistory: [], pettyCashShiftHistory: [], gastos: [] };
+    throw err;
   }
 }
 

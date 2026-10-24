@@ -13,7 +13,7 @@ import {
   exportPettyCashHistoryToExcel,
 } from '../services/excelExport';
 import { formatDateToFriendly } from '../services/storage';
-import { getLocalTodayStr, addDaysToDateStr, getLocalDateTimeStr, extractLocalDateStr } from '../utils/dateUtils';
+import { getLocalTodayStr, addDaysToDateStr, getLocalDateTimeStr, extractLocalDateStr, isSameMinute } from '../utils/dateUtils';
 import {
   ShoppingCart,
   ArrowDownRight,
@@ -300,9 +300,12 @@ export const PettyCashView: React.FC<Props> = ({
         if (!other.cloudId) return false;
         if (other.type !== tx.type) return false;
         if (Math.abs(other.amount - tx.amount) >= 0.01) return false;
+        // Solo es gemelo si coincide también el minuto del registro: dos compras iguales
+        // hechas en distintos momentos (ej. dos bolsas de hielo) son compras distintas.
+        if (!isSameMinute(other.date, tx.date)) return false;
         const v1 = (tx.vendor || '').trim().toLowerCase();
         const v2 = (other.vendor || '').trim().toLowerCase();
-        return v1 === v2 || v1.includes(v2) || v2.includes(v1);
+        return v1 !== '' && v1 === v2;
       });
       return !hasCloudTwin;
     });
