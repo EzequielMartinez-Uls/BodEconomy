@@ -24,6 +24,7 @@ import {
   syncFromBodegonPass,
   matchEmployeeName,
   testBodegonPassConnection,
+  loginBodegonPass,
   DEFAULT_BODEGON_PASS_URL,
 } from '../../services/bodegonPassSync';
 import { syncCatalogsToCloud } from '../../services/supabaseSync';
@@ -43,6 +44,7 @@ import {
   Globe,
   X,
   Eraser,
+  Lock,
 } from 'lucide-react';
 
 interface Props {
@@ -96,6 +98,13 @@ export const PayrollView: React.FC<Props> = ({
   const [passUrlInput, setPassUrlInput] = useState(state.bodegonPassUrl || DEFAULT_BODEGON_PASS_URL);
   const [testingPass, setTestingPass] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  // PIN de gerencia de Bodegón Pass (se pide solo cuando el servidor lo exige; no se guarda)
+  const [passPinOpen, setPassPinOpen] = useState(false);
+  const [passPinAfter, setPassPinAfter] = useState<'sync' | 'test'>('sync');
+  const [passPin, setPassPin] = useState('');
+  const [passPinError, setPassPinError] = useState<string | null>(null);
+  const [passPinBusy, setPassPinBusy] = useState(false);
 
   // Dropdown de impresión
   const [printMenuOpen, setPrintMenuOpen] = useState(false);
@@ -605,6 +614,43 @@ export const PayrollView: React.FC<Props> = ({
     }
   };
 
+  const openPassPin = (after: 'sync' | 'test') => {
+    setPassPinAfter(after);
+    setPassPin('');
+    setPassPinError(null);
+    setPassPinOpen(true);
+  };
+
+  const handleTestBodegonPass = async () => {
+    setTestingPass(true);
+    setTestResult(null);
+    const res = await testBodegonPassConnection(passUrlInput);
+    setTestResult(res);
+    setTestingPass(false);
+    if (res.needsPin) openPassPin('test');
+  };
+
+  const handleSubmitPassPin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passPin.trim() || passPinBusy) return;
+    setPassPinBusy(true);
+    setPassPinError(null);
+    const url = passPinAfter === 'test' ? passUrlInput : (state.bodegonPassUrl || DEFAULT_BODEGON_PASS_URL);
+    const res = await loginBodegonPass(url, passPin.trim());
+    setPassPinBusy(false);
+    setPassPin('');
+    if (!res.ok) {
+      setPassPinError(res.message);
+      return;
+    }
+    setPassPinOpen(false);
+    if (passPinAfter === 'test') {
+      handleTestBodegonPass();
+    } else {
+      handleSyncBodegonPass();
+    }
+  };
+
   // Sincronizar automáticamente con Bodegón Pass
   const handleSyncBodegonPass = async () => {
     setSyncing(true);
@@ -659,6 +705,9 @@ export const PayrollView: React.FC<Props> = ({
         persistDraftLocally(updatedRows, updatedSpecialRows);
 
         setSyncNotice(`${result.message}`);
+      } else if (result.needsPin) {
+        setSyncNotice(null);
+        openPassPin('sync');
       } else {
         setSyncNotice(`ℹ️ ${result.message}`);
       }
@@ -1296,13 +1345,7 @@ export const PayrollView: React.FC<Props> = ({
               <div className="flex items-center justify-between pt-2 border-t border-stone-100">
                 <button
                   type="button"
-                  onClick={async () => {
-                    setTestingPass(true);
-                    setTestResult(null);
-                    const res = await testBodegonPassConnection(passUrlInput);
-                    setTestResult(res);
-                    setTestingPass(false);
-                  }}
+                  onClick={handleTestBodegonPass}
                   disabled={testingPass}
                   className="px-3 py-1.5 text-xs font-bold border border-stone-200 hover:bg-stone-50 text-stone-700 rounded-lg transition cursor-pointer flex items-center gap-1.5"
                 >
@@ -1340,6 +1383,67 @@ export const PayrollView: React.FC<Props> = ({
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* PIN de gerencia de Bodegón Pass */}
+      {passPinOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-stone-900/60">
+          <form
+            onSubmit={handleSubmitPassPin}
+            className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden border border-stone-200"
+          >
+            <div className="p-4 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
+              <div className="flex items-center gap-2">
+                <Lock className="w-5 h-5 text-bodegon" />
+                <h3 className="font-bold text-stone-900 text-sm">PIN de Bodegón Pass</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPassPinOpen(false)}
+                className="p-1 text-stone-400 hover:text-stone-600 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-4 space-y-3">
+              <p className="text-xs text-stone-600">
+                Escribe el PIN de gerencia del panel de Bodegón Pass para traer las horas extras y feriados.
+                No se guarda: la sesión dura unas horas y se cierra al salir de la app.
+              </p>
+              <input
+                type="password"
+                inputMode="numeric"
+                autoComplete="off"
+                autoFocus
+                value={passPin}
+                onChange={(e) => setPassPin(e.target.value)}
+                placeholder="••••"
+                className="w-full text-center tracking-[0.5em] text-lg font-mono border border-stone-200 rounded-lg px-3 py-2 bg-stone-50 focus:bg-white focus:border-bodegon outline-hidden"
+              />
+              {passPinError && (
+                <div className="p-2.5 rounded-xl text-xs font-medium bg-barro/5 text-barro border border-barro/25">
+                  {passPinError}
+                </div>
+              )}
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setPassPinOpen(false)}
+                  className="px-3 py-1.5 text-xs text-stone-500 hover:text-stone-700 font-semibold cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={passPinBusy || !passPin.trim()}
+                  className="px-4 py-1.5 text-xs font-bold bg-bodegon hover:bg-bodegon-noche disabled:opacity-60 text-white rounded-lg transition cursor-pointer shadow-xs"
+                >
+                  {passPinBusy ? 'Verificando...' : 'Conectar'}
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
       )}
     </div>
