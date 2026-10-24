@@ -296,8 +296,10 @@ export function loadState(): AppState {
     const parsed = JSON.parse(raw);
     const loaded: AppState = { ...INITIAL_STATE, ...parsed };
 
-    // Tasa de cambio oficial fija en C$ 36.00 para todo el sistema
-    loaded.defaultExchangeRate = 36.00;
+    // Tasa de cambio: 36.00 por defecto, pero se respeta si se cambió en el sistema.
+    if (!(Number(loaded.defaultExchangeRate) > 0)) {
+      loaded.defaultExchangeRate = 36.00;
+    }
 
     // Administradores autorizados estrictamente: Eddy, Xiomara, Ezequiel, Snyder
     loaded.availableAdmins = ['Eddy', 'Xiomara', 'Ezequiel', 'Snyder'];

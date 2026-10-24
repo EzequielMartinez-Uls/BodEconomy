@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { calculateShiftProfit } from '../utils/cashMath';
 import { AppState, DailyEarningsSummary, CashShift } from '../types';
 import { printOfficialActBN, printOfficialOpeningActBN, computeYesterdayEarningsSummary } from '../services/thermalPrint';
 import { exportDailyEarningsToExcel, exportMonthlyEarningsToExcel } from '../services/excelExport';
@@ -316,7 +317,13 @@ export const DailyEarningsView: React.FC<Props> = ({
       }
       const shift = (state.shiftHistory || []).find((s) => s.date === item.date) ||
         (state.currentShift?.date === item.date ? state.currentShift : null);
-      if (shift?.dailyNetProfit !== undefined && shift.dailyNetProfit !== null && shift.status === 'CLOSED') {
+      if (shift && shift.status === 'CLOSED' && shift.formulaVersion === 2) {
+        // Fórmula única: se recalcula con los gastos actuales, así un gasto editado después del cierre sí cuadra.
+        const profit = calculateShiftProfit(shift, state.pettyCashTransactions || []);
+        item.cashSales = profit.efectivoReal;
+        item.totalGrossSales = profit.ventasTotales;
+        item.netEarnings = profit.ganancia;
+      } else if (shift?.dailyNetProfit !== undefined && shift.dailyNetProfit !== null && shift.status === 'CLOSED') {
         item.netEarnings = Number(shift.dailyNetProfit);
       } else {
         item.netEarnings = item.totalGrossSales - item.totalExpenses - (item.tipsCollected || 0);

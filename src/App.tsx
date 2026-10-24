@@ -841,7 +841,7 @@ export function App() {
     }
   };
 
-  const handleConfirmCloseShift = (closedShift: CashShift) => {
+  const handleConfirmCloseShift = (closedShift: CashShift, pettyCounted: number | null = null) => {
     let closedPettyToSync: PettyCashShift | null = null;
 
     setState((prev) => {
@@ -852,17 +852,24 @@ export function App() {
       let updatedPettyShift = prev.currentPettyCashShift;
       let updatedPettyHistory = prev.pettyCashShiftHistory;
       if (updatedPettyShift && updatedPettyShift.status === 'OPEN') {
+        // Caja Chica se cierra con el conteo físico del cierre; si no se contó, queda con el saldo del sistema.
+        const counted = pettyCounted ?? updatedPettyBalance;
+        const pettyDiff = parseFloat((counted - updatedPettyBalance).toFixed(2));
         const closedPetty: PettyCashShift = {
           ...updatedPettyShift,
           status: 'CLOSED',
           closedBy: closedShift.closedBy || prev.activeAdminName,
           closedAt: closedShift.closedAt || new Date().toISOString(),
-          actualCashCounted: updatedPettyBalance,
+          actualCashCounted: counted,
           expectedBalance: updatedPettyBalance,
-          difference: 0,
-          auditStatus: 'SQUARED',
-          closingNotes: 'Cierre automático unificado con Caja General',
+          difference: pettyDiff,
+          auditStatus: pettyDiff === 0 ? 'SQUARED' : pettyDiff > 0 ? 'SURPLUS' : 'SHORTAGE',
+          closingNotes:
+            pettyCounted === null
+              ? 'Cierre unificado con Caja General (sin conteo físico de Caja Chica)'
+              : 'Cierre unificado con Caja General con conteo físico de Caja Chica',
         };
+        updatedPettyBalance = counted;
         closedPettyToSync = closedPetty;
         updatedPettyHistory = [closedPetty, ...prev.pettyCashShiftHistory.filter((s) => s.date !== closedShift.date)];
         updatedPettyShift = null;

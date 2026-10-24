@@ -9,7 +9,7 @@ import {
 import { CashDenominationsInput } from './CashDenominationsInput';
 import { printOfficialActBN } from '../services/thermalPrint';
 import { exportShiftToExcel } from '../services/excelExport';
-import { extractLocalDateStr } from '../utils/dateUtils';
+import { calculateDayProfit, sumDayExpenses, buildActTransactions } from '../utils/cashMath';
 import { processOutboxQueue } from '../services/supabaseSync';
 import confetti from 'canvas-confetti';
 import {
@@ -45,7 +45,7 @@ interface Props {
   state: AppState;
   activeAdminName: string;
   availableAdmins: string[];
-  onConfirmClose: (closedShift: CashShift) => void;
+  onConfirmClose: (closedShift: CashShift, pettyCounted: number | null) => void;
 }
 
 export const ClosingModal: React.FC<Props> = ({
@@ -82,6 +82,10 @@ export const ClosingModal: React.FC<Props> = ({
   const [salesCashSystem, setSalesCashSystem] = useState<number>(shift.salesCashSystem || 0);
   const [otherIncome, setOtherIncome] = useState<number>(shift.otherIncome || 0);
   const [otherIncomeNotes, setOtherIncomeNotes] = useState<string>(shift.otherIncomeNotes || '');
+  // "Pagos y salidas" de Loyverse del día: se suman al efectivo contado para la venta en efectivo real
+  const [loyversePaidOut, setLoyversePaidOut] = useState<number>(shift.loyversePaidOut || 0);
+  // Conteo físico de Caja Chica al cerrar el día (vacío = no se contó)
+  const [pettyCountInput, setPettyCountInput] = useState<string>('');
 
   // Traspasos entre Cajas (Loyverse POS: Pagos/Salidas & Depositado)
   const [transferToPettyCash, setTransferToPettyCash] = useState<number>(shift.transferToPettyCash || 0);
@@ -118,7 +122,6 @@ export const ClosingModal: React.FC<Props> = ({
 
   // Cálculos de Ventas
   const totalCards = cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise;
-  const totalGrossSales = salesCashSystem + totalCards + salesPedidosYa + salesBankTransfers + otherIncome;
 
   // Cálculos de Propinas (Acuerdo Laboral: Cuota Yahaira Rivas + Fondo Común Equipo)
   const actualYahairaTip = tipYahairaWorked ? Math.min(totalTipCollected, Math.max(0, tipYahairaAmount)) : 0;
@@ -167,35 +170,39 @@ export const ClosingModal: React.FC<Props> = ({
   const differenceNIO: number = 0;
   let auditStatus: 'SQUARED' | 'SURPLUS' | 'SHORTAGE' = (differenceNIO > 0 ? 'SURPLUS' : differenceNIO < 0 ? 'SHORTAGE' : 'SQUARED') as 'SQUARED' | 'SURPLUS' | 'SHORTAGE';
 
-  // Gastos de Caja Chica del Día para ver la ganancia neta real
-  const dayPettyExpensesCash = useMemo(() => {
-    return (state.pettyCashTransactions || [])
-      .filter((t) => t.type === 'EXPENSE' && extractLocalDateStr(t.date) === shift.date && (t.method === 'CASH' || !t.method))
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
-  }, [state.pettyCashTransactions, shift.date]);
+  // Gastos de Caja Chica del Día (efectivo, transferencia y tarjeta)
+  const dayExpenses = useMemo(
+    () => sumDayExpenses(state.pettyCashTransactions || [], shift.date),
+    [state.pettyCashTransactions, shift.date]
+  );
+  const dayPettyExpensesCash = dayExpenses.cash;
+  const dayPettyExpensesTransf = dayExpenses.transfer + dayExpenses.card;
+  const dayPettyExpenses = dayExpenses.total;
 
-  const dayPettyExpensesTransf = useMemo(() => {
-    return (state.pettyCashTransactions || [])
-      .filter((t) => t.type === 'EXPENSE' && extractLocalDateStr(t.date) === shift.date && (t.method === 'TRANSFER' || t.method === 'CARD'))
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
-  }, [state.pettyCashTransactions, shift.date]);
+  const dayTransactions = useMemo(
+    () => buildActTransactions(state.pettyCashTransactions || [], shift.date),
+    [state.pettyCashTransactions, shift.date]
+  );
 
-  const dayPettyExpenses = dayPettyExpensesCash + dayPettyExpensesTransf;
+  // Ventas y ganancia con la fórmula única (utils/cashMath.ts)
+  const dayProfit = calculateDayProfit({
+    efectivoContado: actualCashNIO,
+    pagosSalidas: loyversePaidOut,
+    tarjetas: totalCards,
+    transferencias: salesBankTransfers,
+    pedidosYa: salesPedidosYa,
+    otrosIngresos: otherIncome,
+    gastos: dayExpenses,
+    propinaEntregada: tipsPaidAmount,
+  });
+  const efectivoReal = dayProfit.efectivoReal;
+  const totalGrossSales = dayProfit.ventasTotales;
+  const dailyNetProfit = dayProfit.ganancia;
 
-  const dayTransactions = useMemo(() => {
-    return (state.pettyCashTransactions || [])
-      .filter((t) => extractLocalDateStr(t.date) === shift.date)
-      .map((t) => ({
-        id: t.id,
-        hora: new Date(t.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        categoria: t.category,
-        concepto: t.vendor + (t.notes ? ` - ${t.notes}` : ''),
-        proveedor: t.vendor,
-        metodo: t.method === 'CASH' ? 'Efectivo' : t.method === 'CARD' ? 'Tarjeta' : 'Transferencia',
-        monto: t.amount,
-        tipo: t.type === 'INFLOW' ? ('INGRESO' as const) : ('GASTO' as const),
-      }));
-  }, [state.pettyCashTransactions, shift.date]);
+  // Caja Chica: saldo esperado vs conteo físico
+  const pettyExpected = state.pettyCashBalance || 0;
+  const pettyCounted = pettyCountInput.trim() === '' ? null : Math.max(0, parseFloat(pettyCountInput) || 0);
+  const pettyDifference = pettyCounted === null ? 0 : parseFloat((pettyCounted - pettyExpected).toFixed(2));
 
   const pendingPettyTransactions = useMemo(() => {
     return (state.pettyCashTransactions || []).filter(
@@ -205,14 +212,101 @@ export const ClosingModal: React.FC<Props> = ({
 
   const isPettyCashOpen = state.currentPettyCashShift?.status === 'OPEN';
 
-  // Rendimiento Financiero Consolidado (Idéntico a Excel: Total Ingresos - Compras Insumos - Propinas Entregadas)
-  const dailyNetProfit = parseFloat((totalGrossSales - dayPettyExpenses - tipsPaidAmount).toFixed(2));
-
   const triggerCelebration = () => {
     confetti({
       particleCount: 60,
       spread: 60,
       origin: { y: 0.6 },
+    });
+  };
+
+  // Turno cerrado con todos los datos del cierre (se usa al confirmar, al imprimir y al exportar)
+  const buildClosedShift = (): CashShift => ({
+    ...shift,
+    status: 'CLOSED',
+    closedBy,
+    closedAt: new Date().toISOString(),
+    closingNIO,
+    closingUSD,
+    totalClosingNIO,
+    totalClosingUSD,
+    totalClosingEquivNIO,
+    netCashAfterTipsNIO,
+
+    // Ventas Reales del Turno
+    cardsBAC,
+    cardsFicohsa,
+    cardsBanpro,
+    cardsLafise,
+    totalCards,
+    salesPedidosYa,
+    salesBankTransfers,
+    bankTransfersNotes,
+    salesCashSystem,
+    otherIncome,
+    otherIncomeNotes,
+    loyversePaidOut,
+    formulaVersion: 2,
+    totalGrossSales,
+
+    // Propinas
+    totalTipCollected,
+    staffCount,
+    individualTip,
+    tipPaid,
+    tipNotes,
+    tipYahairaWorked,
+    tipYahairaAmount: actualYahairaTip,
+    tipTeamPool,
+    tipIsRounded,
+    tipDistributedTotal,
+    tipRoundingDiff,
+
+    // Caja General: el cuadre lo hace Loyverse; aquí se registra el conteo físico
+    actualCashNIO,
+    expectedCashNIO,
+    differenceNIO,
+    auditStatus,
+    dailyNetProfit,
+    closingNotes,
+
+    // Traspasos entre Cajas
+    transferToPettyCash,
+    depositedFromPettyCash,
+    overtimePaidCash: 0,
+    extraDaysPaidCash: 0,
+    reserveDGI: 0,
+    reservePayroll: 0,
+    reserveVacations: 0,
+    reserveSnyder: 0,
+    totalWithdrawals: transferToPettyCash + tipsPaidAmount,
+  });
+
+  const printClosingAct = (closedShift: CashShift) => {
+    printOfficialActBN({
+      shift: closedShift,
+      date: shift.date,
+      modo: 'TODO',
+      salesCash: efectivoReal,
+      cardsBAC,
+      cardsFicohsa,
+      cardsBanpro,
+      cardsLafise,
+      totalCards,
+      salesPedidosYa,
+      salesBankTransfers,
+      totalGross: totalGrossSales,
+      netProfit: dailyNetProfit,
+      marginPercent: dayProfit.margen,
+      responsableCaja: closedBy,
+      observacionesGeneral: closingNotes,
+      fondoInicial: state.currentPettyCashShift?.initialBalance ?? 0,
+      expensesCash: dayPettyExpensesCash,
+      expensesTransf: dayPettyExpensesTransf,
+      expensesTotal: dayPettyExpenses,
+      saldoRemanente: pettyCounted ?? pettyExpected,
+      responsableCajaChica: state.currentPettyCashShift?.openedBy || closedBy,
+      transactions: dayTransactions,
     });
   };
 
@@ -237,93 +331,18 @@ export const ClosingModal: React.FC<Props> = ({
       });
     }
 
-    const closedShift: CashShift = {
-      ...shift,
-      status: 'CLOSED',
-      closedBy,
-      closedAt: new Date().toISOString(),
-      closingNIO,
-      closingUSD,
-      totalClosingNIO,
-      totalClosingUSD,
-      totalClosingEquivNIO,
-      netCashAfterTipsNIO,
+    if (pettyCounted === null && isPettyCashOpen) {
+      const skipPetty = window.confirm(
+        `No se contó la Caja Chica (el sistema espera C$ ${pettyExpected.toFixed(2)}).\n\n¿Cerrar sin conteo? Quedará como cuadrada con el saldo del sistema.`
+      );
+      if (!skipPetty) return;
+    }
 
-      // Ventas Reales del Turno
-      cardsBAC,
-      cardsFicohsa,
-      cardsBanpro,
-      cardsLafise,
-      totalCards,
-      salesPedidosYa,
-      salesBankTransfers,
-      bankTransfersNotes,
-      salesCashSystem,
-      otherIncome,
-      otherIncomeNotes,
-      totalGrossSales,
+    const closedShift = buildClosedShift();
+    onConfirmClose(closedShift, pettyCounted);
 
-      // Propinas
-      totalTipCollected,
-      staffCount,
-      individualTip,
-      tipPaid,
-      tipNotes,
-      tipYahairaWorked,
-      tipYahairaAmount: actualYahairaTip,
-      tipTeamPool,
-      tipIsRounded,
-      tipDistributedTotal,
-      tipRoundingDiff,
-
-      // Auditoría Real
-      actualCashNIO,
-      expectedCashNIO,
-      differenceNIO,
-      auditStatus,
-      dailyNetProfit,
-      closingNotes,
-
-      // Traspasos entre Cajas
-      transferToPettyCash,
-      depositedFromPettyCash,
-      overtimePaidCash: 0,
-      extraDaysPaidCash: 0,
-      reserveDGI: 0,
-      reservePayroll: 0,
-      reserveVacations: 0,
-      reserveSnyder: 0,
-      totalWithdrawals: transferToPettyCash + tipsPaidAmount,
-    };
-
-    onConfirmClose(closedShift);
-
-    // 🖨️ Mandar obligatoriamente a imprimir el Acta Oficial Completa de Cierre del Día (2 Hojas B/N: General + Chica)
-    printOfficialActBN({
-      shift: closedShift,
-      date: shift.date,
-      modo: 'TODO',
-      salesCash: salesCashSystem,
-      cardsBAC,
-      cardsFicohsa,
-      cardsBanpro,
-      cardsLafise,
-      totalCards,
-      salesPedidosYa,
-      salesBankTransfers,
-      totalGross: totalGrossSales,
-      netProfit: dailyNetProfit,
-      marginPercent: totalGrossSales > 0 ? (dailyNetProfit / totalGrossSales) * 100 : 0,
-      responsableCaja: closedBy,
-      observacionesGeneral: closingNotes,
-      fondoInicial: state.currentPettyCashShift?.initialBalance ?? 2000,
-      expensesCash: dayPettyExpensesCash,
-      expensesTransf: dayPettyExpensesTransf,
-      expensesTotal: dayPettyExpenses,
-      saldoRemanente: state.pettyCashBalance,
-      responsableCajaChica: state.currentPettyCashShift?.openedBy || closedBy,
-      transactions: dayTransactions,
-    });
+    // 🖨️ Acta Oficial Completa de Cierre del Día (2 hojas carta: Caja General + Caja Chica)
+    printClosingAct(closedShift);
 
     onClose();
   };
@@ -668,7 +687,7 @@ export const ClosingModal: React.FC<Props> = ({
                     </h3>
                   </div>
                   <p className="text-[11px] text-stone-500">
-                    Total según sistema (Loyverse).
+                    Total según sistema (Loyverse). Solo de referencia: la venta en efectivo real sale del conteo de gaveta.
                   </p>
                   <div className="flex items-center gap-2 pt-1">
                     <span className="text-stone-400 font-mono font-bold text-xs">C$</span>
@@ -682,6 +701,34 @@ export const ClosingModal: React.FC<Props> = ({
                       className="w-full bg-stone-50 border border-stone-300 rounded-lg px-2.5 py-1.5 text-sm font-bold font-mono text-bodegon focus:bg-white focus:outline-none focus:border-bodegon"
                     />
                   </div>
+                </div>
+
+                {/* Pagos y Salidas de Loyverse */}
+                <div className="p-4 bg-white rounded-xl border border-stone-200 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Receipt className="w-4 h-4 text-dorado-tinta" />
+                    <h3 className="text-xs font-bold text-stone-800 uppercase tracking-wider">
+                      Pagos y Salidas (C$)
+                    </h3>
+                  </div>
+                  <p className="text-[11px] text-stone-500">
+                    Según Loyverse. Se suman al efectivo contado en gaveta.
+                  </p>
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-stone-400 font-mono font-bold text-xs">C$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      value={loyversePaidOut === 0 ? '' : loyversePaidOut}
+                      onChange={(e) => setLoyversePaidOut(Math.max(0, parseFloat(e.target.value) || 0))}
+                      className="w-full bg-stone-50 border border-stone-300 rounded-lg px-2.5 py-1.5 text-sm font-bold font-mono text-cafe focus:bg-white focus:outline-none focus:border-bodegon"
+                    />
+                  </div>
+                  <p className="text-[11px] text-stone-600 font-mono">
+                    Efectivo real: C$ {actualCashNIO.toFixed(2)} contado + C$ {loyversePaidOut.toFixed(2)} = <strong>C$ {efectivoReal.toFixed(2)}</strong>
+                  </p>
                 </div>
 
                 {/* Otros Ingresos */}
@@ -720,10 +767,10 @@ export const ClosingModal: React.FC<Props> = ({
               {/* Total Bruto Consolidado */}
               <div className="p-4 bg-bodegon text-white rounded-xl flex items-center justify-between shadow-sm">
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400 block">
-                    Total Ventas Brutas del Turno (Efectivo + Tarjetas + Delivery + Transf. + Otros Ing.)
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-white/80 block">
+                    Ventas Totales del Turno (Efectivo real + Tarjetas + PedidosYa + Transf. + Otros Ing.)
                   </span>
-                  <div className="text-2xl font-bold font-mono text-bodegon mt-0.5">
+                  <div className="text-2xl font-bold font-mono text-white mt-0.5">
                     C$ {totalGrossSales.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                   </div>
                 </div>
@@ -1170,8 +1217,8 @@ export const ClosingModal: React.FC<Props> = ({
 
                   <div className="space-y-1.5 text-xs">
                     <div className="flex justify-between text-stone-600">
-                      <span>Ventas Efectivo:</span>
-                      <span className="font-mono">C$ {salesCashSystem.toFixed(2)}</span>
+                      <span>Efectivo real (gaveta + pagos/salidas):</span>
+                      <span className="font-mono">C$ {efectivoReal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-stone-600">
                       <span>Ventas Tarjetas (BAC/Fic/Ban/Laf):</span>
@@ -1198,12 +1245,12 @@ export const ClosingModal: React.FC<Props> = ({
                       <strong className="font-mono text-stone-900 text-sm">C$ {totalGrossSales.toFixed(2)}</strong>
                     </div>
                     <div className="flex justify-between text-stone-500 pt-1">
-                      <span>(-) Compras / Caja Chica (Pag. Efect.):</span>
+                      <span>(-) Gastos del día (efectivo, transferencia y tarjeta):</span>
                       <span className="font-mono text-barro">- C$ {dayPettyExpenses.toFixed(2)}</span>
                     </div>
                     {tipsPaidAmount > 0 && (
                       <div className="flex justify-between text-stone-500">
-                        <span>(-) Propinas Pagadas al Personal:</span>
+                        <span>(-) Propinas pagadas al personal:</span>
                         <span className="font-mono text-barro">- C$ {tipsPaidAmount.toFixed(2)}</span>
                       </div>
                     )}
@@ -1241,6 +1288,47 @@ export const ClosingModal: React.FC<Props> = ({
                 </span>
               </div>
 
+              {/* Conteo físico de Caja Chica: única caja que se cuadra en el sistema */}
+              {isPettyCashOpen && (
+                <div className="p-4 bg-white rounded-xl border border-stone-200 space-y-2">
+                  <h4 className="text-xs font-bold text-stone-800 uppercase tracking-wider">Conteo de Caja Chica</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs items-end">
+                    <div>
+                      <span className="block text-stone-500 font-bold mb-1">Saldo según sistema</span>
+                      <strong className="font-mono text-sm text-stone-900">C$ {pettyExpected.toFixed(2)}</strong>
+                    </div>
+                    <label className="block">
+                      <span className="block text-stone-500 font-bold mb-1">Efectivo contado en Caja Chica</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="Contar billetes y monedas"
+                        value={pettyCountInput}
+                        onChange={(e) => setPettyCountInput(e.target.value)}
+                        className="w-full bg-stone-50 border border-stone-300 rounded-lg px-2.5 py-1.5 text-sm font-bold font-mono focus:bg-white focus:outline-none focus:border-bodegon"
+                      />
+                    </label>
+                    <div>
+                      <span className="block text-stone-500 font-bold mb-1">Diferencia</span>
+                      <strong
+                        className={`font-mono text-sm ${
+                          pettyCounted === null ? 'text-stone-400' : pettyDifference === 0 ? 'text-bodegon' : pettyDifference > 0 ? 'text-blue-700' : 'text-barro'
+                        }`}
+                      >
+                        {pettyCounted === null
+                          ? 'Pendiente de conteo'
+                          : pettyDifference === 0
+                          ? 'C$ 0.00 (cuadrada)'
+                          : pettyDifference > 0
+                          ? `+ C$ ${pettyDifference.toFixed(2)} (sobrante)`
+                          : `- C$ ${Math.abs(pettyDifference).toFixed(2)} (faltante)`}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Observaciones de Cierre */}
               <div>
                 <label className="block text-xs font-bold text-stone-600 uppercase tracking-wider mb-1.5">
@@ -1259,87 +1347,7 @@ export const ClosingModal: React.FC<Props> = ({
               <div className="flex flex-wrap gap-2.5 pt-1">
                 <button
                   type="button"
-                  onClick={() => {
-                    const previewShift: CashShift = {
-                      ...shift,
-                      closedBy,
-                      closedAt: new Date().toISOString(),
-                      closingNIO,
-                      closingUSD,
-                      totalClosingNIO,
-                      totalClosingUSD,
-                      totalClosingEquivNIO,
-                      cardsBAC,
-                      cardsFicohsa,
-                      cardsBanpro,
-                      cardsLafise,
-                      totalCards,
-                      salesPedidosYa,
-                      salesBankTransfers,
-                      bankTransfersNotes,
-                      salesCashSystem,
-                      otherIncome,
-                      otherIncomeNotes,
-                      totalGrossSales,
-                      totalTipCollected,
-                      staffCount,
-                      individualTip,
-                      tipPaid,
-                      tipNotes,
-                      tipYahairaWorked,
-                      tipYahairaAmount: actualYahairaTip,
-                      tipTeamPool,
-                      tipIsRounded,
-                      tipDistributedTotal,
-                      tipRoundingDiff,
-                      transferToPettyCash,
-                      depositedFromPettyCash,
-                      totalWithdrawals: transferToPettyCash + tipsPaidAmount,
-                      actualCashNIO,
-                      expectedCashNIO,
-                      differenceNIO,
-                      auditStatus,
-                      dailyNetProfit,
-                      closingNotes,
-                    };
-                    const dayTransactions = (state.pettyCashTransactions || [])
-                      .filter((t) => extractLocalDateStr(t.date) === shift.date)
-                      .map((t) => ({
-                        id: t.id,
-                        hora: new Date(t.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        categoria: t.category,
-                        concepto: t.vendor + (t.notes ? ` - ${t.notes}` : ''),
-                        proveedor: t.vendor,
-                        metodo: t.method === 'CASH' ? 'Efectivo' : t.method === 'CARD' ? 'Tarjeta' : 'Transferencia',
-                        monto: t.amount,
-                        tipo: t.type === 'INFLOW' ? ('INGRESO' as const) : ('GASTO' as const),
-                      }));
-                    printOfficialActBN({
-                      shift: previewShift,
-                      date: shift.date,
-                      modo: 'TODO',
-                      salesCash: salesCashSystem,
-                      cardsBAC,
-                      cardsFicohsa,
-                      cardsBanpro,
-                      cardsLafise,
-                      totalCards,
-                      salesPedidosYa,
-                      salesBankTransfers,
-                      totalGross: totalGrossSales,
-                      netProfit: dailyNetProfit,
-                      marginPercent: totalGrossSales > 0 ? (dailyNetProfit / totalGrossSales) * 100 : 0,
-                      responsableCaja: closedBy,
-                      observacionesGeneral: closingNotes,
-                      fondoInicial: shift.totalOpeningEquivNIO,
-                      expensesCash: dayPettyExpenses,
-                      expensesTransf: 0,
-                      expensesTotal: dayPettyExpenses,
-                      saldoRemanente: actualCashNIO,
-                      responsableCajaChica: closedBy,
-                      transactions: dayTransactions,
-                    });
-                  }}
+                  onClick={() => printClosingAct(buildClosedShift())}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bodegon hover:bg-bodegon-noche text-white text-xs font-bold transition cursor-pointer"
                 >
                   <Printer className="w-3.5 h-3.5 text-bodegon" />
@@ -1348,48 +1356,7 @@ export const ClosingModal: React.FC<Props> = ({
 
                 <button
                   type="button"
-                  onClick={() => {
-                    const previewShift: CashShift = {
-                      ...shift,
-                      closedBy,
-                      closedAt: new Date().toISOString(),
-                      closingNIO,
-                      closingUSD,
-                      totalClosingNIO,
-                      totalClosingUSD,
-                      totalClosingEquivNIO,
-                      cardsBAC,
-                      cardsFicohsa,
-                      cardsBanpro,
-                      cardsLafise,
-                      totalCards,
-                      salesPedidosYa,
-                      salesBankTransfers,
-                      bankTransfersNotes,
-                      salesCashSystem,
-                      otherIncome,
-                      otherIncomeNotes,
-                      totalGrossSales,
-                      totalTipCollected,
-                      staffCount,
-                      individualTip,
-                      tipPaid,
-                      tipNotes,
-                      tipYahairaWorked,
-                      tipYahairaAmount: actualYahairaTip,
-                      tipTeamPool,
-                      tipIsRounded,
-                      tipDistributedTotal,
-                      tipRoundingDiff,
-                      actualCashNIO,
-                      expectedCashNIO,
-                      differenceNIO,
-                      auditStatus,
-                      dailyNetProfit,
-                      closingNotes,
-                    };
-                    exportShiftToExcel(previewShift, state);
-                  }}
+                  onClick={() => exportShiftToExcel(buildClosedShift(), state)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bodegon/5 hover:bg-bodegon/10 text-bodegon text-xs font-bold border border-bodegon/20 transition cursor-pointer"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-bodegon" />

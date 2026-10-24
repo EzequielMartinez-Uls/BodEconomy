@@ -1,6 +1,7 @@
 import { AppState, CashShift, PettyCashShift, PettyCashTransaction, TablewareItem, TablewareLoss } from '../types';
 import { addDaysToDateStr, extractLocalDateStr, getLocalTodayStr } from '../utils/dateUtils';
 import logoImg from '../assets/logo.png';
+import { calculateShiftProfit } from '../utils/cashMath';
 
 // Si la ventana de impresión no se pudo abrir, antes se imprimía la pantalla completa de la app
 // (una hoja desperdiciada). Ahora solo se avisa.
@@ -1593,7 +1594,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
     const {
       date,
       modo,
-      salesCash,
+      salesCash: salesCashInput,
       cardsBAC,
       cardsFicohsa,
       cardsBanpro,
@@ -1601,7 +1602,9 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
       totalCards,
       salesPedidosYa,
       salesBankTransfers = 0,
-      totalGross,
+      totalGross: totalGrossInput,
+      netProfit,
+      marginPercent,
       responsableCaja,
       observacionesGeneral,
       fondoInicial,
@@ -1613,6 +1616,13 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
       responsableCajaChica = responsableCaja,
       transactions,
     } = data;
+
+    // Con la fórmula única, la venta en efectivo es lo contado en gaveta + pagos y salidas.
+    const usesUnifiedFormula = data.shift?.formulaVersion === 2;
+    const salesCash = usesUnifiedFormula
+      ? (data.shift?.actualCashNIO || 0) + (data.shift?.loyversePaidOut || 0)
+      : salesCashInput;
+    const totalGross = usesUnifiedFormula ? data.shift?.totalGrossSales ?? totalGrossInput : totalGrossInput;
 
     const [y, m, d] = date.split('-').map(Number);
     const fechaObj = new Date(y, m - 1, d);
@@ -1998,7 +2008,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
             <tbody>
               <tr>
                 <td><strong>Ventas en Efectivo</strong></td>
-                <td>Recaudación física en gaveta de caja general</td>
+                <td>${usesUnifiedFormula ? 'Contado en gaveta + pagos y salidas (Loyverse)' : 'Recaudación física en gaveta de caja general'}</td>
                 <td class="text-right font-mono">C$ ${salesCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                 <td class="text-right font-mono">${cashPct}%</td>
               </tr>
@@ -2233,29 +2243,29 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
           <table>
             <tbody>
               <tr>
-                <td style="width: 70%;"><strong>(+) Total Ingresos Facturados</strong> (Efectivo General + Tarjetas Datafast + PedidosYa)</td>
+                <td style="width: 70%;"><strong>(+) Ventas totales</strong> (Efectivo real + Tarjetas + PedidosYa + Transferencias + Otros)</td>
                 <td style="width: 30%;" class="text-right font-mono">C$ ${totalGross.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
               <tr>
-                <td><strong>(-) Compras y Gastos en Efectivo de Caja Chica</strong> (Pag. en Efect. para compras e insumos)</td>
-                <td class="text-right font-mono">- C$ ${expensesCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td><strong>(-) Gastos del día</strong> (Efectivo C$ ${expensesCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })} + Transferencia y tarjeta C$ ${expensesTransf.toLocaleString('es-NI', { minimumFractionDigits: 2 })})</td>
+                <td class="text-right font-mono">- C$ ${expensesTotal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
-              ${tipCollected > 0 ? `
+              ${tipsDeductedFromDrawer > 0 ? `
               <tr>
-                <td><strong>(-) Propinas del Turno Entregadas</strong> (Propinas retiradas de caja para el personal)</td>
+                <td><strong>(-) Propinas entregadas al personal</strong></td>
                 <td class="text-right font-mono">- C$ ${tipsDeductedFromDrawer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
               ` : ''}
               <tr class="highlight-row" style="font-size: 11px;">
-                <td><strong>(=) TOTAL NETO / UTILIDAD OPERATIVA LÍQUIDA DE LA JORNADA</strong></td>
+                <td><strong>(=) GANANCIA DEL DÍA</strong></td>
                 <td class="text-right font-mono font-bold">
-                  C$ ${(totalGross - expensesCash - tipsDeductedFromDrawer).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                  C$ ${netProfit.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                 </td>
               </tr>
               <tr>
-                <td>Margen Operativo Neto Sobre Ingresos Totales</td>
+                <td>Margen sobre ventas totales</td>
                 <td class="text-right font-mono font-bold">
-                  ${totalGross > 0 ? (((totalGross - expensesCash - tipsDeductedFromDrawer) / totalGross) * 100).toFixed(1) : '0.0'}%
+                  ${(marginPercent || 0).toFixed(1)}%
                 </td>
               </tr>
             </tbody>
@@ -2450,10 +2460,14 @@ export function computeYesterdayEarningsSummary(
   // 1. Buscar turno de la fecha anterior en shiftHistory o el último cerrado
   const history = state.shiftHistory || [];
   const shiftsForYesterday = history.filter((s) => s.date === yesterdayDate);
+  // Si ayer no hubo turno (ej. día cerrado), se usa el último cierre ANTERIOR a hoy.
+  // Antes se tomaba el día con más ventas de todo el historial.
   const yesterdayShift =
     shiftsForYesterday.find((s) => (s.totalGrossSales || 0) > 0) ||
     shiftsForYesterday[0] ||
-    history.filter((s) => s.status === 'CLOSED').sort((a, b) => (b.totalGrossSales || 0) - (a.totalGrossSales || 0) || b.date.localeCompare(a.date))[0];
+    history
+      .filter((s) => s.status === 'CLOSED' && s.date < currentDate)
+      .sort((a, b) => b.date.localeCompare(a.date))[0];
 
   if (!yesterdayShift) {
     return undefined;
@@ -2481,7 +2495,7 @@ export function computeYesterdayEarningsSummary(
     (t) => t.type === 'EXPENSE' && extractLocalDateStr(t.date) === yesterdayShift.date
   );
   const gastosEfectivo = dayPettyTxs
-    .filter((t) => t.method === 'CASH')
+    .filter((t) => t.method === 'CASH' || !t.method)
     .reduce((sum, t) => sum + (t.amount || 0), 0);
   const gastosTransferencia = dayPettyTxs
     .filter((t) => t.method === 'TRANSFER' || t.method === 'CARD')
@@ -2496,6 +2510,30 @@ export function computeYesterdayEarningsSummary(
   const gananciaNeta = parseFloat((totalGenerado - totalGastos).toFixed(2));
   const margenPorcentaje =
     totalGenerado > 0 ? (gananciaNeta / totalGenerado) * 100 : 0;
+
+  if (yesterdayShift.formulaVersion === 2) {
+    const profit = calculateShiftProfit(yesterdayShift, state.pettyCashTransactions || []);
+    return {
+      cardsBAC,
+      cardsFicohsa,
+      cardsBanpro,
+      cardsLafise,
+      totalCards,
+      salesPedidosYa,
+      salesBankTransfers,
+      salesCashLoyverse,
+      loyversePaidOut: yesterdayShift.loyversePaidOut || 0,
+      efectivoRealGenerado: profit.efectivoReal,
+      otherIncome,
+      totalGenerado: profit.ventasTotales,
+      gastosEfectivo,
+      gastosTransferencia,
+      propinasEntregadas: profit.propinaEntregada,
+      totalGastos: profit.totalGastos + profit.propinaEntregada,
+      gananciaNeta: profit.ganancia,
+      margenPorcentaje: profit.margen,
+    };
+  }
 
   return {
     cardsBAC,

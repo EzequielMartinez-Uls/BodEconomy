@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { calculateDayProfit, sumDayExpenses } from '../utils/cashMath';
 import { AppState, CashShift, DenominationsNIO, DenominationsUSD, PettyCashTransaction } from '../types';
 import {
   printOfficialActBN,
@@ -301,7 +302,7 @@ export const GeneralCashView: React.FC<Props> = ({
     const salesBankTransfers = parseFloat(editForm.salesBankTransfers) || 0;
     const salesCashSystem = parseFloat(editForm.salesCashSystem) || 0;
     const otherIncome = editingShift.otherIncome || 0;
-    const totalGrossSales = salesCashSystem + totalCards + salesPedidosYa + salesBankTransfers + otherIncome;
+    let totalGrossSales = salesCashSystem + totalCards + salesPedidosYa + salesBankTransfers + otherIncome;
     const totalTipCollected = parseFloat(editForm.totalTipCollected) || 0;
     const staffCount = editingShift.staffCount || 10;
     const tipPaid = editForm.tipPaid;
@@ -341,7 +342,22 @@ export const GeneralCashView: React.FC<Props> = ({
     const dayPettyExpenses = (state.pettyCashTransactions || [])
       .filter((t) => t.type === 'EXPENSE' && extractLocalDateStr(t.date) === editingShift.date)
       .reduce((sum, t) => sum + (t.amount || 0), 0);
-    const dailyNetProfit = parseFloat((totalGrossSales - dayPettyExpenses - tipsPaidAmount).toFixed(2));
+    let dailyNetProfit = parseFloat((totalGrossSales - dayPettyExpenses - tipsPaidAmount).toFixed(2));
+    if (editingShift.formulaVersion === 2) {
+      // Cierres hechos con la fórmula única se corrigen con la misma fórmula (utils/cashMath.ts).
+      const profit = calculateDayProfit({
+        efectivoContado: actualCashNIO,
+        pagosSalidas: editingShift.loyversePaidOut || 0,
+        tarjetas: totalCards,
+        transferencias: salesBankTransfers,
+        pedidosYa: salesPedidosYa,
+        otrosIngresos: otherIncome,
+        gastos: sumDayExpenses(state.pettyCashTransactions || [], editingShift.date),
+        propinaEntregada: tipsPaidAmount,
+      });
+      totalGrossSales = profit.ventasTotales;
+      dailyNetProfit = profit.ganancia;
+    }
 
     const updated: CashShift = {
       ...editingShift,

@@ -53,7 +53,7 @@ function createWindow() {
     height: 860,
     minWidth: 1024,
     minHeight: 700,
-    backgroundColor: '#020617',
+    backgroundColor: '#ffffff',
     title: 'Restaurante El Bodegón — Control ERP de Cajas',
     icon: path.join(__dirname, '..', 'public', 'icon.png'),
     autoHideMenuBar: true,
