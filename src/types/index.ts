@@ -355,6 +355,10 @@ declare global {
       onUpdateProgress: (callback: (progress: { percent: number; bytesPerSecond: number }) => void) => () => void;
       onUpdateDownloaded: (callback: (info: any) => void) => () => void;
       onUpdateStatus: (callback: (status: any) => void) => () => void;
+      passHasSession?: (baseUrl: string) => Promise<boolean>;
+      passLogin?: (baseUrl: string, pin: string) => Promise<{ ok: boolean; status: number; error?: string }>;
+      passLogout?: (baseUrl: string) => Promise<boolean>;
+      passGet?: (baseUrl: string, ruta: string) => Promise<{ ok: boolean; status: number; data: any; error?: string }>;
       isDesktop: boolean;
     };
   }

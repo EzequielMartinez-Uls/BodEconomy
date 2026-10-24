@@ -26,5 +26,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('updater:status', sub);
     return () => ipcRenderer.removeListener('updater:status', sub);
   },
+  passHasSession: (baseUrl) => ipcRenderer.invoke('pass:has-session', baseUrl),
+  passLogin: (baseUrl, pin) => ipcRenderer.invoke('pass:login', baseUrl, pin),
+  passLogout: (baseUrl) => ipcRenderer.invoke('pass:logout', baseUrl),
+  passGet: (baseUrl, ruta) => ipcRenderer.invoke('pass:get', baseUrl, ruta),
   isDesktop: true,
 });
