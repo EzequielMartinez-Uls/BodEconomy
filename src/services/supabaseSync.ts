@@ -709,6 +709,8 @@ export async function syncGeneralCashShiftToCloud(shift: CashShift): Promise<voi
         shift.tipDistributedTotal !== undefined
           ? shift.tipDistributedTotal
           : prevAudit.tipDistributedTotal,
+      loyversePaidOut: shift.loyversePaidOut ?? prevAudit.loyversePaidOut,
+      formulaVersion: shift.formulaVersion ?? prevAudit.formulaVersion,
     };
 
     const finalObs = mergeJornadaTags(prevObs, {
@@ -849,7 +851,8 @@ export async function syncFullDayClosureToCloud({
     );
     const pedidosYa = generalShift.salesPedidosYa ?? generalShift.loyverseValidation?.salesPedidosYa ?? 0;
     const otherIncome = generalShift.otherIncome || 0;
-    const gross = generalShift.totalGrossSales ?? (cash + cards + pedidosYa + otherIncome);
+    const bankTransfers = generalShift.salesBankTransfers || 0;
+    const gross = generalShift.totalGrossSales ?? (cash + cards + pedidosYa + bankTransfers + otherIncome);
 
     const salesDataObj = {
       salesCash: cash,
@@ -859,6 +862,8 @@ export async function syncFullDayClosureToCloud({
       cardsLafise: generalShift.cardsLafise || 0,
       totalCards: cards,
       salesPedidosYa: pedidosYa,
+      salesBankTransfers: bankTransfers,
+      bankTransfersNotes: generalShift.bankTransfersNotes || '',
       otherIncome: otherIncome,
       otherIncomeNotes: generalShift.otherIncomeNotes || '',
       totalGrossSales: gross,
@@ -879,6 +884,12 @@ export async function syncFullDayClosureToCloud({
       totalClosingUSD: generalShift.totalClosingUSD || 0,
       closingNIO: generalShift.closingNIO,
       closingUSD: generalShift.closingUSD,
+      netCashAfterTipsNIO: generalShift.netCashAfterTipsNIO,
+      tipPaid: generalShift.tipPaid,
+      totalTipCollected: generalShift.totalTipCollected,
+      tipDistributedTotal: generalShift.tipDistributedTotal,
+      loyversePaidOut: generalShift.loyversePaidOut,
+      formulaVersion: generalShift.formulaVersion,
     };
 
     let pettyClosing: any = undefined;
@@ -1172,6 +1183,10 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
   let salesPedidosYa = existingShift?.salesPedidosYa || 0;
   let otherIncome = existingShift?.otherIncome || 0;
   let otherIncomeNotes = existingShift?.otherIncomeNotes || '';
+  let salesBankTransfers = existingShift?.salesBankTransfers || 0;
+  let bankTransfersNotes = existingShift?.bankTransfersNotes || '';
+  let loyversePaidOut = existingShift?.loyversePaidOut;
+  let formulaVersion = existingShift?.formulaVersion;
   let totalGrossSales = existingShift?.totalGrossSales || 0;
   let totalTipCollected = existingShift?.totalTipCollected || 0;
   let tipPaid = existingShift?.tipPaid;
@@ -1190,7 +1205,9 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
       salesPedidosYa = Number(s.salesPedidosYa) || 0;
       otherIncome = Number(s.otherIncome) || 0;
       if (s.otherIncomeNotes) otherIncomeNotes = s.otherIncomeNotes;
-      totalGrossSales = Number(s.totalGrossSales) || (salesCash + totalCards + salesPedidosYa + otherIncome);
+      salesBankTransfers = Number(s.salesBankTransfers) || 0;
+      if (s.bankTransfersNotes) bankTransfersNotes = s.bankTransfersNotes;
+      totalGrossSales = Number(s.totalGrossSales) || (salesCash + totalCards + salesPedidosYa + salesBankTransfers + otherIncome);
       totalTipCollected = Number(s.tips) || Number(s.totalTipCollected) || 0;
       if (s.tipPaid !== undefined) tipPaid = Boolean(s.tipPaid);
       if (s.tipDistributedTotal !== undefined) tipDistributedTotal = Number(s.tipDistributedTotal);
@@ -1232,6 +1249,8 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
       if (a.tipPaid !== undefined) tipPaid = Boolean(a.tipPaid);
       if (a.totalTipCollected !== undefined) totalTipCollected = Number(a.totalTipCollected);
       if (a.tipDistributedTotal !== undefined) tipDistributedTotal = Number(a.tipDistributedTotal);
+      if (a.loyversePaidOut !== undefined) loyversePaidOut = Number(a.loyversePaidOut);
+      if (a.formulaVersion !== undefined) formulaVersion = Number(a.formulaVersion);
     } catch {}
   }
 
@@ -1281,6 +1300,10 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
     salesPedidosYa,
     otherIncome,
     otherIncomeNotes,
+    salesBankTransfers,
+    bankTransfersNotes,
+    loyversePaidOut,
+    formulaVersion,
     totalGrossSales,
     totalTipCollected,
     tipPaid,
@@ -1299,22 +1322,33 @@ export function parseShiftFromJornada(j: any, existingShift?: CashShift | null):
 /**
  * Consulta el estado completo de la nube para mantener sincronizadas múltiples computadoras y la web
  */
+/** Cuántas jornadas y compras recientes se bajan de la nube en cada sincronización. */
+export const CLOUD_JORNADAS_LIMIT = 45;
+export const CLOUD_GASTOS_LIMIT = 350;
+
 export async function fetchFullCloudState(): Promise<{
   activeShift: CashShift | null;
   activePettyShift: PettyCashShift | null;
   shiftHistory: CashShift[];
   pettyCashShiftHistory: PettyCashShift[];
   gastos: any[];
+  jornadasCount: number;
 }> {
   try {
     // Auto-sanar en segundo plano compras huérfanas en la nube para garantizar integridad del visualizador
     autoHealOrphanedCloudTransactions().catch(() => {});
 
     const today = getLocalTodayStr();
-    const [{ data: jData }, { data: gData }] = await Promise.all([
-      supabase.from('jornadas_diarias').select('*').neq('turno', 'CONFIG').order('fecha', { ascending: false }).limit(45),
-      supabase.from('compras_gastos').select('*').order('fecha_hora', { ascending: false }).limit(350),
+    const [{ data: jData, error: jError }, { data: gData, error: gError }] = await Promise.all([
+      supabase.from('jornadas_diarias').select('*').neq('turno', 'CONFIG').order('fecha', { ascending: false }).limit(CLOUD_JORNADAS_LIMIT),
+      supabase.from('compras_gastos').select('*').order('fecha_hora', { ascending: false }).limit(CLOUD_GASTOS_LIMIT),
     ]);
+
+    // Sin internet Supabase no lanza error: devuelve data = null. Si lo tomáramos como
+    // "nube vacía", la app borraría la caja abierta y las compras pendientes de subir.
+    if (jError || gError || !jData || !gData) {
+      throw new Error(`No se pudo leer la nube: ${(jError || gError)?.message || 'sin datos'}`);
+    }
 
     const jornadas = (jData || []) as any[];
     let activeShift: CashShift | null = null;
@@ -1494,10 +1528,11 @@ export async function fetchFullCloudState(): Promise<{
       shiftHistory,
       pettyCashShiftHistory,
       gastos: gData || [],
+      jornadasCount: jornadas.length,
     };
   } catch (err) {
     console.warn('⚠️ Error al consultar estado completo de la nube:', err);
-    return { activeShift: null, activePettyShift: null, shiftHistory: [], pettyCashShiftHistory: [], gastos: [] };
+    throw err;
   }
 }
 

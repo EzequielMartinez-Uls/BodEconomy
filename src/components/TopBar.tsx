@@ -11,7 +11,6 @@ import {
   Cloud,
   Unlock,
   Lock,
-  RefreshCw,
 } from 'lucide-react';
 import {
   printOfficialActBN,
@@ -41,28 +40,6 @@ export const TopBar: React.FC<Props> = ({
   const [cloudModalOpen, setCloudModalOpen] = useState(false);
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const isShiftOpen = state.currentShift?.status === 'OPEN';
-  const [checkingUpdate, setCheckingUpdate] = useState(false);
-  const [updateFeedback, setUpdateFeedback] = useState<string | null>(null);
-
-  const handleManualCheckUpdate = async () => {
-    if (checkingUpdate) return;
-    setCheckingUpdate(true);
-    setUpdateFeedback(null);
-    try {
-      if (window.electronAPI?.checkForUpdates) {
-        await window.electronAPI.checkForUpdates();
-      }
-      setTimeout(() => {
-        setCheckingUpdate(false);
-        setUpdateFeedback('Comprobado');
-        setTimeout(() => setUpdateFeedback(null), 3000);
-      }, 2000);
-    } catch (e) {
-      setCheckingUpdate(false);
-      setUpdateFeedback('Error');
-      setTimeout(() => setUpdateFeedback(null), 3000);
-    }
-  };
 
   const pendingCount = (state.pettyCashTransactions || []).filter(
     (t) => !t.cloudId && !t.id.startsWith('pct-cloud-') && !t.id.startsWith('opening-') && !t.id.startsWith('pct-init-')
@@ -231,10 +208,10 @@ export const TopBar: React.FC<Props> = ({
 
   return (
     <>
-      <header className="h-16 bg-white border-b border-stone-200 px-6 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
+      <header className="h-16 bg-white border-b border-stone-200 px-6 flex items-center justify-between gap-4 sticky top-0 z-30 shadow-2xs whitespace-nowrap">
         {/* Saludo y Fecha */}
-        <div className="flex items-center gap-3">
-          <div>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="text-base font-bold text-stone-900 tracking-tight flex items-center gap-1.5">
                 <span>Sesión:</span>
@@ -251,8 +228,8 @@ export const TopBar: React.FC<Props> = ({
             <div className="text-xs text-stone-500 capitalize flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-stone-400" />
               <span>{today}</span>
-              <span>•</span>
-              <span className="text-stone-600 font-medium">El Bodegón Restaurante</span>
+              <span className="hidden 2xl:inline">•</span>
+              <span className="hidden 2xl:inline text-stone-600 font-medium">El Bodegón Restaurante</span>
             </div>
           </div>
         </div>
@@ -311,22 +288,6 @@ export const TopBar: React.FC<Props> = ({
             </span>
             <span className="sm:hidden">
               {pendingCount > 0 ? `Nube (${pendingCount})` : 'Nube'}
-            </span>
-          </button>
-
-          {/* Botón Buscar Actualización */}
-          <button
-            onClick={handleManualCheckUpdate}
-            disabled={checkingUpdate}
-            title="Buscar si existe una actualización del software en GitHub"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-stone-200 bg-stone-50 hover:bg-stone-100 text-stone-700 text-xs font-semibold shadow-2xs transition cursor-pointer"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 text-stone-500 ${checkingUpdate ? 'animate-spin text-bodegon' : ''}`} />
-            <span className="hidden xl:inline">
-              {checkingUpdate ? 'Buscando...' : updateFeedback || 'Buscar actualización'}
-            </span>
-            <span className="xl:hidden">
-              {checkingUpdate ? '...' : updateFeedback || 'Actualizar'}
             </span>
           </button>
 

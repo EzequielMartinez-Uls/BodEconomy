@@ -296,8 +296,10 @@ export function loadState(): AppState {
     const parsed = JSON.parse(raw);
     const loaded: AppState = { ...INITIAL_STATE, ...parsed };
 
-    // Tasa de cambio oficial fija en C$ 36.00 para todo el sistema
-    loaded.defaultExchangeRate = 36.00;
+    // Tasa de cambio: 36.00 por defecto, pero se respeta si se cambió en el sistema.
+    if (!(Number(loaded.defaultExchangeRate) > 0)) {
+      loaded.defaultExchangeRate = 36.00;
+    }
 
     // Administradores autorizados estrictamente: Eddy, Xiomara, Ezequiel, Snyder
     loaded.availableAdmins = ['Eddy', 'Xiomara', 'Ezequiel', 'Snyder'];
@@ -389,35 +391,9 @@ export function loadState(): AppState {
       loaded.pettyCashShiftHistory = [];
     }
 
-    // Auto-saneamiento de compras duplicadas accidentales (ej: eco de red local vs Supabase)
-    if (loaded.pettyCashTransactions && loaded.pettyCashTransactions.length > 1) {
-      const seen = new Map<string, PettyCashTransaction>();
-      const deduped: PettyCashTransaction[] = [];
-      let restoredBalance = 0;
-
-      for (const tx of loaded.pettyCashTransactions) {
-        const minuteKey = `${tx.vendor.trim().toLowerCase()}_${tx.amount.toFixed(2)}_${(tx.date || '').slice(0, 16)}`;
-        if (seen.has(minuteKey)) {
-          const prevTx = seen.get(minuteKey)!;
-          // Preferir conservar el ID oficial de la nube
-          if (!prevTx.id.startsWith('pct-cloud-') && tx.id.startsWith('pct-cloud-')) {
-            const idx = deduped.indexOf(prevTx);
-            if (idx !== -1) deduped[idx] = tx;
-            seen.set(minuteKey, tx);
-          }
-          if (tx.type === 'EXPENSE' && tx.method === 'CASH') {
-            restoredBalance += tx.amount;
-          }
-        } else {
-          seen.set(minuteKey, tx);
-          deduped.push(tx);
-        }
-      }
-
-      if (restoredBalance > 0) {
-        loaded.pettyCashTransactions = deduped;
-      }
-    }
+    // Nota: aquí antes se borraban compras "duplicadas" (mismo proveedor, monto y minuto).
+    // Se quitó porque eliminaba compras reales repetidas (ej. dos bolsas de hielo seguidas).
+    // Los duplicados reales de la nube se depuran por cloudId al sincronizar.
 
     // Limpiar transacciones demo residuales y duplicados conocidos (ej. ID 85 duplicado de C$ 2,600)
     loaded.pettyCashTransactions = (loaded.pettyCashTransactions || []).filter(
@@ -437,59 +413,6 @@ export function loadState(): AppState {
       loaded.pettyCashTransactions = loaded.pettyCashTransactions.filter(
         (tx) => !(tx.amount === 2600 && tx.type === 'INFLOW' && !tx.cloudId && (tx.notes || '').toLowerCase().includes('snyder'))
       );
-    }
-
-    // Saneamiento de movimientos de Caja Chica:
-    // Asegurar que las compras pertenecientes al 2026-10-02 (o jornadas anteriores) queden estrictamente
-    // aisladas en su shiftId correspondiente (pc-shift-2026-10-02) y no contaminen la jornada del 2026-10-03
-    const FRIDAY_2026_10_02_CLOUD_IDS = new Set([
-      49, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83
-    ]);
-    const FRIDAY_2026_10_02_KEYWORDS = [
-      'gas de 100', 'yahaira', 'queso quesillo', 'delivery quesillo', 'hielo', 'carnic', 'delivery carnic',
-      'dia completo laburado ezequiel', 'basura', 'limones', 'mercado', 'sandor', 'tajin', 'lechuga',
-      'pepinos', 'alvaro', 'delivery super', 'flor de caña', 'fresas', 'comida de gato', 'cuajada',
-      'tortillas', 'paniagua', 'huevos'
-    ];
-
-    if (loaded.pettyCashTransactions && loaded.pettyCashTransactions.length > 0) {
-      loaded.pettyCashTransactions = loaded.pettyCashTransactions.map((tx) => {
-        const isFridayCloud = tx.cloudId && FRIDAY_2026_10_02_CLOUD_IDS.has(tx.cloudId);
-        const isFridayId = tx.id.startsWith('pct-cloud-') && FRIDAY_2026_10_02_CLOUD_IDS.has(Number(tx.id.replace('pct-cloud-', '')));
-        const isFridayKeyword = FRIDAY_2026_10_02_KEYWORDS.some((kw) =>
-          (tx.vendor || '').toLowerCase().includes(kw) || (tx.notes || '').toLowerCase().includes(kw)
-        );
-
-        if (isFridayCloud || isFridayId || isFridayKeyword) {
-          const timePart = tx.date && tx.date.includes('T') ? tx.date.split('T')[1] : '12:00:00';
-          return {
-            ...tx,
-            shiftId: 'pc-shift-2026-10-02',
-            date: `2026-10-02T${timePart}`,
-          };
-        }
-        return tx;
-      });
-    }
-
-    // Saneamiento de turnos históricos y activos (Viernes 2026-10-02 y Sábado 2026-10-03)
-    if (loaded.shiftHistory) {
-      loaded.shiftHistory = loaded.shiftHistory.map((s) => {
-        if (s.date === '2026-10-02') {
-          return {
-            ...s,
-            actualCashNIO: 11481,
-            expectedCashNIO: 11481,
-            totalClosingNIO: 11481,
-            totalClosingUSD: 40,
-            totalClosingEquivNIO: 11481,
-            differenceNIO: 0,
-            auditStatus: 'SQUARED',
-            dailyNetProfit: 14374.97,
-          };
-        }
-        return s;
-      });
     }
 
     // Recalcular con precisión estricta el saldo físico en gaveta de la jornada
@@ -550,11 +473,27 @@ export function getPettyCashTransactionsForDate(
 }
 
 
+export const BACKUP_DAYS_TO_KEEP = 7;
+
+function pruneOldBackups(today: string): void {
+  const backupKeys: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(BACKUP_PREFIX)) backupKeys.push(key);
+  }
+  const keep = new Set(
+    [...backupKeys, `${BACKUP_PREFIX}${today}`].sort().reverse().slice(0, BACKUP_DAYS_TO_KEEP)
+  );
+  backupKeys.filter((k) => !keep.has(k)).forEach((k) => localStorage.removeItem(k));
+}
+
 export function saveState(state: AppState): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    // Automatic daily rotating backup
+    // Respaldo diario rotativo: se guardan solo los últimos días para no llenar el espacio local
+    // (cuando se llena, el guardado principal falla en silencio).
     const today = getLocalTodayStr();
+    pruneOldBackups(today);
     localStorage.setItem(`${BACKUP_PREFIX}${today}`, JSON.stringify(state));
   } catch (error) {
     console.error('Error saving state to localStorage:', error);

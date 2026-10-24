@@ -8,6 +8,7 @@ import {
 } from '../services/storage';
 import { getLocalTodayStr, formatDateToFriendly, addDaysToDateStr, extractLocalDateStr } from '../utils/dateUtils';
 import { CashDenominationsInput } from './CashDenominationsInput';
+import { calculateDayProfit } from '../utils/cashMath';
 import { printOfficialOpeningActBN, printYesterdayEarningsActBN } from '../services/thermalPrint';
 import {
   X,
@@ -155,7 +156,9 @@ export const OpeningModal: React.FC<Props> = ({
   );
 
   // Casilla Clave: Pagos y Salidas de Loyverse del día anterior
-  const [loyversePaidOutInput, setLoyversePaidOutInput] = useState<string>('');
+  const [loyversePaidOutInput, setLoyversePaidOutInput] = useState<string>(
+    lastClosedShift?.loyversePaidOut ? String(lastClosedShift.loyversePaidOut) : ''
+  );
   const loyversePaidOut = Math.max(0, parseFloat(loyversePaidOutInput) || 0);
 
   const [syncCorrectionsToPrevious, setSyncCorrectionsToPrevious] = useState<boolean>(true);
@@ -223,7 +226,8 @@ export const OpeningModal: React.FC<Props> = ({
 
   // Fórmula exacta explicada por el usuario:
   // Efectivo generado ayer = Efectivo (ventas de ayer en efectivo) + Pagos y Salidas (Loyverse)
-  const efectivoVentasAyer = numLoyverseCash ?? repLoyverseCash ?? 0;
+  // Efectivo contado en gaveta al cierre de ayer (C$ + dólares a la tasa)
+  const efectivoVentasAyer = lastClosedShift?.actualCashNIO ?? lastClosedShift?.totalClosingEquivNIO ?? 0;
   const efectivoGeneradoRealAyer = Math.max(0, efectivoVentasAyer + loyversePaidOut);
 
   // ----------------------------------------------------
@@ -255,6 +259,7 @@ export const OpeningModal: React.FC<Props> = ({
 
   // Propina entregada de ayer (como gasto/salida de la jornada según cierre)
   const initialTipsAyer = useMemo(() => {
+    if (lastClosedShift?.tipPaid === false) return 0;
     return lastClosedShift?.tipDistributedTotal || lastClosedShift?.totalTipCollected || 0;
   }, [lastClosedShift]);
 
@@ -265,18 +270,65 @@ export const OpeningModal: React.FC<Props> = ({
   React.useEffect(() => {
     setReportCashExpensesAyer(initialCashExpensesAyer > 0 ? String(initialCashExpensesAyer) : '0');
     setReportTransferExpensesAyer(initialTransferExpensesAyer > 0 ? String(initialTransferExpensesAyer) : '0');
-    if (initialTipsAyer > 0) {
-      setReportTipsExpensesAyer(String(initialTipsAyer));
-    }
+    setReportTipsExpensesAyer(String(initialTipsAyer));
   }, [initialCashExpensesAyer, initialTransferExpensesAyer, initialTipsAyer]);
 
   const numCashExpensesAyer = reportCashExpensesAyer !== '' ? parseFloat(reportCashExpensesAyer) || 0 : initialCashExpensesAyer;
   const numTransferExpensesAyer = reportTransferExpensesAyer !== '' ? parseFloat(reportTransferExpensesAyer) || 0 : initialTransferExpensesAyer;
-  const numTipsExpensesAyer = reportTipsExpensesAyer !== '' && parseFloat(reportTipsExpensesAyer) > 0 ? parseFloat(reportTipsExpensesAyer) : initialTipsAyer;
+  // Escribir 0 es válido (por ejemplo, si esa noche no se repartió propina).
+  const numTipsExpensesAyer = reportTipsExpensesAyer !== '' ? Math.max(0, parseFloat(reportTipsExpensesAyer) || 0) : initialTipsAyer;
 
-  const totalGastosAyer = numCashExpensesAyer + numTransferExpensesAyer + numTipsExpensesAyer;
-  const gananciaNetaAyer = totalVerifiedSales - totalGastosAyer;
-  const margenNetoAyer = totalVerifiedSales > 0 ? (gananciaNetaAyer / totalVerifiedSales) * 100 : 0;
+  // Ganancia de ayer con la fórmula única (utils/cashMath.ts): gaveta contada + pagos y salidas,
+  // más tarjetas, transferencias, PedidosYa y otros, menos gastos y propina.
+  const corBAC = numBAC ?? repBAC;
+  const corFico = numFico ?? repFico;
+  const corBanpro = numBanpro ?? repBanpro;
+  const corLafise = numLafise ?? repLafise;
+  const corTotalCards = corBAC + corFico + corBanpro + corLafise;
+  const corPY = numPedidosYa ?? repPedidosYa;
+  const corCash = numLoyverseCash ?? repLoyverseCash;
+  const corOther = numOtherIncome ?? repOtherIncome;
+  const corTransfers = lastClosedShift?.salesBankTransfers || 0;
+  const profitAyer = calculateDayProfit({
+    efectivoContado: lastClosedShift?.actualCashNIO ?? lastClosedShift?.totalClosingEquivNIO ?? 0,
+    pagosSalidas: loyversePaidOut,
+    tarjetas: corTotalCards,
+    transferencias: corTransfers,
+    pedidosYa: corPY,
+    otrosIngresos: corOther,
+    gastos: {
+      cash: numCashExpensesAyer,
+      transfer: numTransferExpensesAyer,
+      card: 0,
+      total: numCashExpensesAyer + numTransferExpensesAyer,
+    },
+    propinaEntregada: numTipsExpensesAyer,
+  });
+  const totalGastosAyer = profitAyer.totalGastos + profitAyer.propinaEntregada;
+  const ventasTotalesAyer = profitAyer.ventasTotales;
+  const gananciaNetaAyer = profitAyer.ganancia;
+  const margenNetoAyer = profitAyer.margen;
+
+  const openingEarningsSummary: NonNullable<CashShift['openingEarningsSummary']> = {
+    cardsBAC: corBAC,
+    cardsFicohsa: corFico,
+    cardsBanpro: corBanpro,
+    cardsLafise: corLafise,
+    totalCards: corTotalCards,
+    salesPedidosYa: corPY,
+    salesBankTransfers: corTransfers,
+    salesCashLoyverse: corCash,
+    loyversePaidOut,
+    efectivoRealGenerado: profitAyer.efectivoReal,
+    otherIncome: corOther,
+    totalGenerado: ventasTotalesAyer,
+    gastosEfectivo: numCashExpensesAyer,
+    gastosTransferencia: numTransferExpensesAyer,
+    propinasEntregadas: numTipsExpensesAyer,
+    totalGastos: totalGastosAyer,
+    gananciaNeta: gananciaNetaAyer,
+    margenPorcentaje: margenNetoAyer,
+  };
 
   // ----------------------------------------------------
   // PASO 3: DISTRIBUCIÓN DE FONDOS PARA HOY
@@ -366,44 +418,6 @@ export const OpeningModal: React.FC<Props> = ({
       auditNotes = auditNotes ? `${auditNotes} • ${snyderNote}` : snyderNote;
     }
 
-    // Consolidación de Ganancias del Día Anterior (Hoja 2 del Acta Oficial)
-    const corBAC = numBAC ?? repBAC;
-    const corFico = numFico ?? repFico;
-    const corBanpro = numBanpro ?? repBanpro;
-    const corLafise = numLafise ?? repLafise;
-    const corTotalCards = corBAC + corFico + corBanpro + corLafise;
-    const corPY = numPedidosYa ?? repPedidosYa;
-    const corCash = numLoyverseCash ?? repLoyverseCash;
-    const corOther = numOtherIncome ?? repOtherIncome;
-    const corEfectivoReal = Math.max(0, corCash + loyversePaidOut);
-    const corTotalGenerado = corTotalCards + corPY + corEfectivoReal + corOther;
-    const corGastosEfectivo = numCashExpensesAyer;
-    const corGastosTransf = numTransferExpensesAyer;
-    const corPropinas = numTipsExpensesAyer;
-    const corTotalGastos = corGastosEfectivo + corGastosTransf + corPropinas;
-    const corGananciaNeta = corTotalGenerado - corTotalGastos;
-    const corMargenPct = corTotalGenerado > 0 ? (corGananciaNeta / corTotalGenerado) * 100 : 0;
-
-    const openingEarningsSummary = {
-      cardsBAC: corBAC,
-      cardsFicohsa: corFico,
-      cardsBanpro: corBanpro,
-      cardsLafise: corLafise,
-      totalCards: corTotalCards,
-      salesPedidosYa: corPY,
-      salesCashLoyverse: corCash,
-      loyversePaidOut,
-      efectivoRealGenerado: corEfectivoReal,
-      otherIncome: corOther,
-      totalGenerado: corTotalGenerado,
-      gastosEfectivo: corGastosEfectivo,
-      gastosTransferencia: corGastosTransf,
-      propinasEntregadas: corPropinas,
-      totalGastos: corTotalGastos,
-      gananciaNeta: corGananciaNeta,
-      margenPorcentaje: corMargenPct,
-    };
-
     // Datos del nuevo turno de Caja General
     const newShift: CashShift = {
       id: `shift-${shiftDate}-${Date.now()}`,
@@ -449,9 +463,13 @@ export const OpeningModal: React.FC<Props> = ({
         salesPedidosYa: corPY,
         salesCashSystem: corCash,
         otherIncome: corOther,
-        totalGrossSales: corCash + corTotalCards + corPY + corOther,
-        totalTipCollected: numTipsExpensesAyer,
-        dailyNetProfit: corGananciaNeta,
+        loyversePaidOut,
+        formulaVersion: 2,
+        // Ventas totales con transferencias incluidas (antes se perdían al abrir el día siguiente)
+        totalGrossSales: ventasTotalesAyer,
+        tipDistributedTotal: numTipsExpensesAyer,
+        tipPaid: numTipsExpensesAyer > 0 ? true : lastClosedShift.tipPaid,
+        dailyNetProfit: gananciaNetaAyer,
         closingNotes: diffItems.length > 0
           ? (lastClosedShift.closingNotes
               ? `${lastClosedShift.closingNotes} • Corroborado en apertura ${shiftDate}: ${diffItems.join(', ')}`
@@ -939,7 +957,7 @@ export const OpeningModal: React.FC<Props> = ({
                     <div className="bg-white/90 rounded-md p-2 border border-dorado/40 text-xs font-mono space-y-0.5">
                       <div className="text-[10px] text-stone-500 uppercase font-bold">Fórmula de Efectivo Generado Ayer:</div>
                       <div className="text-stone-700 text-[11px]">
-                        Efectivo: C$ {efectivoVentasAyer.toFixed(2)} + Pagos/Salidas: C$ {loyversePaidOut.toFixed(2)}
+                        Gaveta contada: C$ {efectivoVentasAyer.toFixed(2)} + Pagos/Salidas: C$ {loyversePaidOut.toFixed(2)}
                       </div>
                       <div className="text-bodegon font-bold text-xs pt-0.5">
                         = Efectivo Generado Ayer: C$ {efectivoGeneradoRealAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
@@ -1118,53 +1136,53 @@ export const OpeningModal: React.FC<Props> = ({
                 </div>
 
                 {/* Desglose Contable de Liquidación: Ganancia Neta Real */}
-                <div className="p-4 rounded-xl border bg-bodegon text-white space-y-3 font-mono text-xs">
-                  <div className="flex items-center justify-between border-b border-stone-800 pb-2">
-                    <span className="text-[11px] uppercase font-bold text-stone-300 font-sans flex items-center gap-1.5">
+                <div className="p-4 rounded-xl border bg-white border-stone-200 text-stone-800 space-y-3 font-mono text-xs">
+                  <div className="flex items-center justify-between border-b border-stone-200 pb-2">
+                    <span className="text-[11px] uppercase font-bold text-stone-600 font-sans flex items-center gap-1.5">
                       <TrendingUp className="w-4 h-4 text-bodegon" />
                       Cálculo de Ganancia Neta de Ayer (Liquidación Completa del Día)
                     </span>
-                    <span className="text-[10px] text-stone-400 font-sans">
+                    <span className="text-[10px] text-stone-500 font-sans">
                       Fórmula del Excel Oficial
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                    <div className="bg-stone-800/60 p-2.5 rounded-lg border border-stone-700/60">
-                      <span className="text-[10px] text-stone-400 block uppercase font-sans">1. Venta Bruta Total</span>
-                      <strong className="text-sm font-bold text-white">
-                        +C$ {totalVerifiedSales.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                    <div className="bg-stone-50 p-2.5 rounded-lg border border-stone-200">
+                      <span className="text-[10px] text-stone-500 block uppercase font-sans">1. Venta Bruta Total</span>
+                      <strong className="text-sm font-bold text-stone-900">
+                        +C$ {ventasTotalesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </strong>
                     </div>
 
-                    <div className="bg-stone-800/60 p-2.5 rounded-lg border border-stone-700/60">
-                      <span className="text-[10px] text-[#F3C9BF] block uppercase font-sans">2. (-) Compras Efectivo</span>
-                      <strong className="text-sm font-bold text-[#F3C9BF]">
+                    <div className="bg-stone-50 p-2.5 rounded-lg border border-stone-200">
+                      <span className="text-[10px] text-barro block uppercase font-sans">2. (-) Compras Efectivo</span>
+                      <strong className="text-sm font-bold text-barro">
                         -C$ {numCashExpensesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </strong>
                     </div>
 
-                    <div className="bg-stone-800/60 p-2.5 rounded-lg border border-stone-700/60">
-                      <span className="text-[10px] text-blue-300 block uppercase font-sans">3. (-) Transferencias</span>
-                      <strong className="text-sm font-bold text-blue-300">
+                    <div className="bg-stone-50 p-2.5 rounded-lg border border-stone-200">
+                      <span className="text-[10px] text-blue-700 block uppercase font-sans">3. (-) Transferencias</span>
+                      <strong className="text-sm font-bold text-blue-700">
                         -C$ {numTransferExpensesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </strong>
                     </div>
 
-                    <div className="bg-stone-800/60 p-2.5 rounded-lg border border-stone-700/60">
-                      <span className="text-[10px] text-dorado-vivo block uppercase font-sans">4. (-) Propina Personal</span>
-                      <strong className="text-sm font-bold text-dorado-vivo">
+                    <div className="bg-stone-50 p-2.5 rounded-lg border border-stone-200">
+                      <span className="text-[10px] text-dorado-tinta block uppercase font-sans">4. (-) Propina Personal</span>
+                      <strong className="text-sm font-bold text-dorado-tinta">
                         -C$ {numTipsExpensesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </strong>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-stone-800 flex flex-wrap items-center justify-between gap-3 bg-stone-950/70 p-3 rounded-lg border border-stone-800/80">
+                  <div className="pt-2 border-t border-stone-200 flex flex-wrap items-center justify-between gap-3 bg-bodegon/5 p-3 rounded-lg border border-bodegon/20">
                     <div>
-                      <span className="text-[10px] uppercase font-bold text-stone-400 block font-sans">
+                      <span className="text-[10px] uppercase font-bold text-stone-500 block font-sans">
                         = Ganancia Neta del Día (Pagando Gastos y Propina)
                       </span>
-                      <span className="text-[11px] text-stone-400 font-sans">
+                      <span className="text-[11px] text-stone-500 font-sans">
                         Utilidad real del restaurante tras pagar todos los egresos del día
                       </span>
                     </div>
@@ -1172,7 +1190,7 @@ export const OpeningModal: React.FC<Props> = ({
                       <span className={`text-xl font-bold font-mono block ${gananciaNetaAyer >= 0 ? 'text-bodegon' : 'text-barro'}`}>
                         C$ {gananciaNetaAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                       </span>
-                      {totalVerifiedSales > 0 && (
+                      {ventasTotalesAyer > 0 && (
                         <span className="text-[10px] px-2 py-0.5 rounded-md bg-bodegon-noche text-[#CFE3DC] border border-bodegon font-sans font-bold inline-block mt-0.5">
                           Margen Neto: {margenNetoAyer.toFixed(1)}%
                         </span>
@@ -1213,26 +1231,7 @@ export const OpeningModal: React.FC<Props> = ({
                         totalOpeningEquivNIO: totalNIO,
                         openingCashCountedNIO: totalNIO,
                       };
-                      const summary = {
-                        cardsBAC: numBAC ?? repBAC,
-                        cardsFicohsa: numFico ?? repFico,
-                        cardsBanpro: numBanpro ?? repBanpro,
-                        cardsLafise: numLafise ?? repLafise,
-                        totalCards: (numBAC ?? repBAC) + (numFico ?? repFico) + (numBanpro ?? repBanpro) + (numLafise ?? repLafise),
-                        salesPedidosYa: numPedidosYa ?? repPedidosYa,
-                        salesCashLoyverse: numLoyverseCash ?? repLoyverseCash,
-                        loyversePaidOut,
-                        efectivoRealGenerado: Math.max(0, (numLoyverseCash ?? repLoyverseCash) + loyversePaidOut),
-                        otherIncome: numOtherIncome ?? repOtherIncome,
-                        totalGenerado: ((numBAC ?? repBAC) + (numFico ?? repFico) + (numBanpro ?? repBanpro) + (numLafise ?? repLafise)) + (numPedidosYa ?? repPedidosYa) + Math.max(0, (numLoyverseCash ?? repLoyverseCash) + loyversePaidOut) + (numOtherIncome ?? repOtherIncome),
-                        gastosEfectivo: numCashExpensesAyer,
-                        gastosTransferencia: numTransferExpensesAyer,
-                        propinasEntregadas: numTipsExpensesAyer,
-                        totalGastos: totalGastosAyer,
-                        gananciaNeta: gananciaNetaAyer,
-                        margenPorcentaje: margenNetoAyer,
-                      };
-                      printYesterdayEarningsActBN(tempShift, openerName, summary);
+                      printYesterdayEarningsActBN(tempShift, openerName, openingEarningsSummary);
                     }}
                     className="px-4 py-2 rounded-lg border border-bodegon bg-bodegon/5 hover:bg-bodegon/10 text-bodegon font-bold text-xs flex items-center gap-1.5 cursor-pointer transition shadow-2xs"
                     title="Imprimir directamente la hoja de ganancias y ventas de ayer"
@@ -1402,7 +1401,7 @@ export const OpeningModal: React.FC<Props> = ({
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <span className="text-stone-500 font-sans block text-[11px]">Venta Bruta:</span>
-                    <strong className="text-stone-800 text-xs">C$ {totalVerifiedSales.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
+                    <strong className="text-stone-800 text-xs">C$ {ventasTotalesAyer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</strong>
                   </div>
                   <div>
                     <span className="text-stone-500 font-sans block text-[11px]">Compras Efectivo:</span>

@@ -1,4 +1,6 @@
 import React, { useState, useRef } from 'react';
+import { calculateDayProfit, sumDayExpenses } from '../utils/cashMath';
+import { AnimatedNumber } from './ui/AnimatedNumber';
 import { AppState, CashShift, DenominationsNIO, DenominationsUSD, PettyCashTransaction } from '../types';
 import {
   printOfficialActBN,
@@ -301,7 +303,7 @@ export const GeneralCashView: React.FC<Props> = ({
     const salesBankTransfers = parseFloat(editForm.salesBankTransfers) || 0;
     const salesCashSystem = parseFloat(editForm.salesCashSystem) || 0;
     const otherIncome = editingShift.otherIncome || 0;
-    const totalGrossSales = salesCashSystem + totalCards + salesPedidosYa + salesBankTransfers + otherIncome;
+    let totalGrossSales = salesCashSystem + totalCards + salesPedidosYa + salesBankTransfers + otherIncome;
     const totalTipCollected = parseFloat(editForm.totalTipCollected) || 0;
     const staffCount = editingShift.staffCount || 10;
     const tipPaid = editForm.tipPaid;
@@ -341,7 +343,22 @@ export const GeneralCashView: React.FC<Props> = ({
     const dayPettyExpenses = (state.pettyCashTransactions || [])
       .filter((t) => t.type === 'EXPENSE' && extractLocalDateStr(t.date) === editingShift.date)
       .reduce((sum, t) => sum + (t.amount || 0), 0);
-    const dailyNetProfit = parseFloat((totalGrossSales - dayPettyExpenses - tipsPaidAmount).toFixed(2));
+    let dailyNetProfit = parseFloat((totalGrossSales - dayPettyExpenses - tipsPaidAmount).toFixed(2));
+    if (editingShift.formulaVersion === 2) {
+      // Cierres hechos con la fórmula única se corrigen con la misma fórmula (utils/cashMath.ts).
+      const profit = calculateDayProfit({
+        efectivoContado: actualCashNIO,
+        pagosSalidas: editingShift.loyversePaidOut || 0,
+        tarjetas: totalCards,
+        transferencias: salesBankTransfers,
+        pedidosYa: salesPedidosYa,
+        otrosIngresos: otherIncome,
+        gastos: sumDayExpenses(state.pettyCashTransactions || [], editingShift.date),
+        propinaEntregada: tipsPaidAmount,
+      });
+      totalGrossSales = profit.ventasTotales;
+      dailyNetProfit = profit.ganancia;
+    }
 
     const updated: CashShift = {
       ...editingShift,
@@ -649,15 +666,17 @@ export const GeneralCashView: React.FC<Props> = ({
           </div>
 
           {lastClosedShift ? (
-            <div className="bg-white rounded-xl border border-stone-200 shadow-2xs divide-y sm:divide-y-0 sm:divide-x divide-stone-100 grid grid-cols-1 sm:grid-cols-4">
+            <div className="bd-rise bg-white rounded-xl border border-stone-200 shadow-2xs divide-y sm:divide-y-0 sm:divide-x divide-stone-100 grid grid-cols-1 sm:grid-cols-4">
               <div className="p-4 space-y-1">
                 <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider block">
                   Ventas Brutas del Día
                 </span>
                 <div className="text-xl font-bold text-stone-900 font-mono">
-                  C$ {(lastClosedShift.totalGrossSales || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                  C$ <AnimatedNumber value={lastClosedShift.totalGrossSales || 0} />
                 </div>
-                <span className="text-[11px] text-stone-400">Efectivo + Tarjetas + PedidosYa</span>
+                <span className="text-[11px] text-stone-400">
+                  {lastClosedShift.formulaVersion === 2 ? 'Efectivo + tarjetas + transferencias + PedidosYa' : 'Efectivo + Tarjetas + PedidosYa'}
+                </span>
               </div>
 
               <div className="p-4 space-y-1">
@@ -665,7 +684,7 @@ export const GeneralCashView: React.FC<Props> = ({
                   Efectivo Físico en Gaveta
                 </span>
                 <div className="text-xl font-bold text-stone-900 font-mono">
-                  C$ {(lastClosedShift.totalClosingNIO || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                  C$ <AnimatedNumber value={lastClosedShift.totalClosingNIO || 0} />
                   {lastClosedShift.totalClosingUSD ? (
                     <span className="text-bodegon text-xs ml-1">+${lastClosedShift.totalClosingUSD}</span>
                   ) : null}
@@ -678,9 +697,11 @@ export const GeneralCashView: React.FC<Props> = ({
                   Utilidad Neta de la Jornada
                 </span>
                 <div className="text-xl font-bold text-bodegon font-mono">
-                  C$ {(lastClosedShift.dailyNetProfit || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                  C$ <AnimatedNumber value={lastClosedShift.dailyNetProfit || 0} />
                 </div>
-                <span className="text-[11px] text-stone-400">Ventas Brutas − Gastos Insumos</span>
+                <span className="text-[11px] text-stone-400">
+                  {lastClosedShift.formulaVersion === 2 ? 'Ventas − gastos − propina' : 'Ventas Brutas − Gastos Insumos'}
+                </span>
               </div>
 
               <div className="p-4 space-y-1 bg-stone-50/70 sm:rounded-r-xl flex flex-col justify-between">

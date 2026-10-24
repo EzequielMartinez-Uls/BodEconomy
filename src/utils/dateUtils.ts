@@ -69,3 +69,15 @@ export function extractLocalDateStr(dateStr?: string): string {
   if (isNaN(d.getTime())) return dateStr.slice(0, 10);
   return getLocalTodayStr(d);
 }
+
+/**
+ * Indica si dos fechas/horas caen en el mismo minuto, aunque vengan en formatos distintos
+ * (hora local con -06:00 o UTC con Z).
+ */
+export function isSameMinute(a?: string, b?: string): boolean {
+  if (!a || !b) return false;
+  const ta = new Date(a).getTime();
+  const tb = new Date(b).getTime();
+  if (isNaN(ta) || isNaN(tb)) return a.slice(0, 16) === b.slice(0, 16);
+  return Math.floor(ta / 60000) === Math.floor(tb / 60000);
+}

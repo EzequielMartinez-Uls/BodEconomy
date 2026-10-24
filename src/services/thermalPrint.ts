@@ -1,11 +1,18 @@
 import { AppState, CashShift, PettyCashShift, PettyCashTransaction, TablewareItem, TablewareLoss } from '../types';
 import { addDaysToDateStr, extractLocalDateStr, getLocalTodayStr } from '../utils/dateUtils';
 import logoImg from '../assets/logo.png';
+import { calculateShiftProfit } from '../utils/cashMath';
+
+// Si la ventana de impresión no se pudo abrir, antes se imprimía la pantalla completa de la app
+// (una hoja desperdiciada). Ahora solo se avisa.
+function alertPrintBlocked(): void {
+  alert('No se pudo abrir la ventana de impresión. Permite las ventanas emergentes e inténtalo de nuevo.');
+}
 
 function openPrintWindow(title: string, bodyContent: string): void {
   const printWindow = window.open('', '_blank', 'width=1020,height=920,menubar=no,toolbar=no,location=no,status=no');
   if (!printWindow) {
-    alert('Por favor permite ventanas emergentes en tu navegador para visualizar e imprimir el reporte Tamaño Carta.');
+    alertPrintBlocked();
     return;
   }
 
@@ -136,8 +143,19 @@ function openPrintWindow(title: string, bodyContent: string): void {
               border: none !important;
               border-radius: 0 !important;
             }
-            table, tr, td, th {
+            /* Las tablas largas se pueden partir entre hojas (si no, la tabla completa salta
+               a la hoja siguiente y deja la primera casi en blanco); solo cada fila va entera. */
+            tr {
               page-break-inside: avoid;
+              break-inside: avoid;
+            }
+            thead { display: table-header-group; }
+            tfoot { display: table-row-group; }
+            th { padding: 3px 5px; font-size: 9px; }
+            td { padding: 3px 5px; font-size: 10px; }
+            .total-card, .info-box, .grid-2, .grid-3, .grid-4 {
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
           }
 
@@ -368,17 +386,21 @@ function openPrintWindow(title: string, bodyContent: string): void {
         <div class="a4-sheet">
           ${bodyContent}
         </div>
+        <script>
+          // Imprimir cuando ya cargaron el logo y las letras (antes a veces salía sin logo).
+          window.addEventListener('load', function() {
+            setTimeout(function() {
+              window.focus();
+              window.print();
+            }, 150);
+          });
+        </script>
       </body>
     </html>
   `;
 
   printWindow.document.write(html);
   printWindow.document.close();
-
-  setTimeout(() => {
-    printWindow.focus();
-    printWindow.print();
-  }, 350);
 }
 
 // ============================================================================
@@ -548,7 +570,7 @@ export function printThermalOpeningTicket(shift: CashShift): void {
     ` : ''}
 
     <div class="footer-note">
-      <span>BodegónControl ERP • Documento Oficial de Apertura (Tamaño Carta) • Responsable: ${shift.openedBy}</span>
+      <span>Bodegón Control · TEGA • Documento Oficial de Apertura (Tamaño Carta) • Responsable: ${shift.openedBy}</span>
       <span>Impreso el ${new Date().toLocaleString()}</span>
     </div>
   `;
@@ -748,7 +770,7 @@ export function printThermalClosingTicket(shift: CashShift): void {
     ` : ''}
 
     <div class="footer-note">
-      <span>BodegónControl ERP • Acta Oficial de Cierre (Tamaño Carta) • Responsable: ${shift.closedBy || shift.openedBy}</span>
+      <span>Bodegón Control · TEGA • Acta Oficial de Cierre (Tamaño Carta) • Responsable: ${shift.closedBy || shift.openedBy}</span>
       <span>Impreso el ${new Date().toLocaleString()}</span>
     </div>
   `;
@@ -828,15 +850,15 @@ export function printThermalDailyExpensesTicket(
     <table>
       <thead>
         <tr>
-          <th style="width: 35px;">#</th>
-          <th style="width: 65px;">Hora</th>
-          <th style="width: 130px;">Rubro / Categoría</th>
-          <th>Concepto</th>
-          <th style="width: 90px;">Comprobante</th>
-          <th style="width: 75px;">Medio</th>
-          <th style="width: 90px;" class="text-right">Entradas (+)</th>
-          <th style="width: 90px;" class="text-right">Salidas (-)</th>
-          <th style="width: 95px;" class="text-right">Saldo Gaveta</th>
+          <th style="width: 4%;">#</th>
+          <th style="width: 8%;">Hora</th>
+          <th style="width: 13%;">Rubro</th>
+          <th style="width: 31%;">Concepto</th>
+          <th style="width: 8%;">Recibo</th>
+          <th style="width: 7%;">Medio</th>
+          <th style="width: 9%;" class="text-right">Entradas C$</th>
+          <th style="width: 10%;" class="text-right">Salidas C$</th>
+          <th style="width: 10%;" class="text-right">Saldo C$</th>
         </tr>
       </thead>
       <tbody>
@@ -854,17 +876,16 @@ export function printThermalDailyExpensesTicket(
             return `
               <tr>
                 <td class="font-mono text-center bold">${idx + 1}</td>
-                <td class="font-mono text-center">${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                <td><span class="badge">${tx.category}</span></td>
+                <td class="font-mono text-center" style="white-space: nowrap;">${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                <td style="font-size: 9px;">${tx.category}</td>
                 <td>
-                  <span class="bold">${tx.vendor}</span>
-                  ${tx.notes ? `<div style="font-size: 10px; font-weight: 700; color: #000000;">${tx.notes}</div>` : ''}
+                  <span class="bold">${tx.vendor}</span>${tx.notes && tx.notes.trim() !== (tx.vendor || '').trim() ? ` <span style="font-size: 9px; font-weight: 700; color: #000000;">— ${tx.notes}</span>` : ''}
                 </td>
-                <td class="font-mono text-center">${tx.receiptNumber ? `#${tx.receiptNumber}` : 'Sin Recibo'}</td>
+                <td class="font-mono text-center">${tx.receiptNumber ? `#${tx.receiptNumber}` : '—'}</td>
                 <td class="text-center">${isCash ? 'Efectivo' : tx.method === 'CARD' ? 'Tarjeta' : 'Transf.'}</td>
-                <td class="text-right font-mono ${isIn ? 'bold' : ''}">${isIn ? `+C$ ${tx.amount.toFixed(2)}` : '—'}</td>
-                <td class="text-right font-mono ${!isIn ? 'bold' : ''}">${!isIn ? `-C$ ${tx.amount.toFixed(2)}` : '—'}</td>
-                <td class="text-right font-mono bold">C$ ${runningBal.toFixed(2)}</td>
+                <td class="text-right font-mono ${isIn ? 'bold' : ''}" style="white-space: nowrap;">${isIn ? `+${tx.amount.toFixed(2)}` : '—'}</td>
+                <td class="text-right font-mono ${!isIn ? 'bold' : ''}" style="white-space: nowrap;">${!isIn ? `-${tx.amount.toFixed(2)}` : '—'}</td>
+                <td class="text-right font-mono bold" style="white-space: nowrap;">${runningBal.toFixed(2)}</td>
               </tr>
             `;
           }).join('');
@@ -891,7 +912,7 @@ export function printThermalDailyExpensesTicket(
     </div>
 
     <div class="footer-note">
-      <span>BodegónControl ERP • Reporte Oficial de Caja Chica (Tamaño Carta) • Responsable: ${adminName}</span>
+      <span>Bodegón Control · TEGA • Reporte Oficial de Caja Chica (Tamaño Carta) • Responsable: ${adminName}</span>
       <span>Impreso el ${new Date().toLocaleString()}</span>
     </div>
   `;
@@ -1175,15 +1196,18 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
           </div>
 
           <div class="footer-text">
-            Restaurante El Bodegón • Documento Oficial de Respaldo Contable de Compra (Hoja Tamaño Carta B/N)
+            Restaurante El Bodegón • Documento Oficial de Respaldo Contable de Compra (Hoja Tamaño Carta B/N) • Bodegón Control · TEGA
           </div>
         </div>
 
         <script>
-          setTimeout(function() {
-            window.focus();
-            window.print();
-          }, 350);
+          // Imprimir cuando ya cargaron el logo y las letras (antes a veces salía sin logo).
+          window.addEventListener('load', function() {
+            setTimeout(function() {
+              window.focus();
+              window.print();
+            }, 150);
+          });
         </script>
       </body>
       </html>
@@ -1194,7 +1218,7 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
       printWindow.document.write(receiptHtml);
       printWindow.document.close();
     } else {
-      window.print();
+      alertPrintBlocked();
     }
   } catch (err: any) {
     alert('Error imprimiendo recibo de compra: ' + err.message);
@@ -1306,7 +1330,7 @@ export function printThermalTablewareReport(
     </table>
 
     <div class="footer-note">
-      <span>BodegónControl ERP • Reporte de control de menaje (Tamaño Carta) • Auditoría: ${adminName}</span>
+      <span>Bodegón Control · TEGA • Reporte de control de menaje (Tamaño Carta) • Auditoría: ${adminName}</span>
       <span>Impreso el ${new Date().toLocaleString()}</span>
     </div>
   `;
@@ -1452,13 +1476,13 @@ export function printThermalPettyCashClosingAct(
     <table>
       <thead>
         <tr>
-          <th style="width: 9%; text-align: center;">Hora</th>
-          <th style="width: 33%;">Concepto</th>
-          <th style="width: 14%;">Rubro</th>
-          <th style="width: 12%; text-align: center;">Medio</th>
-          <th style="width: 11%;" class="text-right">Entradas (+)</th>
-          <th style="width: 11%;" class="text-right">Salidas (-)</th>
-          <th style="width: 10%;" class="text-right">Saldo (C$)</th>
+          <th style="width: 8%; text-align: center;">Hora</th>
+          <th style="width: 42%;">Concepto</th>
+          <th style="width: 12%;">Rubro</th>
+          <th style="width: 8%; text-align: center;">Medio</th>
+          <th style="width: 10%;" class="text-right">Entradas C$</th>
+          <th style="width: 10%;" class="text-right">Salidas C$</th>
+          <th style="width: 10%;" class="text-right">Saldo C$</th>
         </tr>
       </thead>
       <tbody>
@@ -1476,13 +1500,13 @@ export function printThermalPettyCashClosingAct(
             }
             return `
               <tr>
-                <td class="font-mono text-center">${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                <td><strong>${tx.vendor}</strong> ${tx.notes ? `<div style="font-size: 9.5px; font-weight: 700; color: #000000;">${tx.notes}</div>` : ''}</td>
-                <td><span class="badge">${tx.category}</span></td>
+                <td class="font-mono text-center" style="white-space: nowrap;">${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                <td><strong>${tx.vendor}</strong>${tx.notes && tx.notes.trim() !== (tx.vendor || '').trim() ? ` <span style="font-size: 9px; font-weight: 700; color: #000000;">— ${tx.notes}</span>` : ''}</td>
+                <td style="font-size: 9px;">${tx.category}</td>
                 <td class="text-center">${isCash ? 'Efectivo' : tx.method === 'CARD' ? 'Tarjeta' : 'Transf.'}</td>
-                <td class="text-right font-mono ${isIn ? 'bold' : ''}">${isIn ? `+C$ ${tx.amount.toFixed(2)}` : '—'}</td>
-                <td class="text-right font-mono ${!isIn ? 'bold' : ''}">${!isIn ? `-C$ ${tx.amount.toFixed(2)}` : '—'}</td>
-                <td class="text-right font-mono bold">C$ ${runningSaldoAct.toFixed(2)}</td>
+                <td class="text-right font-mono ${isIn ? 'bold' : ''}" style="white-space: nowrap;">${isIn ? `+${tx.amount.toFixed(2)}` : '—'}</td>
+                <td class="text-right font-mono ${!isIn ? 'bold' : ''}" style="white-space: nowrap;">${!isIn ? `-${tx.amount.toFixed(2)}` : '—'}</td>
+                <td class="text-right font-mono bold" style="white-space: nowrap;">${runningSaldoAct.toFixed(2)}</td>
               </tr>
             `;
           }).join('');
@@ -1506,7 +1530,7 @@ export function printThermalPettyCashClosingAct(
     ` : ''}
 
     <div class="footer-note">
-      <span>BodegónControl ERP • Acta formal de cierre diario de caja chica (Tamaño Carta) • Responsable: ${closedByAdmin || shift.closedBy || shift.openedBy}</span>
+      <span>Bodegón Control · TEGA • Acta formal de cierre diario de caja chica (Tamaño Carta) • Responsable: ${closedByAdmin || shift.closedBy || shift.openedBy}</span>
       <span>Impreso el ${new Date().toLocaleString()}</span>
     </div>
   `;
@@ -1570,7 +1594,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
     const {
       date,
       modo,
-      salesCash,
+      salesCash: salesCashInput,
       cardsBAC,
       cardsFicohsa,
       cardsBanpro,
@@ -1578,7 +1602,9 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
       totalCards,
       salesPedidosYa,
       salesBankTransfers = 0,
-      totalGross,
+      totalGross: totalGrossInput,
+      netProfit,
+      marginPercent,
       responsableCaja,
       observacionesGeneral,
       fondoInicial,
@@ -1590,6 +1616,13 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
       responsableCajaChica = responsableCaja,
       transactions,
     } = data;
+
+    // Con la fórmula única, la venta en efectivo es lo contado en gaveta + pagos y salidas.
+    const usesUnifiedFormula = data.shift?.formulaVersion === 2;
+    const salesCash = usesUnifiedFormula
+      ? (data.shift?.actualCashNIO || 0) + (data.shift?.loyversePaidOut || 0)
+      : salesCashInput;
+    const totalGross = usesUnifiedFormula ? data.shift?.totalGrossSales ?? totalGrossInput : totalGrossInput;
 
     const [y, m, d] = date.split('-').map(Number);
     const fechaObj = new Date(y, m - 1, d);
@@ -1631,7 +1664,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
               const isCash = raw === 'EFECTIVO' || raw === 'CASH';
               const isCard = raw === 'TARJETA' || raw === 'CARD';
               const metodoLabel = isCash ? 'Efectivo' : isCard ? 'Tarjeta' : raw === '-' ? '-' : 'Transferencia';
-              const estadoLabel = g.estado || (g.referencia ? `#${g.referencia}` : 'Liquidado');
+              const estadoLabel = g.estado || (g.referencia ? `#${g.referencia}` : '—');
 
               const isIngreso =
                 g.tipo === 'INGRESO' ||
@@ -1670,12 +1703,12 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
 
               const entradaText =
                 inflowVal > 0
-                  ? `+C$ ${inflowVal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}`
+                  ? `+${inflowVal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}`
                   : '—';
 
               const salidaText =
                 outflowVal > 0
-                  ? `-C$ ${outflowVal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}`
+                  ? `-${outflowVal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}`
                   : '—';
 
               return `
@@ -1685,10 +1718,10 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
                 <td><strong style="font-weight: 900;">${g.concepto}</strong></td>
                 <td style="font-weight: 800;">${g.categoria || '—'}</td>
                 <td style="text-align: center; font-weight: 800;">${metodoLabel}</td>
-                <td style="text-align: center; font-size: 9.5px; font-weight: 800;">${estadoLabel}</td>
-                <td class="text-right font-mono ${inflowVal > 0 ? 'font-bold' : ''}">${entradaText}</td>
-                <td class="text-right font-mono ${outflowVal > 0 ? 'font-bold' : ''}">${salidaText}</td>
-                <td class="text-right font-mono font-bold">C$ ${Number(rowSaldo).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td style="text-align: center; font-size: 8.5px; font-weight: 800;">${estadoLabel}</td>
+                <td class="text-right font-mono ${inflowVal > 0 ? 'font-bold' : ''}" style="white-space: nowrap;">${entradaText}</td>
+                <td class="text-right font-mono ${outflowVal > 0 ? 'font-bold' : ''}" style="white-space: nowrap;">${salidaText}</td>
+                <td class="text-right font-mono font-bold" style="white-space: nowrap;">${Number(rowSaldo).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
             `;
             })
@@ -1860,6 +1893,19 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
           .sheet {
             padding-top: 0 !important;
           }
+          /* El espacio para la barra de botones solo es para la pantalla: impreso empujaba la hoja 1
+             y la firma caía sola en una hoja extra. */
+          .no-print-padding {
+            padding: 0 !important;
+          }
+          tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          thead { display: table-header-group; }
+          td, th { padding: 2px 4px; font-size: 9.5px; }
+          .section-title { margin: 4px 0 2px 0; }
+          .signatures { margin-top: 6px; }
         }
       </style>
     `;
@@ -1962,7 +2008,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
             <tbody>
               <tr>
                 <td><strong>Ventas en Efectivo</strong></td>
-                <td>Recaudación física en gaveta de caja general</td>
+                <td>${usesUnifiedFormula ? 'Contado en gaveta + pagos y salidas (Loyverse)' : 'Recaudación física en gaveta de caja general'}</td>
                 <td class="text-right font-mono">C$ ${salesCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
                 <td class="text-right font-mono">${cashPct}%</td>
               </tr>
@@ -2197,29 +2243,29 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
           <table>
             <tbody>
               <tr>
-                <td style="width: 70%;"><strong>(+) Total Ingresos Facturados</strong> (Efectivo General + Tarjetas Datafast + PedidosYa)</td>
+                <td style="width: 70%;"><strong>(+) Ventas totales</strong> (Efectivo real + Tarjetas + PedidosYa + Transferencias + Otros)</td>
                 <td style="width: 30%;" class="text-right font-mono">C$ ${totalGross.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
               <tr>
-                <td><strong>(-) Compras y Gastos en Efectivo de Caja Chica</strong> (Pag. en Efect. para compras e insumos)</td>
-                <td class="text-right font-mono">- C$ ${expensesCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
+                <td><strong>(-) Gastos del día</strong> (Efectivo C$ ${expensesCash.toLocaleString('es-NI', { minimumFractionDigits: 2 })} + Transferencia y tarjeta C$ ${expensesTransf.toLocaleString('es-NI', { minimumFractionDigits: 2 })})</td>
+                <td class="text-right font-mono">- C$ ${expensesTotal.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
-              ${tipCollected > 0 ? `
+              ${tipsDeductedFromDrawer > 0 ? `
               <tr>
-                <td><strong>(-) Propinas del Turno Entregadas</strong> (Propinas retiradas de caja para el personal)</td>
+                <td><strong>(-) Propinas entregadas al personal</strong></td>
                 <td class="text-right font-mono">- C$ ${tipsDeductedFromDrawer.toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>
               </tr>
               ` : ''}
               <tr class="highlight-row" style="font-size: 11px;">
-                <td><strong>(=) TOTAL NETO / UTILIDAD OPERATIVA LÍQUIDA DE LA JORNADA</strong></td>
+                <td><strong>(=) GANANCIA DEL DÍA</strong></td>
                 <td class="text-right font-mono font-bold">
-                  C$ ${(totalGross - expensesCash - tipsDeductedFromDrawer).toLocaleString('es-NI', { minimumFractionDigits: 2 })}
+                  C$ ${netProfit.toLocaleString('es-NI', { minimumFractionDigits: 2 })}
                 </td>
               </tr>
               <tr>
-                <td>Margen Operativo Neto Sobre Ingresos Totales</td>
+                <td>Margen sobre ventas totales</td>
                 <td class="text-right font-mono font-bold">
-                  ${totalGross > 0 ? (((totalGross - expensesCash - tipsDeductedFromDrawer) / totalGross) * 100).toFixed(1) : '0.0'}%
+                  ${(marginPercent || 0).toFixed(1)}%
                 </td>
               </tr>
             </tbody>
@@ -2289,15 +2335,15 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
           <table>
             <thead>
               <tr>
-                <th style="width: 4%; text-align: center;">#</th>
-                <th style="width: 8%; text-align: center;">HORA</th>
-                <th style="width: 28%;">CONCEPTO DEL GASTO</th>
-                <th style="width: 14%;">CATEGORÍA</th>
-                <th style="width: 10%; text-align: center;">MÉTODO</th>
-                <th style="width: 9%; text-align: center;">COMPROBANTE</th>
-                <th style="width: 9%;" class="text-right">ENTRADAS (+)</th>
-                <th style="width: 9%;" class="text-right">SALIDAS (-)</th>
-                <th style="width: 9%;" class="text-right">SALDO (C$)</th>
+                <th style="width: 3%; text-align: center;">#</th>
+                <th style="width: 6%; text-align: center;">HORA</th>
+                <th style="width: 37%;">CONCEPTO DEL GASTO</th>
+                <th style="width: 11%;">CATEGORÍA</th>
+                <th style="width: 7%; text-align: center;">MÉTODO</th>
+                <th style="width: 7%; text-align: center;">RECIBO</th>
+                <th style="width: 9%;" class="text-right">ENTRADAS C$</th>
+                <th style="width: 10%;" class="text-right">SALIDAS C$</th>
+                <th style="width: 10%;" class="text-right">SALDO C$</th>
               </tr>
             </thead>
             <tbody>
@@ -2375,10 +2421,13 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
         </div>
 
         <script>
-          setTimeout(function() {
-            window.focus();
-            window.print();
-          }, 350);
+          // Imprimir cuando ya cargaron el logo y las letras (antes a veces salía sin logo).
+          window.addEventListener('load', function() {
+            setTimeout(function() {
+              window.focus();
+              window.print();
+            }, 150);
+          });
         </script>
       </body>
       </html>
@@ -2389,7 +2438,7 @@ export function printOfficialActBN(data: OfficialActPrintData): void {
       printWindow.document.write(fullHtml);
       printWindow.document.close();
     } else {
-      window.print();
+      alertPrintBlocked();
     }
   } catch (err: any) {
     alert('Error generando impresión oficial: ' + err.message);
@@ -2411,10 +2460,14 @@ export function computeYesterdayEarningsSummary(
   // 1. Buscar turno de la fecha anterior en shiftHistory o el último cerrado
   const history = state.shiftHistory || [];
   const shiftsForYesterday = history.filter((s) => s.date === yesterdayDate);
+  // Si ayer no hubo turno (ej. día cerrado), se usa el último cierre ANTERIOR a hoy.
+  // Antes se tomaba el día con más ventas de todo el historial.
   const yesterdayShift =
     shiftsForYesterday.find((s) => (s.totalGrossSales || 0) > 0) ||
     shiftsForYesterday[0] ||
-    history.filter((s) => s.status === 'CLOSED').sort((a, b) => (b.totalGrossSales || 0) - (a.totalGrossSales || 0) || b.date.localeCompare(a.date))[0];
+    history
+      .filter((s) => s.status === 'CLOSED' && s.date < currentDate)
+      .sort((a, b) => b.date.localeCompare(a.date))[0];
 
   if (!yesterdayShift) {
     return undefined;
@@ -2442,7 +2495,7 @@ export function computeYesterdayEarningsSummary(
     (t) => t.type === 'EXPENSE' && extractLocalDateStr(t.date) === yesterdayShift.date
   );
   const gastosEfectivo = dayPettyTxs
-    .filter((t) => t.method === 'CASH')
+    .filter((t) => t.method === 'CASH' || !t.method)
     .reduce((sum, t) => sum + (t.amount || 0), 0);
   const gastosTransferencia = dayPettyTxs
     .filter((t) => t.method === 'TRANSFER' || t.method === 'CARD')
@@ -2457,6 +2510,30 @@ export function computeYesterdayEarningsSummary(
   const gananciaNeta = parseFloat((totalGenerado - totalGastos).toFixed(2));
   const margenPorcentaje =
     totalGenerado > 0 ? (gananciaNeta / totalGenerado) * 100 : 0;
+
+  if (yesterdayShift.formulaVersion === 2) {
+    const profit = calculateShiftProfit(yesterdayShift, state.pettyCashTransactions || []);
+    return {
+      cardsBAC,
+      cardsFicohsa,
+      cardsBanpro,
+      cardsLafise,
+      totalCards,
+      salesPedidosYa,
+      salesBankTransfers,
+      salesCashLoyverse,
+      loyversePaidOut: yesterdayShift.loyversePaidOut || 0,
+      efectivoRealGenerado: profit.efectivoReal,
+      otherIncome,
+      totalGenerado: profit.ventasTotales,
+      gastosEfectivo,
+      gastosTransferencia,
+      propinasEntregadas: profit.propinaEntregada,
+      totalGastos: profit.totalGastos + profit.propinaEntregada,
+      gananciaNeta: profit.ganancia,
+      margenPorcentaje: profit.margen,
+    };
+  }
 
   return {
     cardsBAC,
@@ -2728,6 +2805,9 @@ export function printOfficialOpeningActBN(
           .no-print { display: none !important; }
           body { padding: 0 !important; background: #ffffff !important; }
           .sheet { padding: 0 !important; }
+          /* El espacio de la barra de botones no se imprime (dejaba el pie solo en una hoja extra). */
+          .no-print-padding { padding: 0 !important; }
+          tr { page-break-inside: avoid; break-inside: avoid; }
         }
       </style>
     `;
@@ -3151,10 +3231,13 @@ export function printOfficialOpeningActBN(
         </div>
 
         <script>
-          setTimeout(function() {
-            window.focus();
-            window.print();
-          }, 350);
+          // Imprimir cuando ya cargaron el logo y las letras (antes a veces salía sin logo).
+          window.addEventListener('load', function() {
+            setTimeout(function() {
+              window.focus();
+              window.print();
+            }, 150);
+          });
         </script>
       </body>
       </html>
@@ -3165,7 +3248,7 @@ export function printOfficialOpeningActBN(
       printWindow.document.write(fullHtml);
       printWindow.document.close();
     } else {
-      window.print();
+      alertPrintBlocked();
     }
   } catch (err: any) {
     alert('Error imprimiendo acta de apertura y ganancias: ' + err.message);
@@ -3506,7 +3589,7 @@ export function printThermalIndividualPayrollReceipt(
       printWindow.document.write(receiptHtml);
       printWindow.document.close();
     } else {
-      window.print();
+      alertPrintBlocked();
     }
   } catch (err: any) {
     alert('Error imprimiendo recibo de pago: ' + err.message);

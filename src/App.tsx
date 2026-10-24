@@ -3,6 +3,8 @@ import { AppState, CashShift, PettyCashShift, PettyCashTransaction, TablewareIte
 import { loadState, saveState, INITIAL_STATE } from './services/storage';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
+import { ClosingSeal, ClosingSealInfo } from './components/ui/ClosingSeal';
+import { Toaster, notify } from './components/ui/Toaster';
 import { GeneralCashView } from './components/GeneralCashView';
 import { PettyCashView } from './components/PettyCashView';
 import { TablewareView } from './components/TablewareView';
@@ -35,7 +37,10 @@ import {
   isFondeoTransaction,
   processOutboxQueue,
   supabase,
+  CLOUD_JORNADAS_LIMIT,
+  CLOUD_GASTOS_LIMIT,
 } from './services/supabaseSync';
+import { keepOlderLocalShifts, keepOlderLocalTransactions } from './utils/cloudMerge';
 import { getLocalTodayStr, getLocalDateTimeStr, extractLocalDateStr } from './utils/dateUtils';
 
 export function App() {
@@ -70,6 +75,7 @@ export function App() {
   // Modals
   const [openingModalOpen, setOpeningModalOpen] = useState(false);
   const [closingModalOpen, setClosingModalOpen] = useState(false);
+  const [closingSeal, setClosingSeal] = useState<ClosingSealInfo | null>(null);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [adminSelectModalOpen, setAdminSelectModalOpen] = useState(false);
   const [exchangeRateModalOpen, setExchangeRateModalOpen] = useState(false);
@@ -129,15 +135,21 @@ export function App() {
     if (isSyncingRef.current) return;
     isSyncingRef.current = true;
     try {
-      const { activeShift, activePettyShift, shiftHistory: cloudHistory, pettyCashShiftHistory: cloudPettyHistory, gastos } = await fetchFullCloudState();
+      const { activeShift, activePettyShift, shiftHistory: cloudHistory, pettyCashShiftHistory: cloudPettyHistory, gastos, jornadasCount } = await fetchFullCloudState();
       setState((prev) => {
         const today = getLocalTodayStr();
 
         // 1. Supabase es el cerebro oficial del Historial de Turnos de Caja General y Caja Chica:
-        let mergedHistory = [...cloudHistory];
+        let mergedHistory = [
+          ...cloudHistory,
+          ...keepOlderLocalShifts(prev.shiftHistory, cloudHistory, jornadasCount, CLOUD_JORNADAS_LIMIT),
+        ];
         mergedHistory.sort((a, b) => b.date.localeCompare(a.date));
 
-        let mergedPettyHistory = [...(cloudPettyHistory || [])];
+        let mergedPettyHistory = [
+          ...(cloudPettyHistory || []),
+          ...keepOlderLocalShifts(prev.pettyCashShiftHistory, cloudPettyHistory || [], jornadasCount, CLOUD_JORNADAS_LIMIT),
+        ];
         mergedPettyHistory.sort((a, b) => b.date.localeCompare(a.date));
 
         // 2. Determinar Turno Activo de Caja General desde Supabase:
@@ -151,7 +163,10 @@ export function App() {
         const pendingOfflineLocalTxs = prev.pettyCashTransactions.filter(
           (t) => !t.cloudId && !t.id.startsWith('pct-cloud-') && !t.id.startsWith('pct-init-') && t.syncStatus === 'PENDING'
         );
-        let updatedTxs: PettyCashTransaction[] = [...pendingOfflineLocalTxs];
+        let updatedTxs: PettyCashTransaction[] = [
+          ...pendingOfflineLocalTxs,
+          ...keepOlderLocalTransactions(prev.pettyCashTransactions, gastos || [], CLOUD_GASTOS_LIMIT),
+        ];
 
         if (gastos && gastos.length > 0) {
           for (const g of gastos) {
@@ -275,15 +290,15 @@ export function App() {
         updatedTxs = dedupedTxs;
 
         // Si la base de datos en la nube está completamente limpia para comenzar producción real,
-        // purgar todo el estado local y reiniciar a cero absoluto.
-        if ((!cloudHistory || cloudHistory.length === 0) && (!gastos || gastos.length === 0)) {
+        // reiniciar el estado local (conservando las compras hechas sin internet que aún no se suben).
+        if (jornadasCount === 0 && (!gastos || gastos.length === 0)) {
           return {
             ...prev,
             currentShift: null,
             shiftHistory: [],
             currentPettyCashShift: null,
             pettyCashShiftHistory: [],
-            pettyCashTransactions: [],
+            pettyCashTransactions: pendingOfflineLocalTxs,
             pettyCashBalance: 0,
           };
         }
@@ -829,7 +844,7 @@ export function App() {
     }
   };
 
-  const handleConfirmCloseShift = (closedShift: CashShift) => {
+  const handleConfirmCloseShift = (closedShift: CashShift, pettyCounted: number | null = null) => {
     let closedPettyToSync: PettyCashShift | null = null;
 
     setState((prev) => {
@@ -840,17 +855,24 @@ export function App() {
       let updatedPettyShift = prev.currentPettyCashShift;
       let updatedPettyHistory = prev.pettyCashShiftHistory;
       if (updatedPettyShift && updatedPettyShift.status === 'OPEN') {
+        // Caja Chica se cierra con el conteo físico del cierre; si no se contó, queda con el saldo del sistema.
+        const counted = pettyCounted ?? updatedPettyBalance;
+        const pettyDiff = parseFloat((counted - updatedPettyBalance).toFixed(2));
         const closedPetty: PettyCashShift = {
           ...updatedPettyShift,
           status: 'CLOSED',
           closedBy: closedShift.closedBy || prev.activeAdminName,
           closedAt: closedShift.closedAt || new Date().toISOString(),
-          actualCashCounted: updatedPettyBalance,
+          actualCashCounted: counted,
           expectedBalance: updatedPettyBalance,
-          difference: 0,
-          auditStatus: 'SQUARED',
-          closingNotes: 'Cierre automático unificado con Caja General',
+          difference: pettyDiff,
+          auditStatus: pettyDiff === 0 ? 'SQUARED' : pettyDiff > 0 ? 'SURPLUS' : 'SHORTAGE',
+          closingNotes:
+            pettyCounted === null
+              ? 'Cierre unificado con Caja General (sin conteo físico de Caja Chica)'
+              : 'Cierre unificado con Caja General con conteo físico de Caja Chica',
         };
+        updatedPettyBalance = counted;
         closedPettyToSync = closedPetty;
         updatedPettyHistory = [closedPetty, ...prev.pettyCashShiftHistory.filter((s) => s.date !== closedShift.date)];
         updatedPettyShift = null;
@@ -904,6 +926,16 @@ export function App() {
     });
 
     playSound([523.25, 659.25, 783.99, 1046.5]); // Acorde triunfal
+
+    const pettyWasOpen = state.currentPettyCashShift?.status === 'OPEN';
+    setClosingSeal({
+      date: closedShift.date,
+      ganancia: closedShift.dailyNetProfit ?? null,
+      pettyDifference:
+        pettyWasOpen && pettyCounted !== null
+          ? parseFloat((pettyCounted - state.pettyCashBalance).toFixed(2))
+          : null,
+    });
 
     // Cierre atómico y unificado en Supabase (evita condiciones de carrera entre Caja General y Caja Chica)
     syncFullDayClosureToCloud({
@@ -1095,6 +1127,10 @@ export function App() {
     });
 
     playSound([587.33, 880]);
+    notify(
+      txWithStatus.type === 'EXPENSE' ? 'Gasto guardado' : 'Ingreso guardado',
+      `${txWithStatus.vendor} · C$ ${txWithStatus.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    );
 
     // Sincronizar de inmediato a Supabase
     try {
@@ -1748,6 +1784,9 @@ export function App() {
         availableAdmins={state.availableAdmins}
         onConfirmClose={handleConfirmCloseShift}
       />
+
+      <ClosingSeal info={closingSeal} onDismiss={() => setClosingSeal(null)} />
+      <Toaster />
 
       <SettingsModal
         isOpen={settingsModalOpen}

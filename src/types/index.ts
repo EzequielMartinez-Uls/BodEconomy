@@ -120,6 +120,8 @@ export interface CashShift {
   bankTransfersNotes?: string; // Banco / Comprobante / Referencia de transferencias recibidas
   otherIncome?: number; // Otros Ingresos
   otherIncomeNotes?: string; // Concepto / Detalle de otros ingresos
+  loyversePaidOut?: number; // "Pagos y salidas" de Loyverse del día (se suman al efectivo contado)
+  formulaVersion?: number; // 2 = ventas y ganancia con la fórmula única de utils/cashMath.ts
   totalGrossSales?: number; // Efectivo + Tarjetas + PedidosYa + Transferencias + Otros Ingresos
 
   // Propinas
@@ -197,6 +199,10 @@ export function isOpeningPettyCashTx(tx: PettyCashTransaction): boolean {
   }
   if (tx.inflowSource === 'FONDO_INICIAL') {
     return true;
+  }
+  // Una compra nunca es un traslado de apertura, aunque su nota diga "al abrir".
+  if (tx.type === 'EXPENSE') {
+    return false;
   }
 
   const notes = (tx.notes || '').toLowerCase();
