@@ -382,11 +382,6 @@ export function App() {
     // 2. Primera sincronización completa inmediata
     syncFromCloud(false);
 
-    // 3. Polling silencioso en segundo plano cada 10 segundos para garantizar datos al día
-    const syncInterval = setInterval(() => {
-      syncFromCloud(true);
-    }, 10000);
-
     // 4. Sincronización inmediata al reenfocar la ventana o recuperar conexión
     const handleFocus = () => syncFromCloud(true);
     const handleOnline = () => syncFromCloud(true);
@@ -660,7 +655,6 @@ export function App() {
       .subscribe();
 
     return () => {
-      clearInterval(syncInterval);
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('online', handleOnline);
       supabase.removeChannel(channel);
