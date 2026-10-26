@@ -194,7 +194,10 @@ async function main() {
     await uploadOrReplace('latest.yml', 'latest.yml', 'text/yaml');
 
     // 2. Subir instalador .exe
-    const exeFileName = `BodegonControl Setup ${pkg.version}.exe`;
+    let exeFileName = `BodegonControl-Setup-${pkg.version}.exe`;
+    if (!fs.existsSync(path.join(distDir, exeFileName))) {
+      exeFileName = `BodegonControl Setup ${pkg.version}.exe`;
+    }
     const exeUploadName = `BodegonControl-Setup-${pkg.version}.exe`;
     await uploadOrReplace(exeFileName, exeUploadName, 'application/octet-stream');
 

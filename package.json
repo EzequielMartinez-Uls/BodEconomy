@@ -1,8 +1,8 @@
 {
   "name": "bodegon-control",
   "private": true,
-  "version": "1.0.65",
-  "description": "Bodegón Control: caja y cierre diario del Restaurante El Bodegón. Un producto de TEGA.",
+  "version": "1.0.66",
+  "description": "Bodeg\u00f3n Control: caja y cierre diario del Restaurante El Bodeg\u00f3n. Un producto de TEGA.",
   "author": {
     "name": "TEGA",
     "email": "eddym0746@gmail.com"
@@ -25,7 +25,7 @@
   "build": {
     "appId": "com.elbodegon.control",
     "productName": "BodegonControl",
-    "copyright": "© 2026 TEGA",
+    "copyright": "\u00a9 2026 TEGA",
     "publish": {
       "provider": "github",
       "owner": "EzequielMartinez-Uls",
@@ -52,9 +52,9 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Bodegón Control",
+      "shortcutName": "Bodeg\u00f3n Control",
       "runAfterFinish": true,
-      "uninstallDisplayName": "Bodegón Control"
+      "uninstallDisplayName": "Bodeg\u00f3n Control"
     }
   },
   "dependencies": {
