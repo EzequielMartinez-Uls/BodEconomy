@@ -714,6 +714,8 @@ export async function syncGeneralCashShiftToCloud(shift: CashShift): Promise<voi
           : prevAudit.tipDistributedTotal,
       loyversePaidOut: shift.loyversePaidOut ?? prevAudit.loyversePaidOut,
       formulaVersion: shift.formulaVersion ?? prevAudit.formulaVersion,
+      tipNotPaidReason: shift.tipNotPaidReason ?? prevAudit.tipNotPaidReason,
+      closingNotes: shift.closingNotes ?? prevAudit.closingNotes,
     };
 
     const finalObs = mergeJornadaTags(prevObs, {
@@ -771,6 +773,8 @@ export async function syncUnifiedDayOpeningToCloud(
       openingUSD: generalShift.openingUSD,
       openingCashCountedNIO: generalShift.openingCashCountedNIO,
       openingTransferToPettyCash: generalShift.openingTransferToPettyCash || generalShift.transferToPettyCash,
+      openingDiffNIO: generalShift.openingDiffNIO,
+      openingDiffReason: generalShift.openingDiffReason,
     };
 
     const fondosComp = pettyShift
@@ -893,6 +897,8 @@ export async function syncFullDayClosureToCloud({
       tipDistributedTotal: generalShift.tipDistributedTotal,
       loyversePaidOut: generalShift.loyversePaidOut,
       formulaVersion: generalShift.formulaVersion,
+      tipNotPaidReason: generalShift.tipNotPaidReason,
+      closingNotes: generalShift.closingNotes,
     };
 
     let pettyClosing: any = undefined;

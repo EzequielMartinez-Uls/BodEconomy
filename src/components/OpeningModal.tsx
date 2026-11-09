@@ -131,6 +131,9 @@ export const OpeningModal: React.FC<Props> = ({
   const differenceWithPrevious = parseFloat((totalEquivNIO - expectedFromPrevious).toFixed(2));
   const isCountInitiated = totalNIO > 0 || totalUSD > 0;
   const isMatchWithPrevious = lastClosedShift ? Math.abs(differenceWithPrevious) < 1.0 : true;
+  // Si lo contado no coincide con lo que quedó anoche se pide el motivo (no bloquea: con escribirlo se abre)
+  const [motivoDiferencia, setMotivoDiferencia] = useState<string>('');
+  const pideMotivoDiferencia = Boolean(lastClosedShift) && isCountInitiated && !isMatchWithPrevious;
 
   // Corroboración de Canales de Venta / Vouchers de Anoche
   const [vouchersBAC, setVouchersBAC] = useState<string>(
@@ -397,7 +400,19 @@ export const OpeningModal: React.FC<Props> = ({
       if (!confirmDup) return;
     }
 
+    if (pideMotivoDiferencia && !motivoDiferencia.trim()) {
+      alert(
+        `Lo contado no coincide con lo que quedó en el cierre de ayer (${differenceWithPrevious < 0 ? 'faltan' : 'sobran'} C$ ${Math.abs(differenceWithPrevious).toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}).\n\nEscribe el motivo en el paso 2 para poder abrir.`
+      );
+      setStep(2);
+      return;
+    }
+
     let auditNotes = notes;
+    if (pideMotivoDiferencia) {
+      const nota = `[Diferencia con el cierre de ayer: ${differenceWithPrevious < 0 ? '-' : '+'}C$ ${Math.abs(differenceWithPrevious).toFixed(2)} · ${motivoDiferencia.trim()}]`;
+      auditNotes = auditNotes ? `${auditNotes} • ${nota}` : nota;
+    }
     const diffItems: string[] = [];
     if (diffBAC !== null && Math.abs(diffBAC) >= 0.01) diffItems.push(`BAC (${diffBAC > 0 ? '+' : ''}${diffBAC.toFixed(2)})`);
     if (diffFico !== null && Math.abs(diffFico) >= 0.01) diffItems.push(`Ficohsa (${diffFico > 0 ? '+' : ''}${diffFico.toFixed(2)})`);
@@ -436,6 +451,8 @@ export const OpeningModal: React.FC<Props> = ({
       openingCashCountedNIO: totalNIO,
       openingTransferToPettyCash: transferAmount > 0 ? transferAmount : undefined,
       transferToPettyCash: transferAmount > 0 ? transferAmount : undefined,
+      openingDiffNIO: lastClosedShift && isCountInitiated ? differenceWithPrevious : undefined,
+      openingDiffReason: pideMotivoDiferencia ? motivoDiferencia.trim() : undefined,
       openingEarningsSummary,
       loyverseValidation: {
         validated: true,
@@ -904,6 +921,22 @@ export const OpeningModal: React.FC<Props> = ({
                     )}
                   </div>
                 </div>
+
+                {pideMotivoDiferencia && (
+                  <div className="p-3 bg-white rounded-lg border border-barro/30 space-y-1.5">
+                    <label className="block text-xs font-bold text-barro">
+                      {differenceWithPrevious < 0 ? 'Faltan' : 'Sobran'} C$ {Math.abs(differenceWithPrevious).toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} contra lo que quedó anoche (C$ {expectedFromPrevious.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}): escribe el motivo (obligatorio)
+                    </label>
+                    <input
+                      type="text"
+                      value={motivoDiferencia}
+                      onChange={(e) => setMotivoDiferencia(e.target.value)}
+                      placeholder="Ej.: la propina de anoche se entregó esta mañana"
+                      className="w-full bg-stone-50 border border-stone-300 rounded-lg px-2.5 py-1.5 text-xs text-stone-900 focus:bg-white focus:outline-none focus:border-bodegon"
+                    />
+                    <p className="text-[11px] text-stone-500">Con escribirlo se puede abrir. Snyder lo ve en la vista online del efectivo.</p>
+                  </div>
+                )}
               </div>
 
               {/* Auditoría de Canales de Venta & Casilla de Pagos y Salidas */}
