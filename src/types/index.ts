@@ -61,6 +61,8 @@ export interface CashShift {
   totalOpeningEquivNIO: number; // totalOpeningNIO + (totalOpeningUSD * exchangeRate)
   openingCashCountedNIO?: number; // Total billetes/monedas contados físicamente antes de traspasos
   openingTransferToPettyCash?: number; // Monto trasladado a Caja Chica al abrir (se resta de la gaveta de caja general)
+  openingDiffNIO?: number; // Contado al abrir − lo que quedó al cierre anterior (C$ + US$ a la tasa)
+  openingDiffReason?: string; // Motivo obligatorio cuando la apertura no coincide con el cierre anterior
 
   // Validación de Ventas de Ayer (según reporte de Loyverse a la Apertura)
   loyverseValidation?: {
@@ -130,6 +132,7 @@ export interface CashShift {
   individualTip?: number;
   tipPaid?: boolean;
   tipNotes?: string;
+  tipNotPaidReason?: string; // Motivo obligatorio si hubo propina y no se entregó de la gaveta
   tipYahairaWorked?: boolean; // Acuerdo laboral: cuota especial fija si trabajó
   tipYahairaAmount?: number; // Monto asignado (por defecto C$ 100)
   tipTeamPool?: number; // Fondo restante a repartir entre el resto del equipo (totalTipCollected - tipYahairaAmount)
