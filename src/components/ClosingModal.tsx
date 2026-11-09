@@ -168,6 +168,8 @@ export const ClosingModal: React.FC<Props> = ({
   const [bloqueadoTega, setBloqueadoTega] = useState<boolean>(Boolean(tegaTurno));
   const [motivoCambioTega, setMotivoCambioTega] = useState<string>('');
   const [motivoDescuadre, setMotivoDescuadre] = useState<string>('');
+  // Si hubo propina y no se marca como entregada, se pide el motivo (no bloquea: con escribirlo se cierra)
+  const [motivoPropina, setMotivoPropina] = useState<string>(shift.tipNotPaidReason || '');
   const hayTega = Boolean(tegaTurno);
   useEffect(() => {
     if (!tegaTurno || !bloqueadoTega) return;
@@ -292,7 +294,10 @@ export const ClosingModal: React.FC<Props> = ({
     });
   };
 
+  const faltaEntregarPropina = !tipPaid && totalTipCollected > 0;
+
   const notasCierre = [
+    faltaEntregarPropina && motivoPropina.trim() ? `Propina de C$ ${totalTipCollected.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} no entregada esta noche: ${motivoPropina.trim()}` : '',
     closingNotes.trim(),
     hayDescuadre && motivoDescuadre.trim() ? `Motivo del ${differenceNIO < 0 ? 'faltante' : 'sobrante'} (C$ ${differenceNIO.toFixed(2)}): ${motivoDescuadre.trim()}` : '',
     tegaTurno && !bloqueadoTega && motivoCambioTega.trim() ? `Datos de TEGA cambiados a mano: ${motivoCambioTega.trim()}` : '',
@@ -334,6 +339,7 @@ export const ClosingModal: React.FC<Props> = ({
     individualTip,
     tipPaid,
     tipNotes,
+    tipNotPaidReason: faltaEntregarPropina ? motivoPropina.trim() : undefined,
     tipYahairaWorked,
     tipYahairaAmount: actualYahairaTip,
     tipTeamPool,
@@ -390,6 +396,11 @@ export const ClosingModal: React.FC<Props> = ({
   };
 
   const handleFinishClosing = () => {
+    if (faltaEntregarPropina && !motivoPropina.trim()) {
+      window.alert(`Hubo C$ ${totalTipCollected.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} de propina y no está marcada como entregada.\n\nEscribe el motivo en el paso 3 (por ejemplo: "se entrega mañana en la mañana") para poder cerrar.`);
+      setStep(3);
+      return;
+    }
     if (hayDescuadre && !motivoDescuadre.trim()) {
       window.alert(`La gaveta no cuadra con TEGA (${differenceNIO < 0 ? 'faltante' : 'sobrante'} de C$ ${Math.abs(differenceNIO).toFixed(2)}).\n\nEscribe el motivo en el paso 1 para poder cerrar.`);
       setStep(1);
@@ -1217,6 +1228,21 @@ export const ClosingModal: React.FC<Props> = ({
                         ¿Se entregó en efectivo de la gaveta esta noche?
                       </span>
                     </label>
+                    {faltaEntregarPropina && (
+                      <div className="w-full p-3 bg-white rounded-lg border border-barro/30 space-y-1.5">
+                        <label className="block text-xs font-bold text-barro">
+                          La propina de C$ {totalTipCollected.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} queda en la gaveta: escribe el motivo (obligatorio)
+                        </label>
+                        <input
+                          type="text"
+                          value={motivoPropina}
+                          onChange={(e) => setMotivoPropina(e.target.value)}
+                          placeholder="Ej.: se entrega mañana en la mañana"
+                          className="w-full bg-stone-50 border border-stone-300 rounded-lg px-2.5 py-1.5 text-xs text-stone-900 focus:bg-white focus:outline-none focus:border-bodegon"
+                        />
+                        <p className="text-[11px] text-stone-500">Snyder lo ve en la vista online del efectivo.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
