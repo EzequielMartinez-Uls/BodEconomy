@@ -324,10 +324,12 @@ export const DailyEarningsView: React.FC<Props> = ({
         item.cashSales = profit.efectivoReal;
         item.totalGrossSales = profit.ventasTotales;
         item.netEarnings = profit.ganancia;
+        item.tipsDeducted = profit.propinaEntregada;
       } else if (shift?.dailyNetProfit !== undefined && shift.dailyNetProfit !== null && shift.status === 'CLOSED') {
         item.netEarnings = Number(shift.dailyNetProfit);
       } else {
-        item.netEarnings = item.totalGrossSales - item.totalExpenses - (item.tipsCollected || 0);
+        item.tipsDeducted = item.tipsCollected || 0;
+        item.netEarnings = item.totalGrossSales - item.totalExpenses - item.tipsDeducted;
       }
     });
 
@@ -1824,6 +1826,33 @@ export const DailyEarningsView: React.FC<Props> = ({
                   - C$ {activeDaySummary.transfersPaid.toFixed(2)}
                 </span>
               </div>
+              {(activeDaySummary.tipsDeducted || 0) > 0 && (
+                <div className="flex justify-between py-2 border-b border-stone-100 text-stone-600">
+                  <span>(-) Propina entregada al personal</span>
+                  <span className="font-mono text-barro">
+                    - C$ {(activeDaySummary.tipsDeducted || 0).toFixed(2)}
+                  </span>
+                </div>
+              )}
+              {(() => {
+                // Si el cierre guardó una ganancia distinta (cierres viejos), se muestra la diferencia
+                // para que la suma del desglose siempre cuadre con la ganancia final.
+                const otros =
+                  activeDaySummary.totalGrossSales -
+                  activeDaySummary.pettyCashExpenses -
+                  activeDaySummary.transfersPaid -
+                  (activeDaySummary.tipsDeducted || 0) -
+                  activeDaySummary.netEarnings;
+                if (Math.abs(otros) < 0.01) return null;
+                return (
+                  <div className="flex justify-between py-2 border-b border-stone-100 text-stone-600">
+                    <span>({otros > 0 ? '-' : '+'}) Otros ajustes del cierre</span>
+                    <span className="font-mono text-barro">
+                      {otros > 0 ? '-' : '+'} C$ {Math.abs(otros).toFixed(2)}
+                    </span>
+                  </div>
+                );
+              })()}
               <div className="flex justify-between py-2 px-3 rounded-lg bg-stone-100 font-black text-stone-900 text-sm border border-stone-200">
                 <span>(=) GANANCIA NETA FINAL</span>
                 <span className="font-mono text-bodegon">C$ {activeDaySummary.netEarnings.toFixed(2)}</span>

@@ -338,6 +338,7 @@ export interface DailyEarningsSummary {
   totalExpenses: number;
   netEarnings: number;
   tipsCollected: number;
+  tipsDeducted?: number; // propina que se restó en la ganancia neta (entregada al personal)
   responsible: string;
   sourceShiftId?: string;
   isVoid?: boolean;
