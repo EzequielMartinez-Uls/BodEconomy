@@ -603,7 +603,7 @@ export const ClosingModal: React.FC<Props> = ({
                   titulo="Cuadre de gaveta con TEGA"
                   filas={testigoGaveta}
                   enVivo={tegaTurno.estado !== 'cerrado'}
-                  nota={`Debe haber = fondo de apertura C$ ${(tegaTurno.fondo || 0).toFixed(2)} + efectivo cobrado − vuelto de dólares − salidas. El fondo no entra como venta: solo sirve para el cuadre.`}
+                  nota={`Debe haber = fondo de apertura C$ ${(tegaTurno.fondo ?? fondoApertura).toFixed(2)} + efectivo cobrado − vuelto de dólares − salidas. El fondo no entra como venta: solo sirve para el cuadre.`}
                 />
               )}
               {hayDescuadre && (
