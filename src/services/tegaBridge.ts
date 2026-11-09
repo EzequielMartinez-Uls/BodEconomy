@@ -227,6 +227,12 @@ export function recalcularServicioEnBorradores(
   });
 }
 
+/**
+ * Las cuentas de colaborador se traen desde el domingo 8-nov-2026 (5 a. m. Managua): ese día ya hubo créditos en TEGA y
+ * Ezequiel no los cargó a mano (2026-11-09). Las salidas siguen desde la primera vez que corre el puente.
+ */
+export const CREDITOS_TEGA_DESDE = Date.UTC(2026, 10, 8, 11, 0, 0);
+
 /** Desde cuándo traer de TEGA: la primera vez que esta computadora corre la versión con el puente. */
 export function tegaDesde(): number {
   const k = 'bodeconomy-tega-desde';

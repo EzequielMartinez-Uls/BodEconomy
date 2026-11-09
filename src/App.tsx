@@ -46,6 +46,7 @@ import {
   TegaDatos,
   fetchTega,
   tegaDesde,
+  CREDITOS_TEGA_DESDE,
   salidaYaImportada,
   salidaComoTraslado,
   creditoComoIncidencia,
@@ -1208,7 +1209,7 @@ export function App() {
     const ids = new Set(actuales.map((i) => i.id));
     const anuladas = new Set(datos.creditos.filter((c) => c.anulado).map((c) => idIncidenciaTega(c.id)));
     const nuevas = datos.creditos
-      .filter((c) => !c.anulado && c.t >= desde && c.monto > 0 && !ids.has(idIncidenciaTega(c.id)))
+      .filter((c) => !c.anulado && c.t >= Math.min(desde, CREDITOS_TEGA_DESDE) && c.monto > 0 && !ids.has(idIncidenciaTega(c.id)))
       .map((c) => creditoComoIncidencia(c, st.payrollEmployees || []));
     const quitar = actuales.some((i) => anuladas.has(i.id));
     if (!nuevas.length && !quitar) return;
@@ -1254,7 +1255,7 @@ export function App() {
 
   const refrescarTega = useCallback(async () => {
     setTegaCargando(true);
-    const datos = await fetchTega(tegaDesde() - 6 * 3600 * 1000);
+    const datos = await fetchTega(Math.min(tegaDesde() - 6 * 3600 * 1000, CREDITOS_TEGA_DESDE));
     setTegaCargando(false);
     if (!datos) return;
     setTega(datos);
