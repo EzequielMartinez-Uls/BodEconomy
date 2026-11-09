@@ -1,7 +1,7 @@
 /**
  * Puente de solo lectura con TEGA (el punto de venta del Bodegón), en la misma base de Supabase.
  *
- * Control nunca escribe en TEGA. Lee con una sola función (public.tega_para_control, migración 25 de TEGA), con su llave:
+ * Control nunca escribe en TEGA. Lee con una sola función (public.tega_para_control, migración 26 de TEGA), con su llave:
  *   - turnos de los últimos 45 días con lo que TEGA dice que debería haber (efectivo, cada banco, PedidosYa…).
  *     Si el turno sigue abierto, los números son en vivo.
  *   - pagos y salidas de efectivo de la gaveta de TEGA → entran solos a caja chica como depósito desde caja general.
