@@ -22,6 +22,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_VENDORS } from '../services/storage';
+import { getCategoryLabel } from '../utils/categories';
 import {
   fetchCloudExpensesAnalytics,
   fetchCloudCatalogs,
@@ -195,7 +196,7 @@ export const SettingsModal: React.FC<Props> = ({
       alert('Debe existir al menos una categoría de gasto en el sistema.');
       return;
     }
-    if (confirm(`¿Deseas eliminar la categoría "${catToRemove.replace(/_/g, ' ')}"?`)) {
+    if (confirm(`¿Deseas eliminar la categoría "${getCategoryLabel(catToRemove)}"?`)) {
       const updated = currentCategories.filter((c) => c !== catToRemove);
       onUpdateExpenseCategories?.(updated);
       setIsSavingCatalog(true);
@@ -567,7 +568,7 @@ export const SettingsModal: React.FC<Props> = ({
                                 </td>
                                 <td className="py-2.5 px-3">
                                   <span className="px-2 py-0.5 text-[10px] font-bold bg-stone-100 border border-stone-300 text-stone-700 uppercase">
-                                    {(v.defaultCategory || 'OTROS').replace(/_/g, ' ')}
+                                    {getCategoryLabel((v.defaultCategory || 'OTROS'))}
                                   </span>
                                 </td>
                                 <td className="py-2.5 px-3 text-stone-600 font-mono text-[11px]">
@@ -680,7 +681,7 @@ export const SettingsModal: React.FC<Props> = ({
                               <span className="w-2.5 h-2.5 bg-bodegon"></span>
                               <div>
                                 <span className="text-stone-900 block font-bold">
-                                  {cat.replace(/_/g, ' ')}
+                                  {getCategoryLabel(cat)}
                                 </span>
                                 {stat && stat.total > 0 && (
                                   <span className="text-[10px] text-stone-500 font-mono">
@@ -789,7 +790,7 @@ export const SettingsModal: React.FC<Props> = ({
                 >
                   {currentCategories.map((cat) => (
                     <option key={cat} value={cat}>
-                      {cat.replace(/_/g, ' ')}
+                      {getCategoryLabel(cat)}
                     </option>
                   ))}
                 </select>

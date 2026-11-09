@@ -33,6 +33,7 @@ import {
   syncCatalogsToCloud,
 } from '../services/supabaseSync';
 import { DEFAULT_EXPENSE_CATEGORIES } from '../services/storage';
+import { getCategoryLabel } from '../utils/categories';
 
 interface Props {
   state: AppState;
@@ -851,7 +852,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                           {ven.vendor}
                         </span>
                         <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 font-bold shrink-0">
-                          {ven.mainCategory.replace(/_/g, ' ')}
+                          {getCategoryLabel(ven.mainCategory)}
                         </span>
                       </div>
 
@@ -937,7 +938,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                   <option value="ALL">Todos los Rubros ({expensesList.length})</option>
                   {currentCategories.map((c) => (
                     <option key={c} value={c}>
-                      {c.replace(/_/g, ' ')}
+                      {getCategoryLabel(c)}
                     </option>
                   ))}
                 </select>
@@ -1021,7 +1022,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                               >
                                 {currentCategories.map((c) => (
                                   <option key={c} value={c}>
-                                    {c.replace(/_/g, ' ')}
+                                    {getCategoryLabel(c)}
                                   </option>
                                 ))}
                               </select>
@@ -1047,7 +1048,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
             <div className="flex items-center gap-3 text-barro pb-2 border-b border-stone-100">
               <AlertTriangle className="w-6 h-6 shrink-0" />
               <h3 className="font-bold text-base text-stone-900">
-                Eliminar Categoría: {categoryToDelete.replace(/_/g, ' ')}
+                Eliminar Categoría: {getCategoryLabel(categoryToDelete)}
               </h3>
             </div>
 
@@ -1068,7 +1069,7 @@ export const ExpenseAnalyticsView: React.FC<Props> = ({
                   .filter((c) => c !== categoryToDelete)
                   .map((c) => (
                     <option key={c} value={c}>
-                      {c.replace(/_/g, ' ')}
+                      {getCategoryLabel(c)}
                     </option>
                   ))}
               </select>
