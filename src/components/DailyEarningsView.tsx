@@ -1,3 +1,5 @@
+import { TegaCuadre } from './TegaTestigo';
+import type { TegaDatos } from '../services/tegaBridge';
 import React, { useState, useMemo } from 'react';
 import { calculateShiftProfit } from '../utils/cashMath';
 import { AnimatedNumber } from './ui/AnimatedNumber';
@@ -52,6 +54,7 @@ interface Props {
     }
   ) => void;
   onNavigateToTab?: (tab: 'generalCash' | 'pettyCash') => void;
+  tega?: TegaDatos | null; // datos de TEGA para el cuadre TEGA ↔ Control
 }
 
 type DetailModalType =
@@ -71,6 +74,7 @@ export const DailyEarningsView: React.FC<Props> = ({
   state,
   onUpdateShiftSales,
   onNavigateToTab,
+  tega,
 }) => {
   // Fecha seleccionada (por defecto hoy en YYYY-MM-DD local)
   const todayStr = useMemo(() => getLocalTodayStr(), []);
@@ -319,7 +323,7 @@ export const DailyEarningsView: React.FC<Props> = ({
       const shift = (state.shiftHistory || []).find((s) => s.date === item.date) ||
         (state.currentShift?.date === item.date ? state.currentShift : null);
       if (shift?.staffConsumption) item.staffConsumption = shift.staffConsumption;
-      if (shift && shift.status === 'CLOSED' && shift.formulaVersion === 2) {
+      if (shift && shift.status === 'CLOSED' && (shift.formulaVersion || 0) >= 2) {
         // Fórmula única: se recalcula con los gastos actuales, así un gasto editado después del cierre sí cuadra.
         const profit = calculateShiftProfit(shift, state.pettyCashTransactions || []);
         item.cashSales = profit.efectivoReal;
@@ -2039,6 +2043,12 @@ export const DailyEarningsView: React.FC<Props> = ({
           </div>
         </div>
       )}
+
+      <TegaCuadre
+        tega={tega || null}
+        shifts={state.shiftHistory || []}
+        ventasControl={Object.fromEntries(dailySummaries.map((d) => [d.date, d.totalGrossSales]))}
+      />
 
       {/* Modal de Impresión Oficial B/N (1 o 2 Hojas) */}
       <PrintOfficialActModal

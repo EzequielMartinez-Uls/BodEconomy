@@ -354,11 +354,12 @@ export const GeneralCashView: React.FC<Props> = ({
       .filter((t) => t.type === 'EXPENSE' && extractLocalDateStr(t.date) === editingShift.date)
       .reduce((sum, t) => sum + (t.amount || 0), 0);
     let dailyNetProfit = parseFloat((totalGrossSales - dayPettyExpenses - tipsPaidAmount).toFixed(2));
-    if (editingShift.formulaVersion === 2) {
+    if ((editingShift.formulaVersion || 0) >= 2) {
       // Cierres hechos con la fórmula única se corrigen con la misma fórmula (utils/cashMath.ts).
       const profit = calculateDayProfit({
         efectivoContado: actualCashNIO,
         pagosSalidas: editingShift.loyversePaidOut || 0,
+        fondoApertura: (editingShift.formulaVersion || 0) >= 3 ? editingShift.totalOpeningEquivNIO || 0 : 0,
         tarjetas: totalCards,
         transferencias: salesBankTransfers,
         pedidosYa: salesPedidosYa,
@@ -689,7 +690,7 @@ export const GeneralCashView: React.FC<Props> = ({
                   C$ <AnimatedNumber value={lastClosedShift.totalGrossSales || 0} />
                 </div>
                 <span className="text-[11px] text-stone-400">
-                  {lastClosedShift.formulaVersion === 2 ? 'Efectivo + tarjetas + transferencias + PedidosYa' : 'Efectivo + Tarjetas + PedidosYa'}
+                  {(lastClosedShift.formulaVersion || 0) >= 2 ? 'Efectivo + tarjetas + transferencias + PedidosYa' : 'Efectivo + Tarjetas + PedidosYa'}
                 </span>
               </div>
 
@@ -714,7 +715,7 @@ export const GeneralCashView: React.FC<Props> = ({
                   C$ <AnimatedNumber value={lastClosedShift.dailyNetProfit || 0} />
                 </div>
                 <span className="text-[11px] text-stone-400">
-                  {lastClosedShift.formulaVersion === 2 ? 'Ventas − gastos − propina' : 'Ventas Brutas − Gastos Insumos'}
+                  {(lastClosedShift.formulaVersion || 0) >= 2 ? 'Ventas − gastos − propina' : 'Ventas Brutas − Gastos Insumos'}
                 </span>
               </div>
 

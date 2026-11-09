@@ -1830,6 +1830,7 @@ export function App() {
                 state={state}
                 onUpdateShiftSales={handleUpdateShiftSales}
                 onNavigateToTab={handleGuardedTabChange}
+                tega={tega}
               />
             )}
 

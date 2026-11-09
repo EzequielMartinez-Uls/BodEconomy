@@ -4,12 +4,15 @@ import { extractLocalDateStr } from './dateUtils';
 /**
  * Fórmula única de ventas y ganancia del día (reglas confirmadas por Ezequiel, 2026-10-24).
  *
- *   Efectivo real   = dinero contado en gaveta al cierre (C$ + US$ a la tasa) + pagos y salidas del día (Loyverse)
+ *   Efectivo real   = dinero contado en gaveta al cierre (C$ + US$ a la tasa) − fondo de apertura + pagos y salidas del día
  *   Ventas totales  = efectivo real + tarjetas + transferencias + PedidosYa + otros ingresos
  *   Ganancia        = ventas totales − gastos del día (efectivo + transferencia + tarjeta) − propina entregada
  *
- * El fondo de apertura no se resta: solo sirve de referencia para ver descuadres entre el
- * administrador de día y el de noche.
+ * El fondo de apertura es plata de ayer que ya estaba en la gaveta: no es venta de hoy. Desde la v1.0.68
+ * (formulaVersion 3) se resta; antes se contaba dos veces (unos C$ 41,500 en octubre-noviembre).
+ * Los cierres viejos (formulaVersion 2 o sin versión) se quedan como se guardaron.
+ *
+ * Gastos que no son de operación (retiro de socios y préstamos) salen de caja chica, pero no bajan la ganancia.
  *
  * Pantallas, actas impresas y reportes usan esta misma función para que nunca den números distintos.
  */
@@ -17,12 +20,17 @@ export interface DayExpenses {
   cash: number;
   transfer: number;
   card: number;
-  total: number;
+  total: number; // solo gastos de operación
+  fueraOperacion?: number; // retiro de socios y préstamos: salen de caja chica pero no son gasto
 }
+
+/** Categorías que salen de caja chica pero no son gasto del negocio. */
+export const CATEGORIAS_FUERA_OPERACION = ['RETIRO_SOCIOS', 'PRESTAMOS'];
 
 export interface DayProfitInput {
   efectivoContado: number; // C$ + US$ convertidos, contados en gaveta al cierre
-  pagosSalidas: number; // "Pagos y salidas" de Loyverse del día
+  pagosSalidas: number; // "Pagos y salidas" del día (TEGA)
+  fondoApertura?: number; // fondo con que abrió la gaveta (C$ + US$ a la tasa); se resta del efectivo
   tarjetas: number;
   transferencias: number;
   pedidosYa: number;
@@ -43,7 +51,7 @@ export interface DayProfit {
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 export function calculateDayProfit(input: DayProfitInput): DayProfit {
-  const efectivoReal = round2((input.efectivoContado || 0) + (input.pagosSalidas || 0));
+  const efectivoReal = round2((input.efectivoContado || 0) - (input.fondoApertura || 0) + (input.pagosSalidas || 0));
   const ventasTotales = round2(
     efectivoReal + (input.tarjetas || 0) + (input.transferencias || 0) + (input.pedidosYa || 0) + (input.otrosIngresos || 0)
   );
@@ -65,13 +73,18 @@ export function sumDayExpenses(transactions: PettyCashTransaction[], date: strin
   let cash = 0;
   let transfer = 0;
   let card = 0;
+  let fuera = 0;
   for (const t of transactions || []) {
     if (t.type !== 'EXPENSE' || extractLocalDateStr(t.date) !== date) continue;
+    if (CATEGORIAS_FUERA_OPERACION.includes(String(t.category))) {
+      fuera += t.amount || 0;
+      continue;
+    }
     if (t.method === 'TRANSFER') transfer += t.amount || 0;
     else if (t.method === 'CARD') card += t.amount || 0;
     else cash += t.amount || 0;
   }
-  return { cash: round2(cash), transfer: round2(transfer), card: round2(card), total: round2(cash + transfer + card) };
+  return { cash: round2(cash), transfer: round2(transfer), card: round2(card), total: round2(cash + transfer + card), fueraOperacion: round2(fuera) };
 }
 
 /** Ganancia de un turno ya guardado, con los gastos de caja chica de ese día. */
@@ -79,6 +92,7 @@ export function calculateShiftProfit(shift: CashShift, transactions: PettyCashTr
   return calculateDayProfit({
     efectivoContado: shift.actualCashNIO ?? shift.totalClosingEquivNIO ?? 0,
     pagosSalidas: shift.loyversePaidOut || 0,
+    fondoApertura: (shift.formulaVersion || 0) >= 3 ? shift.totalOpeningEquivNIO || 0 : 0,
     tarjetas: shift.totalCards ?? (shift.cardsBAC || 0) + (shift.cardsFicohsa || 0) + (shift.cardsBanpro || 0) + (shift.cardsLafise || 0),
     transferencias: shift.salesBankTransfers || 0,
     pedidosYa: shift.salesPedidosYa || 0,

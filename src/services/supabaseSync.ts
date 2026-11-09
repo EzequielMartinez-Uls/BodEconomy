@@ -80,7 +80,9 @@ export function mapCloudCategoryToLocal(cloudCat: string): ExpenseCategory {
     case 'TRANSPORTE':
       return 'DELIVERYS_ACARREOS';
     default:
-      return 'OTROS';
+      // Las categorías del catálogo (Música, Gas, Mariscos, Servicios básicos…) pasan tal cual.
+      // Antes todo lo desconocido se volvía OTROS y al editar se guardaba así en la nube.
+      return cloudCat && cloudCat.trim() ? cloudCat : 'OTROS';
   }
 }
 

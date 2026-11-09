@@ -174,3 +174,106 @@ export const TegaEnVivo: React.FC<VivoProps> = ({ turno, actualizado, cargando, 
     </div>
   );
 };
+
+interface CuadreProps {
+  tega: import('../services/tegaBridge').TegaDatos | null;
+  shifts: import('../types').CashShift[];
+  ventasControl: Record<string, number>; // fecha → ventas totales que da Control ese día
+}
+
+/**
+ * Cuadre TEGA ↔ Control: cada día cerrado, lo cobrado según TEGA contra lo que quedó en Control, y dónde está la
+ * diferencia (banco tecleado mal, salidas sin anotar, fondo sumado como venta…). Cada día debe quedar en verde o con motivo.
+ */
+export const TegaCuadre: React.FC<CuadreProps> = ({ tega, shifts, ventasControl }) => {
+  if (!tega) return null;
+  const filas = tega.turnos
+    .filter((t) => t.estado === 'cerrado')
+    .map((t) => {
+      const fecha = new Date(t.abierto);
+      const f = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
+      const m = t.metodos || {};
+      const cobrado = Object.entries(m)
+        .filter(([k]) => k !== 'personal' && k !== 'cortesia')
+        .reduce((s, [, v]) => s + Number(v || 0), 0);
+      const shift = shifts.find((s) => s.date === f && s.status === 'CLOSED');
+      const control = ventasControl[f];
+      const dif = control === undefined ? null : Math.round((control - cobrado) * 100) / 100;
+      const pistas: string[] = [];
+      if (shift) {
+        const tasa = shift.exchangeRate || 36;
+        const banco = (b: string) => {
+          const k = Object.keys(t.bancos || {}).find((x) => x.trim().toLowerCase() === b.toLowerCase());
+          return k ? Number(t.bancos[k]) || 0 : 0;
+        };
+        ([['BAC', shift.cardsBAC], ['Banpro', shift.cardsBanpro], ['Ficohsa', shift.cardsFicohsa], ['Lafise', shift.cardsLafise]] as [string, number | undefined][])
+          .forEach(([b, v]) => {
+            if (Math.abs((v || 0) - banco(b)) >= 1) pistas.push(`Tarjeta ${b}: TEGA ${fmt(banco(b))}, tecleado ${fmt(v || 0)}`);
+          });
+        if (Math.abs((shift.salesPedidosYa || 0) - (m.pedidosya || 0)) >= 1) pistas.push(`PedidosYa: TEGA ${fmt(m.pedidosya || 0)}, tecleado ${fmt(shift.salesPedidosYa || 0)}`);
+        if (Math.abs((shift.salesBankTransfers || 0) - (m.transferencia || 0)) >= 1) pistas.push(`Transferencias: TEGA ${fmt(m.transferencia || 0)}, tecleado ${fmt(shift.salesBankTransfers || 0)}`);
+        const salidas = t.salidasCS + t.salidasUSD * tasa;
+        if (Math.abs((shift.loyversePaidOut || 0) - salidas) >= 1) pistas.push(`Pagos y salidas: TEGA ${fmt(salidas)}, anotado ${fmt(shift.loyversePaidOut || 0)}`);
+        if ((shift.formulaVersion || 0) < 3 && (shift.totalOpeningEquivNIO || 0) > 0) pistas.push(`Fondo de apertura (${fmt(shift.totalOpeningEquivNIO || 0)}) sumado como venta`);
+        if (Math.abs(shift.differenceNIO || 0) >= 1) pistas.push(`${(shift.differenceNIO || 0) < 0 ? 'Faltante' : 'Sobrante'} de gaveta ${fmt(Math.abs(shift.differenceNIO || 0))}`);
+      }
+      const conMotivo = Boolean(shift?.closingNotes && /Motivo del (faltante|sobrante)/.test(shift.closingNotes));
+      const estado: 'Cuadra' | 'Con motivo' | 'Revisar' | 'Sin cierre' =
+        dif === null ? 'Sin cierre' : Math.abs(dif) < 1 ? 'Cuadra' : conMotivo ? 'Con motivo' : 'Revisar';
+      return { f, cobrado, control, dif, pistas, estado };
+    })
+    .reverse();
+  if (!filas.length) return null;
+  const totTega = filas.reduce((s, r) => s + r.cobrado, 0);
+  const totControl = filas.reduce((s, r) => s + (r.control || 0), 0);
+  const color = (e: string) =>
+    e === 'Cuadra' ? 'bg-bodegon/5 text-bodegon border-bodegon/20' : e === 'Con motivo' ? 'bg-amber-50 text-amber-800 border-amber-200' : e === 'Revisar' ? 'bg-red-50 text-barro border-red-200' : 'bg-stone-100 text-stone-600 border-stone-200';
+  const dia = (f: string) => new Date(`${f}T12:00:00`).toLocaleDateString('es-NI', { weekday: 'short', day: 'numeric', month: 'short' });
+  return (
+    <div className="bg-white rounded-2xl border border-stone-200/90 p-5 shadow-xs space-y-3">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Eye className="w-4 h-4 text-bodegon" />
+          <h3 className="text-sm font-bold text-stone-900">Cuadre TEGA ↔ Control</h3>
+        </div>
+        <span className="text-[11px] text-stone-500">
+          TEGA C$ {fmt(totTega)} · Control C$ {fmt(totControl)} · Diferencia{' '}
+          <strong className={Math.abs(totControl - totTega) < 1 ? 'text-bodegon' : 'text-barro'}>C$ {fmt(totControl - totTega)}</strong>
+        </span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[720px] text-xs">
+          <thead>
+            <tr className="text-[10px] uppercase text-stone-400">
+              <th className="text-left font-bold px-2 py-1.5">Día</th>
+              <th className="text-right font-bold px-2 py-1.5">TEGA</th>
+              <th className="text-right font-bold px-2 py-1.5">Control</th>
+              <th className="text-right font-bold px-2 py-1.5">Diferencia</th>
+              <th className="text-left font-bold px-2 py-1.5">Dónde está</th>
+              <th className="text-left font-bold px-2 py-1.5">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filas.map((r) => (
+              <tr key={r.f} className="border-t border-stone-100 align-top">
+                <td className="px-2 py-2 font-bold text-stone-800 capitalize">{dia(r.f)}</td>
+                <td className="px-2 py-2 text-right font-mono">{fmt(r.cobrado)}</td>
+                <td className="px-2 py-2 text-right font-mono">{r.control === undefined ? '—' : fmt(r.control)}</td>
+                <td className={`px-2 py-2 text-right font-mono font-bold ${r.dif !== null && Math.abs(r.dif) < 1 ? 'text-bodegon' : 'text-barro'}`}>
+                  {r.dif === null ? '—' : `${r.dif > 0 ? '+' : r.dif < 0 ? '−' : ''}${fmt(Math.abs(r.dif))}`}
+                </td>
+                <td className="px-2 py-2 text-stone-600">{r.estado === 'Cuadra' ? '—' : r.pistas.join(' · ') || 'Revisar el conteo de gaveta'}</td>
+                <td className="px-2 py-2">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${color(r.estado)}`}>{r.estado}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-[11px] text-stone-500">
+        TEGA = todo lo cobrado (con propina), sin el consumo de personal. Cada día debe quedar en verde o con motivo.
+      </p>
+    </div>
+  );
+};
