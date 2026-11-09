@@ -1,3 +1,4 @@
+import { getCategoryLabel } from '../utils/categories';
 import { AppState, CashShift, PettyCashShift, PettyCashTransaction, TablewareItem, TablewareLoss } from '../types';
 import { addDaysToDateStr, extractLocalDateStr, getLocalTodayStr } from '../utils/dateUtils';
 import logoImg from '../assets/logo.png';
@@ -877,7 +878,7 @@ export function printThermalDailyExpensesTicket(
               <tr>
                 <td class="font-mono text-center bold">${idx + 1}</td>
                 <td class="font-mono text-center" style="white-space: nowrap;">${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                <td style="font-size: 9px;">${tx.category}</td>
+                <td style="font-size: 9px;">${getCategoryLabel(tx.category)}</td>
                 <td>
                   <span class="bold">${tx.vendor}</span>${tx.notes && tx.notes.trim() !== (tx.vendor || '').trim() ? ` <span style="font-size: 9px; font-weight: 700; color: #000000;">— ${tx.notes}</span>` : ''}
                 </td>
@@ -1164,7 +1165,7 @@ export function printThermalSingleExpenseVoucher(tx: PettyCashTransaction): void
                 <td class="data-label">CONCEPTO DETALLADO:</td>
                 <td class="data-val" style="line-height: 1.4;">
                   <strong style="font-weight: 900;">${tx.notes || tx.vendor || tx.category}</strong>
-                  ${tx.category && tx.category !== tx.notes ? `<div style="font-size: 11.5px; font-weight: 800; color: #000000; margin-top: 4px;">Categoría: ${tx.category} • Método: ${tx.method === 'CASH' ? 'Efectivo' : tx.method === 'TRANSFER' ? 'Transferencia' : 'Tarjeta'}</div>` : ''}
+                  ${tx.category && tx.category !== tx.notes ? `<div style="font-size: 11.5px; font-weight: 800; color: #000000; margin-top: 4px;">Categoría: ${getCategoryLabel(tx.category)} • Método: ${tx.method === 'CASH' ? 'Efectivo' : tx.method === 'TRANSFER' ? 'Transferencia' : 'Tarjeta'}</div>` : ''}
                 </td>
               </tr>
             </tbody>
@@ -1502,7 +1503,7 @@ export function printThermalPettyCashClosingAct(
               <tr>
                 <td class="font-mono text-center" style="white-space: nowrap;">${new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                 <td><strong>${tx.vendor}</strong>${tx.notes && tx.notes.trim() !== (tx.vendor || '').trim() ? ` <span style="font-size: 9px; font-weight: 700; color: #000000;">— ${tx.notes}</span>` : ''}</td>
-                <td style="font-size: 9px;">${tx.category}</td>
+                <td style="font-size: 9px;">${getCategoryLabel(tx.category)}</td>
                 <td class="text-center">${isCash ? 'Efectivo' : tx.method === 'CARD' ? 'Tarjeta' : 'Transf.'}</td>
                 <td class="text-right font-mono ${isIn ? 'bold' : ''}" style="white-space: nowrap;">${isIn ? `+${tx.amount.toFixed(2)}` : '—'}</td>
                 <td class="text-right font-mono ${!isIn ? 'bold' : ''}" style="white-space: nowrap;">${!isIn ? `-${tx.amount.toFixed(2)}` : '—'}</td>

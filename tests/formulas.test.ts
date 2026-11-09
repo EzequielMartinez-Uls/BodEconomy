@@ -52,7 +52,28 @@ describe('fórmula única de ganancia (reglas de Ezequiel)', () => {
       ],
       '2026-10-23'
     );
-    expect(g).toEqual({ cash: 300, transfer: 200, card: 50, total: 550 });
+    expect(g).toEqual({ cash: 300, transfer: 200, card: 50, total: 550, fueraOperacion: 0 });
+  });
+
+  test('retiro de socios y préstamos salen de caja chica pero no son gasto', () => {
+    const g = sumDayExpenses(
+      [
+        tx({ id: 'a', amount: 300 }),
+        tx({ id: 'b', amount: 1000, category: 'RETIRO_SOCIOS' }),
+        tx({ id: 'c', amount: 500, category: 'PRESTAMOS' }),
+      ],
+      '2026-10-23'
+    );
+    expect(g.total).toBe(300);
+    expect(g.fueraOperacion).toBe(1500);
+  });
+
+  test('el fondo de apertura no es venta (v1.0.68, formulaVersion 3)', () => {
+    const base = { pagosSalidas: 0, tarjetas: 0, transferencias: 0, pedidosYa: 0, otrosIngresos: 0, gastos: { cash: 0, transfer: 0, card: 0, total: 0 }, propinaEntregada: 0 };
+    expect(calculateDayProfit({ ...base, efectivoContado: 40821, fondoApertura: 846 }).efectivoReal).toBe(39975);
+    const turno = (v: number) => ({ date: '2026-10-23', formulaVersion: v, totalOpeningEquivNIO: 846, actualCashNIO: 40821 }) as unknown as CashShift;
+    expect(calculateShiftProfit(turno(3), []).efectivoReal).toBe(39975);
+    expect(calculateShiftProfit(turno(2), []).efectivoReal).toBe(40821); // cierres viejos no cambian
   });
 });
 

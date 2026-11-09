@@ -1,3 +1,4 @@
+import { getCategoryLabel } from '../utils/categories';
 import { createClient } from '@supabase/supabase-js';
 import { CashShift, PettyCashShift, PettyCashTransaction, ExpenseCategory, isOpeningPettyCashTx, VendorItem } from '../types';
 import { calculateSpecialPayrollRow } from '../types/payroll';
@@ -80,7 +81,9 @@ export function mapCloudCategoryToLocal(cloudCat: string): ExpenseCategory {
     case 'TRANSPORTE':
       return 'DELIVERYS_ACARREOS';
     default:
-      return 'OTROS';
+      // Las categorías del catálogo (Música, Gas, Mariscos, Servicios básicos…) pasan tal cual.
+      // Antes todo lo desconocido se volvía OTROS y al editar se guardaba así en la nube.
+      return cloudCat && cloudCat.trim() ? cloudCat : 'OTROS';
   }
 }
 
@@ -1855,7 +1858,7 @@ export async function fetchCloudExpensesAnalytics(
     const byCategory = Array.from(catMap.entries())
       .map(([category, info]) => ({
         category,
-        label: category.replace(/_/g, ' '),
+        label: getCategoryLabel(category),
         total: info.total,
         count: info.count,
         percent: totalAmount > 0 ? (info.total / totalAmount) * 100 : 0,

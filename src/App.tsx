@@ -42,6 +42,18 @@ import {
 } from './services/supabaseSync';
 import { keepOlderLocalShifts, keepOlderLocalTransactions } from './utils/cloudMerge';
 import { getLocalTodayStr, getLocalDateTimeStr, extractLocalDateStr } from './utils/dateUtils';
+import {
+  TegaDatos,
+  fetchTega,
+  tegaDesde,
+  salidaYaImportada,
+  salidaComoTraslado,
+  creditoComoIncidencia,
+  idIncidenciaTega,
+  recalcularServicioEnBorradores,
+  turnoDeFecha,
+  tegaConfigurado,
+} from './services/tegaBridge';
 
 export function App() {
   const [state, setState] = useState<AppState>(loadState);
@@ -1169,6 +1181,96 @@ export function App() {
     }
   };
 
+  // ---------- Puente con TEGA (solo lectura) ----------
+  // Cada 2 minutos (y al volver a la ventana) lee TEGA: el testigo del cierre, el cuadre en vivo, las salidas de la
+  // gaveta (entran solas a caja chica) y las cuentas de colaborador cargadas a quincena (entran solas a Incidencias).
+  const [tega, setTega] = useState<TegaDatos | null>(null);
+  const [tegaCargando, setTegaCargando] = useState(false);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const addTxRef = useRef(handleAddPettyCashTransaction);
+  addTxRef.current = handleAddPettyCashTransaction;
+  const tegaEnCurso = useRef(new Set<string>());
+
+  const importarDeTega = useCallback((datos: TegaDatos) => {
+    const st = stateRef.current;
+    const desde = tegaDesde();
+
+    // 1. Pagos y salidas de TEGA → depósito a caja chica desde caja general.
+    for (const s of datos.salidas) {
+      if (s.t < desde || tegaEnCurso.current.has(s.id) || salidaYaImportada(s, st.pettyCashTransactions)) continue;
+      tegaEnCurso.current.add(s.id);
+      addTxRef.current(salidaComoTraslado(s, datos, st.defaultExchangeRate || 36, st.activeAdminName || 'TEGA'));
+    }
+
+    // 2. Cuentas de colaborador cargadas a quincena → Servicio de restaurante (y se quitan si se anularon en TEGA).
+    const actuales = st.payrollIncidents || [];
+    const ids = new Set(actuales.map((i) => i.id));
+    const anuladas = new Set(datos.creditos.filter((c) => c.anulado).map((c) => idIncidenciaTega(c.id)));
+    const nuevas = datos.creditos
+      .filter((c) => !c.anulado && c.t >= desde && c.monto > 0 && !ids.has(idIncidenciaTega(c.id)))
+      .map((c) => creditoComoIncidencia(c, st.payrollEmployees || []));
+    const quitar = actuales.some((i) => anuladas.has(i.id));
+    if (!nuevas.length && !quitar) return;
+
+    setState((prev) => {
+      const prevIds = new Set((prev.payrollIncidents || []).map((i) => i.id));
+      const agregar = nuevas.filter((i) => !prevIds.has(i.id));
+      const nextIncidents = [...agregar, ...(prev.payrollIncidents || []).filter((i) => !anuladas.has(i.id))];
+      if (nextIncidents.length === (prev.payrollIncidents || []).length && !agregar.length) return prev;
+      const nextHistory = recalcularServicioEnBorradores(prev.payrollHistory || [], nextIncidents);
+      syncCatalogsToCloud(
+        prev.vendorsList,
+        prev.expenseCategories,
+        prev.payrollEmployees,
+        nextHistory,
+        nextIncidents,
+        prev.tablewareItems,
+        prev.tablewareLosses
+      ).catch(console.warn);
+      if (agregar.length) {
+        notify(
+          agregar.length === 1 ? 'Consumo de colaborador cargado a quincena' : `${agregar.length} consumos de colaboradores cargados a quincena`,
+          agregar.map((i) => `${i.employeeName} · C$ ${i.amount.toFixed(2)}`).join(', ')
+        );
+      }
+      return {
+        ...prev,
+        payrollIncidents: nextIncidents,
+        payrollHistory: nextHistory,
+        auditLogs: [
+          {
+            id: `log-${Date.now()}`,
+            timestamp: new Date().toISOString(),
+            user: 'TEGA',
+            action: 'INCIDENCIAS_TEGA',
+            details: `${agregar.length} consumo(s) de colaborador desde TEGA${anuladas.size ? `, ${[...anuladas].filter((id) => prevIds.has(id)).length} anulado(s)` : ''}`,
+          },
+          ...prev.auditLogs,
+        ],
+      };
+    });
+  }, []);
+
+  const refrescarTega = useCallback(async () => {
+    setTegaCargando(true);
+    const datos = await fetchTega(tegaDesde() - 6 * 3600 * 1000);
+    setTegaCargando(false);
+    if (!datos) return;
+    setTega(datos);
+    importarDeTega(datos);
+  }, [importarDeTega]);
+
+  useEffect(() => {
+    refrescarTega();
+    const id = window.setInterval(refrescarTega, 120000);
+    window.addEventListener('focus', refrescarTega);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener('focus', refrescarTega);
+    };
+  }, [refrescarTega]);
+
   const handleForceSyncPending = async () => {
     setState((prev) => {
       processOutboxQueue(prev.pettyCashTransactions).then(({ updated, syncedCount }) => {
@@ -1692,6 +1794,10 @@ export function App() {
                 onUpdateShift={handleUpdateShift}
                 onCancelOpenShift={handleCancelOpenShift}
                 onAddPettyCashTransaction={handleAddPettyCashTransaction}
+                tegaTurno={state.currentShift ? turnoDeFecha(tega, state.currentShift.date) : null}
+                tegaActualizado={tega?.ahora ?? null}
+                tegaCargando={tegaCargando}
+                onActualizarTega={tegaConfigurado ? refrescarTega : undefined}
               />
             )}
 
@@ -1724,6 +1830,7 @@ export function App() {
                 state={state}
                 onUpdateShiftSales={handleUpdateShiftSales}
                 onNavigateToTab={handleGuardedTabChange}
+                tega={tega}
               />
             )}
 
@@ -1777,6 +1884,7 @@ export function App() {
         activeAdminName={state.activeAdminName}
         availableAdmins={state.availableAdmins}
         onConfirmClose={handleConfirmCloseShift}
+        tegaTurno={state.currentShift ? turnoDeFecha(tega, state.currentShift.date) : null}
       />
 
       <ClosingSeal info={closingSeal} onDismiss={() => setClosingSeal(null)} />

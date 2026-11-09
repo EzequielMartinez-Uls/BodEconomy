@@ -1,3 +1,5 @@
+import { TegaCuadre } from './TegaTestigo';
+import type { TegaDatos } from '../services/tegaBridge';
 import React, { useState, useMemo } from 'react';
 import { calculateShiftProfit } from '../utils/cashMath';
 import { AnimatedNumber } from './ui/AnimatedNumber';
@@ -52,6 +54,7 @@ interface Props {
     }
   ) => void;
   onNavigateToTab?: (tab: 'generalCash' | 'pettyCash') => void;
+  tega?: TegaDatos | null; // datos de TEGA para el cuadre TEGA ↔ Control
 }
 
 type DetailModalType =
@@ -71,6 +74,7 @@ export const DailyEarningsView: React.FC<Props> = ({
   state,
   onUpdateShiftSales,
   onNavigateToTab,
+  tega,
 }) => {
   // Fecha seleccionada (por defecto hoy en YYYY-MM-DD local)
   const todayStr = useMemo(() => getLocalTodayStr(), []);
@@ -318,16 +322,19 @@ export const DailyEarningsView: React.FC<Props> = ({
       }
       const shift = (state.shiftHistory || []).find((s) => s.date === item.date) ||
         (state.currentShift?.date === item.date ? state.currentShift : null);
-      if (shift && shift.status === 'CLOSED' && shift.formulaVersion === 2) {
+      if (shift?.staffConsumption) item.staffConsumption = shift.staffConsumption;
+      if (shift && shift.status === 'CLOSED' && (shift.formulaVersion || 0) >= 2) {
         // Fórmula única: se recalcula con los gastos actuales, así un gasto editado después del cierre sí cuadra.
         const profit = calculateShiftProfit(shift, state.pettyCashTransactions || []);
         item.cashSales = profit.efectivoReal;
         item.totalGrossSales = profit.ventasTotales;
         item.netEarnings = profit.ganancia;
+        item.tipsDeducted = profit.propinaEntregada;
       } else if (shift?.dailyNetProfit !== undefined && shift.dailyNetProfit !== null && shift.status === 'CLOSED') {
         item.netEarnings = Number(shift.dailyNetProfit);
       } else {
-        item.netEarnings = item.totalGrossSales - item.totalExpenses - (item.tipsCollected || 0);
+        item.tipsDeducted = item.tipsCollected || 0;
+        item.netEarnings = item.totalGrossSales - item.totalExpenses - item.tipsDeducted;
       }
     });
 
@@ -1824,11 +1831,45 @@ export const DailyEarningsView: React.FC<Props> = ({
                   - C$ {activeDaySummary.transfersPaid.toFixed(2)}
                 </span>
               </div>
+              {(activeDaySummary.tipsDeducted || 0) > 0 && (
+                <div className="flex justify-between py-2 border-b border-stone-100 text-stone-600">
+                  <span>(-) Propina entregada al personal</span>
+                  <span className="font-mono text-barro">
+                    - C$ {(activeDaySummary.tipsDeducted || 0).toFixed(2)}
+                  </span>
+                </div>
+              )}
+              {(() => {
+                // Si el cierre guardó una ganancia distinta (cierres viejos), se muestra la diferencia
+                // para que la suma del desglose siempre cuadre con la ganancia final.
+                const otros =
+                  activeDaySummary.totalGrossSales -
+                  activeDaySummary.pettyCashExpenses -
+                  activeDaySummary.transfersPaid -
+                  (activeDaySummary.tipsDeducted || 0) -
+                  activeDaySummary.netEarnings;
+                if (Math.abs(otros) < 0.01) return null;
+                return (
+                  <div className="flex justify-between py-2 border-b border-stone-100 text-stone-600">
+                    <span>({otros > 0 ? '-' : '+'}) Otros ajustes del cierre</span>
+                    <span className="font-mono text-barro">
+                      {otros > 0 ? '-' : '+'} C$ {Math.abs(otros).toFixed(2)}
+                    </span>
+                  </div>
+                );
+              })()}
               <div className="flex justify-between py-2 px-3 rounded-lg bg-stone-100 font-black text-stone-900 text-sm border border-stone-200">
                 <span>(=) GANANCIA NETA FINAL</span>
                 <span className="font-mono text-bodegon">C$ {activeDaySummary.netEarnings.toFixed(2)}</span>
               </div>
             </div>
+
+            {(activeDaySummary.staffConsumption || 0) > 0 && (
+              <p className="text-[11px] text-stone-500 px-1">
+                Consumo de personal cargado a quincena: <strong className="font-mono text-stone-700">C$ {(activeDaySummary.staffConsumption || 0).toFixed(2)}</strong>.
+                No entra a la gaveta ni a esta ganancia; se descuenta en la planilla.
+              </p>
+            )}
 
             <div className="flex gap-2 pt-2">
               <button
@@ -2002,6 +2043,12 @@ export const DailyEarningsView: React.FC<Props> = ({
           </div>
         </div>
       )}
+
+      <TegaCuadre
+        tega={tega || null}
+        shifts={state.shiftHistory || []}
+        ventasControl={Object.fromEntries(dailySummaries.map((d) => [d.date, d.totalGrossSales]))}
+      />
 
       {/* Modal de Impresión Oficial B/N (1 o 2 Hojas) */}
       <PrintOfficialActModal

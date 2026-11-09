@@ -1,3 +1,4 @@
+import { getCategoryLabel } from '../utils/categories';
 import ExcelJS from 'exceljs';
 import {
   AppState,
@@ -532,7 +533,7 @@ export async function exportShiftToExcel(shift: CashShift, state: AppState): Pro
       r.getCell(1).value = i + 1;
       r.getCell(2).value = new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       r.getCell(3).value = tx.type === 'EXPENSE' ? 'COMPRA / GASTO' : 'REEMBOLSO / INGRESO';
-      r.getCell(4).value = tx.category;
+      r.getCell(4).value = getCategoryLabel(tx.category);
       r.getCell(5).value = tx.vendor;
       r.getCell(6).value = tx.notes || tx.vendor;
       r.getCell(7).value = tx.receiptNumber || 'Sin factura';
@@ -702,7 +703,7 @@ export async function exportPettyCashExpensesToExcel(
     r.getCell(1).value = i + 1;
     r.getCell(2).value = new Date(t.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     r.getCell(3).value = t.notes ? `${t.vendor} (${t.notes})` : t.vendor;
-    r.getCell(4).value = t.category;
+    r.getCell(4).value = getCategoryLabel(t.category);
     r.getCell(5).value = t.receiptNumber || 'Sin comprobante';
     r.getCell(6).value = isCash ? 'Efectivo' : isTransf ? 'Transferencia' : isCard ? 'Tarjeta' : '-';
 
@@ -896,7 +897,7 @@ export async function exportPettyCashClosingToExcel(
     r.getCell(1).value = i + 1;
     r.getCell(2).value = new Date(t.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     r.getCell(3).value = t.notes ? `${t.vendor} (${t.notes})` : t.vendor;
-    r.getCell(4).value = t.category;
+    r.getCell(4).value = getCategoryLabel(t.category);
     r.getCell(5).value = t.receiptNumber || 'Sin comprobante';
     r.getCell(6).value = isCash ? 'Efectivo' : t.method === 'TRANSFER' ? 'Transferencia' : 'Tarjeta';
     
@@ -1442,7 +1443,7 @@ export async function exportDailyEarningsToExcel(
       r.getCell(1).value = i + 1;
       r.getCell(2).value = new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       r.getCell(3).value = tx.type === 'EXPENSE' ? 'COMPRA' : 'FONDEO';
-      r.getCell(4).value = tx.category;
+      r.getCell(4).value = getCategoryLabel(tx.category);
       r.getCell(5).value = tx.vendor;
       r.getCell(6).value = tx.notes || tx.vendor;
       r.getCell(7).value = tx.receiptNumber || 'Sin factura';

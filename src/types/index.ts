@@ -138,6 +138,7 @@ export interface CashShift {
   tipRoundingDiff?: number; // Diferencia entre propina recaudada en POS y la entregada en físico (totalTipCollected - tipDistributedTotal)
 
   // Deducciones / Retiros de Caja
+  staffConsumption?: number; // Consumo de colaboradores cargado a quincena (de TEGA), no entra a la gaveta
   transferToPettyCash?: number; // Pagos/Salidas hacia Caja Chica (traspasos en el turno)
   depositedFromPettyCash?: number; // Depositado desde Caja Chica hacia General (reintegros)
   overtimePaidCash?: number;
@@ -338,6 +339,8 @@ export interface DailyEarningsSummary {
   totalExpenses: number;
   netEarnings: number;
   tipsCollected: number;
+  staffConsumption?: number; // consumo de colaboradores cargado a quincena (informativo)
+  tipsDeducted?: number; // propina que se restó en la ganancia neta (entregada al personal)
   responsible: string;
   sourceShiftId?: string;
   isVoid?: boolean;

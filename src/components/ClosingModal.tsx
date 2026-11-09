@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { AnimatedNumber } from './ui/AnimatedNumber';
 import { CashShift, DenominationsNIO, DenominationsUSD, AppState } from '../types';
 import {
@@ -12,6 +12,8 @@ import { printOfficialActBN } from '../services/thermalPrint';
 import { exportShiftToExcel } from '../services/excelExport';
 import { calculateDayProfit, sumDayExpenses, buildActTransactions } from '../utils/cashMath';
 import { processOutboxQueue } from '../services/supabaseSync';
+import { TegaTurno, bancoTega, tarjetasTega } from '../services/tegaBridge';
+import { TegaTestigo, FilaTestigo } from './TegaTestigo';
 import confetti from 'canvas-confetti';
 import {
   X,
@@ -37,6 +39,8 @@ import {
   Sparkles,
   RotateCcw,
   Landmark,
+  Lock,
+  LockOpen,
 } from 'lucide-react';
 
 interface Props {
@@ -47,6 +51,7 @@ interface Props {
   activeAdminName: string;
   availableAdmins: string[];
   onConfirmClose: (closedShift: CashShift, pettyCounted: number | null) => void;
+  tegaTurno?: TegaTurno | null; // el turno de TEGA de este día, como testigo del conteo
 }
 
 export const ClosingModal: React.FC<Props> = ({
@@ -57,6 +62,7 @@ export const ClosingModal: React.FC<Props> = ({
   activeAdminName,
   availableAdmins,
   onConfirmClose,
+  tegaTurno = null,
 }) => {
   if (!isOpen || !shift) return null;
 
@@ -124,6 +130,62 @@ export const ClosingModal: React.FC<Props> = ({
   // Cálculos de Ventas
   const totalCards = cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise;
 
+  // TEGA como testigo: no llena nada, solo muestra al lado lo que dice el punto de venta.
+  const tasaTega = shift.exchangeRate || 36;
+  const tegaSalidas = tegaTurno ? parseFloat((tegaTurno.salidasCS + tegaTurno.salidasUSD * tasaTega).toFixed(2)) : 0;
+  const testigoGaveta: FilaTestigo[] = tegaTurno
+    ? [
+        { label: 'Córdobas en gaveta', contado: totalClosingNIO, tega: tegaTurno.esperado },
+        { label: 'Dólares en gaveta', contado: totalClosingUSD, tega: tegaTurno.esperadoUsd, moneda: 'US$' },
+      ]
+    : [];
+  const bancosTega = tegaTurno
+    ? ([
+        ['BAC', cardsBAC],
+        ['Banpro', cardsBanpro],
+        ['Ficohsa', cardsFicohsa],
+        ['Lafise', cardsLafise],
+      ] as [string, number][])
+    : [];
+  const testigoVentas: FilaTestigo[] = tegaTurno
+    ? [
+        ...bancosTega.map(([b, v]) => ({ label: b, contado: v, tega: bancoTega(tegaTurno, b) })),
+        { label: 'Total tarjetas', contado: totalCards, tega: tarjetasTega(tegaTurno), total: true },
+        { label: 'PedidosYa', contado: salesPedidosYa, tega: tegaTurno.metodos.pedidosya || 0 },
+        { label: 'Transferencias', contado: salesBankTransfers, tega: tegaTurno.metodos.transferencia || 0 },
+        { label: 'Pagos y salidas', contado: loyversePaidOut, tega: tegaSalidas, usar: () => setLoyversePaidOut(tegaSalidas) },
+      ]
+    : [];
+  const bancosDescuadrados = bancosTega.filter(([b, v]) => Math.abs(v - bancoTega(tegaTurno!, b)) >= 1).length;
+  const notaBancos =
+    tegaTurno && bancosDescuadrados > 0 && Math.abs(totalCards - tarjetasTega(tegaTurno)) < 1
+      ? 'El total de tarjetas cuadra pero algún banco no: casi siempre es que en TEGA se marcó el banco equivocado al cobrar, no que falte plata.'
+      : null;
+  const consumoPersonalTega = tegaTurno ? tegaTurno.personal : (shift.staffConsumption || 0);
+
+  // Datos que llegan de TEGA (bancos, PedidosYa, transferencias, pagos y salidas) quedan con candado.
+  // Se pueden cambiar a mano, pero pidiendo un motivo que queda en el acta.
+  const [bloqueadoTega, setBloqueadoTega] = useState<boolean>(Boolean(tegaTurno));
+  const [motivoCambioTega, setMotivoCambioTega] = useState<string>('');
+  const [motivoDescuadre, setMotivoDescuadre] = useState<string>('');
+  const hayTega = Boolean(tegaTurno);
+  useEffect(() => {
+    if (!tegaTurno || !bloqueadoTega) return;
+    setCardsBAC(bancoTega(tegaTurno, 'BAC'));
+    setCardsBanpro(bancoTega(tegaTurno, 'Banpro'));
+    setCardsFicohsa(bancoTega(tegaTurno, 'Ficohsa'));
+    setCardsLafise(bancoTega(tegaTurno, 'Lafise'));
+    setSalesPedidosYa(parseFloat((tegaTurno.metodos.pedidosya || 0).toFixed(2)));
+    setSalesBankTransfers(parseFloat((tegaTurno.metodos.transferencia || 0).toFixed(2)));
+    setSalesCashSystem(parseFloat((tegaTurno.metodos.efectivo || 0).toFixed(2)));
+    setLoyversePaidOut(tegaSalidas);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tegaTurno, bloqueadoTega, tegaSalidas, hayTega]);
+  const bloq = Boolean(tegaTurno) && bloqueadoTega;
+
+  // Fondo de apertura: ya estaba en la gaveta, no es venta de hoy (se resta del efectivo contado).
+  const fondoApertura = parseFloat((shift.totalOpeningEquivNIO || 0).toFixed(2));
+
   // Cálculos de Propinas (Acuerdo Laboral: Cuota Yahaira Rivas + Fondo Común Equipo)
   const actualYahairaTip = tipYahairaWorked ? Math.min(totalTipCollected, Math.max(0, tipYahairaAmount)) : 0;
   const tipTeamPool = parseFloat(Math.max(0, totalTipCollected - actualYahairaTip).toFixed(2));
@@ -168,7 +230,12 @@ export const ClosingModal: React.FC<Props> = ({
 
   // El efectivo neto en gaveta tras propinas es el dinero real y cuadrado
   const expectedCashNIO = netCashAfterTipsNIO;
-  const differenceNIO: number = 0;
+  // Descuadre real de gaveta contra lo que TEGA dice que debe haber (fondo + efectivo cobrado − vuelto − salidas).
+  // Sin TEGA no hay contra qué comparar y queda en 0 como antes.
+  const difGavetaCS = tegaTurno ? parseFloat((totalClosingNIO - tegaTurno.esperado).toFixed(2)) : 0;
+  const difGavetaUSD = tegaTurno ? parseFloat((totalClosingUSD - tegaTurno.esperadoUsd).toFixed(2)) : 0;
+  const differenceNIO: number = tegaTurno ? parseFloat((difGavetaCS + difGavetaUSD * tasaTega).toFixed(2)) : 0;
+  const hayDescuadre = Boolean(tegaTurno) && actualCashNIO > 0 && (Math.abs(difGavetaCS) >= 1 || Math.abs(difGavetaUSD) >= 0.5);
   let auditStatus: 'SQUARED' | 'SURPLUS' | 'SHORTAGE' = (differenceNIO > 0 ? 'SURPLUS' : differenceNIO < 0 ? 'SHORTAGE' : 'SQUARED') as 'SQUARED' | 'SURPLUS' | 'SHORTAGE';
 
   // Gastos de Caja Chica del Día (efectivo, transferencia y tarjeta)
@@ -188,6 +255,7 @@ export const ClosingModal: React.FC<Props> = ({
   // Ventas y ganancia con la fórmula única (utils/cashMath.ts)
   const dayProfit = calculateDayProfit({
     efectivoContado: actualCashNIO,
+    fondoApertura,
     pagosSalidas: loyversePaidOut,
     tarjetas: totalCards,
     transferencias: salesBankTransfers,
@@ -224,6 +292,12 @@ export const ClosingModal: React.FC<Props> = ({
     });
   };
 
+  const notasCierre = [
+    closingNotes.trim(),
+    hayDescuadre && motivoDescuadre.trim() ? `Motivo del ${differenceNIO < 0 ? 'faltante' : 'sobrante'} (C$ ${differenceNIO.toFixed(2)}): ${motivoDescuadre.trim()}` : '',
+    tegaTurno && !bloqueadoTega && motivoCambioTega.trim() ? `Datos de TEGA cambiados a mano: ${motivoCambioTega.trim()}` : '',
+  ].filter(Boolean).join(' · ');
+
   // Turno cerrado con todos los datos del cierre (se usa al confirmar, al imprimir y al exportar)
   const buildClosedShift = (): CashShift => ({
     ...shift,
@@ -250,7 +324,8 @@ export const ClosingModal: React.FC<Props> = ({
     otherIncome,
     otherIncomeNotes,
     loyversePaidOut,
-    formulaVersion: 2,
+    staffConsumption: consumoPersonalTega,
+    formulaVersion: 3,
     totalGrossSales,
 
     // Propinas
@@ -272,7 +347,7 @@ export const ClosingModal: React.FC<Props> = ({
     differenceNIO,
     auditStatus,
     dailyNetProfit,
-    closingNotes,
+    closingNotes: notasCierre,
 
     // Traspasos entre Cajas
     transferToPettyCash,
@@ -303,7 +378,7 @@ export const ClosingModal: React.FC<Props> = ({
       netProfit: dailyNetProfit,
       marginPercent: dayProfit.margen,
       responsableCaja: closedBy,
-      observacionesGeneral: closingNotes,
+      observacionesGeneral: notasCierre,
       fondoInicial: state.currentPettyCashShift?.initialBalance ?? 0,
       expensesCash: dayPettyExpensesCash,
       expensesTransf: dayPettyExpensesTransf,
@@ -315,6 +390,16 @@ export const ClosingModal: React.FC<Props> = ({
   };
 
   const handleFinishClosing = () => {
+    if (hayDescuadre && !motivoDescuadre.trim()) {
+      window.alert(`La gaveta no cuadra con TEGA (${differenceNIO < 0 ? 'faltante' : 'sobrante'} de C$ ${Math.abs(differenceNIO).toFixed(2)}).\n\nEscribe el motivo en el paso 1 para poder cerrar.`);
+      setStep(1);
+      return;
+    }
+    if (tegaTurno && !bloqueadoTega && !motivoCambioTega.trim()) {
+      window.alert('Cambiaste datos que vienen de TEGA. Escribe el motivo en el paso 2 para poder cerrar.');
+      setStep(2);
+      return;
+    }
     if (actualCashNIO <= 0) {
       const confirmZero = window.confirm(
         'El arqueo de efectivo en gaveta está en C$ 0.00.\n\n¿Estás seguro de cerrar la caja sin registrar billetes ni monedas?'
@@ -512,6 +597,29 @@ export const ClosingModal: React.FC<Props> = ({
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
+
+              {tegaTurno && (
+                <TegaTestigo
+                  titulo="Cuadre de gaveta con TEGA"
+                  filas={testigoGaveta}
+                  enVivo={tegaTurno.estado !== 'cerrado'}
+                  nota={`Debe haber = fondo de apertura C$ ${(tegaTurno.fondo ?? fondoApertura).toFixed(2)} + efectivo cobrado − vuelto de dólares − salidas. El fondo no entra como venta: solo sirve para el cuadre.`}
+                />
+              )}
+              {hayDescuadre && (
+                <div className="p-3.5 bg-white rounded-xl border border-barro/30 space-y-2">
+                  <label className="block text-xs font-bold text-barro">
+                    {differenceNIO < 0 ? 'Faltante' : 'Sobrante'} de C$ {Math.abs(differenceNIO).toFixed(2)}: escribe el motivo (obligatorio)
+                  </label>
+                  <input
+                    type="text"
+                    value={motivoDescuadre}
+                    onChange={(e) => setMotivoDescuadre(e.target.value)}
+                    placeholder="Ej.: vuelto mal dado en la mesa CTO5"
+                    className="w-full bg-stone-50 border border-stone-300 rounded-lg px-2.5 py-1.5 text-xs text-stone-900 focus:bg-white focus:outline-none focus:border-bodegon"
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -520,6 +628,43 @@ export const ClosingModal: React.FC<Props> = ({
           {/* ════════════════════════════════════════════════════════════════ */}
           {step === 2 && (
             <div className="space-y-4">
+              {tegaTurno && (
+                <div className="flex items-center justify-between gap-3 flex-wrap p-3.5 bg-white rounded-xl border border-stone-200">
+                  <span className="flex items-center gap-2 text-xs font-bold text-stone-700">
+                    {bloq ? <Lock className="w-4 h-4 text-bodegon" /> : <LockOpen className="w-4 h-4 text-barro" />}
+                    {bloq
+                      ? 'Tarjetas, PedidosYa, transferencias y pagos y salidas vienen de TEGA, no se teclean.'
+                      : 'Datos de TEGA abiertos para cambiar a mano.'}
+                  </span>
+                  {bloq ? (
+                    <button
+                      type="button"
+                      onClick={() => setBloqueadoTega(false)}
+                      className="px-3 py-1.5 rounded-lg border border-stone-300 text-xs font-bold text-stone-700 hover:bg-stone-100 cursor-pointer"
+                    >
+                      Cambiar con motivo
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => { setBloqueadoTega(true); setMotivoCambioTega(''); }}
+                      className="px-3 py-1.5 rounded-lg border border-stone-300 text-xs font-bold text-stone-700 hover:bg-stone-100 cursor-pointer"
+                    >
+                      Volver a lo de TEGA
+                    </button>
+                  )}
+                  {!bloq && (
+                    <input
+                      type="text"
+                      value={motivoCambioTega}
+                      onChange={(e) => setMotivoCambioTega(e.target.value)}
+                      placeholder="Motivo del cambio (obligatorio). Ej.: en TEGA se marcó Banpro y era BAC"
+                      className="w-full bg-stone-50 border border-stone-300 rounded-lg px-2.5 py-1.5 text-xs text-stone-900 focus:bg-white focus:outline-none focus:border-bodegon"
+                    />
+                  )}
+                  <p className="w-full text-[11px] text-stone-500">Si algo está mal, lo mejor es corregirlo en TEGA (Historial → Corregir pago): aquí se actualiza solo.</p>
+                </div>
+              )}
               {/* Tarjetas POS por Banco */}
               <div className="p-5 bg-white rounded-xl border border-stone-200 space-y-4">
                 <div className="flex items-center justify-between border-b border-stone-100 pb-3">
@@ -558,8 +703,9 @@ export const ClosingModal: React.FC<Props> = ({
                         min="0"
                         placeholder="0.00"
                         value={cardsBAC === 0 ? '' : cardsBAC}
+                        readOnly={bloq}
                         onChange={(e) => setCardsBAC(parseFloat(e.target.value) || 0)}
-                        className="w-full bg-white border border-stone-300 rounded-lg px-2.5 py-1.5 font-mono font-bold text-xs text-stone-900 focus:outline-none focus:border-bodegon"
+                        className="read-only:bg-stone-100 read-only:text-stone-500 read-only:cursor-not-allowed w-full bg-white border border-stone-300 rounded-lg px-2.5 py-1.5 font-mono font-bold text-xs text-stone-900 focus:outline-none focus:border-bodegon"
                       />
                     </div>
                   </div>
@@ -577,8 +723,9 @@ export const ClosingModal: React.FC<Props> = ({
                         min="0"
                         placeholder="0.00"
                         value={cardsFicohsa === 0 ? '' : cardsFicohsa}
+                        readOnly={bloq}
                         onChange={(e) => setCardsFicohsa(parseFloat(e.target.value) || 0)}
-                        className="w-full bg-white border border-stone-300 rounded-lg px-2.5 py-1.5 font-mono font-bold text-xs text-stone-900 focus:outline-none focus:border-bodegon"
+                        className="read-only:bg-stone-100 read-only:text-stone-500 read-only:cursor-not-allowed w-full bg-white border border-stone-300 rounded-lg px-2.5 py-1.5 font-mono font-bold text-xs text-stone-900 focus:outline-none focus:border-bodegon"
                       />
                     </div>
                   </div>
@@ -596,8 +743,9 @@ export const ClosingModal: React.FC<Props> = ({
                         min="0"
                         placeholder="0.00"
                         value={cardsBanpro === 0 ? '' : cardsBanpro}
+                        readOnly={bloq}
                         onChange={(e) => setCardsBanpro(parseFloat(e.target.value) || 0)}
-                        className="w-full bg-white border border-stone-300 rounded-lg px-2.5 py-1.5 font-mono font-bold text-xs text-stone-900 focus:outline-none focus:border-bodegon"
+                        className="read-only:bg-stone-100 read-only:text-stone-500 read-only:cursor-not-allowed w-full bg-white border border-stone-300 rounded-lg px-2.5 py-1.5 font-mono font-bold text-xs text-stone-900 focus:outline-none focus:border-bodegon"
                       />
                     </div>
                   </div>
@@ -615,8 +763,9 @@ export const ClosingModal: React.FC<Props> = ({
                         min="0"
                         placeholder="0.00"
                         value={cardsLafise === 0 ? '' : cardsLafise}
+                        readOnly={bloq}
                         onChange={(e) => setCardsLafise(parseFloat(e.target.value) || 0)}
-                        className="w-full bg-white border border-stone-300 rounded-lg px-2.5 py-1.5 font-mono font-bold text-xs text-stone-900 focus:outline-none focus:border-bodegon"
+                        className="read-only:bg-stone-100 read-only:text-stone-500 read-only:cursor-not-allowed w-full bg-white border border-stone-300 rounded-lg px-2.5 py-1.5 font-mono font-bold text-xs text-stone-900 focus:outline-none focus:border-bodegon"
                       />
                     </div>
                   </div>
@@ -644,8 +793,9 @@ export const ClosingModal: React.FC<Props> = ({
                       min="0"
                       placeholder="0.00"
                       value={salesPedidosYa === 0 ? '' : salesPedidosYa}
-                      onChange={(e) => setSalesPedidosYa(parseFloat(e.target.value) || 0)}
-                      className="w-full bg-stone-50 border border-stone-300 rounded-lg px-2.5 py-1.5 text-sm font-bold font-mono text-stone-900 focus:bg-white focus:outline-none focus:border-bodegon"
+                      readOnly={bloq}
+                        onChange={(e) => setSalesPedidosYa(parseFloat(e.target.value) || 0)}
+                      className="read-only:bg-stone-100 read-only:text-stone-500 read-only:cursor-not-allowed w-full bg-stone-50 border border-stone-300 rounded-lg px-2.5 py-1.5 text-sm font-bold font-mono text-stone-900 focus:bg-white focus:outline-none focus:border-bodegon"
                     />
                   </div>
                 </div>
@@ -659,7 +809,7 @@ export const ClosingModal: React.FC<Props> = ({
                     </h3>
                   </div>
                   <p className="text-[11px] text-stone-500">
-                    Cobradas en Loyverse (BAC, Banpro, Lafise).
+                    Cobradas por transferencia (BAC, Banpro, Lafise).
                   </p>
                   <div className="flex items-center gap-2 pt-1">
                     <span className="text-blue-500 font-mono font-bold text-xs">C$</span>
@@ -669,8 +819,9 @@ export const ClosingModal: React.FC<Props> = ({
                       min="0"
                       placeholder="0.00"
                       value={salesBankTransfers === 0 ? '' : salesBankTransfers}
-                      onChange={(e) => setSalesBankTransfers(parseFloat(e.target.value) || 0)}
-                      className="w-full bg-white border border-blue-300 rounded-lg px-2.5 py-1.5 text-sm font-bold font-mono text-blue-900 focus:bg-white focus:outline-none focus:border-blue-600 shadow-2xs"
+                      readOnly={bloq}
+                        onChange={(e) => setSalesBankTransfers(parseFloat(e.target.value) || 0)}
+                      className="read-only:bg-stone-100 read-only:text-stone-500 read-only:cursor-not-allowed w-full bg-white border border-blue-300 rounded-lg px-2.5 py-1.5 text-sm font-bold font-mono text-blue-900 focus:bg-white focus:outline-none focus:border-blue-600 shadow-2xs"
                     />
                   </div>
                   <input
@@ -691,7 +842,7 @@ export const ClosingModal: React.FC<Props> = ({
                     </h3>
                   </div>
                   <p className="text-[11px] text-stone-500">
-                    Total según sistema (Loyverse). Solo de referencia: la venta en efectivo real sale del conteo de gaveta.
+                    Total según sistema. Solo de referencia: la venta en efectivo real sale del conteo de gaveta.
                   </p>
                   <div className="flex items-center gap-2 pt-1">
                     <span className="text-stone-400 font-mono font-bold text-xs">C$</span>
@@ -701,8 +852,9 @@ export const ClosingModal: React.FC<Props> = ({
                       min="0"
                       placeholder="0.00"
                       value={salesCashSystem === 0 ? '' : salesCashSystem}
-                      onChange={(e) => setSalesCashSystem(parseFloat(e.target.value) || 0)}
-                      className="w-full bg-stone-50 border border-stone-300 rounded-lg px-2.5 py-1.5 text-sm font-bold font-mono text-bodegon focus:bg-white focus:outline-none focus:border-bodegon"
+                      readOnly={bloq}
+                        onChange={(e) => setSalesCashSystem(parseFloat(e.target.value) || 0)}
+                      className="read-only:bg-stone-100 read-only:text-stone-500 read-only:cursor-not-allowed w-full bg-stone-50 border border-stone-300 rounded-lg px-2.5 py-1.5 text-sm font-bold font-mono text-bodegon focus:bg-white focus:outline-none focus:border-bodegon"
                     />
                   </div>
                 </div>
@@ -716,7 +868,7 @@ export const ClosingModal: React.FC<Props> = ({
                     </h3>
                   </div>
                   <p className="text-[11px] text-stone-500">
-                    Según Loyverse. Se suman al efectivo contado en gaveta.
+                    Según TEGA (botón Usar en el testigo). Se suman al efectivo contado en gaveta.
                   </p>
                   <div className="flex items-center gap-2 pt-1">
                     <span className="text-stone-400 font-mono font-bold text-xs">C$</span>
@@ -726,12 +878,13 @@ export const ClosingModal: React.FC<Props> = ({
                       min="0"
                       placeholder="0.00"
                       value={loyversePaidOut === 0 ? '' : loyversePaidOut}
-                      onChange={(e) => setLoyversePaidOut(Math.max(0, parseFloat(e.target.value) || 0))}
-                      className="w-full bg-stone-50 border border-stone-300 rounded-lg px-2.5 py-1.5 text-sm font-bold font-mono text-cafe focus:bg-white focus:outline-none focus:border-bodegon"
+                      readOnly={bloq}
+                        onChange={(e) => setLoyversePaidOut(Math.max(0, parseFloat(e.target.value) || 0))}
+                      className="read-only:bg-stone-100 read-only:text-stone-500 read-only:cursor-not-allowed w-full bg-stone-50 border border-stone-300 rounded-lg px-2.5 py-1.5 text-sm font-bold font-mono text-cafe focus:bg-white focus:outline-none focus:border-bodegon"
                     />
                   </div>
                   <p className="text-[11px] text-stone-600 font-mono">
-                    Efectivo real: C$ {actualCashNIO.toFixed(2)} contado + C$ {loyversePaidOut.toFixed(2)} = <strong>C$ {efectivoReal.toFixed(2)}</strong>
+                    Efectivo real: C$ {actualCashNIO.toFixed(2)} contado − C$ {fondoApertura.toFixed(2)} fondo + C$ {loyversePaidOut.toFixed(2)} = <strong>C$ {efectivoReal.toFixed(2)}</strong>
                   </p>
                 </div>
 
@@ -767,6 +920,23 @@ export const ClosingModal: React.FC<Props> = ({
                   />
                 </div>
               </div>
+
+              {tegaTurno && (
+                <TegaTestigo
+                  titulo="Testigo TEGA · ventas"
+                  filas={testigoVentas}
+                  enVivo={tegaTurno.estado !== 'cerrado'}
+                  nota={notaBancos}
+                />
+              )}
+              {consumoPersonalTega > 0 && (
+                <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-stone-200 text-xs">
+                  <span className="font-bold text-stone-700">
+                    Consumo de personal <span className="font-medium text-stone-500">(cargado a quincena, no entra a la gaveta)</span>
+                  </span>
+                  <span className="font-mono font-bold text-stone-900">C$ {consumoPersonalTega.toFixed(2)}</span>
+                </div>
+              )}
 
               {/* Total Bruto Consolidado */}
               <div className="p-4 bg-bodegon text-white rounded-xl flex items-center justify-between shadow-sm">
