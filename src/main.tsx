@@ -9,6 +9,29 @@ import App from './App.tsx'
 // hacen que Chromium pierda el foco del teclado (impidiendo escribir en inputs o abrir selects).
 // Al cerrar cualquier alerta/confirmación, forzamos la restauración del foco en la ventana nativa y en el DOM.
 if (typeof window !== 'undefined') {
+  // La rueda del mouse NO cambia montos: sobre un campo numérico solo desplaza la pantalla.
+  // (En Chromium, girar la rueda sobre un <input type="number"> con foco sube o baja el número.)
+  const findScrollable = (el: HTMLElement | null): HTMLElement => {
+    let node = el?.parentElement ?? null;
+    while (node && node !== document.body) {
+      const oy = getComputedStyle(node).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && node.scrollHeight > node.clientHeight) return node;
+      node = node.parentElement;
+    }
+    return (document.scrollingElement as HTMLElement) || document.documentElement;
+  };
+  window.addEventListener(
+    'wheel',
+    (e) => {
+      const t = e.target as HTMLElement | null;
+      if (!(t instanceof HTMLInputElement) || t.type !== 'number') return;
+      e.preventDefault();
+      const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1;
+      findScrollable(t).scrollBy({ top: e.deltaY * unit, left: e.deltaX * unit });
+    },
+    { passive: false, capture: true },
+  );
+
   const restoreElectronFocus = () => {
     const prevActive = document.activeElement as HTMLElement | null;
     const api = (window as any).electronAPI;

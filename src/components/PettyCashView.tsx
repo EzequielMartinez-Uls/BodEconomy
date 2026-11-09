@@ -14,6 +14,7 @@ import {
   exportPettyCashHistoryToExcel,
 } from '../services/excelExport';
 import { formatDateToFriendly } from '../services/storage';
+import { getCategoryInfo, BUILTIN_CATEGORY_KEYS } from '../utils/categories';
 import { getLocalTodayStr, addDaysToDateStr, getLocalDateTimeStr, extractLocalDateStr, isSameMinute } from '../utils/dateUtils';
 import {
   ShoppingCart,
@@ -58,33 +59,7 @@ interface Props {
   onOpenShiftClick?: () => void;
 }
 
-const BUILTIN_CATEGORY_METADATA: Record<string, { label: string; emoji: string; badgeClass: string }> = {
-  CARNES: { label: 'Carnes', emoji: '', badgeClass: 'bg-stone-100 text-stone-700 border-stone-200' },
-  POLLO: { label: 'Pollo', emoji: '', badgeClass: 'bg-stone-100 text-stone-700 border-stone-200' },
-  HIELO: { label: 'Hielo', emoji: '', badgeClass: 'bg-stone-100 text-stone-700 border-stone-200' },
-  BEBIDAS: { label: 'Bebidas', emoji: '', badgeClass: 'bg-stone-100 text-stone-700 border-stone-200' },
-  BEBIDAS_ALCOHOLICAS: { label: 'Bebidas alcohólicas', emoji: '', badgeClass: 'bg-stone-100 text-stone-700 border-stone-200' },
-  DELIVERYS_ACARREOS: { label: 'Deliverys y acarreos', emoji: '', badgeClass: 'bg-stone-100 text-stone-700 border-stone-200' },
-  FRUTAS_VEGETALES: { label: 'Frutas / Vegetales', emoji: '', badgeClass: 'bg-stone-100 text-stone-700 border-stone-200' },
-  SUPERMERCADO: { label: 'Supermercado', emoji: '', badgeClass: 'bg-stone-100 text-stone-700 border-stone-200' },
-  MERCADO: { label: 'Mercado', emoji: '', badgeClass: 'bg-stone-100 text-stone-700 border-stone-200' },
-  LACTEOS: { label: 'Lácteos', emoji: '', badgeClass: 'bg-stone-100 text-stone-700 border-stone-200' },
-  PAGOS_PERSONAL: { label: 'Pagos personal', emoji: '', badgeClass: 'bg-stone-100 text-stone-700 border-stone-200' },
-  OTROS: { label: 'Otros', emoji: '', badgeClass: 'bg-stone-100 text-stone-700 border-stone-200' },
-  FONDEO: { label: 'Depósito / Fondeo', emoji: '', badgeClass: 'bg-bodegon/5 text-bodegon border-bodegon/20' },
-};
-
-export function getCategoryInfo(catValue: string) {
-  if (BUILTIN_CATEGORY_METADATA[catValue]) {
-    return BUILTIN_CATEGORY_METADATA[catValue];
-  }
-  const formatted = catValue.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
-  return {
-    label: formatted,
-    emoji: '',
-    badgeClass: 'bg-stone-100 text-stone-700 border-stone-200',
-  };
-}
+export { getCategoryInfo };
 
 export const PettyCashView: React.FC<Props> = ({
   state,
@@ -103,7 +78,7 @@ export const PettyCashView: React.FC<Props> = ({
   const activeCategories = useMemo(() => {
     return state.expenseCategories && state.expenseCategories.length > 0
       ? state.expenseCategories
-      : Object.keys(BUILTIN_CATEGORY_METADATA);
+      : BUILTIN_CATEGORY_KEYS;
   }, [state.expenseCategories]);
 
   const categoryDefs = useMemo(() => {

@@ -1,3 +1,4 @@
+import { getCategoryLabel } from '../utils/categories';
 import { createClient } from '@supabase/supabase-js';
 import { CashShift, PettyCashShift, PettyCashTransaction, ExpenseCategory, isOpeningPettyCashTx, VendorItem } from '../types';
 import { calculateSpecialPayrollRow } from '../types/payroll';
@@ -1855,7 +1856,7 @@ export async function fetchCloudExpensesAnalytics(
     const byCategory = Array.from(catMap.entries())
       .map(([category, info]) => ({
         category,
-        label: category.replace(/_/g, ' '),
+        label: getCategoryLabel(category),
         total: info.total,
         count: info.count,
         percent: totalAmount > 0 ? (info.total / totalAmount) * 100 : 0,
