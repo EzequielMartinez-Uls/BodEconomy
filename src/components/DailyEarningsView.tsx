@@ -318,6 +318,7 @@ export const DailyEarningsView: React.FC<Props> = ({
       }
       const shift = (state.shiftHistory || []).find((s) => s.date === item.date) ||
         (state.currentShift?.date === item.date ? state.currentShift : null);
+      if (shift?.staffConsumption) item.staffConsumption = shift.staffConsumption;
       if (shift && shift.status === 'CLOSED' && shift.formulaVersion === 2) {
         // Fórmula única: se recalcula con los gastos actuales, así un gasto editado después del cierre sí cuadra.
         const profit = calculateShiftProfit(shift, state.pettyCashTransactions || []);
@@ -1858,6 +1859,13 @@ export const DailyEarningsView: React.FC<Props> = ({
                 <span className="font-mono text-bodegon">C$ {activeDaySummary.netEarnings.toFixed(2)}</span>
               </div>
             </div>
+
+            {(activeDaySummary.staffConsumption || 0) > 0 && (
+              <p className="text-[11px] text-stone-500 px-1">
+                Consumo de personal cargado a quincena: <strong className="font-mono text-stone-700">C$ {(activeDaySummary.staffConsumption || 0).toFixed(2)}</strong>.
+                No entra a la gaveta ni a esta ganancia; se descuenta en la planilla.
+              </p>
+            )}
 
             <div className="flex gap-2 pt-2">
               <button

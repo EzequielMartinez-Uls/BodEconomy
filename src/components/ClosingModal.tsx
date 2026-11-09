@@ -12,6 +12,8 @@ import { printOfficialActBN } from '../services/thermalPrint';
 import { exportShiftToExcel } from '../services/excelExport';
 import { calculateDayProfit, sumDayExpenses, buildActTransactions } from '../utils/cashMath';
 import { processOutboxQueue } from '../services/supabaseSync';
+import { TegaTurno, bancoTega, tarjetasTega } from '../services/tegaBridge';
+import { TegaTestigo, FilaTestigo } from './TegaTestigo';
 import confetti from 'canvas-confetti';
 import {
   X,
@@ -47,6 +49,7 @@ interface Props {
   activeAdminName: string;
   availableAdmins: string[];
   onConfirmClose: (closedShift: CashShift, pettyCounted: number | null) => void;
+  tegaTurno?: TegaTurno | null; // el turno de TEGA de este día, como testigo del conteo
 }
 
 export const ClosingModal: React.FC<Props> = ({
@@ -57,6 +60,7 @@ export const ClosingModal: React.FC<Props> = ({
   activeAdminName,
   availableAdmins,
   onConfirmClose,
+  tegaTurno = null,
 }) => {
   if (!isOpen || !shift) return null;
 
@@ -123,6 +127,39 @@ export const ClosingModal: React.FC<Props> = ({
 
   // Cálculos de Ventas
   const totalCards = cardsBAC + cardsFicohsa + cardsBanpro + cardsLafise;
+
+  // TEGA como testigo: no llena nada, solo muestra al lado lo que dice el punto de venta.
+  const tasaTega = shift.exchangeRate || 36;
+  const tegaSalidas = tegaTurno ? parseFloat((tegaTurno.salidasCS + tegaTurno.salidasUSD * tasaTega).toFixed(2)) : 0;
+  const testigoGaveta: FilaTestigo[] = tegaTurno
+    ? [
+        { label: 'Córdobas en gaveta', contado: totalClosingNIO, tega: tegaTurno.esperado },
+        { label: 'Dólares en gaveta', contado: totalClosingUSD, tega: tegaTurno.esperadoUsd, moneda: 'US$' },
+      ]
+    : [];
+  const bancosTega = tegaTurno
+    ? ([
+        ['BAC', cardsBAC],
+        ['Banpro', cardsBanpro],
+        ['Ficohsa', cardsFicohsa],
+        ['Lafise', cardsLafise],
+      ] as [string, number][])
+    : [];
+  const testigoVentas: FilaTestigo[] = tegaTurno
+    ? [
+        ...bancosTega.map(([b, v]) => ({ label: b, contado: v, tega: bancoTega(tegaTurno, b) })),
+        { label: 'Total tarjetas', contado: totalCards, tega: tarjetasTega(tegaTurno), total: true },
+        { label: 'PedidosYa', contado: salesPedidosYa, tega: tegaTurno.metodos.pedidosya || 0 },
+        { label: 'Transferencias', contado: salesBankTransfers, tega: tegaTurno.metodos.transferencia || 0 },
+        { label: 'Pagos y salidas', contado: loyversePaidOut, tega: tegaSalidas, usar: () => setLoyversePaidOut(tegaSalidas) },
+      ]
+    : [];
+  const bancosDescuadrados = bancosTega.filter(([b, v]) => Math.abs(v - bancoTega(tegaTurno!, b)) >= 1).length;
+  const notaBancos =
+    tegaTurno && bancosDescuadrados > 0 && Math.abs(totalCards - tarjetasTega(tegaTurno)) < 1
+      ? 'El total de tarjetas cuadra pero algún banco no: casi siempre es que en TEGA se marcó el banco equivocado al cobrar, no que falte plata.'
+      : null;
+  const consumoPersonalTega = tegaTurno ? tegaTurno.personal : (shift.staffConsumption || 0);
 
   // Cálculos de Propinas (Acuerdo Laboral: Cuota Yahaira Rivas + Fondo Común Equipo)
   const actualYahairaTip = tipYahairaWorked ? Math.min(totalTipCollected, Math.max(0, tipYahairaAmount)) : 0;
@@ -250,6 +287,7 @@ export const ClosingModal: React.FC<Props> = ({
     otherIncome,
     otherIncomeNotes,
     loyversePaidOut,
+    staffConsumption: consumoPersonalTega,
     formulaVersion: 2,
     totalGrossSales,
 
@@ -512,6 +550,10 @@ export const ClosingModal: React.FC<Props> = ({
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
+
+              {tegaTurno && (
+                <TegaTestigo titulo="Testigo TEGA · efectivo" filas={testigoGaveta} enVivo={tegaTurno.estado !== 'cerrado'} />
+              )}
             </div>
           )}
 
@@ -659,7 +701,7 @@ export const ClosingModal: React.FC<Props> = ({
                     </h3>
                   </div>
                   <p className="text-[11px] text-stone-500">
-                    Cobradas en Loyverse (BAC, Banpro, Lafise).
+                    Cobradas por transferencia (BAC, Banpro, Lafise).
                   </p>
                   <div className="flex items-center gap-2 pt-1">
                     <span className="text-blue-500 font-mono font-bold text-xs">C$</span>
@@ -691,7 +733,7 @@ export const ClosingModal: React.FC<Props> = ({
                     </h3>
                   </div>
                   <p className="text-[11px] text-stone-500">
-                    Total según sistema (Loyverse). Solo de referencia: la venta en efectivo real sale del conteo de gaveta.
+                    Total según sistema. Solo de referencia: la venta en efectivo real sale del conteo de gaveta.
                   </p>
                   <div className="flex items-center gap-2 pt-1">
                     <span className="text-stone-400 font-mono font-bold text-xs">C$</span>
@@ -716,7 +758,7 @@ export const ClosingModal: React.FC<Props> = ({
                     </h3>
                   </div>
                   <p className="text-[11px] text-stone-500">
-                    Según Loyverse. Se suman al efectivo contado en gaveta.
+                    Según TEGA (botón Usar en el testigo). Se suman al efectivo contado en gaveta.
                   </p>
                   <div className="flex items-center gap-2 pt-1">
                     <span className="text-stone-400 font-mono font-bold text-xs">C$</span>
@@ -767,6 +809,23 @@ export const ClosingModal: React.FC<Props> = ({
                   />
                 </div>
               </div>
+
+              {tegaTurno && (
+                <TegaTestigo
+                  titulo="Testigo TEGA · ventas"
+                  filas={testigoVentas}
+                  enVivo={tegaTurno.estado !== 'cerrado'}
+                  nota={notaBancos}
+                />
+              )}
+              {consumoPersonalTega > 0 && (
+                <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-stone-200 text-xs">
+                  <span className="font-bold text-stone-700">
+                    Consumo de personal <span className="font-medium text-stone-500">(cargado a quincena, no entra a la gaveta)</span>
+                  </span>
+                  <span className="font-mono font-bold text-stone-900">C$ {consumoPersonalTega.toFixed(2)}</span>
+                </div>
+              )}
 
               {/* Total Bruto Consolidado */}
               <div className="p-4 bg-bodegon text-white rounded-xl flex items-center justify-between shadow-sm">

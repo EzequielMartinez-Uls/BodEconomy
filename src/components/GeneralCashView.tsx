@@ -1,3 +1,5 @@
+import { TegaEnVivo } from './TegaTestigo';
+import { TegaTurno } from '../services/tegaBridge';
 import React, { useState, useRef } from 'react';
 import { calculateDayProfit, sumDayExpenses } from '../utils/cashMath';
 import { AnimatedNumber } from './ui/AnimatedNumber';
@@ -50,6 +52,10 @@ interface Props {
   onUpdateShift?: (updatedShift: CashShift) => void;
   onCancelOpenShift?: () => void;
   onAddPettyCashTransaction?: (tx: PettyCashTransaction) => void;
+  tegaTurno?: TegaTurno | null;
+  tegaActualizado?: number | null;
+  tegaCargando?: boolean;
+  onActualizarTega?: () => void;
 }
 
 export const GeneralCashView: React.FC<Props> = ({
@@ -59,6 +65,10 @@ export const GeneralCashView: React.FC<Props> = ({
   onUpdateShift,
   onCancelOpenShift,
   onAddPettyCashTransaction,
+  tegaTurno = null,
+  tegaActualizado = null,
+  tegaCargando = false,
+  onActualizarTega,
 }) => {
   const currentShift = state.currentShift;
   const isShiftOpen = currentShift !== null && currentShift.status === 'OPEN';
@@ -483,6 +493,10 @@ export const GeneralCashView: React.FC<Props> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {isShiftOpen && onActualizarTega && (
+        <TegaEnVivo turno={tegaTurno} actualizado={tegaActualizado} cargando={tegaCargando} onActualizar={onActualizarTega} />
       )}
 
       {/* Tarjeta de Estado de Turno Actual */}
