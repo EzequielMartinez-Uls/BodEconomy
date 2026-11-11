@@ -27,7 +27,7 @@ import {
   loginBodegonPass,
   DEFAULT_BODEGON_PASS_URL,
 } from '../../services/bodegonPassSync';
-import { syncCatalogsToCloud } from '../../services/supabaseSync';
+import { syncCatalogsToCloud, addTegaQuitadas } from '../../services/supabaseSync';
 import { getDeletedPayrollNames, addDeletedPayrollName, removeDeletedPayrollName } from '../../services/storage';
 import {
   Calendar,
@@ -842,6 +842,8 @@ export const PayrollView: React.FC<Props> = ({
   const handleDeleteIncident = (id: string) => {
     const target = (state.payrollIncidents || []).find((i) => i.id === id);
     const nextIncidents = (state.payrollIncidents || []).filter((i) => i.id !== id);
+    // Un consumo que vino de TEGA y se borra a mano no vuelve a entrar solo.
+    addTegaQuitadas([id]);
     syncIncidentsIntoRowsAndCloud(
       nextIncidents,
       target ? [target.employeeId] : [],

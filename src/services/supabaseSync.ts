@@ -1672,6 +1672,98 @@ export async function fetchCloudCatalogs(): Promise<{
 
 let catalogSyncQueue: Promise<boolean> = Promise.resolve(true);
 
+/* ---------- Consumos de colaborador que vienen de TEGA ---------- */
+
+export const esIncidenciaTega = (id: string) => typeof id === 'string' && id.startsWith('tega-pago-');
+
+const TEGA_QUITADAS_KEY = 'bodeconomy-tega-quitadas';
+
+/** Consumos de TEGA que ya no deben volver a entrar (anulados en TEGA o borrados a mano en Incidencias). */
+export function getTegaQuitadas(): string[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(TEGA_QUITADAS_KEY) || '[]');
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addTegaQuitadas(ids: string[]) {
+  const nuevos = ids.filter(esIncidenciaTega);
+  if (!nuevos.length) return;
+  try {
+    localStorage.setItem(TEGA_QUITADAS_KEY, JSON.stringify(Array.from(new Set([...getTegaQuitadas(), ...nuevos]))));
+  } catch {
+    /* sin almacenamiento local: igual se guarda en la nube en la próxima sincronización */
+  }
+}
+
+/**
+ * Asegura en la nube los consumos de colaborador de TEGA. Lee el catálogo de la nube (no el de esta computadora),
+ * agrega los que falten y quita los anulados, y devuelve lo que quedó para ponerlo también en pantalla.
+ * Así, si otra computadora con una versión vieja guarda la nómina encima y los borra, vuelven a entrar solos.
+ * Devuelve null si no hubo que cambiar nada o no hay internet.
+ */
+export function asegurarIncidenciasTega(
+  construir: (empleados: import('../types/payroll').PayrollEmployee[]) => import('../types/payroll').PayrollIncident[],
+  anuladas: string[],
+  recalcular: (
+    historial: import('../types/payroll').BiweeklyPayrollRecord[],
+    incidencias: import('../types/payroll').PayrollIncident[]
+  ) => import('../types/payroll').BiweeklyPayrollRecord[]
+): Promise<{
+  incidencias: import('../types/payroll').PayrollIncident[];
+  historial: import('../types/payroll').BiweeklyPayrollRecord[];
+  agregadas: import('../types/payroll').PayrollIncident[];
+} | null> {
+  const op = catalogSyncQueue.catch(() => true).then(async () => {
+    try {
+      const { data: existing, error: readError } = await supabase
+        .from('jornadas_diarias')
+        .select('id, observaciones')
+        .eq('responsable', 'SYSTEM_CATALOGS')
+        .limit(1);
+      if (readError || !existing || !existing.length) return null;
+      const obs = existing[0].observaciones || '';
+      const tag = '[SYSTEM_CATALOGS:';
+      const start = obs.indexOf(tag);
+      if (start === -1) return null;
+      let prev: any;
+      try {
+        prev = JSON.parse(obs.substring(start + tag.length, obs.lastIndexOf(']')));
+      } catch {
+        return null;
+      }
+      const actuales: import('../types/payroll').PayrollIncident[] = Array.isArray(prev.payrollIncidents) ? prev.payrollIncidents : [];
+      const quitadas = new Set<string>([...(Array.isArray(prev.tegaQuitadas) ? prev.tegaQuitadas : []), ...getTegaQuitadas(), ...anuladas]);
+      const ids = new Set(actuales.map((i) => i.id));
+      const agregadas = construir(Array.isArray(prev.payrollEmployees) ? prev.payrollEmployees : []).filter(
+        (i) => !ids.has(i.id) && !quitadas.has(i.id)
+      );
+      const incidencias = [...agregadas, ...actuales.filter((i) => !(esIncidenciaTega(i.id) && quitadas.has(i.id)))];
+      if (!agregadas.length && incidencias.length === actuales.length) return null;
+      const historial = recalcular(Array.isArray(prev.payrollHistory) ? prev.payrollHistory : [], incidencias);
+      const payload = {
+        ...prev,
+        updatedAt: new Date().toISOString(),
+        payrollIncidents: incidencias,
+        payrollHistory: historial,
+        tegaQuitadas: Array.from(quitadas),
+      };
+      const { error } = await supabase
+        .from('jornadas_diarias')
+        .update({ observaciones: `[SYSTEM_CATALOGS:${JSON.stringify(payload)}]`, updated_at: new Date().toISOString() })
+        .eq('id', existing[0].id);
+      if (error) return null;
+      return { incidencias, historial, agregadas };
+    } catch {
+      return null;
+    }
+  });
+  catalogSyncQueue = op.then(() => true, () => true);
+  return op;
+}
+
 /**
  * Guarda y actualiza el catálogo oficial de Proveedores, Categorías, Nómina, Incidencias y Vajilla en Supabase
  * Serializado en cola secuencial para evitar condiciones de carrera al borrar o editar varios elementos seguidos.
@@ -1713,6 +1805,24 @@ export function syncCatalogsToCloud(
         ])
       );
 
+      const prevIncidents: import('../types/payroll').PayrollIncident[] = Array.isArray(prevParsed.payrollIncidents)
+        ? prevParsed.payrollIncidents
+        : [];
+      const quitadas = new Set<string>([
+        ...(Array.isArray(prevParsed.tegaQuitadas) ? prevParsed.tegaQuitadas : []),
+        ...getTegaQuitadas(),
+      ]);
+      // Consumos que entraron solos desde TEGA: si esta computadora no los tiene todavía, no se borran de la nube.
+      // Solo se quitan si se anularon en TEGA o si alguien los borró a mano en Incidencias (quedan en tegaQuitadas).
+      let nextIncidents = payrollIncidents !== undefined ? payrollIncidents : prevParsed.payrollIncidents;
+      if (Array.isArray(nextIncidents)) {
+        const enviados = new Set(nextIncidents.map((i) => i.id));
+        const conservar = prevIncidents.filter(
+          (i) => esIncidenciaTega(i.id) && !enviados.has(i.id) && !quitadas.has(i.id)
+        );
+        nextIncidents = [...conservar, ...nextIncidents].filter((i) => !(esIncidenciaTega(i.id) && quitadas.has(i.id)));
+      }
+
       const payload = {
         ...prevParsed,
         version: 2,
@@ -1721,7 +1831,8 @@ export function syncCatalogsToCloud(
         categories: categories && categories.length > 0 ? categories : (prevParsed.categories || DEFAULT_EXPENSE_CATEGORIES),
         payrollEmployees: payrollEmployees !== undefined ? payrollEmployees : prevParsed.payrollEmployees,
         payrollHistory: payrollHistory !== undefined ? payrollHistory : prevParsed.payrollHistory,
-        payrollIncidents: payrollIncidents !== undefined ? payrollIncidents : prevParsed.payrollIncidents,
+        payrollIncidents: nextIncidents,
+        tegaQuitadas: Array.from(quitadas),
         tablewareItems: tablewareItems !== undefined ? tablewareItems : prevParsed.tablewareItems,
         tablewareLosses: tablewareLosses !== undefined ? tablewareLosses : prevParsed.tablewareLosses,
         deletedPayrollNames: mergedDeletedNames,

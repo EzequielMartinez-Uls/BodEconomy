@@ -1,7 +1,7 @@
 {
   "name": "bodegon-control",
   "private": true,
-  "version": "1.0.69",
+  "version": "1.0.70",
   "description": "Bodegón Control: caja y cierre diario del Restaurante El Bodegón. Un producto de TEGA.",
   "author": {
     "name": "TEGA",

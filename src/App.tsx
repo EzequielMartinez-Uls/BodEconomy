@@ -31,6 +31,8 @@ import {
   syncFullDayClosureToCloud,
   fetchFullCloudState,
   fetchCloudCatalogs,
+  asegurarIncidenciasTega,
+  esIncidenciaTega,
   syncCatalogsToCloud,
   parseShiftFromJornada,
   mapCloudCategoryToLocal,
@@ -386,7 +388,15 @@ export function App() {
         expenseCategories: categories,
         payrollEmployees: Array.isArray(payrollEmployees) ? payrollEmployees : prev.payrollEmployees,
         payrollHistory: Array.isArray(payrollHistory) ? payrollHistory : prev.payrollHistory,
-        payrollIncidents: Array.isArray(payrollIncidents) ? payrollIncidents : prev.payrollIncidents,
+        // Si los consumos de TEGA ya entraron en esta computadora mientras se leía la nube, no se pierden de la pantalla.
+        payrollIncidents: Array.isArray(payrollIncidents)
+          ? [
+              ...(prev.payrollIncidents || []).filter(
+                (i) => esIncidenciaTega(i.id) && !payrollIncidents.some((c) => c.id === i.id)
+              ),
+              ...payrollIncidents,
+            ]
+          : prev.payrollIncidents,
         tablewareItems: Array.isArray(tablewareItems) ? tablewareItems : prev.tablewareItems,
         tablewareLosses: Array.isArray(tablewareLosses) ? tablewareLosses : prev.tablewareLosses,
       }));
@@ -1192,6 +1202,7 @@ export function App() {
   const addTxRef = useRef(handleAddPettyCashTransaction);
   addTxRef.current = handleAddPettyCashTransaction;
   const tegaEnCurso = useRef(new Set<string>());
+  const tegaIncidenciasEnCurso = useRef(false);
 
   const importarDeTega = useCallback((datos: TegaDatos) => {
     const st = stateRef.current;
@@ -1205,52 +1216,50 @@ export function App() {
     }
 
     // 2. Cuentas de colaborador cargadas a quincena → Servicio de restaurante (y se quitan si se anularon en TEGA).
-    const actuales = st.payrollIncidents || [];
-    const ids = new Set(actuales.map((i) => i.id));
-    const anuladas = new Set(datos.creditos.filter((c) => c.anulado).map((c) => idIncidenciaTega(c.id)));
-    const nuevas = datos.creditos
-      .filter((c) => !c.anulado && c.t >= Math.min(desde, CREDITOS_TEGA_DESDE) && c.monto > 0 && !ids.has(idIncidenciaTega(c.id)))
-      .map((c) => creditoComoIncidencia(c, st.payrollEmployees || []));
-    const quitar = actuales.some((i) => anuladas.has(i.id));
-    if (!nuevas.length && !quitar) return;
-
-    setState((prev) => {
-      const prevIds = new Set((prev.payrollIncidents || []).map((i) => i.id));
-      const agregar = nuevas.filter((i) => !prevIds.has(i.id));
-      const nextIncidents = [...agregar, ...(prev.payrollIncidents || []).filter((i) => !anuladas.has(i.id))];
-      if (nextIncidents.length === (prev.payrollIncidents || []).length && !agregar.length) return prev;
-      const nextHistory = recalcularServicioEnBorradores(prev.payrollHistory || [], nextIncidents);
-      syncCatalogsToCloud(
-        prev.vendorsList,
-        prev.expenseCategories,
-        prev.payrollEmployees,
-        nextHistory,
-        nextIncidents,
-        prev.tablewareItems,
-        prev.tablewareLosses
-      ).catch(console.warn);
-      if (agregar.length) {
-        notify(
-          agregar.length === 1 ? 'Consumo de colaborador cargado a quincena' : `${agregar.length} consumos de colaboradores cargados a quincena`,
-          agregar.map((i) => `${i.employeeName} · C$ ${i.amount.toFixed(2)}`).join(', ')
-        );
-      }
-      return {
-        ...prev,
-        payrollIncidents: nextIncidents,
-        payrollHistory: nextHistory,
-        auditLogs: [
-          {
-            id: `log-${Date.now()}`,
-            timestamp: new Date().toISOString(),
-            user: 'TEGA',
-            action: 'INCIDENCIAS_TEGA',
-            details: `${agregar.length} consumo(s) de colaborador desde TEGA${anuladas.size ? `, ${[...anuladas].filter((id) => prevIds.has(id)).length} anulado(s)` : ''}`,
-          },
-          ...prev.auditLogs,
-        ],
-      };
-    });
+    //    Se comparan contra la nómina de la NUBE, no la de esta computadora: si otra computadora con una versión vieja
+    //    guardó encima y los borró, vuelven a entrar solos en la siguiente lectura (cada 2 minutos).
+    const anuladas = datos.creditos.filter((c) => c.anulado).map((c) => idIncidenciaTega(c.id));
+    const validos = datos.creditos.filter((c) => !c.anulado && c.t >= Math.min(desde, CREDITOS_TEGA_DESDE) && c.monto > 0);
+    if (tegaIncidenciasEnCurso.current) return;
+    tegaIncidenciasEnCurso.current = true;
+    asegurarIncidenciasTega(
+      (empleadosNube) => {
+        const empleados = (st.payrollEmployees && st.payrollEmployees.length ? st.payrollEmployees : empleadosNube) || [];
+        return validos.map((c) => creditoComoIncidencia(c, empleados));
+      },
+      anuladas,
+      recalcularServicioEnBorradores
+    )
+      .then((res) => {
+        if (!res) return;
+        setState((prev) => ({
+          ...prev,
+          payrollIncidents: res.incidencias,
+          payrollHistory: res.historial,
+          auditLogs: [
+            {
+              id: `log-${Date.now()}`,
+              timestamp: new Date().toISOString(),
+              user: 'TEGA',
+              action: 'INCIDENCIAS_TEGA',
+              details: `${res.agregadas.length} consumo(s) de colaborador desde TEGA`,
+            },
+            ...prev.auditLogs,
+          ],
+        }));
+        if (res.agregadas.length) {
+          notify(
+            res.agregadas.length === 1
+              ? 'Consumo de colaborador cargado a quincena'
+              : `${res.agregadas.length} consumos de colaboradores cargados a quincena`,
+            res.agregadas.map((i) => `${i.employeeName} · C$ ${i.amount.toFixed(2)}`).join(', ')
+          );
+        }
+      })
+      .catch(console.warn)
+      .finally(() => {
+        tegaIncidenciasEnCurso.current = false;
+      });
   }, []);
 
   const refrescarTega = useCallback(async () => {
