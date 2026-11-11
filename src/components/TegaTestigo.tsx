@@ -114,7 +114,7 @@ interface VivoProps {
 
 /**
  * Cuadre en vivo: durante el turno, lo que TEGA dice que debería haber en gaveta y en cada datáfono, sin esperar al
- * cierre. Se actualiza solo cada 2 minutos.
+ * cierre. Se actualiza solo cuando TEGA avisa un cobro o movimiento de gaveta.
  */
 export const TegaEnVivo: React.FC<VivoProps> = ({ turno, actualizado, cargando, onActualizar }) => {
   const bancos = turno ? Object.entries(turno.bancos || {}).filter(([, v]) => Number(v) > 0) : [];
