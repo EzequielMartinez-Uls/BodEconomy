@@ -45,6 +45,7 @@ import { getLocalTodayStr, getLocalDateTimeStr, extractLocalDateStr } from './ut
 import {
   TegaDatos,
   fetchTega,
+  canalTega,
   tegaDesde,
   CREDITOS_TEGA_DESDE,
   salidaYaImportada,
@@ -1183,7 +1184,7 @@ export function App() {
   };
 
   // ---------- Puente con TEGA (solo lectura) ----------
-  // Cada 2 minutos (y al volver a la ventana) lee TEGA: el testigo del cierre, el cuadre en vivo, las salidas de la
+  // Cuando TEGA avisa un cambio (y al volver a la ventana) lee TEGA: el testigo del cierre, el cuadre en vivo, las salidas de la
   // gaveta (entran solas a caja chica) y las cuentas de colaborador cargadas a quincena (entran solas a Incidencias).
   const [tega, setTega] = useState<TegaDatos | null>(null);
   const [tegaCargando, setTegaCargando] = useState(false);
@@ -1262,15 +1263,57 @@ export function App() {
     importarDeTega(datos);
   }, [importarDeTega]);
 
-  useEffect(() => {
-    refrescarTega();
-    const id = window.setInterval(refrescarTega, 120000);
-    window.addEventListener('focus', refrescarTega);
-    return () => {
-      window.clearInterval(id);
-      window.removeEventListener('focus', refrescarTega);
+  // Sin consultas cada X tiempo (regla de Ezequiel): TEGA avisa por Realtime cuando cobra, saca dinero de la gaveta o
+  // abre/cierra turno (migración 29 de TEGA), y solo entonces se lee. En una noche llena se juntan los avisos: como
+  // mucho una lectura cada 30 s. También se lee al abrir Control, al volver a la ventana, al volver el internet, al
+  // reconectar el aviso y al abrir el cierre.
+  const ultimaTega = useRef(0);
+  const tegaPendiente = useRef<number | null>(null);
+  const pedirTega = useCallback((ya = false) => {
+    if (tegaPendiente.current !== null) {
+      if (!ya) return;
+      window.clearTimeout(tegaPendiente.current);
+      tegaPendiente.current = null;
+    }
+    const falta = ya ? 0 : ultimaTega.current + 30000 - Date.now();
+    const correr = () => {
+      tegaPendiente.current = null;
+      ultimaTega.current = Date.now();
+      refrescarTega();
     };
+    if (falta <= 0) correr();
+    else tegaPendiente.current = window.setTimeout(correr, falta);
   }, [refrescarTega]);
+
+  useEffect(() => {
+    pedirTega(true);
+    const alVolver = () => pedirTega(true);
+    window.addEventListener('focus', alVolver);
+    window.addEventListener('online', alVolver);
+    let canal: ReturnType<typeof supabase.channel> | null = null;
+    let cerrado = false;
+    canalTega().then((nombre) => {
+      if (!nombre || cerrado) return;
+      canal = supabase
+        .channel(nombre)
+        .on('broadcast', { event: 'cambio' }, () => pedirTega())
+        .subscribe((st) => {
+          if (st === 'SUBSCRIBED') pedirTega();
+        });
+    });
+    return () => {
+      cerrado = true;
+      window.removeEventListener('focus', alVolver);
+      window.removeEventListener('online', alVolver);
+      if (canal) supabase.removeChannel(canal);
+      if (tegaPendiente.current !== null) window.clearTimeout(tegaPendiente.current);
+    };
+  }, [pedirTega]);
+
+  // El cierre siempre con lo último de TEGA.
+  useEffect(() => {
+    if (closingModalOpen) pedirTega(true);
+  }, [closingModalOpen, pedirTega]);
 
   const handleForceSyncPending = async () => {
     setState((prev) => {

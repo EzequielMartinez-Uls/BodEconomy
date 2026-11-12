@@ -104,6 +104,18 @@ export async function fetchTega(desde = 0): Promise<TegaDatos | null> {
   }
 }
 
+/** Nombre del canal por el que TEGA avisa que hubo un cobro o un movimiento de gaveta (migración 29). */
+export async function canalTega(): Promise<string | null> {
+  if (!tegaConfigurado) return null;
+  try {
+    const { data, error } = await supabase.rpc('tega_control_canal', { p_clave: LLAVE });
+    if (error || typeof data !== 'string') return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 /** Fecha comercial (día de Control) de un turno de TEGA: el día en que se abrió. */
 export const fechaTurno = (t: TegaTurno) => extractLocalDateStr(new Date(t.abierto).toISOString());
 
