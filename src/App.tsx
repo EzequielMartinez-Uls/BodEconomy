@@ -134,13 +134,18 @@ export function App() {
     saveState(state);
   }, [state]);
 
+  // "Cierre anterior" para la apertura: solo días ANTERIORES a hoy. Si hoy quedó marcado
+  // como cerrado (por error o carrera con la nube), no se debe tomar como "ayer": al volver
+  // a abrir se corregía ese mismo día y la nube lo dejaba CERRADO otra vez (15-nov-2026).
+  const todayStr = getLocalTodayStr();
   const lastClosedShift = useMemo(() => {
-    const closed = state.shiftHistory.filter((s) => s.status === 'CLOSED');
+    const previous = state.shiftHistory.filter((s) => s.date < todayStr);
+    const closed = previous.filter((s) => s.status === 'CLOSED');
     if (closed.length > 0) {
       return [...closed].sort((a, b) => b.date.localeCompare(a.date))[0];
     }
-    return state.shiftHistory[0] || null;
-  }, [state.shiftHistory]);
+    return [...previous].sort((a, b) => b.date.localeCompare(a.date))[0] || null;
+  }, [state.shiftHistory, todayStr]);
 
   const isSyncingRef = useRef(false);
 
@@ -731,6 +736,12 @@ export function App() {
       bossContribution: number;
     }
   ) => {
+    // Nunca "corregir como cierre anterior" el mismo día (o uno posterior) que se está abriendo:
+    // eso volvía a marcar CERRADA la jornada recién abierta.
+    if (updatedPreviousShift && updatedPreviousShift.date >= newShift.date) {
+      updatedPreviousShift = undefined;
+    }
+
     const transferAmount = pettyOpeningData?.generalCashTransfer !== undefined
       ? pettyOpeningData.generalCashTransfer
       : (newShift.openingTransferToPettyCash || newShift.transferToPettyCash || 0);
