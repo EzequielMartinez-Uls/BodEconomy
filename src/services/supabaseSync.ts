@@ -789,12 +789,15 @@ export async function syncUnifiedDayOpeningToCloud(
 
     const { data: existing } = await supabase
       .from('jornadas_diarias')
-      .select('id, observaciones, fondo_inicial')
+      .select('id, observaciones, fondo_inicial, estado')
       .eq('fecha', generalShift.date)
       .limit(1);
 
     if (existing && existing.length > 0) {
-      const finalObs = mergeJornadaTags(existing[0].observaciones, {
+      // Si la apertura anterior de este día se canceló, se empieza de cero: no se arrastran
+      // ventas ni cierres viejos de esa apertura cancelada.
+      const wasCancelled = existing[0].estado === 'CANCELADA';
+      const finalObs = mergeJornadaTags(wasCancelled ? '' : existing[0].observaciones, {
         openingData,
         fondosComposition: fondosComp,
       });
@@ -804,7 +807,8 @@ export async function syncUnifiedDayOpeningToCloud(
         .update({
           estado: 'ABIERTA',
           responsable: generalShift.openedBy,
-          fondo_inicial: pettyShift?.initialBalance ?? existing[0].fondo_inicial ?? generalShift.totalOpeningEquivNIO,
+          fondo_inicial: pettyShift?.initialBalance ?? (wasCancelled ? null : existing[0].fondo_inicial) ?? generalShift.totalOpeningEquivNIO,
+          ...(wasCancelled ? { fecha_cierre: null } : {}),
           observaciones: finalObs,
           updated_at: new Date().toISOString(),
         })
